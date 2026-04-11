@@ -67,22 +67,43 @@ run_task() {
 
   log "=== 开始 Task $task_num: $task_name [${complexity}] ==="
 
-  local cmd
-  cmd=$(build_codex_cmd "$complexity" "$prompt")
-
   local retry=0
   while [ $retry -lt $MAX_RETRIES ]; do
-    if eval "$cmd \"$prompt\"" 2>&1 | tee -a "$LOG_FILE"; then
+    local success=0
+
+    # 根据复杂度和重试次数选择 provider
+    if [ $retry -ge 2 ] || [ "$complexity" = "complex" ]; then
+      # 重试 2 次后或复杂任务，用默认 relay
+      log "  [provider] gpt-5.3-codex (relay，默认)"
+      if codex exec "$prompt" 2>&1 | tee -a "$LOG_FILE"; then
+        success=1
+      fi
+    elif [ "$complexity" = "simple" ] && [ -n "$LONGCAT_API_KEY" ]; then
+      # 简单任务用 LongCat
+      log "  [provider] LongCat-Flash-Chat (免费)"
+      if LONGCAT_API_KEY="$LONGCAT_API_KEY" codex exec -m LongCat-Flash-Chat --provider longcat "$prompt" 2>&1 | tee -a "$LOG_FILE"; then
+        success=1
+      fi
+    elif [ "$complexity" = "medium" ] && [ -n "$VOLC_API_KEY" ]; then
+      # 中等任务用火山
+      log "  [provider] ark-code-latest (火山)"
+      if VOLC_API_KEY="$VOLC_API_KEY" codex exec -m ark-code-latest --provider volc "$prompt" 2>&1 | tee -a "$LOG_FILE"; then
+        success=1
+      fi
+    else
+      # 回退到默认
+      log "  [provider] gpt-5.3-codex (回退默认)"
+      if codex exec "$prompt" 2>&1 | tee -a "$LOG_FILE"; then
+        success=1
+      fi
+    fi
+
+    if [ $success -eq 1 ]; then
       log "✓ Task $task_num 完成"
       return 0
     else
       retry=$((retry + 1))
       log "✗ Task $task_num 失败，重试 $retry/$MAX_RETRIES"
-      # 重试时升级 provider
-      if [ $retry -ge 2 ] && [ "$complexity" != "complex" ]; then
-        log "  升级到 gpt-5.3-codex 重试"
-        cmd="codex exec"
-      fi
       sleep 10
     fi
   done
