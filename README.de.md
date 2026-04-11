@@ -1,3 +1,6 @@
+[![Tests](https://github.com/wyl2607/esg-research-toolkit/actions/workflows/test.yml/badge.svg)](https://github.com/wyl2607/esg-research-toolkit/actions/workflows/test.yml)
+[![Lint](https://github.com/wyl2607/esg-research-toolkit/actions/workflows/lint.yml/badge.svg)](https://github.com/wyl2607/esg-research-toolkit/actions/workflows/lint.yml)
+
 # ESG Research Toolkit
 
 Das ESG Research Toolkit ist ein Open-Source-Werkzeugkasten fuer die ESG-Analyse von Unternehmen. Er vereint PDF-Berichtsparsing, EU-Taxonomie-Scoring und techno-oekonomische Modellierung fuer Projekte im Bereich erneuerbarer Energien in einem gemeinsamen FastAPI-Service.
@@ -92,6 +95,28 @@ Interaktive API-Dokumentation:
 ```bash
 pytest tests/ -v
 ```
+
+## Docker-Bereitstellung
+
+### Schnellstart
+
+```bash
+cp .env.example .env
+docker compose up -d
+docker compose ps
+docker compose logs -f
+docker compose down
+```
+
+### Umgebungsvariablen
+
+Lege in `.env` mindestens Folgendes fest:
+
+```env
+OPENAI_API_KEY=your_openai_api_key_here
+```
+
+Der Container verwendet standardmaessig `DATABASE_URL=sqlite:///./data/esg_toolkit.db` und bindet `./data` sowie `./reports` als persistente Volumes ein.
 
 ## API-Endpunkte
 

@@ -1,0 +1,18 @@
+{
+  "company_name": "GreenTech Solutions GmbH",
+  "report_year": 2024,
+  "scope1_co2e_tonnes": 1200,
+  "scope2_co2e_tonnes": 800,
+  "scope3_co2e_tonnes": 5000,
+  "energy_consumption_mwh": 15000,
+  "renewable_energy_pct": 85,
+  "water_usage_m3": 50000,
+  "waste_recycled_pct": 70,
+  "total_revenue_eur": 50000000,
+  "taxonomy_aligned_revenue_pct": 75,
+  "total_capex_eur": 10000000,
+  "taxonomy_aligned_capex_pct": 80,
+  "total_employees": 250,
+  "female_pct": 45,
+  "primary_activities": ["solar_pv", "wind_onshore"]
+}

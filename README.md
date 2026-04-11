@@ -1,3 +1,6 @@
+[![Tests](https://github.com/wyl2607/esg-research-toolkit/actions/workflows/test.yml/badge.svg)](https://github.com/wyl2607/esg-research-toolkit/actions/workflows/test.yml)
+[![Lint](https://github.com/wyl2607/esg-research-toolkit/actions/workflows/lint.yml/badge.svg)](https://github.com/wyl2607/esg-research-toolkit/actions/workflows/lint.yml)
+
 # ESG Research Toolkit
 
 Open-source toolkit for corporate ESG analysis, combining PDF report parsing, EU Taxonomy compliance scoring, and renewable energy techno-economic modelling in a single FastAPI service.
@@ -92,6 +95,28 @@ Interactive API documentation:
 ```bash
 pytest tests/ -v
 ```
+
+## Docker Deployment
+
+### Quick Start
+
+```bash
+cp .env.example .env
+docker compose up -d
+docker compose ps
+docker compose logs -f
+docker compose down
+```
+
+### Environment Variables
+
+Create a `.env` file with at least:
+
+```env
+OPENAI_API_KEY=your_openai_api_key_here
+```
+
+The container uses `DATABASE_URL=sqlite:///./data/esg_toolkit.db` by default and mounts `./data` and `./reports` as persistent volumes.
 
 ## API Endpoints
 

@@ -1,0 +1,29 @@
+name: Docker Build
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        run: docker build -t esg-toolkit:${{ github.ref_name }} .
+
+      - name: Test Docker image
+        run: |
+          docker run -d -p 8000:8000 \
+            -e OPENAI_API_KEY=test_key \
+            --name esg-test \
+            esg-toolkit:${{ github.ref_name }}
+          sleep 5
+          curl -f http://localhost:8000/health
+          docker stop esg-test

@@ -1,3 +1,6 @@
+[![Tests](https://github.com/wyl2607/esg-research-toolkit/actions/workflows/test.yml/badge.svg)](https://github.com/wyl2607/esg-research-toolkit/actions/workflows/test.yml)
+[![Lint](https://github.com/wyl2607/esg-research-toolkit/actions/workflows/lint.yml/badge.svg)](https://github.com/wyl2607/esg-research-toolkit/actions/workflows/lint.yml)
+
 # ESG Research Toolkit
 
 ESG Research Toolkit 是一个面向企业 ESG 分析的开源工具集，将 PDF 报告解析、EU Taxonomy 合规评分与可再生能源项目技术经济建模整合为统一的 FastAPI 服务。
@@ -92,6 +95,28 @@ uvicorn main:app --reload
 ```bash
 pytest tests/ -v
 ```
+
+## Docker 部署
+
+### 快速开始
+
+```bash
+cp .env.example .env
+docker compose up -d
+docker compose ps
+docker compose logs -f
+docker compose down
+```
+
+### 环境变量
+
+请在 `.env` 中至少配置：
+
+```env
+OPENAI_API_KEY=your_openai_api_key_here
+```
+
+容器默认使用 `DATABASE_URL=sqlite:///./data/esg_toolkit.db`，并挂载 `./data` 与 `./reports` 作为持久化卷。
 
 ## API 端点
 
