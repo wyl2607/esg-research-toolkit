@@ -14,16 +14,35 @@ build/
 venv/
 env/
 
-# Environment
+# Environment & Secrets
 .env
 *.env.local
+.env.production
+.env.development
+*.key
+*.pem
+*_key
+*_secret
+*token*
+credentials.json
+secrets.json
+
+# Personal tools & configs (oh-my-codex, etc.)
+.omx/
+.codex/
+.claude/
+.cursor/
+.gemini/
 
 # Data (not committed)
 data/literature/
 data/questionnaires/
 data/reports/
+reports/
+examples/companies/*.json
 *.db
 *.sqlite
+*.sqlite3
 
 # IDE
 .vscode/
@@ -43,3 +62,15 @@ htmlcov/
 # Logs
 *.log
 logs/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+tmp/
+
+# User-specific files (不要上传个人信息)
+PERSONAL_*
+PRIVATE_*
+*_PRIVATE.*
+*_PERSONAL.*
