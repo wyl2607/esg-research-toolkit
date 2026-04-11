@@ -31,25 +31,25 @@ Task 1 → Task 2 → Task 3 → Task 4
 
 ### 执行 Task 1（用户手册）
 ```bash
-codex --model gpt-5.4 --approval-policy on-failure \
+codex exec -m gpt-5.4 \
   --prompt "读取 docs/codex-tasks/task_01_user_guide.md，按照规格创建三语言用户手册。先读取 main.py 和各模块 api.py 了解实际端点。"
 ```
 
 ### 执行 Task 2（模块联动）
 ```bash
-codex --model gpt-5.4 --approval-policy on-failure \
+codex exec -m gpt-5.4 \
   --prompt "读取 docs/codex-tasks/task_02_integration.md，创建模块联动工作流和示例数据。先读取 core/schemas.py 了解数据结构。"
 ```
 
 ### 执行 Task 3（Docker）
 ```bash
-codex --model gpt-5.4 --approval-policy on-failure \
+codex exec -m gpt-5.4 \
   --prompt "读取 docs/codex-tasks/task_03_docker.md，创建 Docker 部署配置并更新 README。"
 ```
 
 ### 执行 Task 4（CI/CD）
 ```bash
-codex --model gpt-5.4 --approval-policy on-failure \
+codex exec -m gpt-5.4 \
   --prompt "读取 docs/codex-tasks/task_04_cicd.md，创建 GitHub Actions 工作流并添加 CI 徽章。"
 ```
 

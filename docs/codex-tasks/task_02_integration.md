@@ -181,6 +181,6 @@ if __name__ == "__main__":
 ## Codex 执行命令
 
 ```bash
-codex --model gpt-5.4 --approval-policy on-failure \
+codex exec -m gpt-5.4 \
   --prompt "读取 docs/codex-tasks/task_02_integration.md，创建模块联动工作流：1) examples/mock_esg_data.json，2) workflows/end_to_end.py，3) workflows/batch_analysis.py，4) examples/companies/ 下 3 个示例企业数据。先读取 core/schemas.py 了解数据结构，确保脚本可运行。"
 ```

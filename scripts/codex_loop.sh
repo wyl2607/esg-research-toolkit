@@ -27,8 +27,7 @@ run_task() {
 
   local retry=0
   while [ $retry -lt $MAX_RETRIES ]; do
-    if codex --model gpt-5.4 --approval-policy on-failure \
-        --prompt "$prompt" 2>&1 | tee -a "$LOG_FILE"; then
+    if codex exec -m gpt-5.4 "$prompt" 2>&1 | tee -a "$LOG_FILE"; then
       log "✓ Task $task_num 完成"
       return 0
     else

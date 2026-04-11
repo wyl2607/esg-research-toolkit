@@ -16,11 +16,11 @@ cat docs/codex-tasks/TASK_LIST.md
 ### 2. 执行单个任务
 ```bash
 # Task 1: 三语言用户手册
-codex --model gpt-5.4 --approval-policy on-failure \
+codex exec -m gpt-5.4 \
   --prompt "读取 docs/codex-tasks/task_01_user_guide.md，按照规格创建三语言用户手册。"
 
 # Task 2: 模块联动集成
-codex --model gpt-5.4 --approval-policy on-failure \
+codex exec -m gpt-5.4 \
   --prompt "读取 docs/codex-tasks/task_02_integration.md，创建模块联动工作流。"
 ```
 
