@@ -16,7 +16,7 @@ cat docs/codex-tasks/TASK_LIST.md
 
 ### 2. 执行单个任务
 ```bash
-codex exec -m gpt-5.4 \
+codex exec \
   --prompt "$(cat docs/codex-tasks/task_01_user_guide.md)"
 ```
 

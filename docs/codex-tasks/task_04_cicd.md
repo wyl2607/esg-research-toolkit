@@ -148,6 +148,6 @@ jobs:
 ## Codex 执行命令
 
 ```bash
-codex exec -m gpt-5.4 \
+codex exec \
   --prompt "读取 docs/codex-tasks/task_04_cicd.md，创建 GitHub Actions CI/CD：1) .github/workflows/test.yml，2) .github/workflows/lint.yml，3) .github/workflows/docker.yml，4) 在三个 README 文件顶部添加 CI 徽章。验证 YAML 语法正确，ruff 检查通过。"
 ```

@@ -154,6 +154,6 @@ curl -X POST http://localhost:8000/techno/lcoe \
 ## Codex 执行命令
 
 ```bash
-codex exec -m gpt-5.4 \
+codex exec \
   --prompt "读取 docs/codex-tasks/task_01_user_guide.md，按照规格创建三语言用户手册（docs/USER_GUIDE.md 英文、docs/USER_GUIDE.zh.md 中文、docs/USER_GUIDE.de.md 德文）。先读取 main.py 和各模块 api.py 了解实际端点，确保代码示例可运行。"
 ```

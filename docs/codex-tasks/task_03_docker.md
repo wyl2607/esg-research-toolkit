@@ -131,6 +131,6 @@ OPENAI_API_KEY=your_key_here
 ## Codex 执行命令
 
 ```bash
-codex exec -m gpt-5.4 \
+codex exec \
   --prompt "读取 docs/codex-tasks/task_03_docker.md，创建 Docker 部署配置：1) Dockerfile，2) docker-compose.yml，3) .dockerignore，4) 在三个 README 文件中添加 Docker 部署章节。验证 docker build 成功。"
 ```
