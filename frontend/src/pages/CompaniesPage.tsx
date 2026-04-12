@@ -6,10 +6,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Trash2, Search, Download } from 'lucide-react'
 import type { CompanyESGData } from '@/lib/types'
+import { useTranslation } from 'react-i18next'
 
 type SortKey = 'company_name' | 'report_year' | 'taxonomy_aligned_revenue_pct'
 
 export function CompaniesPage() {
+  const { t } = useTranslation()
   const [search, setSearch] = useState('')
   const [sortKey, setSortKey] = useState<SortKey>('report_year')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
@@ -52,14 +54,18 @@ export function CompaniesPage() {
     }`
 
   const handleDelete = (c: CompanyESGData) => {
-    if (confirm(`Delete ${c.company_name} (${c.report_year})?`)) {
+    if (
+      confirm(
+        t('companies.deleteConfirm', { name: c.company_name, year: c.report_year })
+      )
+    ) {
       deleteMutation.mutate({ name: c.company_name, year: c.report_year })
     }
   }
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-slate-900">Companies</h1>
+      <h1 className="text-2xl font-bold text-slate-900">{t('companies.title')}</h1>
 
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="relative w-full md:w-72">
@@ -69,7 +75,7 @@ export function CompaniesPage() {
           />
           <Input
             className="pl-8"
-            placeholder="Search companies…"
+            placeholder={t('companies.searchPlaceholder')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -81,7 +87,7 @@ export function CompaniesPage() {
             onClick={() => window.open('/api/report/companies/export/csv')}
           >
             <Download size={14} className="mr-1" />
-            CSV
+            {t('companies.csvExport')}
           </Button>
           <Button
             variant="outline"
@@ -89,15 +95,15 @@ export function CompaniesPage() {
             onClick={() => window.open('/api/report/companies/export/xlsx')}
           >
             <Download size={14} className="mr-1" />
-            Excel
+            {t('companies.excelExport')}
           </Button>
         </div>
       </div>
 
       {isLoading ? (
-        <p className="text-slate-400">Loading…</p>
+        <p className="text-slate-400">{t('common.loading')}</p>
       ) : filtered.length === 0 ? (
-        <p className="text-slate-400">No companies found.</p>
+        <p className="text-slate-400">{t('companies.noResults')}</p>
       ) : (
         <div className="rounded-lg border overflow-hidden">
           <table className="w-full text-sm">
@@ -107,28 +113,28 @@ export function CompaniesPage() {
                   className={thCls('company_name')}
                   onClick={() => toggleSort('company_name')}
                 >
-                  Company
+                  {t('common.company')}
                 </th>
                 <th
                   className={thCls('report_year')}
                   onClick={() => toggleSort('report_year')}
                 >
-                  Year
+                  {t('common.year')}
                 </th>
                 <th className="px-4 py-3 text-left font-medium text-slate-600">
-                  Scope 1
+                  {t('companies.scope1')}
                 </th>
                 <th className="px-4 py-3 text-left font-medium text-slate-600">
-                  Employees
+                  {t('companies.employees')}
                 </th>
                 <th
                   className={thCls('taxonomy_aligned_revenue_pct')}
                   onClick={() => toggleSort('taxonomy_aligned_revenue_pct')}
                 >
-                  Taxonomy %
+                  {t('upload.taxonomyAligned')}
                 </th>
                 <th className="px-4 py-3 text-left font-medium text-slate-600">
-                  Actions
+                  {t('common.delete')}
                 </th>
               </tr>
             </thead>

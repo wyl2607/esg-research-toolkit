@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer, Tooltip } from 'recharts'
+import { useTranslation } from 'react-i18next'
 
 // ── Grade badge ────────────────────────────────────────────────────────────
 
@@ -53,6 +54,7 @@ const FRAMEWORK_COLORS: Record<string, string> = {
 }
 
 function FrameworkCard({ fw }: { fw: FrameworkScoreResult }) {
+  const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
   const color = FRAMEWORK_COLORS[fw.framework_id] ?? '#6366f1'
   const radarData = fw.dimensions.map((d: DimensionScore) => ({
@@ -69,14 +71,16 @@ function FrameworkCard({ fw }: { fw: FrameworkScoreResult }) {
             <span className="w-3 h-3 rounded-full inline-block" style={{ background: color }} />
             <h3 className="font-semibold text-slate-800">{fw.framework}</h3>
           </div>
-          <p className="text-xs text-slate-400">覆盖率 {fw.coverage_pct}%</p>
+          <p className="text-xs text-slate-400">
+            {t('frameworks.coverage', { pct: fw.coverage_pct })}
+          </p>
         </div>
         <GradeBadge grade={fw.grade} />
       </div>
 
       {/* Total score bar */}
       <div>
-        <p className="text-xs text-slate-500 mb-1">综合得分</p>
+        <p className="text-xs text-slate-500 mb-1">{t('frameworks.totalScore')}</p>
         <ScoreBar value={fw.total_score} />
       </div>
 
@@ -98,7 +102,7 @@ function FrameworkCard({ fw }: { fw: FrameworkScoreResult }) {
           <div key={d.name}>
             <div className="flex justify-between text-xs text-slate-600 mb-0.5">
               <span>{d.name}</span>
-              <span>{d.disclosed}/{d.total} 项</span>
+              <span>{t('frameworks.disclosed', { n: d.disclosed, total: d.total })}</span>
             </div>
             <ScoreBar value={d.score} />
           </div>
@@ -109,19 +113,27 @@ function FrameworkCard({ fw }: { fw: FrameworkScoreResult }) {
       <button
         className="text-xs text-indigo-600 hover:underline"
         onClick={() => setExpanded(!expanded)}
+        type="button"
       >
-        {expanded ? '收起' : `查看差距 (${fw.gaps.length}) 和建议 (${fw.recommendations.length})`}
+        {expanded
+          ? t('frameworks.collapse')
+          : t('frameworks.viewGaps', {
+              count: fw.gaps.length,
+              recs: fw.recommendations.length,
+            })}
       </button>
 
       {expanded && (
         <div className="space-y-3 pt-2 border-t">
           {fw.gaps.length > 0 && (
             <div>
-              <p className="text-xs font-medium text-slate-700 mb-1">差距</p>
+              <p className="text-xs font-medium text-slate-700 mb-1">{t('common.gaps')}</p>
               <ul className="space-y-1">
                 {fw.gaps.map((g, i) => (
                   <li key={i} className="flex gap-2 text-xs text-slate-600">
-                    <Badge variant="outline" className="shrink-0 text-[10px] px-1">缺失</Badge>
+                    <Badge variant="outline" className="shrink-0 text-[10px] px-1">
+                      {t('common.missing')}
+                    </Badge>
                     {g}
                   </li>
                 ))}
@@ -130,7 +142,9 @@ function FrameworkCard({ fw }: { fw: FrameworkScoreResult }) {
           )}
           {fw.recommendations.length > 0 && (
             <div>
-              <p className="text-xs font-medium text-slate-700 mb-1">建议</p>
+              <p className="text-xs font-medium text-slate-700 mb-1">
+                {t('common.recommendations')}
+              </p>
               <ul className="space-y-1">
                 {fw.recommendations.map((r, i) => (
                   <li key={i} className="text-xs text-slate-600">• {r}</li>
@@ -147,6 +161,7 @@ function FrameworkCard({ fw }: { fw: FrameworkScoreResult }) {
 // ── Page ───────────────────────────────────────────────────────────────────
 
 export function FrameworksPage() {
+  const { t } = useTranslation()
   const [selected, setSelected] = useState('')
 
   const { data: companies = [] } = useQuery({
@@ -165,15 +180,15 @@ export function FrameworksPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Multi-Framework ESG</h1>
+        <h1 className="text-2xl font-bold text-slate-900">{t('frameworks.title')}</h1>
         <p className="text-sm text-slate-500 mt-1">
-          同时对比 EU Taxonomy 2020 · 中国证监会 CSRC 2023 · EU CSRD/ESRS 三大框架
+          {t('frameworks.subtitle')}
         </p>
       </div>
 
       <Select value={selected} onValueChange={setSelected}>
         <SelectTrigger className="w-72">
-          <SelectValue placeholder="选择公司和年份…" />
+          <SelectValue placeholder={t('common.selectCompany')} />
         </SelectTrigger>
         <SelectContent>
           {companies.map((c) => (
@@ -187,7 +202,7 @@ export function FrameworksPage() {
         </SelectContent>
       </Select>
 
-      {isLoading && <p className="text-slate-400">正在计算三框架得分…</p>}
+      {isLoading && <p className="text-slate-400">{t('frameworks.calculating')}</p>}
 
       {report && (
         <div className="space-y-4">
@@ -207,7 +222,7 @@ export function FrameworksPage() {
 
       {!selected && (
         <p className="text-slate-400 text-center py-12">
-          选择一家公司，查看三大 ESG 框架下的合规评分与差距分析。
+          {t('frameworks.selectPrompt')}
         </p>
       )}
     </div>

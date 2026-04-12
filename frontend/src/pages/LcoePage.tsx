@@ -23,6 +23,7 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import type { LCOEInput } from '@/lib/types'
+import { useTranslation } from 'react-i18next'
 
 const TECHNOLOGIES = [
   'solar_pv',
@@ -42,17 +43,18 @@ const DEFAULTS: LCOEInput = {
 }
 
 const FIELD_CONFIG: [keyof LCOEInput, string, string][] = [
-  ['capacity_mw', 'Capacity (MW)', '0.1'],
-  ['capacity_factor', 'Capacity Factor (0–1)', '0.01'],
-  ['capex_eur_per_kw', 'CAPEX (€/kW)', '1'],
-  ['opex_eur_per_kw_year', 'OPEX (€/kW/yr)', '0.1'],
-  ['lifetime_years', 'Lifetime (years)', '1'],
-  ['discount_rate', 'Discount Rate (0–1)', '0.001'],
+  ['capacity_mw', 'capacity_mw', '0.1'],
+  ['capacity_factor', 'lcoe.capacityFactor', '0.01'],
+  ['capex_eur_per_kw', 'lcoe.capex', '1'],
+  ['opex_eur_per_kw_year', 'lcoe.opex', '0.1'],
+  ['lifetime_years', 'lcoe.lifetime', '1'],
+  ['discount_rate', 'lcoe.discountRate', '0.001'],
 ]
 
 const COLORS = ['#6366f1', '#22c55e', '#f59e0b', '#ef4444']
 
 export function LcoePage() {
+  const { t } = useTranslation()
   const [form, setForm] = useState<LCOEInput>(DEFAULTS)
 
   const lcoeMutation = useMutation({ mutationFn: calcLcoe })
@@ -87,14 +89,14 @@ export function LcoePage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-bold text-slate-900">LCOE Analysis</h1>
+      <h1 className="text-2xl font-bold text-slate-900">{t('lcoe.title')}</h1>
 
       <div className="grid grid-cols-2 gap-8">
         {/* Input form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4 items-end">
             <div>
-              <Label>Technology</Label>
+              <Label>{t('lcoe.technology')}</Label>
               <Select
                 value={form.technology}
                 onValueChange={(v) => setForm((f) => ({ ...f, technology: v }))}
@@ -112,13 +114,13 @@ export function LcoePage() {
               </Select>
             </div>
             <Button type="button" variant="outline" onClick={loadBenchmark}>
-              Load Benchmark
+              {t('lcoe.loadBenchmark')}
             </Button>
           </div>
 
-          {FIELD_CONFIG.map(([key, label, step]) => (
+          {FIELD_CONFIG.map(([key, labelKey, step]) => (
             <div key={key}>
-              <Label>{label}</Label>
+              <Label>{labelKey === 'capacity_mw' ? 'Capacity (MW)' : t(labelKey)}</Label>
               <Input
                 type="number"
                 step={step}
@@ -138,7 +140,7 @@ export function LcoePage() {
             disabled={lcoeMutation.isPending}
             className="w-full"
           >
-            {lcoeMutation.isPending ? 'Calculating…' : 'Calculate LCOE'}
+            {lcoeMutation.isPending ? t('lcoe.calculating') : t('lcoe.calculate')}
           </Button>
         </form>
 
@@ -147,28 +149,28 @@ export function LcoePage() {
           {lcoeMutation.data ? (
             <div className="grid grid-cols-2 gap-3">
               <MetricCard
-                label="LCOE"
+                label={t('lcoe.lcoe')}
                 value={`€${lcoeMutation.data.lcoe_eur_per_mwh.toFixed(1)}/MWh`}
                 color="blue"
               />
               <MetricCard
-                label="NPV"
+                label={t('lcoe.npv')}
                 value={`€${(lcoeMutation.data.npv_eur / 1e6).toFixed(1)}M`}
                 color={lcoeMutation.data.npv_eur > 0 ? 'green' : 'red'}
               />
               <MetricCard
-                label="IRR"
+                label={t('lcoe.irr')}
                 value={`${(lcoeMutation.data.irr * 100).toFixed(1)}%`}
                 color="blue"
               />
               <MetricCard
-                label="Payback"
-                value={`${lcoeMutation.data.payback_years.toFixed(1)} yr`}
+                label={t('lcoe.payback')}
+                value={`${lcoeMutation.data.payback_years.toFixed(1)} ${t('lcoe.years')}`}
               />
             </div>
           ) : (
             <p className="text-slate-400 text-center py-8">
-              Fill in the form and click Calculate.
+              {t('common.noData')}
             </p>
           )}
         </div>
@@ -176,9 +178,7 @@ export function LcoePage() {
 
       {sensitivityMutation.data && sensitivityChartData.length > 0 && (
         <div>
-          <h2 className="text-lg font-semibold mb-3">
-            Sensitivity Analysis (±20%)
-          </h2>
+          <h2 className="text-lg font-semibold mb-3">{t('lcoe.sensitivityAnalysis')}</h2>
           <ResponsiveContainer width="100%" height={280}>
             <LineChart data={sensitivityChartData}>
               <CartesianGrid strokeDasharray="3 3" />

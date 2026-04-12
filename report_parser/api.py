@@ -1,12 +1,14 @@
-import importlib.util
-import json
 import csv
+import hashlib
+import importlib.util
 import io
+import json
+from datetime import datetime, timezone
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
-from fastapi.responses import StreamingResponse
 import openpyxl
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from core.database import get_db
@@ -14,7 +16,13 @@ from core.schemas import BatchStatusResponse, CompanyESGData
 from report_parser.analyzer import AIExtractionError, analyze_esg_data
 from report_parser.batch_jobs import batch_manager
 from report_parser.extractor import extract_text_from_pdf
-from report_parser.storage import get_report, list_reports, save_report
+from report_parser.storage import (
+    get_report,
+    hard_delete_report,
+    list_reports,
+    request_deletion,
+    save_report,
+)
 
 router = APIRouter(prefix="/report", tags=["report_parser"])
 _MULTIPART_AVAILABLE = any(
@@ -41,11 +49,16 @@ if _MULTIPART_AVAILABLE:
         if not file.filename or not file.filename.lower().endswith(".pdf"):
             raise HTTPException(400, "Only PDF files are supported")
 
+        content = await file.read()
+
+        # ── 合规：计算文件哈希用于溯源，PDF 不对外公开访问 ──────────────────
+        file_hash = hashlib.sha256(content).hexdigest()
         upload_dir = Path("data/reports")
         upload_dir.mkdir(parents=True, exist_ok=True)
-        pdf_path = upload_dir / Path(file.filename).name
+        # 用 hash 前缀命名，避免文件名泄露原始信息
+        safe_name = f"{file_hash[:16]}_{Path(file.filename).name}"
+        pdf_path = upload_dir / safe_name
         with pdf_path.open("wb") as handle:
-            content = await file.read()
             handle.write(content)
 
         text = extract_text_from_pdf(pdf_path)
@@ -60,7 +73,13 @@ if _MULTIPART_AVAILABLE:
         except AIExtractionError as exc:
             raise HTTPException(422, str(exc.reason)) from exc
 
-        save_report(db, esg_data, pdf_filename=file.filename)
+        save_report(
+            db,
+            esg_data,
+            pdf_filename=safe_name,
+            file_hash=file_hash,
+            downloaded_at=datetime.now(timezone.utc),
+        )
         return esg_data
 
     @router.post("/upload/batch", response_model=BatchStatusResponse)
@@ -146,6 +165,50 @@ def list_company_reports(skip: int = 0, limit: int = 50, db: Session = Depends(g
         }
         for record in records
     ]
+
+
+@router.post("/companies/{company_name}/{report_year:int}/request-deletion")
+def request_source_deletion(
+    company_name: str,
+    report_year: int,
+    db: Session = Depends(get_db),
+):
+    """
+    来源删除机制（Requirement 4）：
+    接收权利人请求，立即删除本地 PDF 副本，标记记录为 deletion_requested。
+    提取的指标数据保留 30 天（可配置）后由管理员彻底删除。
+    """
+    record = request_deletion(db, company_name, report_year)
+    if not record:
+        raise HTTPException(404, "Report not found")
+    return {
+        "status": "deletion_requested",
+        "company_name": company_name,
+        "report_year": report_year,
+        "pdf_deleted": True,
+        "message": (
+            "PDF copy has been deleted. Extracted metrics will be purged within 30 days. "
+            "Contact admin@esg-toolkit to expedite full removal."
+        ),
+    }
+
+
+@router.delete("/companies/{company_name}/{report_year:int}")
+def delete_company_report(
+    company_name: str,
+    report_year: int,
+    hard: bool = Query(default=False, description="彻底删除所有数据（管理员操作）"),
+    db: Session = Depends(get_db),
+):
+    """删除公司报告。hard=true 时彻底删除，否则仅软删除（标记 deletion_requested）。"""
+    if hard:
+        ok = hard_delete_report(db, company_name, report_year)
+    else:
+        record = request_deletion(db, company_name, report_year)
+        ok = record is not None
+    if not ok:
+        raise HTTPException(404, "Report not found")
+    return {"status": "deleted", "company_name": company_name, "report_year": report_year}
 
 
 @router.get("/companies/export/csv")
