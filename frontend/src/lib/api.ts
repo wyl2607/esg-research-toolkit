@@ -2,11 +2,13 @@
 import type {
   BatchStatusResponse,
   CompanyESGData,
-  TaxonomyScoreResult,
+  FrameworkScoreResult,
   LCOEInput,
   LCOEResult,
+  MultiFrameworkReport,
   SensitivityResult,
   TaxonomyActivity,
+  TaxonomyScoreResult,
 } from './types'
 
 const BASE = '/api'
@@ -124,3 +126,24 @@ export const listLcoeResults = (): Promise<LCOEResult[]> =>
 
 export const compareLcoe = (inputs: LCOEInput[]): Promise<LCOEResult[]> =>
   req('/techno/compare', { method: 'POST', body: JSON.stringify(inputs) })
+
+// ── Multi-Framework ESG ────────────────────────────────────────────────────
+
+export const getFrameworkComparison = (
+  name: string,
+  year: number
+): Promise<MultiFrameworkReport> =>
+  req(`/frameworks/compare?company_name=${encodeURIComponent(name)}&report_year=${year}`)
+
+export const getFrameworkScore = (
+  name: string,
+  year: number,
+  framework: string
+): Promise<FrameworkScoreResult> =>
+  req(
+    `/frameworks/score?company_name=${encodeURIComponent(name)}&report_year=${year}&framework=${framework}`
+  )
+
+export const listFrameworks = (): Promise<
+  { id: string; name: string; region: string; mandatory_from: string; description: string }[]
+> => req('/frameworks/list')

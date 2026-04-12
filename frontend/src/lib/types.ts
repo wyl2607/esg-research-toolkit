@@ -79,6 +79,35 @@ export interface SensitivityResult {
   lcoe_results: number[]
 }
 
+export interface DimensionScore {
+  name: string
+  score: number
+  weight: number
+  disclosed: number
+  total: number
+  gaps: string[]
+}
+
+export interface FrameworkScoreResult {
+  framework: string
+  framework_id: string
+  company_name: string
+  report_year: number
+  total_score: number
+  grade: string
+  dimensions: DimensionScore[]
+  gaps: string[]
+  recommendations: string[]
+  coverage_pct: number
+}
+
+export interface MultiFrameworkReport {
+  company_name: string
+  report_year: number
+  frameworks: FrameworkScoreResult[]
+  summary: string
+}
+
 export interface TaxonomyActivity {
   activity_id: string
   name: string

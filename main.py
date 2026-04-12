@@ -3,9 +3,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from core.database import init_db
+from esg_frameworks.api import router as frameworks_router
 from report_parser.api import router as report_router
-from techno_economics.api import router as techno_router
 from taxonomy_scorer.api import router as taxonomy_router
+from techno_economics.api import router as techno_router
 
 app = FastAPI(
     title="ESG Research Toolkit",
@@ -27,8 +28,9 @@ def startup() -> None:
 
 
 app.include_router(report_router)
-app.include_router(techno_router)
 app.include_router(taxonomy_router)
+app.include_router(techno_router)
+app.include_router(frameworks_router)
 
 
 @app.get("/")
@@ -36,7 +38,7 @@ def root():
     return {
         "name": "ESG Research Toolkit",
         "version": "0.1.0",
-        "modules": ["report_parser", "taxonomy_scorer", "techno_economics"],
+        "modules": ["report_parser", "taxonomy_scorer", "techno_economics", "esg_frameworks"],
         "docs": "/docs",
     }
 
