@@ -2,142 +2,167 @@
 
 🌐 [English](README.md) · [中文](README.zh.md) · [Deutsch](README.de.md)
 
-> Open-Source-Plattform für die Analyse von ESG-Berichten, mit EU-Taxonomie-Scoring,
-> Multi-Framework-Vergleich (EU-Taxonomie 2020 · China CSRC 2023 · EU CSRD/ESRS)
-> sowie techno-ökonomischer Analyse für erneuerbare Energien (LCOE/NPV/IRR).
+> Open-Source-Plattform zur Analyse von Unternehmens-ESG-Berichten, für EU-Taxonomie-Compliance-Scoring,
+> Multi-Framework-Vergleiche (EU-Taxonomie 2020 · China CSRC 2023 · EU CSRD/ESRS)
+> sowie techno-ökonomische Analysen erneuerbarer Energien (LCOE/NPV/IRR).
 
-[![Python 3.12+](https://img.shields.io/badge/Python-3.12%2B-3776AB?logo=python&logoColor=white)](#) [![FastAPI](https://img.shields.io/badge/FastAPI-0.111%2B-009688?logo=fastapi&logoColor=white)](#) [![React 19](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](#) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](#) [![Live Demo](https://img.shields.io/badge/Live%20Demo-Coming%20Soon-lightgrey)](#)
+![Python](https://img.shields.io/badge/Python-3.12%2B-blue) ![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688) ![React](https://img.shields.io/badge/React-18%2B-61DAFB) ![License](https://img.shields.io/badge/License-MIT-green) ![Live Demo](https://img.shields.io/badge/Live-Demo-orange)
 
 ## ✨ Funktionen
-- 🔍 Einzel- und Batch-Upload von ESG-PDFs über FastAPI-Endpunkte.
-- 🧠 Strukturierte ESG-Kennzahlen durch OpenAI-gestützte Textanalyse.
-- 🗂 Persistenz von Unternehmensberichten in SQLite über SQLAlchemy.
-- 📏 EU-Taxonomie-Scoring inklusive DNSH- und TSC-Prüfungen.
-- 🌍 Vergleich von drei Frameworks: EU-Taxonomie 2020, CSRC 2023 und CSRD/ESRS.
-- 📉 Techno-ökonomische Berechnungen für Projekte (LCOE, NPV, IRR, Payback).
-- 📊 Benchmark- und Sensitivitätsdiagramme im React-Frontend.
-- 📄 Ausgabe als JSON-Report und herunterladbare PDF-Zusammenfassung.
+
+- 📄 ESG-Berichte werden aus Uploads geparst und als strukturierte Nachhaltigkeitsdaten extrahiert.
+- 🧮 Die EU-Taxonomie-Ausrichtung für Umsatz, CapEx und OpEx wird regelbasiert berechnet.
+- 🧠 Multi-Framework-Scoring über EU-Taxonomie 2020, China CSRC 2023 und EU CSRD/ESRS.
+- ⚡ Compliance-Lückenanalyse mit konkreten, priorisierbaren Handlungsempfehlungen.
+- 📊 Export von Unternehmensdatensätzen als CSV/XLSX sowie PDF-Report-Erstellung.
+- 🔬 Berechnung von LCOE und Sensitivitätsanalysen für Energieprojekte.
+- 🖥️ React-Frontend für Upload, Dashboard, Vergleich und Historie.
+- 🐳 Docker-basierter Start mit persistenter Speicherung in `data/` und `reports/`.
 
 ## 🚀 Schnellstart
 
 ### Voraussetzungen
-- Python 3.12+, Node 18+, Docker (optional)
+
+- Python 3.12+
+- Node.js 18+
+- Docker (optional)
 
 ### Lokale Entwicklung
-1. Repository klonen und wechseln:
-   ```bash
-   git clone https://github.com/wyl2607/esg-research-toolkit.git
-   cd esg-research-toolkit
-   ```
-2. Backend-API starten:
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate
-   pip install -r requirements.txt
-   uvicorn main:app --reload
-   ```
-3. Frontend-Dashboard starten:
-   ```bash
-   cd frontend
-   npm install
-   npm run dev
-   ```
+
+1. Repository klonen und in das Projekt wechseln:
+
+```bash
+git clone https://github.com/your-org/esg-research-toolkit.git
+cd esg-research-toolkit
+```
+
+2. Backend-Abhängigkeiten installieren und FastAPI starten:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+uvicorn main:app --reload --port 8000
+```
+
+3. Frontend in einem zweiten Terminal starten:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
 ### Docker
+
+Den Backend-Stack mit Docker Compose starten:
+
 ```bash
 cp .env.example .env
-docker compose up --build
+docker-compose up -d --build
 ```
+
+Die Backend-API ist anschließend unter `http://localhost:8000` erreichbar.
 
 ## 📡 API-Referenz
 
-| Method | Endpoint | Description |
-| --- | --- | --- |
-| `GET` | `/` | Service-Metadaten und Modulüberblick |
-| `GET` | `/docs` | Swagger-UI-Dokumentation |
-| `GET` | `/docs/oauth2-redirect` | OAuth2-Redirect-Helfer für Swagger |
-| `GET` | `/frameworks/compare` | Unternehmen über alle Frameworks vergleichen |
-| `GET` | `/frameworks/list` | Unterstützte ESG-Frameworks und Metadaten auflisten |
-| `GET` | `/frameworks/score` | Unternehmen gegen ein einzelnes Framework bewerten |
-| `POST` | `/frameworks/score/upload` | Hochgeladene CompanyESGData über alle Frameworks bewerten |
-| `GET` | `/health` | Gesundheitsprüfung des Services |
-| `GET` | `/openapi.json` | OpenAPI-Schema |
-| `GET` | `/redoc` | ReDoc-Dokumentation |
-| `GET` | `/report/companies` | Gespeicherte ESG-Berichte auflisten |
-| `GET` | `/report/companies/{company_name}/{report_year}` | Einen gespeicherten Unternehmensbericht abrufen |
-| `GET` | `/report/jobs/{batch_id}` | Status eines Batch-Uploads prüfen |
-| `POST` | `/report/upload` | Eine PDF hochladen und ESG-Daten extrahieren |
-| `POST` | `/report/upload/batch` | Bis zu 20 PDFs asynchron hochladen |
-| `GET` | `/taxonomy/activities` | Unterstützte EU-Taxonomie-Aktivitäten auflisten |
-| `POST` | `/taxonomy/report` | Strukturierten Taxonomie-Report (JSON) erzeugen |
-| `GET` | `/taxonomy/report` | Strukturierten Taxonomie-Report (JSON) erzeugen |
-| `GET` | `/taxonomy/report/pdf` | Taxonomie-Report als PDF herunterladen |
-| `POST` | `/taxonomy/report/text` | Textzusammenfassung zur Taxonomie erzeugen |
-| `POST` | `/taxonomy/score` | EU-Taxonomie-Scoring zurückgeben |
-| `GET` | `/techno/benchmarks` | Benchmark-LCOE-Bereiche zurückgeben |
-| `POST` | `/techno/lcoe` | LCOE, NPV, IRR und Payback berechnen |
-| `POST` | `/techno/sensitivity` | CAPEX/OPEX-Sensitivitätsanalyse ausführen |
+Die folgende Tabelle basiert auf den aktuell registrierten FastAPI-Routen in `main.py`.
+
+| Method | Endpoint | Beschreibung |
+|---|---|---|
+| GET | `/` | Root-Endpunkt mit Basisantwort zur Erreichbarkeit. |
+| GET | `/docs` | Swagger UI für interaktive API-Dokumentation. |
+| GET | `/docs/oauth2-redirect` | OAuth-Redirect-Helfer für Swagger UI. |
+| GET | `/frameworks/compare` | Vergleich von Ergebnissen über mehrere ESG-Frameworks. |
+| GET | `/frameworks/list` | Liste unterstützter ESG-Frameworks mit Metadaten. |
+| GET | `/frameworks/score` | Framework-Scoring per Query-Parameter. |
+| POST | `/frameworks/score/upload` | Report hochladen und Multi-Framework-Scoring ausführen. |
+| GET | `/health` | Health-Check-Endpunkt des Services. |
+| GET | `/openapi.json` | OpenAPI-Schema als JSON. |
+| GET | `/redoc` | ReDoc-Dokumentationsseite. |
+| GET | `/report/companies` | Gespeicherte Unternehmensdatensätze auflisten. |
+| GET | `/report/companies/export/csv` | Unternehmensdatensätze als CSV exportieren. |
+| GET | `/report/companies/export/xlsx` | Unternehmensdatensätze als Excel exportieren. |
+| GET | `/report/companies/{company_name}/{report_year:int}` | Einzelnen Datensatz nach Schlüssel abrufen. |
+| DELETE | `/report/companies/{company_name}/{report_year:int}` | Datensatz endgültig löschen. |
+| POST | `/report/companies/{company_name}/{report_year:int}/request-deletion` | Löschanfrage für einen Datensatz anlegen. |
+| GET | `/report/jobs/{batch_id}` | Status eines Batch-Upload-Jobs abrufen. |
+| POST | `/report/upload` | Einzelnen ESG-Report hochladen und parsen. |
+| POST | `/report/upload/batch` | Mehrere ESG-Reports im Batch hochladen. |
+| GET | `/taxonomy/activities` | Katalog der Taxonomie-Aktivitäten abrufen. |
+| POST | `/taxonomy/report` | Taxonomie-Report aus strukturierten Eingaben erzeugen. |
+| GET | `/taxonomy/report` | Vorhandenen Taxonomie-Report nach Firma/Jahr lesen. |
+| GET | `/taxonomy/report/pdf` | Taxonomie-PDF-Report generieren und herunterladen. |
+| POST | `/taxonomy/report/text` | Narrativen Text-Report zur Taxonomie erzeugen. |
+| POST | `/taxonomy/score` | EU-Taxonomie-Scoring für übergebene Kennzahlen. |
+| GET | `/techno/benchmarks` | Benchmark-Annahmen für techno-ökonomische Analysen. |
+| POST | `/techno/lcoe` | LCOE-Berechnung für Projektparameter. |
+| POST | `/techno/sensitivity` | Sensitivitätsanalyse für techno-ökonomische Annahmen. |
 
 ## 🏗 Architektur
 
 ```text
 React Frontend (Vite)
-        ↓
-Nginx (production reverse proxy)
-        ↓
-FastAPI Backend
-        ↓
-SQLite + Local Storage (data/, reports/)
+        |
+        v
+      Nginx
+        |
+        v
+ FastAPI Backend (main.py)
+        |
+        v
+ SQLite (data/esg_toolkit.db) + File Reports (reports/)
 ```
 
-Das Frontend ruft die FastAPI-Endpunkte per HTTP auf; die Backend-Module teilen sich
-eine Datenbank sowie ein gemeinsames Dateisystem für Reports und Ausgaben.
+Das Frontend steuert Upload-, Bewertungs- und Auswertungsabläufe. FastAPI stellt die Rechen- und Reporting-Endpunkte bereit. Persistenz erfolgt über SQLite, Artefakte liegen im Verzeichnis `reports/`.
 
-## 🌍 Multi-Framework-ESG
+## 🌍 Multi-Framework ESG
 
 ### EU-Taxonomie 2020
-Abdeckung der sechs Umweltziele inklusive Do-No-Significant-Harm-Prüfungen.
-Nutzen Sie dieses Framework für EU-konformes Scoring mit technischen Schwellenwerten.
+
+Die EU-Taxonomie bewertet Umweltkonformität über aktivitätsspezifische Kriterien sowie Umsatz-/CapEx-/OpEx-Ausrichtung. Das Toolkit enthält DNSH-Prüfungen und konkrete Gap-Empfehlungen.
 
 ### China CSRC 2023
-Abbildung der chinesischen Leitlinien für Nachhaltigkeitsberichte börsennotierter Unternehmen.
-Nutzen Sie es für E/S/G-Abdeckungsanalysen und lokale Offenlegungsbereitschaft.
 
-### EU CSRD/ESRS
-Erweitert die Bewertung auf ESRS-Themen wie E1-E5, S1 und G1.
-Nutzen Sie dieses Framework für Vollständigkeits-Benchmarks im EU-Offenlegungskontext.
+CSRC 2023 fokussiert verpflichtende ESG-Offenlegung für börsennotierte Unternehmen entlang E/S/G-Dimensionen. Extrahierte Berichtsdaten werden in CSRC-kompatible Bewertungsstrukturen überführt.
+
+### EU CSRD / ESRS
+
+CSRD/ESRS erweitert die Berichtsanforderungen über Umwelt-, Sozial- und Governance-Themen hinweg. Die Plattform ermöglicht den direkten Framework-Vergleich zur Identifikation von Überschneidungen und Lücken.
 
 ## 📊 Frontend-Seiten
 
-- `DashboardPage.tsx` — Portfolio-KPIs und schnelle Drill-down-Aktionen.
-- `UploadPage.tsx` — Einzel- und Batch-Upload von ESG-PDFs mit Statusanzeige.
-- `CompaniesPage.tsx` — Suche, Sortierung und Verwaltung gespeicherter Berichte.
-- `TaxonomyPage.tsx` — EU-Taxonomie-Radar, Gap-Analyse und PDF-Export.
-- `FrameworksPage.tsx` — Vergleich von EU-Taxonomie, CSRC und CSRD.
-- `ComparePage.tsx` — Tabellarischer Kennzahlenvergleich mehrerer Unternehmen.
-- `LcoePage.tsx` — LCOE-Rechner mit Benchmark- und Sensitivitätsdiagrammen.
+- `DashboardPage.tsx`: KPI-Überblick und zusammenfassende Ergebnisdarstellung.
+- `UploadPage.tsx`: Upload-Prozess für Einzel- und Batch-Dateien.
+- `TaxonomyPage.tsx`: Arbeitsfläche für EU-Taxonomie-Scoring und Berichte.
+- `FrameworksPage.tsx`: Framework-orientierte Bewertung und Standardsicht.
+- `ComparePage.tsx`: Nebeneinandervergleich unterschiedlicher Framework-Ergebnisse.
+- `LcoePage.tsx`: Berechnung von LCOE und Sensitivitätsvarianten.
+- `CompaniesPage.tsx`: Historie, Suche und Export gespeicherter Unternehmensdaten.
 
 ## 🔧 Konfiguration
 
-| Variable | Default | Description |
-| --- | --- | --- |
-| `OPENAI_API_KEY` | `Required` | OpenAI-API-Schlüssel für die ESG-Extraktion |
-| `APP_ENV` | `development` | Anwendungsumgebung (development/production) |
-| `APP_HOST` | `0.0.0.0` | Bind-Adresse des Backends |
-| `APP_PORT` | `8000` | Port des Backends |
-| `DATABASE_URL` | `sqlite:///./data/esg_toolkit.db` | SQLAlchemy-Verbindungszeichenfolge |
-| `ARXIV_MAX_RESULTS` | `20` | Maximale Trefferzahl für die Literatur-Pipeline |
-| `ARXIV_DOWNLOAD_PDF` | `true` | Legt fest, ob arXiv-PDFs heruntergeladen werden |
-| `LOG_LEVEL` | `INFO` | Log-Level zur Laufzeit |
-| `BATCH_MAX_WORKERS` | `2` | Maximale Parallelität für Batch-Verarbeitung |
+Umgebungsvariablen werden aus `.env` geladen.
 
-## 🤝 Mitwirken
+| Variable | Beispiel | Beschreibung |
+|---|---|---|
+| `OPENAI_API_KEY` | `sk-...` | API-Schlüssel für modellgestützte Parsing-/Enrichment-Funktionen. |
+| `APP_ENV` | `development` | Laufzeitmodus, beeinflusst Logging und Feature-Toggles. |
+| `APP_HOST` | `0.0.0.0` | Bind-Host des Backends. |
+| `APP_PORT` | `8000` | Bind-Port des Backends. |
+| `DATABASE_URL` | `sqlite:///./data/esg_toolkit.db` | SQLAlchemy-Verbindungszeichenfolge zur Datenbank. |
+| `ARXIV_MAX_RESULTS` | `20` | Maximale Trefferzahl für Literaturabfragen. |
+| `ARXIV_DOWNLOAD_PDF` | `true` | Steuert PDF-Download im Literatur-Workflow. |
+| `LOG_LEVEL` | `INFO` | Detailgrad der Protokollausgabe. |
+| `BATCH_MAX_WORKERS` | `2` | Anzahl paralleler Worker im Batch-Processing. |
+
+## 🤝 Beitrag leisten
 
 1. Forken Sie das Repository und erstellen Sie einen Feature-Branch.
-2. Halten Sie Änderungen fokussiert und begründen Sie Ihre Commits klar.
-3. Führen Sie vor dem PR Backend-Tests sowie Frontend-Lint/Build aus.
-4. Ergänzen Sie im PR die verwendeten Prüfkommandos und Ergebnisse.
-5. Öffnen Sie einen Pull Request und reagieren Sie zügig auf Feedback.
+2. Ergänzen oder aktualisieren Sie Tests für Ihre Änderungen.
+3. Führen Sie lokale Prüfungen vor dem Pull Request aus.
+4. Beschreiben Sie im PR klar Umfang, Validierung und ggf. Migration.
 
 ## 📄 Lizenz
 
