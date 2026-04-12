@@ -29,20 +29,6 @@ Default output folder:
 
 - `data/reports/test_sources/`
 
-## One-command chained debug flow
-
-```bash
-cd ~/projects/esg-research-toolkit
-API_BASE=http://127.0.0.1:8000 bash scripts/run_chain_debug.sh
-```
-
-This script performs:
-
-1. source PDF download check
-2. single CATL upload smoke test
-3. batch submit (CATL + VW + BYD)
-4. polling `/report/jobs/{batch_id}` until done
-
 ## Web app debug flow
 
 1. Start backend and frontend.
