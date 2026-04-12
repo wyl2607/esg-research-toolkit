@@ -1,8 +1,12 @@
 import importlib.util
 import json
+import csv
+import io
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi.responses import StreamingResponse
+import openpyxl
 from sqlalchemy.orm import Session
 
 from core.database import get_db
@@ -100,7 +104,7 @@ else:
         raise HTTPException(500, 'File uploads require the "python-multipart" package')
 
 
-@router.get("/companies/{company_name}/{report_year}", response_model=CompanyESGData)
+@router.get("/companies/{company_name}/{report_year:int}", response_model=CompanyESGData)
 def get_company_report(
     company_name: str,
     report_year: int,
@@ -142,3 +146,84 @@ def list_company_reports(skip: int = 0, limit: int = 50, db: Session = Depends(g
         }
         for record in records
     ]
+
+
+@router.get("/companies/export/csv")
+def export_companies_csv(db: Session = Depends(get_db)):
+    records = list_reports(db, skip=0, limit=10000)
+    fieldnames = [
+        "company_name",
+        "report_year",
+        "scope1_co2e_tonnes",
+        "scope2_co2e_tonnes",
+        "scope3_co2e_tonnes",
+        "energy_consumption_mwh",
+        "renewable_energy_pct",
+        "water_usage_m3",
+        "waste_recycled_pct",
+        "total_employees",
+        "female_pct",
+    ]
+
+    buf = io.StringIO()
+    writer = csv.DictWriter(buf, fieldnames=fieldnames)
+    writer.writeheader()
+    for record in records:
+        writer.writerow({field: getattr(record, field, None) for field in fieldnames})
+
+    return StreamingResponse(
+        iter([buf.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": 'attachment; filename="esg_companies.csv"'},
+    )
+
+
+@router.get("/companies/export/xlsx")
+def export_companies_xlsx(db: Session = Depends(get_db)):
+    records = list_reports(db, skip=0, limit=10000)
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "ESG Data"
+    ws.append(
+        [
+            "Company",
+            "Year",
+            "Scope1 (tCO2e)",
+            "Scope2 (tCO2e)",
+            "Scope3 (tCO2e)",
+            "Energy (MWh)",
+            "Renewable %",
+            "Water (m³)",
+            "Waste Recycled %",
+            "Employees",
+            "Female %",
+        ]
+    )
+
+    for record in records:
+        ws.append(
+            [
+                record.company_name,
+                record.report_year,
+                record.scope1_co2e_tonnes,
+                record.scope2_co2e_tonnes,
+                record.scope3_co2e_tonnes,
+                record.energy_consumption_mwh,
+                record.renewable_energy_pct,
+                record.water_usage_m3,
+                record.waste_recycled_pct,
+                record.total_employees,
+                record.female_pct,
+            ]
+        )
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+
+    return StreamingResponse(
+        iter([buf.getvalue()]),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": 'attachment; filename="esg_companies.xlsx"'},
+    )

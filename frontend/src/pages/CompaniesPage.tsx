@@ -4,7 +4,7 @@ import { listCompanies, deleteCompany } from '@/lib/api'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Trash2, Search } from 'lucide-react'
+import { Trash2, Search, Download } from 'lucide-react'
 import type { CompanyESGData } from '@/lib/types'
 
 type SortKey = 'company_name' | 'report_year' | 'taxonomy_aligned_revenue_pct'
@@ -61,17 +61,37 @@ export function CompaniesPage() {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-slate-900">Companies</h1>
 
-      <div className="relative w-72">
-        <Search
-          size={14}
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-        />
-        <Input
-          className="pl-8"
-          placeholder="Search companies…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="relative w-full md:w-72">
+          <Search
+            size={14}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+          />
+          <Input
+            className="pl-8"
+            placeholder="Search companies…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.open('/api/report/companies/export/csv')}
+          >
+            <Download size={14} className="mr-1" />
+            CSV
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.open('/api/report/companies/export/xlsx')}
+          >
+            <Download size={14} className="mr-1" />
+            Excel
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (
