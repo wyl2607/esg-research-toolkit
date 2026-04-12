@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from core.database import Base
 from core.schemas import CompanyESGData
-from report_parser.analyzer import analyze_esg_data
+from report_parser.analyzer import AIExtractionError, analyze_esg_data
 from report_parser.extractor import extract_text_from_pdf
 from report_parser.storage import CompanyReport, get_report, list_reports, save_report
 
@@ -119,10 +119,22 @@ def test_analyze_esg_data_with_mock_openai() -> None:
 
 
 def test_analyze_esg_data_invalid_json() -> None:
+    # AI 返回无法解析的 JSON，且文本中无可识别的 ESG 字段 → 抛出 AIExtractionError
     with patch("report_parser.analyzer.complete", return_value="not json"):
-        result = analyze_esg_data("unstructured text")
+        with pytest.raises(AIExtractionError):
+            analyze_esg_data("unstructured text without any ESG keywords")
 
-    assert result == CompanyESGData(company_name="Unknown", report_year=2024)
+
+def test_analyze_esg_data_invalid_json_with_regex_fallback() -> None:
+    # AI 返回无效 JSON，但文本包含中文 Scope 数据 → regex fallback 成功返回部分数据
+    text = "宁德时代 2024年报告\nScope 1 排放: 93,440 tCO2e\n范围二: 12,500 tCO2e"
+    with patch("report_parser.analyzer.complete", return_value="not json"):
+        result = analyze_esg_data(text, filename="CATL_2024.pdf")
+
+    assert result.company_name == "CATL"
+    assert result.report_year == 2024
+    assert result.scope1_co2e_tonnes == pytest.approx(93440.0)
+    assert result.scope2_co2e_tonnes == pytest.approx(12500.0)
 
 
 def test_save_and_get_report(

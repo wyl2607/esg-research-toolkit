@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from core.database import get_db
 from core.schemas import CompanyESGData
-from report_parser.analyzer import analyze_esg_data
+from report_parser.analyzer import AIExtractionError, analyze_esg_data
 from report_parser.extractor import extract_text_from_pdf
 from report_parser.storage import get_report, list_reports, save_report
 
@@ -45,9 +45,16 @@ if _MULTIPART_AVAILABLE:
 
         text = extract_text_from_pdf(pdf_path)
         if not text:
-            raise HTTPException(500, "Failed to extract text from PDF")
+            raise HTTPException(
+                422,
+                "无法从该 PDF 提取文本。请确认文件不是纯图片扫描件，或尝试上传文字版 PDF。",
+            )
 
-        esg_data = analyze_esg_data(text)
+        try:
+            esg_data = analyze_esg_data(text, filename=file.filename or "")
+        except AIExtractionError as exc:
+            raise HTTPException(422, str(exc.reason)) from exc
+
         save_report(db, esg_data, pdf_filename=file.filename)
         return esg_data
 
