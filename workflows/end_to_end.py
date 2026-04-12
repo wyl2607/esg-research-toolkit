@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any
 
 import requests
 
-BASE_URL = "http://localhost:8000"
+BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
 RENEWABLE_TECHNOLOGIES: dict[str, dict[str, float]] = {
     "solar_pv": {"capex": 800.0, "opex": 15.0, "cf": 0.18},
     "wind_onshore": {"capex": 1200.0, "opex": 30.0, "cf": 0.35},
@@ -21,6 +22,29 @@ RENEWABLE_TECHNOLOGIES: dict[str, dict[str, float]] = {
 def _load_json(path: str | Path) -> dict[str, Any]:
     with Path(path).open("r", encoding="utf-8") as handle:
         return json.load(handle)
+
+
+def _upload_pdf(pdf_path: str | Path) -> dict[str, Any]:
+    path = Path(pdf_path)
+    try:
+        with path.open("rb") as handle:
+            response = requests.post(
+                f"{BASE_URL}/report/upload",
+                files={"file": handle},
+                timeout=60,
+            )
+    except requests.RequestException as exc:
+        raise RuntimeError(
+            f"Unable to reach the ESG API at {BASE_URL}. "
+            "Start the FastAPI server first, then retry."
+        ) from exc
+
+    if response.status_code == 422:
+        raise ValueError(
+            f"PDF upload failed with HTTP 422. Details: {response.text}"
+        )
+    response.raise_for_status()
+    return response.json()
 
 
 def _post_json(url: str, payload: dict[str, Any]) -> requests.Response:
@@ -45,8 +69,15 @@ def _response_or_raise(response: requests.Response, action: str) -> None:
     response.raise_for_status()
 
 
+def _load_esg_data(source_path: str | Path) -> dict[str, Any]:
+    source = Path(source_path)
+    if source.suffix.lower() == ".pdf":
+        return _upload_pdf(source)
+    return _load_json(source)
+
+
 def run_full_analysis(esg_data_path: str = "examples/mock_esg_data.json") -> str:
-    esg_data = _load_json(esg_data_path)
+    esg_data = _load_esg_data(esg_data_path)
     company_name = esg_data["company_name"]
     report_year = esg_data["report_year"]
     print(f"Loaded ESG data: {company_name} ({report_year})")
@@ -90,12 +121,15 @@ def run_full_analysis(esg_data_path: str = "examples/mock_esg_data.json") -> str
             f"IRR: {lcoe_result['irr'] * 100:.1f}%"
         )
 
-    output_dir = Path("reports")
+    output_dir = Path(__file__).parent.parent / "reports"
     output_dir.mkdir(parents=True, exist_ok=True)
     safe_company = company_name.replace(" ", "_")
     report_path = output_dir / f"{safe_company}_{report_year}_full_report.txt"
 
     with report_path.open("w", encoding="utf-8") as handle:
+        handle.write(f"Company: {company_name}\n")
+        handle.write(f"Report year: {report_year}\n\n")
+        handle.write("=== TAXONOMY REPORT ===\n")
         handle.write(taxonomy_report)
         handle.write("\n\n=== TECHNO-ECONOMIC ANALYSIS ===\n")
         if lcoe_results:

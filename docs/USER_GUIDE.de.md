@@ -25,6 +25,12 @@ OPENAI_API_KEY=your_openai_api_key_here
 DATABASE_URL=sqlite:///./data/esg_toolkit.db
 ```
 
+Wenn du die Python-Beispiele in diesem Handbuch ausführen willst, installiere zusätzlich `requests`:
+
+```bash
+pip install requests
+```
+
 ## 2. Schnellstart
 
 API-Server starten:
@@ -33,7 +39,7 @@ API-Server starten:
 uvicorn main:app --reload
 ```
 
-Interaktive Dokumentation öffnen:
+Interaktive API-Dokumentation öffnen:
 
 - `http://localhost:8000/docs`
 
@@ -43,21 +49,21 @@ Health Check:
 curl http://localhost:8000/health
 ```
 
-Metadaten am Root-Pfad:
+Root-Metadaten:
 
 ```bash
 curl http://localhost:8000/
 ```
 
-## 3. Modullenutzung
+## 3. Modullogik
 
 ### 3.1 Report Parser
 
-Der Report Parser lädt ein Unternehmens-PDF hoch, extrahiert Text, sendet ihn an den OpenAI-gestützten Extraktor und speichert die ESG-Daten in der Datenbank.
+Der Report Parser lädt ein Unternehmens-PDF hoch, extrahiert Text, analysiert ihn und speichert die resultierenden ESG-Daten in der Datenbank.
 
 #### `POST /report/upload`
 
-PDF-Bericht hochladen und ein `CompanyESGData`-Objekt erhalten.
+PDF hochladen und ein `CompanyESGData`-Objekt erhalten. Dieser Endpunkt benötigt `python-multipart`, und das PDF muss extrahierbaren Text enthalten.
 
 ```bash
 curl -X POST http://localhost:8000/report/upload \
@@ -97,8 +103,6 @@ print(data["company_name"], data["report_year"])
 - `female_pct`
 - `primary_activities`
 
-Hinweis: Für Datei-Uploads wird `python-multipart` benötigt, und das PDF muss extrahierbaren Text enthalten.
-
 #### `GET /report/companies`
 
 Gespeicherte Berichte auflisten.
@@ -109,7 +113,7 @@ curl http://localhost:8000/report/companies
 
 #### `GET /report/companies/{company_name}/{report_year}`
 
-Einen bestimmten Bericht abrufen. Firmennamen mit Leerzeichen müssen URL-kodiert werden.
+Einen gespeicherten Bericht abrufen. Firmennamen mit Leerzeichen müssen URL-kodiert werden.
 
 ```bash
 curl "http://localhost:8000/report/companies/GreenTech%20Solutions%20GmbH/2024"
@@ -127,7 +131,7 @@ print(response.json())
 
 ### 3.2 Taxonomy Scorer
 
-Der Taxonomy Scorer bewertet ein `CompanyESGData`-Payload gegen den EU-Taxonomie-Rahmen, einschließlich der 6 Umweltziele und DNSH-Logik.
+Der Taxonomy Scorer bewertet ein `CompanyESGData`-Payload gegen das EU-Taxonomie-Rahmenwerk. Er deckt die sechs Umweltziele und eine vereinfachte DNSH-Prüfung ab.
 
 #### `POST /taxonomy/score`
 
@@ -136,47 +140,16 @@ Ein Unternehmen bewerten und ein `TaxonomyScoreResult` erhalten.
 ```bash
 curl -X POST http://localhost:8000/taxonomy/score \
   -H "Content-Type: application/json" \
-  -d '{
-    "company_name": "GreenTech Solutions GmbH",
-    "report_year": 2024,
-    "scope1_co2e_tonnes": 1200,
-    "scope2_co2e_tonnes": 340,
-    "scope3_co2e_tonnes": 5600,
-    "energy_consumption_mwh": 8200,
-    "renewable_energy_pct": 85,
-    "water_usage_m3": 12500,
-    "waste_recycled_pct": 72,
-    "total_revenue_eur": 25000000,
-    "taxonomy_aligned_revenue_pct": 18,
-    "total_capex_eur": 4200000,
-    "taxonomy_aligned_capex_pct": 25,
-    "total_employees": 180,
-    "female_pct": 41,
-    "primary_activities": ["solar_pv", "wind_onshore"]
-  }'
+  --data-binary @examples/mock_esg_data.json
 ```
 
 ```python
+import json
+from pathlib import Path
+
 import requests
 
-esg_data = {
-    "company_name": "GreenTech Solutions GmbH",
-    "report_year": 2024,
-    "scope1_co2e_tonnes": 1200,
-    "scope2_co2e_tonnes": 340,
-    "scope3_co2e_tonnes": 5600,
-    "energy_consumption_mwh": 8200,
-    "renewable_energy_pct": 85,
-    "water_usage_m3": 12500,
-    "waste_recycled_pct": 72,
-    "total_revenue_eur": 25000000,
-    "taxonomy_aligned_revenue_pct": 18,
-    "total_capex_eur": 4200000,
-    "taxonomy_aligned_capex_pct": 25,
-    "total_employees": 180,
-    "female_pct": 41,
-    "primary_activities": ["solar_pv", "wind_onshore"],
-}
+esg_data = json.loads(Path("examples/mock_esg_data.json").read_text())
 
 response = requests.post("http://localhost:8000/taxonomy/score", json=esg_data)
 response.raise_for_status()
@@ -199,29 +172,12 @@ print(f"DNSH pass: {result['dnsh_pass']}")
 
 #### `POST /taxonomy/report`
 
-Einen strukturierten JSON-Bericht generieren.
+Einen strukturierten JSON-Bericht erzeugen.
 
 ```bash
 curl -X POST http://localhost:8000/taxonomy/report \
   -H "Content-Type: application/json" \
-  -d '{
-    "company_name": "GreenTech Solutions GmbH",
-    "report_year": 2024,
-    "scope1_co2e_tonnes": 1200,
-    "scope2_co2e_tonnes": 340,
-    "scope3_co2e_tonnes": 5600,
-    "energy_consumption_mwh": 8200,
-    "renewable_energy_pct": 85,
-    "water_usage_m3": 12500,
-    "waste_recycled_pct": 72,
-    "total_revenue_eur": 25000000,
-    "taxonomy_aligned_revenue_pct": 18,
-    "total_capex_eur": 4200000,
-    "taxonomy_aligned_capex_pct": 25,
-    "total_employees": 180,
-    "female_pct": 41,
-    "primary_activities": ["solar_pv", "wind_onshore"]
-  }'
+  --data-binary @examples/mock_esg_data.json
 ```
 
 Die Antwort enthält:
@@ -241,29 +197,21 @@ Eine reine Textzusammenfassung erzeugen.
 ```bash
 curl -X POST http://localhost:8000/taxonomy/report/text \
   -H "Content-Type: application/json" \
-  -d '{
-    "company_name": "GreenTech Solutions GmbH",
-    "report_year": 2024,
-    "scope1_co2e_tonnes": 1200,
-    "scope2_co2e_tonnes": 340,
-    "scope3_co2e_tonnes": 5600,
-    "energy_consumption_mwh": 8200,
-    "renewable_energy_pct": 85,
-    "water_usage_m3": 12500,
-    "waste_recycled_pct": 72,
-    "total_revenue_eur": 25000000,
-    "taxonomy_aligned_revenue_pct": 18,
-    "total_capex_eur": 4200000,
-    "taxonomy_aligned_capex_pct": 25,
-    "total_employees": 180,
-    "female_pct": 41,
-    "primary_activities": ["solar_pv", "wind_onshore"]
-  }'
+  --data-binary @examples/mock_esg_data.json
 ```
 
-Die Antwort ist ein JSON-Objekt mit genau einem Schlüssel:
+```python
+import json
+from pathlib import Path
 
-- `report`
+import requests
+
+esg_data = json.loads(Path("examples/mock_esg_data.json").read_text())
+
+response = requests.post("http://localhost:8000/taxonomy/report/text", json=esg_data)
+response.raise_for_status()
+print(response.json()["report"])
+```
 
 #### `GET /taxonomy/activities`
 
@@ -275,11 +223,11 @@ curl http://localhost:8000/taxonomy/activities
 
 ### 3.3 Techno Economics
 
-Das Techno-Economics-Modul berechnet LCOE, NPV, IRR und Sensitivitätsanalysen für erneuerbare Energieprojekte.
+Das Techno-Economics-Modul berechnet LCOE, NPV, IRR, Amortisationszeit und einfache Sensitivitätsanalysen für erneuerbare Energieprojekte.
 
 #### `POST /techno/lcoe`
 
-LCOE für eine unterstützte Technologie berechnen.
+LCOE / NPV / IRR berechnen.
 
 ```bash
 curl -X POST http://localhost:8000/techno/lcoe \
@@ -297,7 +245,7 @@ curl -X POST http://localhost:8000/techno/lcoe \
 ```python
 import requests
 
-lcoe_input = {
+inp = {
     "technology": "solar_pv",
     "capex_eur_per_kw": 800,
     "opex_eur_per_kw_year": 15,
@@ -306,11 +254,11 @@ lcoe_input = {
     "discount_rate": 0.07,
 }
 
-response = requests.post("http://localhost:8000/techno/lcoe", json=lcoe_input)
+response = requests.post("http://localhost:8000/techno/lcoe", json=inp)
 response.raise_for_status()
 result = response.json()
-print(f"LCOE: {result['lcoe_eur_per_mwh']} EUR/MWh")
-print(f"NPV: {result['npv_eur']}")
+print(f"LCOE: {result['lcoe_eur_per_mwh']:.2f} EUR/MWh")
+print(f"NPV: {result['npv_eur']:.2f} EUR")
 ```
 
 `LCOEResult`-Felder:
@@ -324,7 +272,7 @@ print(f"NPV: {result['npv_eur']}")
 
 #### `POST /techno/sensitivity`
 
-CAPEX- und OPEX-Sensitivitätsanalyse ausführen.
+Sensitivitätsanalyse für CAPEX und OPEX durchführen.
 
 ```bash
 curl -X POST "http://localhost:8000/techno/sensitivity?variation_range=0.2&steps=5" \
@@ -339,17 +287,9 @@ curl -X POST "http://localhost:8000/techno/sensitivity?variation_range=0.2&steps
   }'
 ```
 
-Die Antwort ist eine Liste von Objekten mit:
-
-- `parameter`
-- `base_value`
-- `variations`
-- `lcoe_values`
-- `lcoe_change_pct`
-
 #### `GET /techno/benchmarks`
 
-Benchmark-LCOE-Bereiche zurückgeben.
+Referenzbereiche für LCOE typischer Technologien abrufen.
 
 ```bash
 curl http://localhost:8000/techno/benchmarks
@@ -357,23 +297,47 @@ curl http://localhost:8000/techno/benchmarks
 
 ## 4. End-to-End-Workflow
 
-Beispiel für GreenTech Solutions GmbH:
+Beispiel: GreenTech Solutions GmbH.
 
-1. Ein echtes PDF mit `POST /report/upload` hochladen oder zunächst ein manuell erstelltes `CompanyESGData`-Payload verwenden.
-2. Die extrahierten ESG-Daten an `POST /taxonomy/score` senden.
-3. Mit `POST /techno/lcoe` die gewünschte erneuerbare Technologie bewerten.
-4. `POST /taxonomy/report` und `GET /techno/benchmarks` kombinieren, um eine Entscheidungsgrundlage zu erstellen.
+1. Lade einen PDF-Bericht mit `POST /report/upload` hoch, oder nutze `examples/mock_esg_data.json`, wenn du nur den Scoring-Workflow testen willst.
+2. Sende die extrahierten ESG-Daten an `POST /taxonomy/score`.
+3. Führe für die passende Technologie `POST /techno/lcoe` aus, zum Beispiel `solar_pv` oder `wind_onshore`.
+4. Erzeuge die Endberichte mit `POST /taxonomy/report` und `POST /taxonomy/report/text`.
+
+Minimaler Mock-Workflow:
+
+```bash
+curl -X POST http://localhost:8000/taxonomy/score \
+  -H "Content-Type: application/json" \
+  --data-binary @examples/mock_esg_data.json
+
+curl -X POST http://localhost:8000/techno/lcoe \
+  -H "Content-Type: application/json" \
+  -d '{
+    "technology": "solar_pv",
+    "capex_eur_per_kw": 800,
+    "opex_eur_per_kw_year": 15,
+    "capacity_factor": 0.18,
+    "lifetime_years": 25,
+    "discount_rate": 0.07
+  }'
+```
 
 ## 5. Fehlerbehebung
 
-- Server startet nicht: Prüfen, ob Port `8000` bereits belegt ist.
-- OpenAI-API-Fehler: Sicherstellen, dass `OPENAI_API_KEY` in `.env` gesetzt ist.
-- PDF-Upload schlägt fehl: Sicherstellen, dass die Datei ein echtes PDF mit extrahierbarem Text ist und kein reiner Scan.
-- Datenbankfehler: `data/esg_toolkit.db` löschen und die Anwendung neu starten, damit SQLite das Schema neu anlegt.
+- Server startet nicht: Prüfe, ob Port 8000 bereits belegt ist.
+- OpenAI-API-Fehler: Prüfe `OPENAI_API_KEY` in `.env`.
+- PDF-Analyse schlägt fehl: Stelle sicher, dass das PDF Text enthält und nicht nur gescannt ist.
+- Upload-Fehler wegen Multipart: Installiere `python-multipart`.
+- Datenbankfehler: Lösche `data/esg_toolkit.db` und initialisiere die App neu.
 
 ## 6. FAQ
 
-- Welche PDF-Formate werden unterstützt? Normale PDFs mit extrahierbarem Text.
-- Wie gehe ich mit chinesischen PDFs um? PDFs mit eingebettetem Text verwenden und die Textextraktion vor dem Upload prüfen.
-- Wie genau ist das EU-Taxonomie-Scoring? Es ist eine vereinfachte regelbasierte Bewertung und eignet sich für Analyse und Prototyping, nicht für rechtliche Verbindlichkeit.
-- Welche Formel nutzt LCOE? Abgezinste CAPEX und OPEX geteilt durch abgezinste Energieerzeugung, umgerechnet in EUR/MWh.
+- F: Welche PDF-Formate werden unterstützt?
+  A: PDFs mit extrahierbarem Text. Nur gescannte PDFs benötigen vorher OCR.
+- F: Wie gehe ich mit chinesischen PDFs um?
+  A: Das PDF muss eine echte Textebene enthalten. Bei Bild-PDFs ist OCR erforderlich.
+- F: Wie genau ist die EU-Taxonomie-Bewertung?
+  A: Die Implementierung ist bewusst vereinfacht und eignet sich für Analyse und Prototyping, nicht als Rechtsberatung.
+- F: Welche Formel verwendet LCOE?
+  A: Diskontierte CAPEX und OPEX geteilt durch die diskontierte Stromerzeugung, angegeben in EUR/MWh.

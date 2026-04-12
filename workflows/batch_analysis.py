@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any
 
 import requests
 
-BASE_URL = "http://localhost:8000"
+BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
 
 
 def _load_company(path: Path) -> dict[str, Any]:
@@ -38,7 +39,9 @@ def _score_company(company_data: dict[str, Any]) -> dict[str, Any]:
     return response.json()
 
 
-def run_batch_analysis(companies_dir: str = "examples/companies") -> str:
+def run_batch_analysis(
+    companies_dir: str = str(Path(__file__).parent.parent / "examples" / "companies"),
+) -> str:
     input_dir = Path(companies_dir)
     company_files = sorted(input_dir.glob("*.json"))
     if not company_files:
@@ -110,7 +113,11 @@ def run_batch_analysis(companies_dir: str = "examples/companies") -> str:
 
 def main(argv: list[str] | None = None) -> int:
     args = argv if argv is not None else sys.argv[1:]
-    companies_dir = args[0] if args else "examples/companies"
+    companies_dir = (
+        args[0]
+        if args
+        else str(Path(__file__).parent.parent / "examples" / "companies")
+    )
     try:
         run_batch_analysis(companies_dir)
     except (RuntimeError, FileNotFoundError, ValueError) as exc:

@@ -1,9 +1,9 @@
 #!/bin/bash
-# Codex Loop 自动执行脚本（多 provider 成本优化版）
+# Codex Loop 自动执行脚本（双层 fallback）
 # 用法: ./scripts/codex_loop.sh [task_number]
 #
 # Fallback 顺序（按成本从低到高）：
-#   LongCat key1 → LongCat key2 → Volcano → gpt-5.4-mini → gpt-5.3-codex
+#   gpt-5.4-mini → gpt-5.3-codex
 
 set -e
 
@@ -44,7 +44,7 @@ run_task() {
     case "$provider" in
       mini)
         log "  [尝试 $((retry+1))/$MAX_RETRIES] gpt-5.4-mini"
-        if codex exec --full-auto -m gpt-5.4-mini "$prompt" 2>&1 | tee -a "$LOG_FILE"; then
+        if codex exec --skip-git-repo-check --full-auto -m gpt-5.4-mini "$prompt" 2>&1 | tee -a "$LOG_FILE"; then
           success=1
         else
           retry=$((retry+1)); log "  ✗ gpt-5.4-mini 失败，切兜底"
@@ -52,7 +52,7 @@ run_task() {
         ;;
       codex)
         log "  [尝试 $((retry+1))/$MAX_RETRIES] gpt-5.3-codex (兜底)"
-        if codex exec --full-auto "$prompt" 2>&1 | tee -a "$LOG_FILE"; then
+        if codex exec --skip-git-repo-check --full-auto "$prompt" 2>&1 | tee -a "$LOG_FILE"; then
           success=1
         else
           retry=$((retry+1)); log "  ✗ gpt-5.3-codex 也失败了"

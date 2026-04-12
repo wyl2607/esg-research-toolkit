@@ -25,6 +25,12 @@ OPENAI_API_KEY=your_openai_api_key_here
 DATABASE_URL=sqlite:///./data/esg_toolkit.db
 ```
 
+如果你要直接运行本手册中的 Python 示例，请额外安装 `requests`：
+
+```bash
+pip install requests
+```
+
 ## 2. 快速开始
 
 启动 API 服务：
@@ -33,7 +39,7 @@ DATABASE_URL=sqlite:///./data/esg_toolkit.db
 uvicorn main:app --reload
 ```
 
-打开交互式文档：
+打开 API 文档：
 
 - `http://localhost:8000/docs`
 
@@ -53,11 +59,11 @@ curl http://localhost:8000/
 
 ### 3.1 Report Parser（企业报告解析）
 
-Report Parser 会上传企业 PDF，提取文本，调用 OpenAI 驱动的抽取器，并将 ESG 数据写入数据库。
+Report Parser 会上传企业 PDF，提取文本，分析内容，并将结果 ESG 数据存入数据库。
 
 #### `POST /report/upload`
 
-上传 PDF 报告并返回 `CompanyESGData`。
+上传 PDF 并返回 `CompanyESGData` 对象。该接口需要 `python-multipart`，并且 PDF 必须包含可提取文本。
 
 ```bash
 curl -X POST http://localhost:8000/report/upload \
@@ -97,11 +103,9 @@ print(data["company_name"], data["report_year"])
 - `female_pct`
 - `primary_activities`
 
-注意：文件上传需要 `python-multipart`，并且 PDF 必须包含可提取文本。
-
 #### `GET /report/companies`
 
-列出已存储的报告。
+列出已保存的报告。
 
 ```bash
 curl http://localhost:8000/report/companies
@@ -109,7 +113,7 @@ curl http://localhost:8000/report/companies
 
 #### `GET /report/companies/{company_name}/{report_year}`
 
-获取指定公司和年份的报告。公司名包含空格时要进行 URL 编码。
+获取指定报告。公司名包含空格时，请进行 URL 编码。
 
 ```bash
 curl "http://localhost:8000/report/companies/GreenTech%20Solutions%20GmbH/2024"
@@ -127,56 +131,25 @@ print(response.json())
 
 ### 3.2 Taxonomy Scorer（EU Taxonomy 评分）
 
-Taxonomy Scorer 会对 `CompanyESGData` 进行 EU Taxonomy 评估，覆盖 6 个环境目标和 DNSH 逻辑。
+Taxonomy Scorer 会对 `CompanyESGData` 进行 EU Taxonomy 评估，覆盖 6 个环境目标和 DNSH 简化逻辑。
 
 #### `POST /taxonomy/score`
 
-对公司打分并返回 `TaxonomyScoreResult`。
+对公司评分并返回 `TaxonomyScoreResult`。
 
 ```bash
 curl -X POST http://localhost:8000/taxonomy/score \
   -H "Content-Type: application/json" \
-  -d '{
-    "company_name": "GreenTech Solutions GmbH",
-    "report_year": 2024,
-    "scope1_co2e_tonnes": 1200,
-    "scope2_co2e_tonnes": 340,
-    "scope3_co2e_tonnes": 5600,
-    "energy_consumption_mwh": 8200,
-    "renewable_energy_pct": 85,
-    "water_usage_m3": 12500,
-    "waste_recycled_pct": 72,
-    "total_revenue_eur": 25000000,
-    "taxonomy_aligned_revenue_pct": 18,
-    "total_capex_eur": 4200000,
-    "taxonomy_aligned_capex_pct": 25,
-    "total_employees": 180,
-    "female_pct": 41,
-    "primary_activities": ["solar_pv", "wind_onshore"]
-  }'
+  --data-binary @examples/mock_esg_data.json
 ```
 
 ```python
+import json
+from pathlib import Path
+
 import requests
 
-esg_data = {
-    "company_name": "GreenTech Solutions GmbH",
-    "report_year": 2024,
-    "scope1_co2e_tonnes": 1200,
-    "scope2_co2e_tonnes": 340,
-    "scope3_co2e_tonnes": 5600,
-    "energy_consumption_mwh": 8200,
-    "renewable_energy_pct": 85,
-    "water_usage_m3": 12500,
-    "waste_recycled_pct": 72,
-    "total_revenue_eur": 25000000,
-    "taxonomy_aligned_revenue_pct": 18,
-    "total_capex_eur": 4200000,
-    "taxonomy_aligned_capex_pct": 25,
-    "total_employees": 180,
-    "female_pct": 41,
-    "primary_activities": ["solar_pv", "wind_onshore"],
-}
+esg_data = json.loads(Path("examples/mock_esg_data.json").read_text())
 
 response = requests.post("http://localhost:8000/taxonomy/score", json=esg_data)
 response.raise_for_status()
@@ -204,24 +177,7 @@ print(f"DNSH pass: {result['dnsh_pass']}")
 ```bash
 curl -X POST http://localhost:8000/taxonomy/report \
   -H "Content-Type: application/json" \
-  -d '{
-    "company_name": "GreenTech Solutions GmbH",
-    "report_year": 2024,
-    "scope1_co2e_tonnes": 1200,
-    "scope2_co2e_tonnes": 340,
-    "scope3_co2e_tonnes": 5600,
-    "energy_consumption_mwh": 8200,
-    "renewable_energy_pct": 85,
-    "water_usage_m3": 12500,
-    "waste_recycled_pct": 72,
-    "total_revenue_eur": 25000000,
-    "taxonomy_aligned_revenue_pct": 18,
-    "total_capex_eur": 4200000,
-    "taxonomy_aligned_capex_pct": 25,
-    "total_employees": 180,
-    "female_pct": 41,
-    "primary_activities": ["solar_pv", "wind_onshore"]
-  }'
+  --data-binary @examples/mock_esg_data.json
 ```
 
 响应包含：
@@ -241,33 +197,25 @@ curl -X POST http://localhost:8000/taxonomy/report \
 ```bash
 curl -X POST http://localhost:8000/taxonomy/report/text \
   -H "Content-Type: application/json" \
-  -d '{
-    "company_name": "GreenTech Solutions GmbH",
-    "report_year": 2024,
-    "scope1_co2e_tonnes": 1200,
-    "scope2_co2e_tonnes": 340,
-    "scope3_co2e_tonnes": 5600,
-    "energy_consumption_mwh": 8200,
-    "renewable_energy_pct": 85,
-    "water_usage_m3": 12500,
-    "waste_recycled_pct": 72,
-    "total_revenue_eur": 25000000,
-    "taxonomy_aligned_revenue_pct": 18,
-    "total_capex_eur": 4200000,
-    "taxonomy_aligned_capex_pct": 25,
-    "total_employees": 180,
-    "female_pct": 41,
-    "primary_activities": ["solar_pv", "wind_onshore"]
-  }'
+  --data-binary @examples/mock_esg_data.json
 ```
 
-响应是一个只有单个键的 JSON 对象：
+```python
+import json
+from pathlib import Path
 
-- `report`
+import requests
+
+esg_data = json.loads(Path("examples/mock_esg_data.json").read_text())
+
+response = requests.post("http://localhost:8000/taxonomy/report/text", json=esg_data)
+response.raise_for_status()
+print(response.json()["report"])
+```
 
 #### `GET /taxonomy/activities`
 
-列出所有支持的 EU Taxonomy 活动。
+列出所有受支持的 EU Taxonomy 活动。
 
 ```bash
 curl http://localhost:8000/taxonomy/activities
@@ -275,11 +223,11 @@ curl http://localhost:8000/taxonomy/activities
 
 ### 3.3 Techno Economics（技术经济分析）
 
-Techno Economics 模块用于计算可再生能源项目的 LCOE、NPV、IRR 以及敏感性分析。
+Techno Economics 模块用于计算可再生能源项目的 LCOE、NPV、IRR、回收期和敏感性分析。
 
 #### `POST /techno/lcoe`
 
-计算指定技术的 LCOE。
+计算 LCOE / NPV / IRR。
 
 ```bash
 curl -X POST http://localhost:8000/techno/lcoe \
@@ -297,7 +245,7 @@ curl -X POST http://localhost:8000/techno/lcoe \
 ```python
 import requests
 
-lcoe_input = {
+inp = {
     "technology": "solar_pv",
     "capex_eur_per_kw": 800,
     "opex_eur_per_kw_year": 15,
@@ -306,11 +254,11 @@ lcoe_input = {
     "discount_rate": 0.07,
 }
 
-response = requests.post("http://localhost:8000/techno/lcoe", json=lcoe_input)
+response = requests.post("http://localhost:8000/techno/lcoe", json=inp)
 response.raise_for_status()
 result = response.json()
-print(f"LCOE: {result['lcoe_eur_per_mwh']} EUR/MWh")
-print(f"NPV: {result['npv_eur']}")
+print(f"LCOE: {result['lcoe_eur_per_mwh']:.2f} EUR/MWh")
+print(f"NPV: {result['npv_eur']:.2f} EUR")
 ```
 
 `LCOEResult` 字段：
@@ -324,7 +272,7 @@ print(f"NPV: {result['npv_eur']}")
 
 #### `POST /techno/sensitivity`
 
-对 CAPEX 和 OPEX 进行敏感性分析。
+对 CAPEX 和 OPEX 做敏感性分析。
 
 ```bash
 curl -X POST "http://localhost:8000/techno/sensitivity?variation_range=0.2&steps=5" \
@@ -339,17 +287,9 @@ curl -X POST "http://localhost:8000/techno/sensitivity?variation_range=0.2&steps
   }'
 ```
 
-响应是一个对象列表，包含：
-
-- `parameter`
-- `base_value`
-- `variations`
-- `lcoe_values`
-- `lcoe_change_pct`
-
 #### `GET /techno/benchmarks`
 
-返回行业基准 LCOE 区间。
+获取常见技术的 LCOE 基准范围。
 
 ```bash
 curl http://localhost:8000/techno/benchmarks
@@ -357,23 +297,47 @@ curl http://localhost:8000/techno/benchmarks
 
 ## 4. 端到端工作流
 
-GreenTech Solutions GmbH 的完整流程示例：
+示例公司：GreenTech Solutions GmbH。
 
-1. 使用 `POST /report/upload` 上传真实 PDF，或者先准备一份手工构造的 `CompanyESGData`。
-2. 将抽取出的 ESG 数据发送到 `POST /taxonomy/score`。
-3. 用 `POST /techno/lcoe` 评估某个可再生能源技术。
-4. 结合 `POST /taxonomy/report` 和 `GET /techno/benchmarks` 生成综合决策材料。
+1. 使用 `POST /report/upload` 上传 PDF 报告；如果只是测试评分流程，也可以直接使用 `examples/mock_esg_data.json`。
+2. 将提取出的 ESG 数据发送到 `POST /taxonomy/score`。
+3. 针对相关技术调用 `POST /techno/lcoe`，例如 `solar_pv` 或 `wind_onshore`。
+4. 使用 `POST /taxonomy/report` 和 `POST /taxonomy/report/text` 生成最终报告。
+
+最小 mock 数据流程：
+
+```bash
+curl -X POST http://localhost:8000/taxonomy/score \
+  -H "Content-Type: application/json" \
+  --data-binary @examples/mock_esg_data.json
+
+curl -X POST http://localhost:8000/techno/lcoe \
+  -H "Content-Type: application/json" \
+  -d '{
+    "technology": "solar_pv",
+    "capex_eur_per_kw": 800,
+    "opex_eur_per_kw_year": 15,
+    "capacity_factor": 0.18,
+    "lifetime_years": 25,
+    "discount_rate": 0.07
+  }'
+```
 
 ## 5. 故障排查
 
-- 服务无法启动：检查端口 `8000` 是否被占用。
-- OpenAI API 错误：确认 `.env` 中已设置 `OPENAI_API_KEY`。
-- PDF 上传失败：确认文件是真正的、带可提取文本层的 PDF，而不是纯扫描图片。
-- 数据库错误：删除 `data/esg_toolkit.db` 后重新启动，让 SQLite 重新初始化表结构。
+- 服务无法启动：检查 8000 端口是否被占用。
+- OpenAI API 错误：确认 `.env` 中的 `OPENAI_API_KEY` 是否正确。
+- PDF 解析失败：确认 PDF 不是纯扫描图像，必须包含可提取文本。
+- 上传接口报 multipart 错误：安装 `python-multipart`。
+- 数据库异常：删除 `data/esg_toolkit.db`，让应用重新初始化。
 
-## 6. 常见问题（FAQ）
+## 6. 常见问题
 
-- 支持哪些 PDF 格式？支持包含可提取文本的普通 PDF。
-- 如何处理中文 PDF？建议使用带文本层的 PDF，并在上传前验证提取结果。
-- EU Taxonomy 评分准确吗？这是一个简化的规则引擎，适合分析和原型验证，不适合做法律合规结论。
-- LCOE 使用什么公式？使用折现后的 CAPEX 和 OPEX 除以折现后的发电量，并换算为 EUR/MWh。
+- Q: 支持哪些 PDF 格式？
+  A: 支持包含可提取文本的 PDF。纯扫描 PDF 通常需要先做 OCR。
+- Q: 如何处理中文 PDF？
+  A: 需要 PDF 中存在真实文本层；如果只是图片，需先 OCR。
+- Q: EU Taxonomy 评分准确吗？
+  A: 这里的实现是简化版，适合分析和原型验证，不是法律意见。
+- Q: LCOE 计算使用什么公式？
+  A: 使用折现后的 CAPEX 和 OPEX 除以折现后的发电量，单位为 EUR/MWh。

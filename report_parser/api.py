@@ -38,7 +38,7 @@ if _MULTIPART_AVAILABLE:
 
         upload_dir = Path("data/reports")
         upload_dir.mkdir(parents=True, exist_ok=True)
-        pdf_path = upload_dir / file.filename
+        pdf_path = upload_dir / Path(file.filename).name
         with pdf_path.open("wb") as handle:
             content = await file.read()
             handle.write(content)

@@ -37,10 +37,10 @@ for pattern in "${SENSITIVE_PATTERNS[@]}"; do
   fi
 done
 
-# 检查是否有 API key 在代码中（只检查 .py 文件，不检查文档）
-if git diff --cached -- "*.py" | grep -iE "(api[_-]?key|secret[_-]?key|openai[_-]?key|anthropic[_-]?key)\s*=\s*['\"][a-zA-Z0-9_\-]{20,}" > /dev/null 2>&1; then
-  echo "❌ 发现可能的 API key 硬编码（Python 文件）"
-  git diff --cached -- "*.py" | grep -iE "(api[_-]?key|secret[_-]?key)" | head -5
+# 检查是否有 API key 在代码中（检查常见代码/配置/脚本文件，不检查文档）
+if git diff --cached -- "*.py" "*.toml" "*.yaml" "*.yml" "*.json" "*.sh" | grep -iE "(api[_-]?key|secret[_-]?key|openai[_-]?key|anthropic[_-]?key)\s*=\s*['\"][a-zA-Z0-9_\-]{20,}" > /dev/null 2>&1; then
+  echo "❌ 发现可能的 API key 硬编码（代码/配置/脚本文件）"
+  git diff --cached -- "*.py" "*.toml" "*.yaml" "*.yml" "*.json" "*.sh" | grep -iE "(api[_-]?key|secret[_-]?key)" | head -5
   FOUND_SENSITIVE=1
 fi
 
