@@ -1,7 +1,7 @@
 import json
 from collections.abc import Callable
 from collections.abc import Generator
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 from sqlalchemy import create_engine
@@ -48,33 +48,33 @@ def make_company_data() -> Callable[..., CompanyESGData]:
     return _make_company_data
 
 
-def test_extract_text_from_pdf_success() -> None:
-    first_page = MagicMock()
-    first_page.extract_text.return_value = "  Executive   Summary \n\n Scope 1   emissions "
-    second_page = MagicMock()
-    second_page.extract_text.return_value = None
-    third_page = MagicMock()
-    third_page.extract_text.return_value = "Renewable\tenergy    usage"
-
-    pdf = MagicMock()
-    pdf.pages = [first_page, second_page, third_page]
-
-    pdf_context = MagicMock()
-    pdf_context.__enter__.return_value = pdf
-    pdf_context.__exit__.return_value = False
-
-    with patch("report_parser.extractor.pdfplumber.open", return_value=pdf_context) as mock_open:
+def test_extract_text_from_pdf_prefers_pymupdf() -> None:
+    pymupdf_text = "A" * 120
+    with (
+        patch("report_parser.extractor._extract_with_pymupdf", return_value=pymupdf_text) as mock_pymupdf,
+        patch("report_parser.extractor._extract_with_pdfplumber") as mock_pdfplumber,
+    ):
         result = extract_text_from_pdf("sample.pdf")  # type: ignore[arg-type]
 
-    assert result == "Executive Summary\nScope 1 emissions\n\nRenewable energy usage"
-    mock_open.assert_called_once_with("sample.pdf")
+    assert result == pymupdf_text
+    mock_pymupdf.assert_called_once()
+    mock_pdfplumber.assert_not_called()
 
 
-def test_extract_text_from_pdf_invalid_file() -> None:
-    with patch("report_parser.extractor.pdfplumber.open", side_effect=FileNotFoundError("missing")):
+def test_extract_text_from_pdf_fallback_to_pdfplumber() -> None:
+    with (
+        patch(
+            "report_parser.extractor._extract_with_pymupdf",
+            side_effect=FileNotFoundError("missing"),
+        ),
+        patch(
+            "report_parser.extractor._extract_with_pdfplumber",
+            return_value="Fallback extracted text",
+        ),
+    ):
         result = extract_text_from_pdf("missing.pdf")  # type: ignore[arg-type]
 
-    assert result == ""
+    assert result == "Fallback extracted text"
 
 
 def test_analyze_esg_data_with_mock_openai() -> None:

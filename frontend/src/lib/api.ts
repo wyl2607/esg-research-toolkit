@@ -1,5 +1,6 @@
 // Typed fetch wrappers for all 15 backend endpoints
 import type {
+  BatchStatusResponse,
   CompanyESGData,
   TaxonomyScoreResult,
   LCOEInput,
@@ -31,6 +32,20 @@ export const uploadReport = (file: File): Promise<CompanyESGData> => {
     }
   )
 }
+
+export const uploadReportsBatch = (files: File[]): Promise<BatchStatusResponse> => {
+  const form = new FormData()
+  files.forEach((file) => form.append('files', file))
+  return fetch(BASE + '/report/upload/batch', { method: 'POST', body: form }).then(
+    (r) => {
+      if (!r.ok) throw new Error(r.statusText)
+      return r.json() as Promise<BatchStatusResponse>
+    }
+  )
+}
+
+export const getBatchStatus = (batchId: string): Promise<BatchStatusResponse> =>
+  req(`/report/jobs/${encodeURIComponent(batchId)}`)
 
 export const listCompanies = (): Promise<CompanyESGData[]> =>
   req('/report/companies')

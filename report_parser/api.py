@@ -6,8 +6,9 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
 from core.database import get_db
-from core.schemas import CompanyESGData
+from core.schemas import BatchStatusResponse, CompanyESGData
 from report_parser.analyzer import AIExtractionError, analyze_esg_data
+from report_parser.batch_jobs import batch_manager
 from report_parser.extractor import extract_text_from_pdf
 from report_parser.storage import get_report, list_reports, save_report
 
@@ -57,6 +58,40 @@ if _MULTIPART_AVAILABLE:
 
         save_report(db, esg_data, pdf_filename=file.filename)
         return esg_data
+
+    @router.post("/upload/batch", response_model=BatchStatusResponse)
+    async def upload_reports_batch(files: list[UploadFile] = File(...)):
+        """
+        批量上传 PDF，并异步分析。
+        返回 batch_id，前端通过 /report/jobs/{batch_id} 轮询进度。
+        """
+        if not files:
+            raise HTTPException(400, "No files uploaded")
+        if len(files) > 20:
+            raise HTTPException(400, "At most 20 files per batch")
+
+        upload_dir = Path("data/reports")
+        upload_dir.mkdir(parents=True, exist_ok=True)
+
+        saved_files: list[tuple[Path, str]] = []
+        for file in files:
+            if not file.filename or not file.filename.lower().endswith(".pdf"):
+                raise HTTPException(400, f"Only PDF files are supported: {file.filename or '<unknown>'}")
+
+            pdf_path = upload_dir / Path(file.filename).name
+            with pdf_path.open("wb") as handle:
+                content = await file.read()
+                handle.write(content)
+            saved_files.append((pdf_path, file.filename))
+
+        return batch_manager.submit(saved_files)
+
+    @router.get("/jobs/{batch_id}", response_model=BatchStatusResponse)
+    def get_batch_status(batch_id: str):
+        try:
+            return batch_manager.get_batch_status(batch_id)
+        except KeyError as exc:
+            raise HTTPException(404, f"Batch not found: {batch_id}") from exc
 
 else:
 
