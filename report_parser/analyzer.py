@@ -23,12 +23,20 @@ _SYSTEM = """You are an ESG data analyst. Extract ESG metrics from the provided 
 - female_pct: float (0-100) or null
 - primary_activities: list of strings (e.g. ["solar_pv", "wind_onshore"])
 
-Notes:
-- Data is often in table format with columns for multiple years; use the most recent year (rightmost column).
-- Numbers may appear as "930,440.28" (with commas) — parse as float.
-- Revenue may be in RMB or local currency. If in RMB "10 thousand" units, multiply by 10000 then convert to EUR (1 EUR ≈ 7.8 RMB as of 2024).
-- Scope 1/2/3 emissions are in tCO2e. Energy in MWh. Water in m3.
-- For primary_activities use snake_case strings describing the company's main business.
+Notes on table parsing:
+- Tables columns order: Indicator | Unit | 2022 | 2023 | 2024 (oldest to newest left to right).
+- Always use MOST RECENT year: rightmost non-empty non-"/" column.
+- "/" means no data for that year, skip and use next available year to the right.
+- Numbers use comma separators: "930,440.28" -> 930440.28. Do NOT sum across years.
+- "tCO 2 e" and "tCO2e" both mean tCO2e.
+
+Unit conversions:
+- Water: unit "m3" or "m3" use value as-is. Unit "10 thousand m3" multiply by 10000.
+- Revenue/CapEx: unit "RMB 10 thousand" = value x 10000 / 7.8 = EUR.
+- Energy MWh: use as-is.
+- Percentages: float 0-100, do not divide by 100.
+
+For primary_activities: snake_case strings e.g. "battery_manufacturing", "solar_pv".
 
 Return ONLY valid JSON, no markdown, no explanation. If a field is not found, use null."""
 

@@ -35,6 +35,12 @@ def _score_activity_alignment(data: CompanyESGData, activity_id: str) -> float:
         return 0.0
 
     score = 0.5
+    if (
+        activity.sector == "Manufacturing"
+        and data.scope1_co2e_tonnes is None
+        and data.energy_consumption_mwh is None
+    ):
+        score = 0.3
 
     if activity.ghg_threshold_gco2e_per_kwh and data.energy_consumption_mwh:
         total_ghg = (data.scope1_co2e_tonnes or 0) + (data.scope2_co2e_tonnes or 0)
@@ -77,9 +83,12 @@ def score_company(data: CompanyESGData) -> TaxonomyScoreResult:
     active_circular = [a for a in data.primary_activities if a in circular_economy_activities]
     if active_circular:
         # Battery recycling directly contributes to circular economy objective
-        base = 0.6
-        if data.waste_recycled_pct is not None:
-            base = max(base, min(data.waste_recycled_pct / 100, 1.0))
+        has_positive_waste = (
+            data.waste_recycled_pct is not None and data.waste_recycled_pct > 0
+        )
+        base = 0.2
+        if has_positive_waste:
+            base = max(0.6, min(data.waste_recycled_pct / 100, 1.0))
         objective_scores["circular_economy"] = max(objective_scores["circular_economy"], base)
 
     if data.scope3_co2e_tonnes is not None:
