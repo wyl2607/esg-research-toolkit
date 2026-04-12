@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, Query
 
 from core.schemas import CompanyESGData, TaxonomyScoreResult
 from taxonomy_scorer.gap_analyzer import analyze_gaps
@@ -28,6 +28,28 @@ def text_report(data: CompanyESGData) -> dict[str, str]:
     result = score_company(data)
     gaps = analyze_gaps(data, result)
     return {"report": generate_text_summary(result, gaps)}
+
+
+@router.get("/report")
+def get_report_by_name(
+    company_name: str = Query(...),
+    report_year: int = Query(...),
+) -> dict:
+    """Fetch stored company data and return taxonomy report (GET convenience endpoint)."""
+    from core.database import get_db
+    from report_parser.storage import get_report
+
+    db = next(get_db())
+    record = get_report(db, company_name, report_year)
+    if not record:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No report found for {company_name} ({report_year})",
+        )
+    data = CompanyESGData.model_validate(record.__dict__)
+    result = score_company(data)
+    gaps = analyze_gaps(data, result)
+    return generate_json_report(data, result, gaps)
 
 
 @router.get("/activities")
