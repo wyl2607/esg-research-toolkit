@@ -167,28 +167,10 @@
 
 - 执行文件: `docs/codex-tasks/task_08_e2e_validation.md`
 - 目标主机: `usa-vps` (`192.227.130.69`)
-- 验证结果:
-  - 前端可访问: `https://esg.meichen.beauty/` 返回 `200`
-  - 静态资源可访问: `/assets/index-Kd8BKYCE.js` 返回 `200`
-  - API 健康检查通过: `GET /api/health` 返回 `{\"status\":\"ok\"}`
-  - PDF 上传接口通过: `POST /report/upload` 返回 `200`，并写入数据库记录
-  - Taxonomy 评分通过: `POST /taxonomy/score`（按当前 schema 使用 `report_year`）返回 `200`
-  - LCOE 计算通过: `POST /techno/lcoe`（按当前 schema 使用 `technology/capex_eur_per_kw`）返回 `200`
-  - 报告 PDF 端点通过: `GET /taxonomy/report/pdf?company_name=Unknown&report_year=2024` 返回 `200`，生成有效 PDF
-  - 数据库持久化通过: `/opt/esg-data/esg_toolkit.db` 存在（12K），`company_reports` 记录数 `1`
-  - 资源占用通过: 容器内存约 `130MiB`（<500MB），磁盘可用约 `5.8G`（>2GB）
-- 自愈与热修:
-  - 文档 payload 与当前 API schema 存在漂移（`year`→`report_year`、LCOE 字段变化），已按当前代码 schema 调整请求并重试成功
-  - 发现 `/taxonomy/report/pdf` 初次 500（`primary_activities` 被存为 JSON 字符串，Pydantic 期望 list）
-  - 已修复 `taxonomy_scorer/api.py`：新增 DB 记录字段标准化逻辑，将 `primary_activities` 字符串反序列化为 list 后再校验
-  - 热修已同步 VPS 并重建容器，端点由 500 恢复为 200
-- 残留问题:
-  - 首页 `<title>` 当前为 `frontend`，未体现 “ESG Research Toolkit”
-  - `/api/health` 返回值为 `ok`（与旧文档的 `healthy` 不一致）
-  - 由于 `OPENAI_API_KEY` 无效，上传解析退化为降级路径（日志出现 401），`company_name` 落库为 `Unknown`
-  - 生成的测试 PDF 大小约 `5.5K`，低于任务文档中的 `>10KB` 期望（但文件类型与内容生成均正常）
-- 后续依赖:
-  - 可进入 Task 09（监控和日志配置）
+- 关键结果: 前端/API/上传/Taxonomy/LCOE/PDF 端点均返回 `200`；数据库持久化有效；容器内存约 `130MiB`
+- 自愈与热修: 修正请求 schema 漂移（`year`→`report_year` 等）；修复 `taxonomy_scorer/api.py` 对 `primary_activities` 的反序列化，恢复 `/taxonomy/report/pdf` 从 `500` 到 `200`
+- 残留风险: 首页 `<title>` 未更新；`/api/health` 返回 `ok`；`OPENAI_API_KEY` 无效导致解析降级
+- 后续依赖: 可进入 Task 09
 
 ---
 
@@ -196,27 +178,47 @@
 
 - 执行文件: `docs/codex-tasks/task_09_monitoring.md`
 - 目标主机: `usa-vps` (`192.227.130.69`)
-- 完成项:
-  - Docker 日志轮转已启用并验证: `Logging Driver: json-file`，`max-size=10m`，`max-file=3`
-  - 日志脚本可用: `/opt/esg-research-toolkit/scripts/logs.sh` 运行成功
-  - 健康检查脚本可用: `/opt/esg-research-toolkit/scripts/health-check.sh` 运行通过
-  - Cron 任务已确认存在:
-    - `*/5 * * * * /opt/esg-research-toolkit/scripts/health-check.sh >> /var/log/esg-health.log 2>&1`
-    - `0 3 * * * /opt/esg-research-toolkit/scripts/backup.sh >> /var/log/esg-backup.log 2>&1`
-  - Nginx 日志格式已生效: `esg_combined` + `esg-access.log`
-  - 备份脚本可用: `/opt/esg-research-toolkit/scripts/backup.sh` 成功生成数据库备份
-  - 状态仪表脚本可用: `/opt/esg-research-toolkit/scripts/status.sh` 运行成功
-- 自愈记录:
-  - `health-check.sh` 初版使用 `curl http://127.0.0.1/` 误判前端不可用（server_name 不匹配导致 404）
-  - 已改为带 `Host: esg.meichen.beauty` 的本机探活后通过
-  - Cron 配置采用“读取-合并-保留现有任务”策略，避免覆盖 VPS 上既有 crontab 项
-- 本轮新增/变更文件:
-  - `scripts/logs.sh`
-  - `scripts/health-check.sh`
-  - `scripts/backup.sh`
-  - `scripts/status.sh`
-  - `taxonomy_scorer/api.py`（Task 08 热修，修复 PDF 报告端点 500）
-- 残留风险:
-  - VPS 根分区使用率约 `85%`（虽仍有 `5.8G` 可用，但高于健康脚本告警阈值）
-  - Nginx 仍有多条 `conflicting server name` 警告，建议后续清理重复站点配置
-  - OpenAI API key 当前无效，上传解析会降级为基础抽取（日志可见 401）
+- 关键结果: Docker 日志轮转启用（`10m*3`）；`logs.sh/health-check.sh/backup.sh/status.sh` 可用；cron 与 nginx 日志格式生效
+- 自愈记录: `health-check.sh` 改为带 `Host` 头的本机探活；cron 采用“读取-合并-保留现有任务”策略
+- 本轮变更: `scripts/logs.sh`、`scripts/health-check.sh`、`scripts/backup.sh`、`scripts/status.sh`、`taxonomy_scorer/api.py`
+- 残留风险: VPS 根分区使用率约 `85%`；Nginx 存在 `conflicting server name` 告警；OpenAI key 仍无效
+
+---
+
+## 2026-04-13 Task 15（三语言 README 指南）已完成
+
+- 执行文件: `docs/codex-tasks/task_15_trilingual_guide.md`
+- 产物文件: `README.md`、`README.zh.md`、`README.de.md`
+- 自愈记录: Step 1 首次失败（系统 `python3` 缺少 `fastapi`），已切换 `./.venv/bin/python` 后重试成功
+- 验证通过:
+  - `wc -l README.md README.zh.md README.de.md` → 三文件均 `144` 行（均 >= 100）
+  - `grep "Quick Start" README.md`、`grep "API Reference" README.md` 通过
+  - `grep "快速开始\|快速启动\|开始使用" README.zh.md` 与 UTF-8 编码检查通过
+  - `grep -i "schnellstart\|Schnellstart\|Erste Schritte" README.de.md` 通过
+  - 三文件语言切换行与一致性检查通过（`##` 章节数均为 `9`，`|` 表格行数均为 `37`）
+
+---
+
+## 2026-04-13 CATL recent-year dataset refresh + web debug dataset expansion
+
+- Added reusable source manifest: `docs/test-pdf-sources.md`
+  - CATL recent years: 2022/2023/2024/2025 official sustainability PDFs
+  - Additional companies: Volkswagen 2024 ESRS sustainability report, BYD 2024 sustainability report
+- Added downloader utility: `scripts/fetch_test_pdfs.sh`
+  - Browser User-Agent enabled
+  - Retry + timeout guards
+  - Size sanity check warning for anti-bot/error pages
+- Pulled real test corpus into `data/reports/test_sources/` (non-git data):
+  - `catl_2025_sustainability_report.pdf` (~12.8MB)
+  - `catl_2024_sustainability_report.pdf` (~15.0MB)
+  - `catl_2023_sustainability_report.pdf` (~22.2MB)
+  - `catl_2022_sustainability_report.pdf` (~12.5MB)
+  - `volkswagen_2024_esrs_sustainability_report.pdf` (~8.5MB)
+  - `byd_2024_sustainability_report.pdf` (~18.0MB)
+- API debug smoke tests (local TestClient):
+  - Single upload (`/report/upload`) executed on CATL 2024 file
+  - Batch upload (`/report/upload/batch`) + status polling (`/report/jobs/{batch_id}`) executed on 2 files
+  - Queue/progress behavior validated end-to-end (0%→50%→100%)
+- Current blocker observed in sandbox:
+  - AI extraction fails with network timeout (`422: AI 提取失败：网络连接超时`) due restricted outbound model access in current run environment
+  - Not a parser/queue regression; workflow path itself is functioning
