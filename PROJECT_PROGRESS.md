@@ -222,3 +222,18 @@
 - Current blocker observed in sandbox:
   - AI extraction fails with network timeout (`422: AI 提取失败：网络连接超时`) due restricted outbound model access in current run environment
   - Not a parser/queue regression; workflow path itself is functioning
+
+---
+
+## 2026-04-13 Chained debug workflow (batch pipeline + real PDF corpus)
+
+- Added chained runner: `scripts/run_chain_debug.sh`
+  - Integrates source-fetch + single upload smoke + batch submit + progress polling
+  - Uses `API_BASE` env var (default `http://127.0.0.1:8000`)
+  - Prints per-file terminal status and duration for quick triage
+- Updated `docs/test-pdf-sources.md` with one-command chained workflow usage.
+- Verification:
+  - `bash -n scripts/run_chain_debug.sh` (syntax pass)
+  - `pytest -q` (22 passed)
+- Operational value:
+  - Provides a reproducible end-to-end debug loop for CATL recent-year files and cross-company PDFs.
