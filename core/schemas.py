@@ -22,6 +22,29 @@ class CompanyESGData(BaseModel):
     primary_activities: list[str] = []
 
 
+class BatchJobItem(BaseModel):
+    job_id: str
+    filename: str
+    status: Literal["queued", "processing", "completed", "failed"]
+    error: str | None = None
+    result: CompanyESGData | None = None
+    created_at: str
+    started_at: str | None = None
+    finished_at: str | None = None
+    duration_seconds: float | None = None
+
+
+class BatchStatusResponse(BaseModel):
+    batch_id: str
+    total_jobs: int
+    queued_jobs: int
+    running_jobs: int
+    completed_jobs: int
+    failed_jobs: int
+    progress_pct: float
+    jobs: list[BatchJobItem]
+
+
 class TaxonomyScoreResult(BaseModel):
     company_name: str
     report_year: int

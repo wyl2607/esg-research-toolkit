@@ -19,6 +19,29 @@ export interface CompanyESGData {
   primary_activities: string[]
 }
 
+export interface BatchJobItem {
+  job_id: string
+  filename: string
+  status: 'queued' | 'processing' | 'completed' | 'failed'
+  error: string | null
+  result: CompanyESGData | null
+  created_at: string
+  started_at: string | null
+  finished_at: string | null
+  duration_seconds: number | null
+}
+
+export interface BatchStatusResponse {
+  batch_id: string
+  total_jobs: number
+  queued_jobs: number
+  running_jobs: number
+  completed_jobs: number
+  failed_jobs: number
+  progress_pct: number
+  jobs: BatchJobItem[]
+}
+
 export interface TaxonomyScoreResult {
   company_name: string
   report_year: number
@@ -54,6 +77,35 @@ export interface SensitivityResult {
   parameter: string
   values: number[]
   lcoe_results: number[]
+}
+
+export interface DimensionScore {
+  name: string
+  score: number
+  weight: number
+  disclosed: number
+  total: number
+  gaps: string[]
+}
+
+export interface FrameworkScoreResult {
+  framework: string
+  framework_id: string
+  company_name: string
+  report_year: number
+  total_score: number
+  grade: string
+  dimensions: DimensionScore[]
+  gaps: string[]
+  recommendations: string[]
+  coverage_pct: number
+}
+
+export interface MultiFrameworkReport {
+  company_name: string
+  report_year: number
+  frameworks: FrameworkScoreResult[]
+  summary: string
 }
 
 export interface TaxonomyActivity {

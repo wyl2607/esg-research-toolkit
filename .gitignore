@@ -16,6 +16,8 @@ env/
 
 # Environment & Secrets
 .env
+.env.*
+*.env
 *.env.local
 .env.production
 .env.development
@@ -35,6 +37,7 @@ secrets.json
 .gemini/
 
 # Data (not committed)
+data/*.pdf
 data/literature/
 data/questionnaires/
 data/reports/

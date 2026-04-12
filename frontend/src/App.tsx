@@ -7,6 +7,7 @@ import { TaxonomyPage } from '@/pages/TaxonomyPage'
 import { LcoePage } from '@/pages/LcoePage'
 import { CompaniesPage } from '@/pages/CompaniesPage'
 import { ComparePage } from '@/pages/ComparePage'
+import { FrameworksPage } from '@/pages/FrameworksPage'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
@@ -24,6 +25,7 @@ export default function App() {
             <Route path="lcoe" element={<LcoePage />} />
             <Route path="companies" element={<CompaniesPage />} />
             <Route path="compare" element={<ComparePage />} />
+            <Route path="frameworks" element={<FrameworksPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

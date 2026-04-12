@@ -6,6 +6,7 @@ import {
   Zap,
   Building2,
   GitCompare,
+  Globe,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -16,6 +17,7 @@ const links = [
   { to: '/lcoe', label: 'LCOE', icon: Zap },
   { to: '/companies', label: 'Companies', icon: Building2 },
   { to: '/compare', label: 'Compare', icon: GitCompare },
+  { to: '/frameworks', label: 'Frameworks', icon: Globe },
 ]
 
 export function Sidebar() {

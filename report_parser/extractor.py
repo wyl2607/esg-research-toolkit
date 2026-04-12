@@ -36,30 +36,31 @@ def _extract_with_pymupdf(pdf_path: Path) -> str:
 
 def extract_text_from_pdf(pdf_path: Path) -> str:
     """
-    提取 PDF 全文，优先使用 pdfplumber，中文/失败时自动用 PyMuPDF 补救。
+    提取 PDF 全文，优先使用 PyMuPDF（速度更快），失败时回退到 pdfplumber。
+    当主提取结果过短时（<100 字符）也会自动回退。
     两者都失败时返回空字符串。
     """
     text = ""
 
-    # 首先尝试 pdfplumber
+    # 先尝试 PyMuPDF（性能优先）
     try:
-        text = _extract_with_pdfplumber(pdf_path)
+        text = _extract_with_pymupdf(pdf_path)
     except Exception as exc:
-        logging.warning("pdfplumber failed for %s: %s", pdf_path, exc)
+        logging.warning("PyMuPDF failed for %s: %s", pdf_path, exc)
 
-    # 如果 pdfplumber 提取量太少（< 100字），用 PyMuPDF 重试
+    # 如果 PyMuPDF 提取量太少（<100 字），回退 pdfplumber
     if len(text) < 100:
         try:
-            pymupdf_text = _extract_with_pymupdf(pdf_path)
-            if len(pymupdf_text) > len(text):
+            pdfplumber_text = _extract_with_pdfplumber(pdf_path)
+            if len(pdfplumber_text) > len(text):
                 logging.info(
-                    "PyMuPDF extracted more text (%d vs %d chars), using PyMuPDF result",
-                    len(pymupdf_text),
+                    "pdfplumber extracted more text (%d vs %d chars), using pdfplumber result",
+                    len(pdfplumber_text),
                     len(text),
                 )
-                text = pymupdf_text
+                text = pdfplumber_text
         except Exception as exc:
-            logging.warning("PyMuPDF also failed for %s: %s", pdf_path, exc)
+            logging.warning("pdfplumber fallback failed for %s: %s", pdf_path, exc)
 
     if not text:
         logging.warning("All PDF extraction methods failed for %s", pdf_path)

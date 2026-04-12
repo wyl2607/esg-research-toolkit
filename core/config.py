@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     arxiv_max_results: int = 20
     arxiv_download_pdf: bool = True
     log_level: str = "INFO"
+    batch_max_workers: int = 2
 
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=False)
 
