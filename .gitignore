@@ -75,3 +75,19 @@ PRIVATE_*
 *_PRIVATE.*
 *_PERSONAL.*
 .superpowers/
+
+# 三层部署文档（包含内网 IP 和 VPS IP）
+docs/codex-tasks/task_05_*.md
+docs/codex-tasks/task_10_*.md
+docs/codex-tasks/task_11_*.md
+docs/codex-tasks/task_12_*.md
+docs/codex-tasks/task_13_*.md
+docs/codex-tasks/task_14_*.md
+docs/three-tier-deployment.md
+docs/codex-tasks/THREE_TIER_INDEX.md
+~/.esg-deploy-config
+.esg-deploy-config
+
+# 项目进度和事件日志（可能包含敏感路径）
+PROJECT_PROGRESS.md
+INCIDENT_LOG.md
