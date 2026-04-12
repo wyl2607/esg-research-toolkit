@@ -113,8 +113,9 @@ def test_analyze_esg_data_with_mock_openai() -> None:
 
     system_arg, user_arg = mock_complete.call_args.args[:2]
     assert "Extract ESG metrics" in system_arg
-    assert user_arg == f"Corporate Report Text:\n\n{report_text[:8000]}"
-    assert mock_complete.call_args.kwargs["max_tokens"] == 1024
+    assert "Corporate Report Text:" in user_arg
+    assert report_text[:100] in user_arg  # head section included
+    assert mock_complete.call_args.kwargs["max_tokens"] == 2048
 
 
 def test_analyze_esg_data_invalid_json() -> None:

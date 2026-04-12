@@ -90,6 +90,61 @@ ACTIVITIES: dict[str, TechnicalScreeningCriteria] = {
             "biodiversity",
         ],
     ),
+    # EU Taxonomy Annex I, Activity 3.1 — Manufacture of low carbon technologies for transport
+    "battery_manufacturing": TechnicalScreeningCriteria(
+        activity_id="battery_manufacturing",
+        name="Manufacture of batteries for low-carbon transport (EU Taxonomy 3.1)",
+        sector="Manufacturing",
+        ghg_threshold_gco2e_per_kwh=250.0,  # gCO2e per kWh energy consumed in manufacturing
+        dnsh_objectives=[
+            "climate_adaptation",
+            "water",
+            "circular_economy",
+            "pollution",
+            "biodiversity",
+        ],
+    ),
+    # EU Taxonomy Annex I, Activity 4.8 — Manufacture of renewable energy equipment
+    "battery_materials": TechnicalScreeningCriteria(
+        activity_id="battery_materials",
+        name="Manufacture of battery materials for renewable energy storage (EU Taxonomy 4.8)",
+        sector="Manufacturing",
+        ghg_threshold_gco2e_per_kwh=250.0,
+        dnsh_objectives=[
+            "climate_adaptation",
+            "water",
+            "circular_economy",
+            "pollution",
+            "biodiversity",
+        ],
+    ),
+    # EU Taxonomy Annex I, Activity 5.11 — Recycling of batteries
+    "battery_recycling": TechnicalScreeningCriteria(
+        activity_id="battery_recycling",
+        name="Recycling of batteries and e-waste (EU Taxonomy 5.11)",
+        sector="Circular Economy",
+        ghg_threshold_gco2e_per_kwh=None,
+        dnsh_objectives=[
+            "climate_adaptation",
+            "water",
+            "pollution",
+            "biodiversity",
+        ],
+    ),
+    # Alias: energy_storage → maps to battery_storage logic
+    "energy_storage": TechnicalScreeningCriteria(
+        activity_id="energy_storage",
+        name="Storage of electricity (battery / grid-scale)",
+        sector="Energy",
+        ghg_threshold_gco2e_per_kwh=100.0,
+        dnsh_objectives=[
+            "climate_adaptation",
+            "water",
+            "circular_economy",
+            "pollution",
+            "biodiversity",
+        ],
+    ),
 }
 
 OBJECTIVES = [

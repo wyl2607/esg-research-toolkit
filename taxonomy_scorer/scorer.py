@@ -58,16 +58,29 @@ def score_company(data: CompanyESGData) -> TaxonomyScoreResult:
     """
     objective_scores: dict[str, float] = {obj: 0.0 for obj in OBJECTIVES}
 
-    renewable_activities = {
+    climate_mitigation_activities = {
         "solar_pv",
         "wind_onshore",
         "wind_offshore",
         "battery_storage",
+        "energy_storage",
+        "battery_manufacturing",
+        "battery_materials",
     }
-    active_renewable = [a for a in data.primary_activities if a in renewable_activities]
-    if active_renewable:
-        scores = [_score_activity_alignment(data, a) for a in active_renewable]
+    circular_economy_activities = {"battery_recycling"}
+
+    active_climate = [a for a in data.primary_activities if a in climate_mitigation_activities]
+    if active_climate:
+        scores = [_score_activity_alignment(data, a) for a in active_climate]
         objective_scores["climate_mitigation"] = sum(scores) / len(scores)
+
+    active_circular = [a for a in data.primary_activities if a in circular_economy_activities]
+    if active_circular:
+        # Battery recycling directly contributes to circular economy objective
+        base = 0.6
+        if data.waste_recycled_pct is not None:
+            base = max(base, min(data.waste_recycled_pct / 100, 1.0))
+        objective_scores["circular_economy"] = max(objective_scores["circular_economy"], base)
 
     if data.scope3_co2e_tonnes is not None:
         objective_scores["climate_adaptation"] = 0.5
@@ -76,7 +89,8 @@ def score_company(data: CompanyESGData) -> TaxonomyScoreResult:
         objective_scores["water"] = 0.6
 
     if data.waste_recycled_pct is not None:
-        objective_scores["circular_economy"] = min(data.waste_recycled_pct / 100, 1.0)
+        waste_score = min(data.waste_recycled_pct / 100, 1.0)
+        objective_scores["circular_economy"] = max(objective_scores["circular_economy"], waste_score)
 
     objective_scores["pollution"] = 0.0
     objective_scores["biodiversity"] = 0.0
@@ -88,7 +102,7 @@ def score_company(data: CompanyESGData) -> TaxonomyScoreResult:
     )
 
     revenue_aligned = data.taxonomy_aligned_revenue_pct or (
-        objective_scores["climate_mitigation"] * 100 if active_renewable else 0.0
+        objective_scores["climate_mitigation"] * 100 if active_climate else 0.0
     )
     capex_aligned = data.taxonomy_aligned_capex_pct or revenue_aligned
 
