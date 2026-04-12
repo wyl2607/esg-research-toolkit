@@ -74,6 +74,23 @@ export const getTaxonomyReport = (
 export const listActivities = (): Promise<TaxonomyActivity[]> =>
   req('/taxonomy/activities')
 
+export const downloadTaxonomyPdf = async (
+  name: string,
+  year: number
+): Promise<void> => {
+  const res = await fetch(
+    `${BASE}/taxonomy/report/pdf?company_name=${encodeURIComponent(name)}&report_year=${year}`
+  )
+  if (!res.ok) throw new Error(`${res.status} ${await res.text()}`)
+  const blob = await res.blob()
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${name.replace(/ /g, '_')}_${year}_taxonomy.pdf`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
 // ── Techno-Economics ───────────────────────────────────────────────────────
 
 export const calcLcoe = (input: LCOEInput): Promise<LCOEResult> =>

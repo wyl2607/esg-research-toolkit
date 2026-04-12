@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { listCompanies, getTaxonomyReport } from '@/lib/api'
+import { listCompanies, getTaxonomyReport, downloadTaxonomyPdf } from '@/lib/api'
 import { TaxonomyRadarChart } from '@/components/RadarChart'
 import { MetricCard } from '@/components/MetricCard'
 import { Badge } from '@/components/ui/badge'
@@ -12,10 +12,11 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
-import { CheckCircle, XCircle } from 'lucide-react'
+import { CheckCircle, XCircle, Download } from 'lucide-react'
 
 export function TaxonomyPage() {
   const [selected, setSelected] = useState<string>('')
+  const [pdfLoading, setPdfLoading] = useState(false)
 
   const { data: companies = [] } = useQuery({
     queryKey: ['companies'],
@@ -34,9 +35,21 @@ export function TaxonomyPage() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-900">Taxonomy Scoring</h1>
-        {report && (
-          <Button variant="outline" onClick={() => window.print()}>
-            Export PDF
+        {report && companyName && companyYear && (
+          <Button
+            variant="outline"
+            disabled={pdfLoading}
+            onClick={async () => {
+              setPdfLoading(true)
+              try {
+                await downloadTaxonomyPdf(companyName, Number(companyYear))
+              } finally {
+                setPdfLoading(false)
+              }
+            }}
+          >
+            <Download size={16} className="mr-2" />
+            {pdfLoading ? 'Generating…' : 'Download PDF'}
           </Button>
         )}
       </div>

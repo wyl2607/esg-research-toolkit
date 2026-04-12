@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import Response
 
 from core.schemas import CompanyESGData, TaxonomyScoreResult
 from taxonomy_scorer.gap_analyzer import analyze_gaps
@@ -50,6 +51,37 @@ def get_report_by_name(
     result = score_company(data)
     gaps = analyze_gaps(data, result)
     return generate_json_report(data, result, gaps)
+
+
+@router.get("/report/pdf")
+def download_pdf_report(
+    company_name: str = Query(...),
+    report_year: int = Query(...),
+) -> Response:
+    """Generate and return a PDF EU Taxonomy report for a stored company."""
+    from core.database import get_db
+    from report_parser.storage import get_report
+    from taxonomy_scorer.pdf_report import generate_pdf
+
+    db = next(get_db())
+    record = get_report(db, company_name, report_year)
+    if not record:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No report found for {company_name} ({report_year})",
+        )
+    data = CompanyESGData.model_validate(record.__dict__)
+    result = score_company(data)
+    gaps = analyze_gaps(data, result)
+    pdf_bytes = generate_pdf(data, result, gaps)
+    safe_name = company_name.replace(" ", "_")
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{safe_name}_{report_year}_taxonomy.pdf"'
+        },
+    )
 
 
 @router.get("/activities")
