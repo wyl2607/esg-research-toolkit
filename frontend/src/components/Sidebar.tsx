@@ -8,23 +8,26 @@ import {
   GitCompare,
   Globe,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 
-const links = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/upload', label: 'Upload', icon: Upload },
-  { to: '/taxonomy', label: 'Taxonomy', icon: Tag },
-  { to: '/lcoe', label: 'LCOE', icon: Zap },
-  { to: '/companies', label: 'Companies', icon: Building2 },
-  { to: '/compare', label: 'Compare', icon: GitCompare },
-  { to: '/frameworks', label: 'Frameworks', icon: Globe },
-]
-
 export function Sidebar() {
+  const { t } = useTranslation()
+
+  const links = [
+    { to: '/', label: t('nav.dashboard'), icon: LayoutDashboard },
+    { to: '/upload', label: t('nav.upload'), icon: Upload },
+    { to: '/taxonomy', label: t('nav.taxonomy'), icon: Tag },
+    { to: '/lcoe', label: t('nav.lcoe'), icon: Zap },
+    { to: '/companies', label: t('nav.companies'), icon: Building2 },
+    { to: '/compare', label: t('nav.compare'), icon: GitCompare },
+    { to: '/frameworks', label: t('nav.frameworks'), icon: Globe },
+  ]
+
   return (
     <aside className="w-56 shrink-0 border-r bg-white flex flex-col">
       <div className="px-6 py-5 border-b">
-        <span className="font-bold text-indigo-600 text-lg">ESG Toolkit</span>
+        <span className="font-bold text-indigo-600 text-lg">{t('nav.appName')}</span>
       </div>
       <nav className="flex-1 px-3 py-4 space-y-1">
         {links.map(({ to, label, icon: Icon }) => (
