@@ -1,3 +1,5 @@
+import json
+
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import Response
 
@@ -7,6 +9,18 @@ from taxonomy_scorer.reporter import generate_json_report, generate_text_summary
 from taxonomy_scorer.scorer import score_company
 
 router = APIRouter(prefix="/taxonomy", tags=["taxonomy_scorer"])
+
+
+def _record_to_company_esg(record) -> CompanyESGData:
+    """Normalize DB record fields to CompanyESGData input shape."""
+    payload = record.__dict__.copy()
+    raw_activities = payload.get("primary_activities")
+    if isinstance(raw_activities, str):
+        try:
+            payload["primary_activities"] = json.loads(raw_activities) if raw_activities else []
+        except json.JSONDecodeError:
+            payload["primary_activities"] = []
+    return CompanyESGData.model_validate(payload)
 
 
 @router.post("/score", response_model=TaxonomyScoreResult)
@@ -47,7 +61,7 @@ def get_report_by_name(
             status_code=404,
             detail=f"No report found for {company_name} ({report_year})",
         )
-    data = CompanyESGData.model_validate(record.__dict__)
+    data = _record_to_company_esg(record)
     result = score_company(data)
     gaps = analyze_gaps(data, result)
     return generate_json_report(data, result, gaps)
@@ -70,7 +84,7 @@ def download_pdf_report(
             status_code=404,
             detail=f"No report found for {company_name} ({report_year})",
         )
-    data = CompanyESGData.model_validate(record.__dict__)
+    data = _record_to_company_esg(record)
     result = score_company(data)
     gaps = analyze_gaps(data, result)
     pdf_bytes = generate_pdf(data, result, gaps)
