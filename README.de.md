@@ -1,205 +1,144 @@
-[![Tests](https://github.com/wyl2607/esg-research-toolkit/actions/workflows/test.yml/badge.svg)](https://github.com/wyl2607/esg-research-toolkit/actions/workflows/test.yml)
-[![Lint](https://github.com/wyl2607/esg-research-toolkit/actions/workflows/lint.yml/badge.svg)](https://github.com/wyl2607/esg-research-toolkit/actions/workflows/lint.yml)
-
 # ESG Research Toolkit
 
-Das ESG Research Toolkit ist ein Open-Source-Werkzeugkasten fuer die ESG-Analyse von Unternehmen. Er vereint PDF-Berichtsparsing, EU-Taxonomie-Scoring und techno-oekonomische Modellierung fuer Projekte im Bereich erneuerbarer Energien in einem gemeinsamen FastAPI-Service.
+🌐 [English](README.md) · [中文](README.zh.md) · [Deutsch](README.de.md)
 
-## Projektueberblick
+> Open-Source-Plattform für die Analyse von ESG-Berichten, mit EU-Taxonomie-Scoring,
+> Multi-Framework-Vergleich (EU-Taxonomie 2020 · China CSRC 2023 · EU CSRD/ESRS)
+> sowie techno-ökonomischer Analyse für erneuerbare Energien (LCOE/NPV/IRR).
 
-Das Projekt verfolgt ein klares Ziel: reale ESG-Offenlegungen von Unternehmen reproduzierbar auszuwerten und gleichzeitig die Wirtschaftlichkeit ihrer Projekte im Bereich erneuerbarer Energien ueber einen API-first-Workflow zu bewerten.
+[![Python 3.12+](https://img.shields.io/badge/Python-3.12%2B-3776AB?logo=python&logoColor=white)](#) [![FastAPI](https://img.shields.io/badge/FastAPI-0.111%2B-009688?logo=fastapi&logoColor=white)](#) [![React 19](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](#) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](#) [![Live Demo](https://img.shields.io/badge/Live%20Demo-Coming%20Soon-lightgrey)](#)
 
-Aktueller Release-Status:
+## ✨ Funktionen
+- 🔍 Einzel- und Batch-Upload von ESG-PDFs über FastAPI-Endpunkte.
+- 🧠 Strukturierte ESG-Kennzahlen durch OpenAI-gestützte Textanalyse.
+- 🗂 Persistenz von Unternehmensberichten in SQLite über SQLAlchemy.
+- 📏 EU-Taxonomie-Scoring inklusive DNSH- und TSC-Prüfungen.
+- 🌍 Vergleich von drei Frameworks: EU-Taxonomie 2020, CSRC 2023 und CSRD/ESRS.
+- 📉 Techno-ökonomische Berechnungen für Projekte (LCOE, NPV, IRR, Payback).
+- 📊 Benchmark- und Sensitivitätsdiagramme im React-Frontend.
+- 📄 Ausgabe als JSON-Report und herunterladbare PDF-Zusammenfassung.
 
-- Version: `v0.1.0`
-- Repository: `https://github.com/wyl2607/esg-research-toolkit`
-- Snapshot-Datum: `2026-04-12`
-
-## Kernmodule
-
-### 1. `report_parser`
-
-Analysiert PDF-Berichte von Unternehmen und ueberfuehrt unstrukturierte Offenlegungen in strukturierte ESG-Daten.
-
-- Extrahiert Text aus hochgeladenen PDF-Berichten mit `pdfplumber`
-- Nutzt die OpenAI API zur Identifikation und Extraktion von ESG-Kennzahlen
-- Persistiert strukturierte Ergebnisse ueber SQLAlchemy ORM
-- Liefert normalisierte `CompanyESGData`-Objekte fuer nachgelagerte Bewertungsprozesse
-
-### 2. `taxonomy_scorer`
-
-Bewertet Unternehmensdaten entlang des EU-Taxonomie-Rahmenwerks.
-
-- Bewertet die Ausrichtung auf alle 6 Umweltziele
-- Beruecksichtigt das Do No Significant Harm (`DNSH`)-Prinzip
-- Verwendet Schwellenwerte aus den Technical Screening Criteria (`TSC`) fuer unterstuetzte Aktivitaeten
-- Erzeugt maschinenlesbare Reports und Textzusammenfassungen
-- Enthaelt eine Gap-Analyse mit den Schweregraden `critical`, `high`, `medium`, `low`
-
-### 3. `techno_economics`
-
-Fuehrt wirtschaftliche Berechnungen und Szenarioanalysen fuer Projekte im Bereich erneuerbarer Energien durch.
-
-- Berechnet die Stromgestehungskosten (`LCOE`, Levelized Cost of Energy)
-- Berechnet Kapitalwert (`NPV`), interne Verzinsung (`IRR`) und Amortisationskennzahlen
-- Fuehrt Sensitivitaetsanalysen fuer CAPEX und OPEX durch
-- Stellt Referenzbereiche fuer LCOE ausgewahlter Technologien bereit
-
-## Schnellstart
+## 🚀 Schnellstart
 
 ### Voraussetzungen
+- Python 3.12+, Node 18+, Docker (optional)
 
-- Python `3.11+`
-- Ein gueltiger OpenAI API Key
+### Lokale Entwicklung
+1. Repository klonen und wechseln:
+   ```bash
+   git clone https://github.com/wyl2607/esg-research-toolkit.git
+   cd esg-research-toolkit
+   ```
+2. Backend-API starten:
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate
+   pip install -r requirements.txt
+   uvicorn main:app --reload
+   ```
+3. Frontend-Dashboard starten:
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
 
-### Installation
-
-```bash
-git clone https://github.com/wyl2607/esg-research-toolkit.git
-cd esg-research-toolkit
-
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
-
-### Konfiguration
-
-```bash
-cp .env.example .env
-```
-
-Mindestens die folgenden Variablen setzen:
-
-```env
-OPENAI_API_KEY=your_openai_api_key_here
-APP_ENV=development
-APP_HOST=0.0.0.0
-APP_PORT=8000
-DATABASE_URL=sqlite:///./data/esg_toolkit.db
-```
-
-### Service starten
-
-```bash
-uvicorn main:app --reload
-```
-
-Interaktive API-Dokumentation:
-
-- Swagger UI: `http://localhost:8000/docs`
-- ReDoc: `http://localhost:8000/redoc`
-
-### Tests ausfuehren
-
-```bash
-pytest tests/ -v
-```
-
-## Docker-Bereitstellung
-
-### Schnellstart
-
+### Docker
 ```bash
 cp .env.example .env
-docker compose up -d
-docker compose ps
-docker compose logs -f
-docker compose down
+docker compose up --build
 ```
 
-### Umgebungsvariablen
+## 📡 API-Referenz
 
-Lege in `.env` mindestens Folgendes fest:
-
-```env
-OPENAI_API_KEY=your_openai_api_key_here
-```
-
-Der Container verwendet standardmaessig `DATABASE_URL=sqlite:///./data/esg_toolkit.db` und bindet `./data` sowie `./reports` als persistente Volumes ein.
-
-## API-Endpunkte
-
-### System
-
-| Methode | Endpunkt | Beschreibung |
+| Method | Endpoint | Description |
 | --- | --- | --- |
-| `GET` | `/` | Service-Metadaten und Modulliste |
-| `GET` | `/health` | Health-Check |
-| `GET` | `/docs` | Swagger UI |
-| `GET` | `/redoc` | ReDoc |
+| `GET` | `/` | Service-Metadaten und Modulüberblick |
+| `GET` | `/docs` | Swagger-UI-Dokumentation |
+| `GET` | `/docs/oauth2-redirect` | OAuth2-Redirect-Helfer für Swagger |
+| `GET` | `/frameworks/compare` | Unternehmen über alle Frameworks vergleichen |
+| `GET` | `/frameworks/list` | Unterstützte ESG-Frameworks und Metadaten auflisten |
+| `GET` | `/frameworks/score` | Unternehmen gegen ein einzelnes Framework bewerten |
+| `POST` | `/frameworks/score/upload` | Hochgeladene CompanyESGData über alle Frameworks bewerten |
+| `GET` | `/health` | Gesundheitsprüfung des Services |
 | `GET` | `/openapi.json` | OpenAPI-Schema |
+| `GET` | `/redoc` | ReDoc-Dokumentation |
+| `GET` | `/report/companies` | Gespeicherte ESG-Berichte auflisten |
+| `GET` | `/report/companies/{company_name}/{report_year}` | Einen gespeicherten Unternehmensbericht abrufen |
+| `GET` | `/report/jobs/{batch_id}` | Status eines Batch-Uploads prüfen |
+| `POST` | `/report/upload` | Eine PDF hochladen und ESG-Daten extrahieren |
+| `POST` | `/report/upload/batch` | Bis zu 20 PDFs asynchron hochladen |
+| `GET` | `/taxonomy/activities` | Unterstützte EU-Taxonomie-Aktivitäten auflisten |
+| `POST` | `/taxonomy/report` | Strukturierten Taxonomie-Report (JSON) erzeugen |
+| `GET` | `/taxonomy/report` | Strukturierten Taxonomie-Report (JSON) erzeugen |
+| `GET` | `/taxonomy/report/pdf` | Taxonomie-Report als PDF herunterladen |
+| `POST` | `/taxonomy/report/text` | Textzusammenfassung zur Taxonomie erzeugen |
+| `POST` | `/taxonomy/score` | EU-Taxonomie-Scoring zurückgeben |
+| `GET` | `/techno/benchmarks` | Benchmark-LCOE-Bereiche zurückgeben |
+| `POST` | `/techno/lcoe` | LCOE, NPV, IRR und Payback berechnen |
+| `POST` | `/techno/sensitivity` | CAPEX/OPEX-Sensitivitätsanalyse ausführen |
 
-### Report Parser
+## 🏗 Architektur
 
-| Methode | Endpunkt | Beschreibung |
+```text
+React Frontend (Vite)
+        ↓
+Nginx (production reverse proxy)
+        ↓
+FastAPI Backend
+        ↓
+SQLite + Local Storage (data/, reports/)
+```
+
+Das Frontend ruft die FastAPI-Endpunkte per HTTP auf; die Backend-Module teilen sich
+eine Datenbank sowie ein gemeinsames Dateisystem für Reports und Ausgaben.
+
+## 🌍 Multi-Framework-ESG
+
+### EU-Taxonomie 2020
+Abdeckung der sechs Umweltziele inklusive Do-No-Significant-Harm-Prüfungen.
+Nutzen Sie dieses Framework für EU-konformes Scoring mit technischen Schwellenwerten.
+
+### China CSRC 2023
+Abbildung der chinesischen Leitlinien für Nachhaltigkeitsberichte börsennotierter Unternehmen.
+Nutzen Sie es für E/S/G-Abdeckungsanalysen und lokale Offenlegungsbereitschaft.
+
+### EU CSRD/ESRS
+Erweitert die Bewertung auf ESRS-Themen wie E1-E5, S1 und G1.
+Nutzen Sie dieses Framework für Vollständigkeits-Benchmarks im EU-Offenlegungskontext.
+
+## 📊 Frontend-Seiten
+
+- `DashboardPage.tsx` — Portfolio-KPIs und schnelle Drill-down-Aktionen.
+- `UploadPage.tsx` — Einzel- und Batch-Upload von ESG-PDFs mit Statusanzeige.
+- `CompaniesPage.tsx` — Suche, Sortierung und Verwaltung gespeicherter Berichte.
+- `TaxonomyPage.tsx` — EU-Taxonomie-Radar, Gap-Analyse und PDF-Export.
+- `FrameworksPage.tsx` — Vergleich von EU-Taxonomie, CSRC und CSRD.
+- `ComparePage.tsx` — Tabellarischer Kennzahlenvergleich mehrerer Unternehmen.
+- `LcoePage.tsx` — LCOE-Rechner mit Benchmark- und Sensitivitätsdiagrammen.
+
+## 🔧 Konfiguration
+
+| Variable | Default | Description |
 | --- | --- | --- |
-| `POST` | `/report/upload` | PDF-Bericht hochladen und strukturierte `CompanyESGData` zurueckgeben |
-| `GET` | `/report/companies` | Gespeicherte Unternehmensberichte auflisten |
-| `GET` | `/report/companies/{company_name}/{report_year}` | Einen bestimmten Unternehmensbericht abrufen |
+| `OPENAI_API_KEY` | `Required` | OpenAI-API-Schlüssel für die ESG-Extraktion |
+| `APP_ENV` | `development` | Anwendungsumgebung (development/production) |
+| `APP_HOST` | `0.0.0.0` | Bind-Adresse des Backends |
+| `APP_PORT` | `8000` | Port des Backends |
+| `DATABASE_URL` | `sqlite:///./data/esg_toolkit.db` | SQLAlchemy-Verbindungszeichenfolge |
+| `ARXIV_MAX_RESULTS` | `20` | Maximale Trefferzahl für die Literatur-Pipeline |
+| `ARXIV_DOWNLOAD_PDF` | `true` | Legt fest, ob arXiv-PDFs heruntergeladen werden |
+| `LOG_LEVEL` | `INFO` | Log-Level zur Laufzeit |
+| `BATCH_MAX_WORKERS` | `2` | Maximale Parallelität für Batch-Verarbeitung |
 
-### Taxonomy Scorer
+## 🤝 Mitwirken
 
-| Methode | Endpunkt | Beschreibung |
-| --- | --- | --- |
-| `POST` | `/taxonomy/score` | Ein `CompanyESGData`-Payload gegen die EU-Taxonomie bewerten |
-| `POST` | `/taxonomy/report` | Einen strukturierten Taxonomie-Report mit Gap-Analyse erzeugen |
-| `POST` | `/taxonomy/report/text` | Eine textuelle Taxonomie-Zusammenfassung erzeugen |
-| `GET` | `/taxonomy/activities` | Alle aktuell unterstuetzten EU-Taxonomie-Aktivitaeten auflisten |
+1. Forken Sie das Repository und erstellen Sie einen Feature-Branch.
+2. Halten Sie Änderungen fokussiert und begründen Sie Ihre Commits klar.
+3. Führen Sie vor dem PR Backend-Tests sowie Frontend-Lint/Build aus.
+4. Ergänzen Sie im PR die verwendeten Prüfkommandos und Ergebnisse.
+5. Öffnen Sie einen Pull Request und reagieren Sie zügig auf Feedback.
 
-### Techno Economics
+## 📄 Lizenz
 
-| Methode | Endpunkt | Beschreibung |
-| --- | --- | --- |
-| `POST` | `/techno/lcoe` | `LCOE`, `NPV` und `IRR` berechnen |
-| `POST` | `/techno/sensitivity` | Sensitivitaetsanalyse fuer CAPEX und OPEX ausfuehren |
-| `GET` | `/techno/benchmarks` | Referenzbereiche fuer LCOE ausgewaehlter Technologien zurueckgeben |
-
-## Technologiestack
-
-- Backend: FastAPI, Uvicorn
-- Datenvalidierung: Pydantic v2
-- Datenbank: SQLAlchemy 2.0, SQLite
-- KI-gestuetzte Extraktion: OpenAI API
-- PDF-Verarbeitung: pdfplumber
-- Wissenschaftliches Rechnen: NumPy, SciPy
-- Datenwerkzeuge: pandas, openpyxl
-- Reporting: ReportLab, python-docx
-- Tests: pytest, pytest-asyncio
-
-## Projektkennzahlen
-
-Projekt-Snapshot fuer `v0.1.0`:
-
-| Kennzahl | Wert |
-| --- | --- |
-| Versionierte Dateien | 37 |
-| Kernmodule | 3 |
-| API-Endpunkte | 15 |
-| Automatisierte Tests | 19 |
-| Dokumentierte Erfolgsquote der Tests | 100% |
-| Python-Version | 3.11+ |
-
-## Architektur- und Designprinzipien
-
-- First-Principles-Umfang: nur Funktionen, die ESG-Compliance-Analysen und die Bewertung erneuerbarer Energieprojekte direkt unterstuetzen
-- API-first: jede Kernfaehigkeit ist ueber dokumentierte HTTP-Endpunkte verfuegbar
-- Typsicherheit: Pydantic-Schemas und explizite Python-Typisierung
-- Modularitaet: Berichtsparsing, Taxonomie-Scoring und techno-oekonomische Analyse sind getrennt entwickelt, aber interoperabel
-- Testgestuetzte Entwicklung: die zentrale Fachlogik ist durch automatisierte Tests abgesichert
-
-## Mitwirken
-
-Beitraege sind willkommen.
-
-1. Repository forken.
-2. Einen Feature-Branch erstellen.
-3. Aenderungen klein, testbar und im Einklang mit dem fachlichen Kernumfang halten.
-4. Vor dem Pull Request Linting und Tests ausfuehren.
-5. Im Pull Request die fachliche Motivation und die Verifikation klar dokumentieren.
-
-Bevorzugt werden Beitraege, die ESG-Analyseablaeufe, die Genauigkeit des EU-Taxonomie-Scorings oder die Qualitaet der techno-oekonomischen Modellierung verbessern, ohne den Projektumfang unnoetig zu erweitern.
-
-## Lizenz
-
-Das Projekt wird unter der MIT License veroeffentlicht.
+MIT

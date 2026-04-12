@@ -1,205 +1,144 @@
-[![Tests](https://github.com/wyl2607/esg-research-toolkit/actions/workflows/test.yml/badge.svg)](https://github.com/wyl2607/esg-research-toolkit/actions/workflows/test.yml)
-[![Lint](https://github.com/wyl2607/esg-research-toolkit/actions/workflows/lint.yml/badge.svg)](https://github.com/wyl2607/esg-research-toolkit/actions/workflows/lint.yml)
-
 # ESG Research Toolkit
 
-Open-source toolkit for corporate ESG analysis, combining PDF report parsing, EU Taxonomy compliance scoring, and renewable energy techno-economic modelling in a single FastAPI service.
+🌐 [English](README.md) · [中文](README.zh.md) · [Deutsch](README.de.md)
 
-## Overview
+> Open-source platform for corporate ESG report analysis, EU Taxonomy compliance scoring,
+> multi-framework comparison (EU Taxonomy · CSRC 2023 · CSRD/ESRS), and renewable energy
+> techno-economic analysis (LCOE/NPV/IRR).
 
-ESG Research Toolkit is designed for one practical outcome: assess a real company's ESG disclosures and evaluate the economics of its renewable energy projects with a reproducible, API-first workflow.
+[![Python 3.12+](https://img.shields.io/badge/Python-3.12%2B-3776AB?logo=python&logoColor=white)](#) [![FastAPI](https://img.shields.io/badge/FastAPI-0.111%2B-009688?logo=fastapi&logoColor=white)](#) [![React 19](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](#) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](#) [![Live Demo](https://img.shields.io/badge/Live%20Demo-Coming%20Soon-lightgrey)](#)
 
-Current release status:
+## ✨ Features
+- 🔍 Parse single and batch ESG PDF reports through FastAPI upload endpoints.
+- 🧠 Extract structured ESG metrics with OpenAI-assisted text analysis.
+- 🗂 Persist company reports in SQLite via SQLAlchemy models.
+- 📏 Score disclosures with EU Taxonomy logic including DNSH/TSC checks.
+- 🌍 Compare three frameworks: EU Taxonomy 2020, CSRC 2023, and CSRD/ESRS.
+- 📉 Run renewable-project techno-economics (LCOE, NPV, IRR, payback).
+- 📊 Explore benchmark and sensitivity charts in the React frontend.
+- 📄 Export machine-readable JSON reports and downloadable PDF summaries.
 
-- Version: `v0.1.0`
-- Repository: `https://github.com/wyl2607/esg-research-toolkit`
-- Snapshot date: `2026-04-12`
-
-## Core Modules
-
-### 1. `report_parser`
-
-Parses corporate PDF reports and converts unstructured disclosures into structured ESG data.
-
-- Extracts text from uploaded PDF reports with `pdfplumber`
-- Uses the OpenAI API to identify ESG metrics
-- Persists structured results through SQLAlchemy ORM
-- Returns normalized `CompanyESGData` objects for downstream scoring
-
-### 2. `taxonomy_scorer`
-
-Scores company data against the EU Taxonomy framework.
-
-- Evaluates alignment across the 6 environmental objectives
-- Applies Do No Significant Harm (`DNSH`) logic
-- Uses Technical Screening Criteria (`TSC`) thresholds for supported activities
-- Produces machine-readable reports and plain-text summaries
-- Includes gap analysis with severity levels: `critical`, `high`, `medium`, `low`
-
-### 3. `techno_economics`
-
-Performs renewable energy project economics and scenario analysis.
-
-- Computes Levelized Cost of Energy (`LCOE`)
-- Computes Net Present Value (`NPV`), Internal Rate of Return (`IRR`), and payback metrics
-- Runs CAPEX and OPEX sensitivity analysis
-- Exposes benchmark LCOE ranges for selected technologies
-
-## Quick Start
+## 🚀 Quick Start
 
 ### Prerequisites
+- Python 3.12+, Node 18+, Docker (optional)
 
-- Python `3.11+`
-- An OpenAI API key
+### Local Development
+1. Clone and enter the repository:
+   ```bash
+   git clone https://github.com/wyl2607/esg-research-toolkit.git
+   cd esg-research-toolkit
+   ```
+2. Start backend API:
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate
+   pip install -r requirements.txt
+   uvicorn main:app --reload
+   ```
+3. Start frontend dashboard:
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
 
-### Installation
-
-```bash
-git clone https://github.com/wyl2607/esg-research-toolkit.git
-cd esg-research-toolkit
-
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
-
-### Configuration
-
-```bash
-cp .env.example .env
-```
-
-Set at least:
-
-```env
-OPENAI_API_KEY=your_openai_api_key_here
-APP_ENV=development
-APP_HOST=0.0.0.0
-APP_PORT=8000
-DATABASE_URL=sqlite:///./data/esg_toolkit.db
-```
-
-### Run The Service
-
-```bash
-uvicorn main:app --reload
-```
-
-Interactive API documentation:
-
-- Swagger UI: `http://localhost:8000/docs`
-- ReDoc: `http://localhost:8000/redoc`
-
-### Run Tests
-
-```bash
-pytest tests/ -v
-```
-
-## Docker Deployment
-
-### Quick Start
-
+### Docker
 ```bash
 cp .env.example .env
-docker compose up -d
-docker compose ps
-docker compose logs -f
-docker compose down
+docker compose up --build
 ```
 
-### Environment Variables
-
-Create a `.env` file with at least:
-
-```env
-OPENAI_API_KEY=your_openai_api_key_here
-```
-
-The container uses `DATABASE_URL=sqlite:///./data/esg_toolkit.db` by default and mounts `./data` and `./reports` as persistent volumes.
-
-## API Endpoints
-
-### System
+## 📡 API Reference
 
 | Method | Endpoint | Description |
 | --- | --- | --- |
-| `GET` | `/` | Service metadata and module list |
-| `GET` | `/health` | Health check |
-| `GET` | `/docs` | Swagger UI |
-| `GET` | `/redoc` | ReDoc |
-| `GET` | `/openapi.json` | OpenAPI schema |
-
-### Report Parser
-
-| Method | Endpoint | Description |
-| --- | --- | --- |
-| `POST` | `/report/upload` | Upload a PDF report and return structured `CompanyESGData` |
-| `GET` | `/report/companies` | List stored company reports |
-| `GET` | `/report/companies/{company_name}/{report_year}` | Retrieve a specific company report |
-
-### Taxonomy Scorer
-
-| Method | Endpoint | Description |
-| --- | --- | --- |
-| `POST` | `/taxonomy/score` | Score a `CompanyESGData` payload against the EU Taxonomy |
-| `POST` | `/taxonomy/report` | Generate a structured taxonomy report with gap analysis |
-| `POST` | `/taxonomy/report/text` | Generate a plain-text taxonomy summary |
+| `GET` | `/` | Service metadata and module overview |
+| `GET` | `/docs` | Swagger UI documentation |
+| `GET` | `/docs/oauth2-redirect` | OAuth2 redirect helper for Swagger |
+| `GET` | `/frameworks/compare` | Compare a company across all ESG frameworks |
+| `GET` | `/frameworks/list` | List supported ESG frameworks and metadata |
+| `GET` | `/frameworks/score` | Score a company against one framework |
+| `POST` | `/frameworks/score/upload` | Score uploaded CompanyESGData across all frameworks |
+| `GET` | `/health` | Service health check |
+| `GET` | `/openapi.json` | OpenAPI schema output |
+| `GET` | `/redoc` | ReDoc documentation |
+| `GET` | `/report/companies` | List stored company ESG reports |
+| `GET` | `/report/companies/{company_name}/{report_year}` | Fetch one stored company report |
+| `GET` | `/report/jobs/{batch_id}` | Check async batch upload status |
+| `POST` | `/report/upload` | Upload one PDF and extract ESG data |
+| `POST` | `/report/upload/batch` | Upload up to 20 PDFs for async extraction |
 | `GET` | `/taxonomy/activities` | List supported EU Taxonomy activities |
+| `POST` | `/taxonomy/report` | Generate structured taxonomy report (JSON) |
+| `GET` | `/taxonomy/report` | Generate taxonomy report from stored company data |
+| `GET` | `/taxonomy/report/pdf` | Download taxonomy report as PDF |
+| `POST` | `/taxonomy/report/text` | Generate plain-text taxonomy summary |
+| `POST` | `/taxonomy/score` | Return EU Taxonomy scoring result |
+| `GET` | `/techno/benchmarks` | Return benchmark LCOE ranges |
+| `POST` | `/techno/lcoe` | Calculate LCOE, NPV, IRR, and payback |
+| `POST` | `/techno/sensitivity` | Run CAPEX/OPEX sensitivity analysis |
 
-### Techno Economics
+## 🏗 Architecture
 
-| Method | Endpoint | Description |
+```text
+React Frontend (Vite)
+        ↓
+Nginx (production reverse proxy)
+        ↓
+FastAPI Backend
+        ↓
+SQLite + Local Storage (data/, reports/)
+```
+
+The frontend calls FastAPI APIs over HTTP, while backend modules share one database and
+filesystem workspace for report files and generated outputs.
+
+## 🌍 Multi-Framework ESG
+
+### EU Taxonomy 2020
+Aligned with six environmental objectives and Do No Significant Harm checks.
+Use it when you need EU-compliance scoring tied to technical screening criteria.
+
+### China CSRC 2023
+Implements the Chinese listed-company sustainability reporting guideline structure.
+Use it for E/S/G dimension coverage and local disclosure readiness assessment.
+
+### EU CSRD/ESRS
+Extends evaluation to ESRS themes such as E1-E5, S1, and G1.
+Use it to benchmark report completeness for broader EU sustainability obligations.
+
+## 📊 Frontend Pages
+
+- `DashboardPage.tsx` — Portfolio-level KPI cards and quick drill-down actions.
+- `UploadPage.tsx` — Single and batch ESG PDF upload with processing status.
+- `CompaniesPage.tsx` — Search, sort, and manage stored company report records.
+- `TaxonomyPage.tsx` — EU Taxonomy radar view, gaps, and PDF export.
+- `FrameworksPage.tsx` — Cross-framework comparison for EU Taxonomy, CSRC, and CSRD.
+- `ComparePage.tsx` — Side-by-side company metric comparison table.
+- `LcoePage.tsx` — LCOE calculator with benchmark and sensitivity charts.
+
+## 🔧 Configuration
+
+| Variable | Default | Description |
 | --- | --- | --- |
-| `POST` | `/techno/lcoe` | Calculate `LCOE`, `NPV`, and `IRR` |
-| `POST` | `/techno/sensitivity` | Run CAPEX and OPEX sensitivity analysis |
-| `GET` | `/techno/benchmarks` | Return benchmark LCOE ranges for selected technologies |
+| `OPENAI_API_KEY` | `Required` | OpenAI API key for ESG metric extraction. |
+| `APP_ENV` | `development` | Application environment (development/production). |
+| `APP_HOST` | `0.0.0.0` | Backend bind host. |
+| `APP_PORT` | `8000` | Backend listen port. |
+| `DATABASE_URL` | `sqlite:///./data/esg_toolkit.db` | SQLAlchemy connection string. |
+| `ARXIV_MAX_RESULTS` | `20` | Maximum paper records for literature pipeline. |
+| `ARXIV_DOWNLOAD_PDF` | `true` | Whether to download arXiv PDFs. |
+| `LOG_LEVEL` | `INFO` | Runtime logging level. |
+| `BATCH_MAX_WORKERS` | `2` | Max concurrent workers for batch parsing. |
 
-## Technology Stack
+## 🤝 Contributing
 
-- Backend: FastAPI, Uvicorn
-- Data validation: Pydantic v2
-- Database: SQLAlchemy 2.0, SQLite
-- AI extraction: OpenAI API
-- PDF processing: pdfplumber
-- Scientific computing: NumPy, SciPy
-- Data utilities: pandas, openpyxl
-- Reporting: ReportLab, python-docx
-- Testing: pytest, pytest-asyncio
+1. Fork the repository and create a feature branch.
+2. Keep changes focused, with clear reasoning in commits.
+3. Run backend tests and frontend lint/build checks before PR.
+4. Include verification evidence (commands + outputs) in the PR description.
+5. Open a pull request and respond to review feedback promptly.
 
-## Project Statistics
+## 📄 License
 
-Project snapshot for `v0.1.0`:
-
-| Metric | Value |
-| --- | --- |
-| Tracked files | 37 |
-| Core modules | 3 |
-| API endpoints | 15 |
-| Automated tests | 19 |
-| Recorded test pass rate | 100% |
-| Python version | 3.11+ |
-
-## Design Principles
-
-- First-principles scope: only features that directly support ESG compliance analysis and renewable project evaluation
-- API-first delivery: every core capability is exposed through documented HTTP endpoints
-- Type safety: Pydantic schemas and explicit Python typing
-- Modularity: report parsing, taxonomy scoring, and techno-economics remain separable but interoperable
-- Test-backed development: core business logic is covered by automated tests
-
-## Contributing
-
-Contributions are welcome.
-
-1. Fork the repository.
-2. Create a feature branch.
-3. Keep changes small, testable, and aligned with the toolkit's first-principles scope.
-4. Run linting and tests before opening a pull request.
-5. Submit a pull request with a clear rationale and verification notes.
-
-When contributing, prefer improvements that strengthen ESG analysis workflows, taxonomy scoring accuracy, or techno-economic modelling quality without adding unnecessary scope.
-
-## License
-
-This project is released under the MIT License.
+MIT
