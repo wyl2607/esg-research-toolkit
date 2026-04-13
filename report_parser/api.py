@@ -32,6 +32,117 @@ _MULTIPART_AVAILABLE = any(
 )
 
 
+def _parse_evidence_summary(raw_value: str | None) -> list[dict[str, str | int | float | None]]:
+    if not raw_value:
+        return []
+    try:
+        parsed = json.loads(raw_value)
+    except json.JSONDecodeError:
+        return []
+    return parsed if isinstance(parsed, list) else []
+
+
+def _normalize_evidence_anchor(
+    entry: dict,
+    *,
+    fallback_source_url: str | None = None,
+) -> dict[str, str | int | float | None]:
+    source = entry.get("source")
+    if not isinstance(source, str) or not source:
+        for key in ("source_url", "source_type", "file_hash"):
+            value = entry.get(key)
+            if isinstance(value, str) and value:
+                source = value
+                break
+    if (not isinstance(source, str) or not source) and fallback_source_url:
+        source = fallback_source_url
+
+    page = entry.get("page")
+    if page is None:
+        page = entry.get("page_number")
+
+    snippet = entry.get("snippet")
+    if not isinstance(snippet, str) or not snippet:
+        for key in ("extraction_note", "note"):
+            value = entry.get(key)
+            if isinstance(value, str) and value:
+                snippet = value
+                break
+
+    normalized: dict[str, str | int | float | None] = {
+        "metric": entry.get("metric") if isinstance(entry.get("metric"), str) else None,
+        "source": source if isinstance(source, str) else None,
+        "page": page if isinstance(page, (str, int, float)) else None,
+        "snippet": snippet if isinstance(snippet, str) else None,
+        "source_type": entry.get("source_type") if isinstance(entry.get("source_type"), str) else None,
+        "source_url": entry.get("source_url") if isinstance(entry.get("source_url"), str) else None,
+        "file_hash": entry.get("file_hash") if isinstance(entry.get("file_hash"), str) else None,
+    }
+    return normalized
+
+
+def _evidence_anchors_for_record(record) -> list[dict[str, str | int | float | None]]:
+    raw_items = _parse_evidence_summary(record.evidence_summary)
+    anchors: list[dict[str, str | int | float | None]] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        anchors.append(_normalize_evidence_anchor(item, fallback_source_url=record.source_url))
+    return anchors
+
+
+def _period_metadata(record) -> dict[str, str | int | None]:
+    """
+    Task 27B contract:
+    - `report_year` remains the legacy compatibility anchor
+    - normalized period fields are exposed in a stable nested object
+    """
+    report_year = record.report_year
+    label = record.reporting_period_label or str(report_year)
+    period_type = record.reporting_period_type or "annual"
+    source_document_type = record.source_document_type or "sustainability_report"
+    return {
+        "period_id": f"{record.company_name}:{report_year}:{period_type}:{label}",
+        "label": label,
+        "type": period_type,
+        "source_document_type": source_document_type,
+        "legacy_report_year": report_year,
+    }
+
+
+def _framework_metadata_item(row) -> dict[str, str | int | None]:
+    return {
+        "analysis_result_id": row.id,
+        "framework_id": row.framework_id,
+        "framework": row.framework_name,
+        "framework_version": row.framework_version,
+        "report_year": row.report_year,
+        "stored_at": row.created_at.isoformat() if row.created_at else None,
+    }
+
+
+def _numeric_values(records, field: str) -> list[float]:
+    values: list[float] = []
+    for record in records:
+        value = getattr(record, field, None)
+        if value is None:
+            continue
+        values.append(float(value))
+    return values
+
+
+def _coverage_rates(records, fields: list[str]) -> dict[str, float]:
+    if not records:
+        return {field: 0.0 for field in fields}
+
+    total = len(records)
+    coverage: dict[str, float] = {}
+    for field in fields:
+        present = sum(1 for record in records if getattr(record, field, None) is not None)
+        coverage[field] = round((present / total) * 100, 1)
+    return coverage
+
+
 if _MULTIPART_AVAILABLE:
 
     @router.post("/upload", response_model=CompanyESGData)
@@ -133,7 +244,7 @@ else:
 
 
 def _record_to_company_data(record) -> CompanyESGData:
-    evidence_summary = json.loads(record.evidence_summary) if record.evidence_summary else []
+    evidence_summary = _evidence_anchors_for_record(record)
     return CompanyESGData(
         company_name=record.company_name,
         report_year=record.report_year,
@@ -154,7 +265,7 @@ def _record_to_company_data(record) -> CompanyESGData:
         total_employees=record.total_employees,
         female_pct=record.female_pct,
         primary_activities=json.loads(record.primary_activities) if record.primary_activities else [],
-        evidence_summary=evidence_summary if isinstance(evidence_summary, list) else [],
+        evidence_summary=evidence_summary,
     )
 
 
@@ -175,21 +286,36 @@ def get_company_history(
     company_name: str,
     db: Session = Depends(get_db),
 ):
+    from esg_frameworks.storage import list_framework_results
+
     records = list_reports_for_company(db, company_name)
     if not records:
         raise HTTPException(404, f"No reports found for {company_name}")
 
     trend = []
     periods = []
+    framework_metadata = []
     for record in records:
+        anchors = _evidence_anchors_for_record(record)
+        period = _period_metadata(record)
+        framework_rows = list_framework_results(
+            db,
+            company_name=company_name,
+            report_year=record.report_year,
+        )
+        period_framework_metadata = [_framework_metadata_item(row) for row in framework_rows]
+        framework_metadata.extend(period_framework_metadata)
         periods.append(
             {
                 "report_year": record.report_year,
-                "reporting_period_label": record.reporting_period_label or str(record.report_year),
-                "reporting_period_type": record.reporting_period_type or "annual",
-                "source_document_type": record.source_document_type,
+                "reporting_period_label": period["label"],
+                "reporting_period_type": period["type"],
+                "source_document_type": period["source_document_type"],
+                "period": period,
                 "source_url": record.source_url,
                 "downloaded_at": record.downloaded_at.isoformat() if record.downloaded_at else None,
+                "evidence_anchors": anchors,
+                "framework_metadata": period_framework_metadata,
             }
         )
         trend.append(
@@ -209,6 +335,7 @@ def get_company_history(
         "company_name": company_name,
         "periods": periods,
         "trend": trend,
+        "framework_metadata": framework_metadata,
     }
 
 
@@ -218,6 +345,7 @@ def get_company_profile(
     db: Session = Depends(get_db),
 ):
     from esg_frameworks.storage import list_framework_results
+    from esg_frameworks.api import _SCORERS
 
     records = list_reports_for_company(db, company_name)
     if not records:
@@ -226,6 +354,8 @@ def get_company_profile(
     latest = records[-1]
     history = get_company_history(company_name=company_name, db=db)
     latest_data = _record_to_company_data(latest)
+    latest_evidence_anchors = _evidence_anchors_for_record(latest)
+    latest_period = _period_metadata(latest)
 
     framework_rows = list_framework_results(
         db,
@@ -235,9 +365,14 @@ def get_company_profile(
     framework_results = []
     for row in framework_rows:
         result = json.loads(row.result_payload)
+        result["framework_version"] = result.get("framework_version") or row.framework_version
+        result["framework_id"] = result.get("framework_id") or row.framework_id
+        result["framework"] = result.get("framework") or row.framework_name
         result["analysis_result_id"] = row.id
         result["stored_at"] = row.created_at.isoformat() if row.created_at else None
         framework_results.append(result)
+    latest_framework_metadata = [_framework_metadata_item(row) for row in framework_rows]
+    framework_scores = [scorer(latest_data).model_dump() for scorer in _SCORERS.values()]
 
     return {
         "company_name": company_name,
@@ -245,55 +380,130 @@ def get_company_profile(
         "latest_year": latest.report_year,
         "latest_period": {
             "report_year": latest.report_year,
-            "reporting_period_label": latest.reporting_period_label or str(latest.report_year),
-            "reporting_period_type": latest.reporting_period_type or "annual",
-            "source_document_type": latest.source_document_type,
+            "reporting_period_label": latest_period["label"],
+            "reporting_period_type": latest_period["type"],
+            "source_document_type": latest_period["source_document_type"],
+            "period": latest_period,
+            "framework_metadata": latest_framework_metadata,
         },
         "latest_metrics": latest_data.model_dump(),
         "trend": history["trend"],
         "periods": history["periods"],
+        "framework_metadata": history["framework_metadata"],
+        "framework_scores": framework_scores,
         "framework_results": framework_results,
         "evidence_summary": latest_data.evidence_summary,
+        "evidence_anchors": latest_evidence_anchors,
+    }
+
+
+@router.get("/dashboard/stats")
+def get_dashboard_stats(db: Session = Depends(get_db)):
+    records = list_reports(db, skip=0, limit=10000)
+    if not records:
+        return {
+            "total_companies": 0,
+            "avg_taxonomy_aligned": 0,
+            "avg_renewable_pct": 0,
+            "yearly_trend": [],
+            "top_emitters": [],
+            "bottom_emitters": [],
+            "coverage_rates": {},
+        }
+
+    from collections import defaultdict
+    import statistics
+
+    yearly: dict[int, int] = defaultdict(int)
+    for record in records:
+        yearly[record.report_year] += 1
+    yearly_trend = [{"year": year, "count": count} for year, count in sorted(yearly.items())]
+
+    taxonomy_values = _numeric_values(records, "taxonomy_aligned_revenue_pct")
+    renewable_values = _numeric_values(records, "renewable_energy_pct")
+
+    emitters = [
+        (record.company_name, record.report_year, float(record.scope1_co2e_tonnes))
+        for record in records
+        if record.scope1_co2e_tonnes is not None
+    ]
+    emitters_desc = sorted(emitters, key=lambda item: item[2], reverse=True)
+    emitters_asc = sorted(emitters, key=lambda item: item[2])
+
+    coverage_fields = [
+        "scope1_co2e_tonnes",
+        "scope2_co2e_tonnes",
+        "scope3_co2e_tonnes",
+        "energy_consumption_mwh",
+        "renewable_energy_pct",
+        "water_usage_m3",
+        "waste_recycled_pct",
+        "taxonomy_aligned_revenue_pct",
+        "female_pct",
+    ]
+
+    return {
+        "total_companies": len(records),
+        "avg_taxonomy_aligned": (
+            round(statistics.mean(taxonomy_values), 1) if taxonomy_values else 0
+        ),
+        "avg_renewable_pct": (
+            round(statistics.mean(renewable_values), 1) if renewable_values else 0
+        ),
+        "yearly_trend": yearly_trend,
+        "top_emitters": [
+            {"company": company, "year": year, "scope1": scope1}
+            for company, year, scope1 in emitters_desc[:5]
+        ],
+        "bottom_emitters": [
+            {"company": company, "year": year, "scope1": scope1}
+            for company, year, scope1 in emitters_asc[:5]
+        ],
+        "coverage_rates": _coverage_rates(records, coverage_fields),
     }
 
 
 @router.get("/companies")
 def list_company_reports(skip: int = 0, limit: int = 50, db: Session = Depends(get_db)):
     records = list_reports(db, skip, limit)
-    return [
-        {
-            "company_name": record.company_name,
-            "report_year": record.report_year,
-            "pdf_filename": record.pdf_filename,
-            "source_url": record.source_url,
-            "file_hash": record.file_hash,
-            "downloaded_at": (
-                record.downloaded_at.isoformat() if record.downloaded_at else None
-            ),
-            "reporting_period_label": record.reporting_period_label or str(record.report_year),
-            "reporting_period_type": record.reporting_period_type or "annual",
-            "source_document_type": record.source_document_type,
-            "created_at": (
-                record.created_at.isoformat() if record.created_at else None
-            ),
-            "scope1_co2e_tonnes": record.scope1_co2e_tonnes,
-            "scope2_co2e_tonnes": record.scope2_co2e_tonnes,
-            "scope3_co2e_tonnes": record.scope3_co2e_tonnes,
-            "energy_consumption_mwh": record.energy_consumption_mwh,
-            "renewable_energy_pct": record.renewable_energy_pct,
-            "water_usage_m3": record.water_usage_m3,
-            "waste_recycled_pct": record.waste_recycled_pct,
-            "total_revenue_eur": record.total_revenue_eur,
-            "taxonomy_aligned_revenue_pct": record.taxonomy_aligned_revenue_pct,
-            "total_capex_eur": record.total_capex_eur,
-            "taxonomy_aligned_capex_pct": record.taxonomy_aligned_capex_pct,
-            "total_employees": record.total_employees,
-            "female_pct": record.female_pct,
-            "primary_activities": json.loads(record.primary_activities) if record.primary_activities else [],
-            "evidence_summary": json.loads(record.evidence_summary) if record.evidence_summary else [],
-        }
-        for record in records
-    ]
+    payload = []
+    for record in records:
+        period = _period_metadata(record)
+        payload.append(
+            {
+                "company_name": record.company_name,
+                "report_year": record.report_year,
+                "pdf_filename": record.pdf_filename,
+                "source_url": record.source_url,
+                "file_hash": record.file_hash,
+                "downloaded_at": (
+                    record.downloaded_at.isoformat() if record.downloaded_at else None
+                ),
+                "reporting_period_label": period["label"],
+                "reporting_period_type": period["type"],
+                "source_document_type": period["source_document_type"],
+                "period": period,
+                "created_at": (
+                    record.created_at.isoformat() if record.created_at else None
+                ),
+                "scope1_co2e_tonnes": record.scope1_co2e_tonnes,
+                "scope2_co2e_tonnes": record.scope2_co2e_tonnes,
+                "scope3_co2e_tonnes": record.scope3_co2e_tonnes,
+                "energy_consumption_mwh": record.energy_consumption_mwh,
+                "renewable_energy_pct": record.renewable_energy_pct,
+                "water_usage_m3": record.water_usage_m3,
+                "waste_recycled_pct": record.waste_recycled_pct,
+                "total_revenue_eur": record.total_revenue_eur,
+                "taxonomy_aligned_revenue_pct": record.taxonomy_aligned_revenue_pct,
+                "total_capex_eur": record.total_capex_eur,
+                "taxonomy_aligned_capex_pct": record.taxonomy_aligned_capex_pct,
+                "total_employees": record.total_employees,
+                "female_pct": record.female_pct,
+                "primary_activities": json.loads(record.primary_activities) if record.primary_activities else [],
+                "evidence_summary": _evidence_anchors_for_record(record),
+            }
+        )
+    return payload
 
 
 @router.post("/companies/{company_name}/{report_year:int}/request-deletion")

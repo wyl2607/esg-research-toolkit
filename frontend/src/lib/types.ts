@@ -20,7 +20,26 @@ export interface CompanyESGData {
   total_employees: number | null
   female_pct: number | null
   primary_activities: string[]
-  evidence_summary?: Array<Record<string, string | number | null>>
+  evidence_summary?: EvidenceAnchor[]
+}
+
+export interface EvidenceAnchor {
+  metric: string | null
+  source: string | null
+  page: string | number | null
+  snippet: string | null
+  source_type?: string | null
+  source_url?: string | null
+  file_hash?: string | null
+}
+
+export interface FrameworkMetadata {
+  analysis_result_id: number
+  framework_id: string
+  framework: string
+  framework_version: string
+  report_year: number
+  stored_at: string | null
 }
 
 export interface BatchJobItem {
@@ -128,6 +147,8 @@ export interface CompanyHistoryPeriod {
   source_document_type: string | null
   source_url: string | null
   downloaded_at: string | null
+  evidence_anchors?: EvidenceAnchor[]
+  framework_metadata?: FrameworkMetadata[]
 }
 
 export interface CompanyTrendPoint {
@@ -150,10 +171,14 @@ export interface CompanyProfile {
     reporting_period_label: string
     reporting_period_type: string
     source_document_type: string | null
+    framework_metadata?: FrameworkMetadata[]
   }
   latest_metrics: CompanyESGData
   trend: CompanyTrendPoint[]
   periods: CompanyHistoryPeriod[]
+  framework_metadata?: FrameworkMetadata[]
+  framework_scores?: FrameworkScoreResult[]
   framework_results: Array<FrameworkScoreResult & { analysis_result_id?: number; stored_at?: string | null }>
-  evidence_summary: Array<Record<string, string | number | null>>
+  evidence_summary: EvidenceAnchor[]
+  evidence_anchors?: EvidenceAnchor[]
 }

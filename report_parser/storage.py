@@ -8,6 +8,27 @@ from sqlalchemy.orm import Session
 from core.database import Base
 from core.schemas import CompanyESGData
 
+DEFAULT_REPORTING_PERIOD_TYPE = "annual"
+DEFAULT_SOURCE_DOCUMENT_TYPE = "sustainability_report"
+
+
+def _normalized_period_fields(
+    data: CompanyESGData,
+    *,
+    reporting_period_label: str | None = None,
+    reporting_period_type: str | None = None,
+    source_document_type: str | None = None,
+) -> tuple[str, str, str]:
+    """
+    Transitional contract (Task 27B):
+    - legacy report_year stays canonical for compatibility
+    - period label/type/document are normalized additively around report_year
+    """
+    label = reporting_period_label or data.reporting_period_label or str(data.report_year)
+    period_type = reporting_period_type or data.reporting_period_type or DEFAULT_REPORTING_PERIOD_TYPE
+    document_type = source_document_type or data.source_document_type or DEFAULT_SOURCE_DOCUMENT_TYPE
+    return label, period_type, document_type
+
 
 class CompanyReport(Base):
     __tablename__ = "company_reports"
@@ -62,6 +83,13 @@ def save_report(
     evidence_summary: list[dict[str, str | int | float | None]] | None = None,
 ) -> CompanyReport:
     """保存企业报告（含来源追溯字段）。company_name + report_year 已存在则更新。"""
+    period_label, period_type, document_type = _normalized_period_fields(
+        data,
+        reporting_period_label=reporting_period_label,
+        reporting_period_type=reporting_period_type,
+        source_document_type=source_document_type,
+    )
+
     record = (
         db.query(CompanyReport)
         .filter_by(company_name=data.company_name, report_year=data.report_year)
@@ -72,9 +100,9 @@ def save_report(
         record = CompanyReport(
             company_name=data.company_name,
             report_year=data.report_year,
-            reporting_period_label=reporting_period_label or data.reporting_period_label or str(data.report_year),
-            reporting_period_type=reporting_period_type or data.reporting_period_type or "annual",
-            source_document_type=source_document_type or data.source_document_type or "sustainability_report",
+            reporting_period_label=period_label,
+            reporting_period_type=period_type,
+            source_document_type=document_type,
             pdf_filename=pdf_filename,
             source_url=source_url,
             file_hash=file_hash,
@@ -91,21 +119,18 @@ def save_report(
             record.file_hash = file_hash
         if downloaded_at:
             record.downloaded_at = downloaded_at
-        if reporting_period_label:
-            record.reporting_period_label = reporting_period_label
-        if reporting_period_type:
-            record.reporting_period_type = reporting_period_type
-        if source_document_type:
-            record.source_document_type = source_document_type
+        record.reporting_period_label = period_label
+        record.reporting_period_type = period_type
+        record.source_document_type = document_type
         if evidence_summary is not None:
             record.evidence_summary = json.dumps(evidence_summary)
 
     if not record.reporting_period_label:
-        record.reporting_period_label = data.reporting_period_label or str(data.report_year)
+        record.reporting_period_label = period_label
     if not record.reporting_period_type:
-        record.reporting_period_type = data.reporting_period_type or "annual"
+        record.reporting_period_type = period_type
     if not record.source_document_type:
-        record.source_document_type = data.source_document_type or "sustainability_report"
+        record.source_document_type = document_type
     if evidence_summary is None and not record.evidence_summary:
         record.evidence_summary = json.dumps(data.evidence_summary)
 

@@ -2,12 +2,26 @@ import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft, Building2, Clock3, Leaf, ShieldCheck, TrendingUp } from 'lucide-react'
-import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import {
+  Line,
+  LineChart,
+  Radar,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Legend,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts'
 
 import { MetricCard } from '@/components/MetricCard'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { getCompanyProfile } from '@/lib/api'
+import type { FrameworkScoreResult } from '@/lib/types'
 import { useTranslation } from 'react-i18next'
 import { localizeErrorMessage } from '@/lib/error-utils'
 
@@ -42,6 +56,23 @@ export function CompanyProfilePage() {
     [profile]
   )
 
+  const frameworkScores: FrameworkScoreResult[] = useMemo(() => {
+    if (!profile) return []
+    if (profile.framework_scores && profile.framework_scores.length > 0) {
+      return profile.framework_scores
+    }
+    return profile.framework_results
+  }, [profile])
+
+  const frameworkRadarData = useMemo(
+    () =>
+      frameworkScores.map((f) => ({
+        framework: f.framework,
+        score: Math.round(f.total_score * 100),
+      })),
+    [frameworkScores]
+  )
+
   if (isLoading) return <p className="text-slate-400">{t('common.loading')}</p>
   if (error) return <p className="text-red-500">{localizeErrorMessage(t, error, 'common.error')}</p>
   if (!profile) return <p className="text-red-500">{t('common.error')}</p>
@@ -74,16 +105,45 @@ export function CompanyProfilePage() {
 
       <div className="grid gap-4 md:grid-cols-4">
         <MetricCard label={t('companies.scope1')} value={asNum(m.scope1_co2e_tonnes, locale)} />
+        <MetricCard label={t('companies.scope2')} value={asNum(m.scope2_co2e_tonnes, locale)} />
         <MetricCard label={t('companies.employees')} value={asNum(m.total_employees, locale)} />
         <MetricCard label={t('companies.renewable')} value={asPct(m.renewable_energy_pct)} color="green" />
-        <MetricCard
-          label={t('upload.taxonomyAligned')}
-          value={asPct(m.taxonomy_aligned_revenue_pct)}
-          color="blue"
-        />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <ShieldCheck size={16} className="text-indigo-600" />
+              {t('profile.radarTitle')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {frameworkRadarData.length === 0 ? (
+              <p className="text-sm text-slate-400">{t('profile.noFrameworkResults')}</p>
+            ) : (
+              <>
+                <ResponsiveContainer width="100%" height={260}>
+                  <RadarChart data={frameworkRadarData}>
+                    <PolarGrid />
+                    <PolarAngleAxis dataKey="framework" tick={{ fontSize: 11 }} />
+                    <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fontSize: 10 }} />
+                    <Radar
+                      name={t('common.score')}
+                      dataKey="score"
+                      stroke="#4f46e5"
+                      fill="#4f46e5"
+                      fillOpacity={0.35}
+                    />
+                    <Tooltip formatter={(value) => [`${value}%`, t('common.score')]} />
+                  </RadarChart>
+                </ResponsiveContainer>
+                <p className="mt-2 text-xs text-slate-500">{t('profile.radarLegend')}</p>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
@@ -91,50 +151,107 @@ export function CompanyProfilePage() {
               {t('profile.trendTitle')}
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-3">
             <ResponsiveContainer width="100%" height={260}>
               <LineChart data={trendData}>
                 <XAxis dataKey="year" />
                 <YAxis />
                 <Tooltip />
-                <Line type="monotone" dataKey="scope1" stroke="#ef4444" strokeWidth={2} dot />
-                <Line type="monotone" dataKey="renewable" stroke="#16a34a" strokeWidth={2} dot />
-                <Line type="monotone" dataKey="taxonomy" stroke="#4f46e5" strokeWidth={2} dot />
+                <Legend />
+                <Line type="monotone" dataKey="scope1" stroke="#ef4444" strokeWidth={2} dot name="Scope 1" />
+                <Line
+                  type="monotone"
+                  dataKey="renewable"
+                  stroke="#16a34a"
+                  strokeWidth={2}
+                  dot
+                  name="Renewable %"
+                />
               </LineChart>
             </ResponsiveContainer>
             <p className="mt-2 text-xs text-slate-500">{t('profile.trendLegend')}</p>
           </CardContent>
         </Card>
+      </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <ShieldCheck size={16} className="text-indigo-600" />
-              {t('profile.frameworkTitle')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {profile.framework_results.length === 0 ? (
-              <p className="text-sm text-slate-400">{t('profile.noFrameworkResults')}</p>
-            ) : (
-              profile.framework_results.map((f) => (
-                <div key={`${f.framework_id}-${f.analysis_result_id ?? f.framework_version}`} className="rounded-md border p-3">
-                  <div className="flex items-center justify-between">
-                    <p className="font-medium text-slate-900">{f.framework}</p>
-                    <Badge>{f.grade}</Badge>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <ShieldCheck size={16} className="text-indigo-600" />
+            {t('profile.detailTitle')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {frameworkScores.length === 0 ? (
+            <p className="text-sm text-slate-400">{t('profile.noFrameworkResults')}</p>
+          ) : (
+            frameworkScores.map((framework) => (
+              <details
+                key={`${framework.framework_id}-${framework.framework_version ?? 'v1'}`}
+                className="rounded-md border p-3 open:bg-slate-50"
+              >
+                <summary className="cursor-pointer list-none">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="font-medium text-slate-900">{framework.framework}</p>
+                      <p className="text-xs text-slate-500">
+                        {t('common.score')}: {(framework.total_score * 100).toFixed(1)}% · {t('profile.detailCoverage')}:{' '}
+                        {framework.coverage_pct.toFixed(1)}%
+                      </p>
+                    </div>
+                    <Badge>{framework.grade}</Badge>
                   </div>
-                  <p className="mt-1 text-sm text-slate-600">
-                    {t('common.score')}: {(f.total_score * 100).toFixed(1)}% · {t('common.coverage')}: {f.coverage_pct.toFixed(1)}%
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    {t('profile.frameworkVersion')}: {f.framework_version ?? 'v1'}
+                </summary>
+                <div className="mt-3 space-y-3">
+                  <div className="space-y-2">
+                    {framework.dimensions.map((dimension) => (
+                      <div key={dimension.name}>
+                        <div className="mb-1 flex items-center justify-between text-xs text-slate-600">
+                          <span>{dimension.name}</span>
+                          <span>
+                            {dimension.disclosed}/{dimension.total}
+                          </span>
+                        </div>
+                        <div className="h-2 rounded-full bg-slate-100">
+                          <div
+                            className="h-2 rounded-full bg-indigo-500"
+                            style={{ width: `${Math.round(dimension.score * 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {framework.gaps.length > 0 && (
+                    <div>
+                      <p className="mb-1 text-xs font-medium text-slate-700">{t('profile.detailGaps')}</p>
+                      <ul className="list-disc space-y-1 pl-5 text-xs text-slate-600">
+                        {framework.gaps.map((gap, index) => (
+                          <li key={index}>{gap}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {framework.recommendations.length > 0 && (
+                    <div>
+                      <p className="mb-1 text-xs font-medium text-slate-700">
+                        {t('profile.detailRecommendations')}
+                      </p>
+                      <ul className="list-disc space-y-1 pl-5 text-xs text-slate-600">
+                        {framework.recommendations.map((recommendation, index) => (
+                          <li key={index}>{recommendation}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  <p className="text-xs text-slate-500">
+                    {t('profile.frameworkVersion')}: {framework.framework_version ?? 'v1'}
                   </p>
                 </div>
-              ))
-            )}
-          </CardContent>
-        </Card>
-      </div>
+              </details>
+            ))
+          )}
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
