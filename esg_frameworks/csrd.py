@@ -138,6 +138,7 @@ def score(data: CompanyESGData) -> FrameworkScoreResult:
     return FrameworkScoreResult(
         framework="EU CSRD / ESRS",
         framework_id="csrd",
+        framework_region="EU",
         company_name=data.company_name,
         report_year=data.report_year,
         total_score=round(total, 3),

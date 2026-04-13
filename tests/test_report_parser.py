@@ -137,6 +137,21 @@ def test_analyze_esg_data_invalid_json_with_regex_fallback() -> None:
     assert result.scope2_co2e_tonnes == pytest.approx(12500.0)
 
 
+def test_analyze_esg_data_timeout_with_regex_fallback() -> None:
+    text = "BYD 2024 Sustainability Report\nScope 1 emissions: 120,500 tCO2e"
+    with patch("report_parser.analyzer.complete", side_effect=Exception("connection timeout")):
+        result = analyze_esg_data(text, filename="BYD_2024.pdf")
+
+    assert result.company_name == "BYD"
+    assert result.scope1_co2e_tonnes == pytest.approx(120500.0)
+
+
+def test_analyze_esg_data_timeout_without_fallback_raises() -> None:
+    with patch("report_parser.analyzer.complete", side_effect=Exception("connection timeout")):
+        with pytest.raises(AIExtractionError, match="网络连接超时"):
+            analyze_esg_data("plain text without any metric", filename="unknown.pdf")
+
+
 def test_save_and_get_report(
     db_session: Session,
     make_company_data,

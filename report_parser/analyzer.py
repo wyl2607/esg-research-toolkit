@@ -62,6 +62,36 @@ def _parse_number(s: str) -> float | None:
         return None
 
 
+def _is_placeholder_company(name: str) -> bool:
+    lowered = (name or "").strip().lower()
+    return lowered in {"", "unknown", "report", "document", "file", "esg", "sustainability"}
+
+
+def _extract_scope_value(text: str, labels: tuple[str, ...]) -> float | None:
+    """
+    更宽松地提取 Scope 数值，兼容中英日（Scope/范围/スコープ）写法，
+    单位可选（部分报告把单位放在下一行）。
+    """
+    label_pattern = "|".join(labels)
+    patterns = [
+        rf"(?:{label_pattern})[^\d]{{0,220}}?([\d,]+(?:\.\d+)?)\s*(?:tCO2e|tCO₂e|万吨|吨)?",
+        rf"(?:{label_pattern}).{{0,300}}?([\d,]+(?:\.\d+)?)",
+    ]
+    for pattern in patterns:
+        candidates: list[float] = []
+        for match in re.finditer(pattern, text, re.IGNORECASE):
+            value = _parse_number(match.group(1))
+            if value is None:
+                continue
+            if "万吨" in match.group(0):
+                value *= 10000
+            candidates.append(value)
+        if candidates:
+            high_confidence = [v for v in candidates if v >= 50]
+            return max(high_confidence) if high_confidence else max(candidates)
+    return None
+
+
 def _regex_fallback(text: str, filename: str = "") -> CompanyESGData:
     """
     当 AI 提取失败时，用正则从文本中提取最基础的字段。
@@ -82,6 +112,10 @@ def _regex_fallback(text: str, filename: str = "") -> CompanyESGData:
         parts = re.split(r"[_\-\s]+", stem)
         if parts and len(parts[0]) > 1:
             result["company_name"] = parts[0]
+        # 文件名中的年份可作为兜底
+        year_from_file = re.search(r"(20\d{2})", stem)
+        if year_from_file:
+            result["report_year"] = int(year_from_file.group(1))
 
     # 年份
     year_match = re.search(
@@ -92,43 +126,29 @@ def _regex_fallback(text: str, filename: str = "") -> CompanyESGData:
     if year_match:
         result["report_year"] = int(year_match.group(1))
 
-    # Scope 1（中英文）
-    scope1 = re.search(
-        r"(?:Scope\s*1|范围一|范围\s*1)[^\d]{0,60}?([\d,]+\.?\d*)\s*(?:tCO2e|tCO₂e|万吨|吨)",
-        text,
-        re.IGNORECASE,
+    result["scope1_co2e_tonnes"] = _extract_scope_value(
+        text, ("Scope\\s*1", "范围一", "范围\\s*1", "スコープ\\s*1")
     )
-    if scope1:
-        val = _parse_number(scope1.group(1))
-        if val and "万吨" in scope1.group(0):
-            val *= 10000
-        result["scope1_co2e_tonnes"] = val
-
-    # Scope 2
-    scope2 = re.search(
-        r"(?:Scope\s*2|范围二|范围\s*2)[^\d]{0,60}?([\d,]+\.?\d*)\s*(?:tCO2e|tCO₂e|万吨|吨)",
-        text,
-        re.IGNORECASE,
+    result["scope2_co2e_tonnes"] = _extract_scope_value(
+        text, ("Scope\\s*2", "范围二", "范围\\s*2", "スコープ\\s*2")
     )
-    if scope2:
-        val = _parse_number(scope2.group(1))
-        if val and "万吨" in scope2.group(0):
-            val *= 10000
-        result["scope2_co2e_tonnes"] = val
-
-    # Scope 3
-    scope3 = re.search(
-        r"(?:Scope\s*3|范围三|范围\s*3)[^\d]{0,60}?([\d,]+\.?\d*)\s*(?:tCO2e|tCO₂e|万吨|吨)",
-        text,
-        re.IGNORECASE,
+    result["scope3_co2e_tonnes"] = _extract_scope_value(
+        text, ("Scope\\s*3", "范围三", "范围\\s*3", "スコープ\\s*3")
     )
-    if scope3:
-        val = _parse_number(scope3.group(1))
-        if val and "万吨" in scope3.group(0):
-            val *= 10000
-        result["scope3_co2e_tonnes"] = val
 
     return CompanyESGData(**result)
+
+
+def _has_meaningful_extraction(data: CompanyESGData) -> bool:
+    return any(
+        [
+            not _is_placeholder_company(data.company_name),
+            data.scope1_co2e_tonnes is not None,
+            data.scope2_co2e_tonnes is not None,
+            data.scope3_co2e_tonnes is not None,
+            bool(data.primary_activities),
+        ]
+    )
 
 
 # ── 主入口 ────────────────────────────────────────────────────────────────────
@@ -145,8 +165,8 @@ def analyze_esg_data(text: str, filename: str = "") -> CompanyESGData:
     """
     调用 AI 从文本中抽取 ESG 指标。
     - AI 成功 → 返回 CompanyESGData
-    - AI 失败（API 错误）→ 抛出 AIExtractionError
-    - JSON 解析失败 → 先尝试正则 fallback；fallback 也无法提取则抛出 AIExtractionError
+    - AI 调用/解析失败 → 自动尝试 regex fallback
+    - fallback 能提取关键字段时返回部分结果；否则抛出 AIExtractionError
     """
     extracted = _extract_relevant_sections(text)
     user = f"Corporate Report Text:\n\n{extracted}"
@@ -156,12 +176,20 @@ def analyze_esg_data(text: str, filename: str = "") -> CompanyESGData:
     except Exception as exc:
         err_str = str(exc)
         if "401" in err_str or "authentication" in err_str.lower() or "api_key" in err_str.lower():
-            raise AIExtractionError("AI 提取失败：API Key 无效或未配置，请检查 OPENAI_API_KEY 设置", exc)
-        if "429" in err_str or "rate_limit" in err_str.lower():
-            raise AIExtractionError("AI 提取失败：API 调用频率超限，请稍后重试", exc)
-        if "timeout" in err_str.lower() or "connection" in err_str.lower():
-            raise AIExtractionError("AI 提取失败：网络连接超时，请检查网络设置", exc)
-        raise AIExtractionError(f"AI 提取失败：{err_str[:200]}", exc)
+            reason = "AI 提取失败：API Key 无效或未配置，请检查 OPENAI_API_KEY 设置"
+        elif "429" in err_str or "rate_limit" in err_str.lower():
+            reason = "AI 提取失败：API 调用频率超限，请稍后重试"
+        elif "timeout" in err_str.lower() or "connection" in err_str.lower():
+            reason = "AI 提取失败：网络连接超时，请检查网络设置"
+        else:
+            reason = f"AI 提取失败：{err_str[:200]}"
+
+        logging.warning("AI extraction failed (%s), trying regex fallback", reason)
+        fallback = _regex_fallback(text, filename)
+        if _has_meaningful_extraction(fallback):
+            logging.info("Regex fallback extracted partial data for %s", fallback.company_name)
+            return fallback
+        raise AIExtractionError(reason, exc)
 
     try:
         raw = raw.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
@@ -170,7 +198,7 @@ def analyze_esg_data(text: str, filename: str = "") -> CompanyESGData:
     except Exception as exc:
         logging.warning("AI JSON parse failed, trying regex fallback: %s", exc)
         fallback = _regex_fallback(text, filename)
-        if fallback.company_name != "Unknown" or fallback.scope1_co2e_tonnes is not None:
+        if _has_meaningful_extraction(fallback):
             logging.info("Regex fallback extracted partial data for %s", fallback.company_name)
             return fallback
         raise AIExtractionError(

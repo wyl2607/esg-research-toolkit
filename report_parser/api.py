@@ -17,6 +17,7 @@ from report_parser.analyzer import AIExtractionError, analyze_esg_data
 from report_parser.batch_jobs import batch_manager
 from report_parser.extractor import extract_text_from_pdf
 from report_parser.storage import (
+    CompanyReport,
     get_report,
     hard_delete_report,
     list_reports,
@@ -153,6 +154,75 @@ def get_company_report(
     )
 
 
+@router.get("/companies/{company_name}/profile")
+def get_company_profile(
+    company_name: str,
+    db: Session = Depends(get_db),
+):
+    """
+    返回该企业所有年份报告 + 最新年份的六框架评分
+    """
+    from sqlalchemy import asc
+
+    records = (
+        db.query(CompanyReport)
+        .filter(
+            CompanyReport.company_name == company_name,
+            CompanyReport.deletion_requested == False,  # noqa: E712
+        )
+        .order_by(asc(CompanyReport.report_year))
+        .all()
+    )
+    if not records:
+        raise HTTPException(404, f"No reports found for {company_name}")
+
+    trend = [
+        {
+            "year": r.report_year,
+            "scope1": r.scope1_co2e_tonnes,
+            "scope2": r.scope2_co2e_tonnes,
+            "scope3": r.scope3_co2e_tonnes,
+            "renewable_pct": r.renewable_energy_pct,
+            "taxonomy_aligned": r.taxonomy_aligned_revenue_pct,
+            "female_pct": r.female_pct,
+        }
+        for r in records
+    ]
+
+    latest = records[-1]
+    latest_data = CompanyESGData(
+        company_name=latest.company_name,
+        report_year=latest.report_year,
+        scope1_co2e_tonnes=latest.scope1_co2e_tonnes,
+        scope2_co2e_tonnes=latest.scope2_co2e_tonnes,
+        scope3_co2e_tonnes=latest.scope3_co2e_tonnes,
+        energy_consumption_mwh=latest.energy_consumption_mwh,
+        renewable_energy_pct=latest.renewable_energy_pct,
+        water_usage_m3=latest.water_usage_m3,
+        waste_recycled_pct=latest.waste_recycled_pct,
+        total_revenue_eur=latest.total_revenue_eur,
+        taxonomy_aligned_revenue_pct=latest.taxonomy_aligned_revenue_pct,
+        total_capex_eur=latest.total_capex_eur,
+        taxonomy_aligned_capex_pct=latest.taxonomy_aligned_capex_pct,
+        total_employees=latest.total_employees,
+        female_pct=latest.female_pct,
+        primary_activities=json.loads(latest.primary_activities) if latest.primary_activities else [],
+    )
+
+    from esg_frameworks.api import _SCORERS
+
+    framework_scores = [scorer(latest_data).model_dump() for scorer in _SCORERS.values()]
+
+    return {
+        "company_name": company_name,
+        "years_available": [r.report_year for r in records],
+        "latest_year": latest.report_year,
+        "trend": trend,
+        "framework_scores": framework_scores,
+        "latest_metrics": latest_data.model_dump(),
+    }
+
+
 @router.get("/companies")
 def list_company_reports(skip: int = 0, limit: int = 50, db: Session = Depends(get_db)):
     records = list_reports(db, skip, limit)
@@ -165,6 +235,73 @@ def list_company_reports(skip: int = 0, limit: int = 50, db: Session = Depends(g
         }
         for record in records
     ]
+
+
+@router.get("/dashboard/stats")
+def get_dashboard_stats(db: Session = Depends(get_db)):
+    """
+    返回 Dashboard 所需的聚合统计数据：
+    - 公司数量、平均 Taxonomy 对齐度、平均可再生能源占比
+    - 按年份分组的上传趋势
+    - Scope 1 排放 Top 5 / Bottom 5
+    - 各指标覆盖率（有多少公司填写了该字段）
+    """
+    records = list_reports(db, skip=0, limit=10000)
+
+    if not records:
+        return {
+            "total_companies": 0,
+            "avg_taxonomy_aligned": 0,
+            "avg_renewable_pct": 0,
+            "yearly_trend": [],
+            "top_emitters": [],
+            "bottom_emitters": [],
+            "coverage_rates": {},
+        }
+
+    import statistics
+    from collections import defaultdict
+
+    yearly: dict[int, int] = defaultdict(int)
+    for record in records:
+        yearly[record.report_year] += 1
+    yearly_trend = [{"year": year, "count": count} for year, count in sorted(yearly.items())]
+
+    tax_vals = [record.taxonomy_aligned_revenue_pct for record in records if record.taxonomy_aligned_revenue_pct]
+    ren_vals = [record.renewable_energy_pct for record in records if record.renewable_energy_pct]
+
+    emitters = [
+        (record.company_name, record.report_year, record.scope1_co2e_tonnes)
+        for record in records
+        if record.scope1_co2e_tonnes
+    ]
+    emitters.sort(key=lambda item: item[2], reverse=True)
+
+    fields = [
+        "scope1_co2e_tonnes",
+        "scope2_co2e_tonnes",
+        "scope3_co2e_tonnes",
+        "energy_consumption_mwh",
+        "renewable_energy_pct",
+        "water_usage_m3",
+        "waste_recycled_pct",
+        "taxonomy_aligned_revenue_pct",
+        "female_pct",
+    ]
+    coverage = {
+        field: round(sum(1 for record in records if getattr(record, field) is not None) / len(records) * 100, 1)
+        for field in fields
+    }
+
+    return {
+        "total_companies": len(records),
+        "avg_taxonomy_aligned": round(statistics.mean(tax_vals), 1) if tax_vals else 0,
+        "avg_renewable_pct": round(statistics.mean(ren_vals), 1) if ren_vals else 0,
+        "yearly_trend": yearly_trend,
+        "top_emitters": [{"company": entry[0], "year": entry[1], "scope1": entry[2]} for entry in emitters[:5]],
+        "bottom_emitters": [{"company": entry[0], "year": entry[1], "scope1": entry[2]} for entry in emitters[-5:][::-1]],
+        "coverage_rates": coverage,
+    }
 
 
 @router.post("/companies/{company_name}/{report_year:int}/request-deletion")

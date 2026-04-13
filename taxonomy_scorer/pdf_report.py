@@ -2,15 +2,21 @@
 from __future__ import annotations
 
 import io
+import os
 from datetime import date
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import cm
+from reportlab.graphics import renderPDF
+from reportlab.graphics.shapes import Drawing, Line, Rect, String
+from reportlab.pdfbase.cidfonts import UnicodeCIDFont
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
-    HRFlowable, KeepTogether,
+    Flowable, HRFlowable, KeepTogether,
 )
 
 from core.schemas import CompanyESGData, TaxonomyScoreResult
@@ -41,31 +47,163 @@ OBJECTIVE_LABELS = {
     "biodiversity":          "Biodiversity",
 }
 
+# CJK font search paths (macOS + Linux)
+_CJK_FONT_CANDIDATES = [
+    ("/System/Library/Fonts/Supplemental/Songti.ttc", "Songti"),
+    ("/System/Library/Fonts/PingFang.ttc", "PingFang"),
+    ("/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc", "NotoSansCJK"),
+    ("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc", "NotoSansCJK"),
+    ("/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc", "WQYZenHei"),
+]
+
+_CJK_FONT_NAME = "Helvetica"
+
+
+def _register_cjk_font() -> str:
+    """Register the first available CJK font, fallback to Helvetica."""
+    global _CJK_FONT_NAME
+    for font_path, font_name in _CJK_FONT_CANDIDATES:
+        if not os.path.exists(font_path):
+            continue
+        try:
+            if font_path.endswith(".ttc"):
+                for idx in range(6):
+                    try:
+                        candidate = f"{font_name}_{idx}"
+                        pdfmetrics.registerFont(TTFont(candidate, font_path, subfontIndex=idx))
+                        _CJK_FONT_NAME = candidate
+                        return _CJK_FONT_NAME
+                    except Exception:
+                        continue
+            else:
+                pdfmetrics.registerFont(TTFont(font_name, font_path))
+                _CJK_FONT_NAME = font_name
+                return _CJK_FONT_NAME
+        except Exception:
+            continue
+    for cid_name in ("STSong-Light", "HeiseiMin-W3"):
+        try:
+            pdfmetrics.registerFont(UnicodeCIDFont(cid_name))
+            _CJK_FONT_NAME = cid_name
+            return _CJK_FONT_NAME
+        except Exception:
+            continue
+    return _CJK_FONT_NAME
+
+
+_register_cjk_font()
+
 
 def _styles():
     base = getSampleStyleSheet()
     return {
         "title": ParagraphStyle(
             "title", parent=base["Title"],
+            fontName=_CJK_FONT_NAME,
             fontSize=22, textColor=INDIGO, spaceAfter=4,
         ),
         "subtitle": ParagraphStyle(
             "subtitle", parent=base["Normal"],
+            fontName=_CJK_FONT_NAME,
             fontSize=10, textColor=SLATE, spaceAfter=12,
         ),
         "h2": ParagraphStyle(
             "h2", parent=base["Heading2"],
+            fontName=_CJK_FONT_NAME,
             fontSize=13, textColor=BLACK, spaceBefore=14, spaceAfter=6,
         ),
         "body": ParagraphStyle(
             "body", parent=base["Normal"],
+            fontName=_CJK_FONT_NAME,
             fontSize=9, textColor=BLACK, leading=14,
         ),
         "small": ParagraphStyle(
             "small", parent=base["Normal"],
+            fontName=_CJK_FONT_NAME,
             fontSize=8, textColor=SLATE, leading=12,
         ),
     }
+
+
+def _make_scope_bar_chart(
+    scope1: float | None,
+    scope2: float | None,
+    scope3: float | None,
+    width: float = 14 * cm,
+    height: float = 6 * cm,
+) -> Drawing:
+    """Build a Scope 1/2/3 emissions bar chart as a reportlab Drawing."""
+    d = Drawing(width, height)
+    values = [
+        ("Scope 1", scope1 or 0, "#ef4444"),
+        ("Scope 2", scope2 or 0, "#f97316"),
+        ("Scope 3", scope3 or 0, "#6366f1"),
+    ]
+    max_val = max((v for _, v, _ in values), default=1) or 1
+    bar_w = width / 5
+    gap = bar_w * 0.3
+    chart_h = height - 1.5 * cm
+
+    for i, (label, val, color) in enumerate(values):
+        x = gap + i * (bar_w + gap)
+        bar_h = (val / max_val) * chart_h
+        y_base = 1 * cm
+
+        rect = Rect(
+            x,
+            y_base,
+            bar_w,
+            bar_h,
+            fillColor=colors.HexColor(color),
+            strokeColor=None,
+        )
+        d.add(rect)
+
+        lbl = String(
+            x + bar_w / 2,
+            y_base - 0.35 * cm,
+            label,
+            textAnchor="middle",
+            fontSize=8,
+            fontName=_CJK_FONT_NAME,
+        )
+        d.add(lbl)
+
+        if val > 0:
+            val_str = f"{val/1000:.1f}k" if val > 1000 else str(int(val))
+            val_lbl = String(
+                x + bar_w / 2,
+                y_base + bar_h + 0.1 * cm,
+                val_str,
+                textAnchor="middle",
+                fontSize=7,
+                fontName=_CJK_FONT_NAME,
+            )
+            d.add(val_lbl)
+
+    d.add(Line(gap / 2, 1 * cm, width - gap / 2, 1 * cm, strokeColor=colors.HexColor("#94a3b8")))
+    title = String(
+        width / 2,
+        height - 0.3 * cm,
+        "GHG Emissions by Scope (tCO2e)",
+        textAnchor="middle",
+        fontSize=9,
+        fontName=_CJK_FONT_NAME,
+    )
+    d.add(title)
+    return d
+
+
+class _ChartFlowable(Flowable):
+    def __init__(self, drawing: Drawing):
+        super().__init__()
+        self.drawing = drawing
+
+    def wrap(self, *_):
+        return self.drawing.width, self.drawing.height
+
+    def draw(self):
+        renderPDF.draw(self.drawing, self.canv, 0, 0)
 
 
 def _progress_bar(score: float, width: float = 180, height: float = 10) -> Table:
@@ -97,10 +235,12 @@ def generate_pdf(
 ) -> bytes:
     """Return PDF bytes for a full EU Taxonomy report."""
     buf = io.BytesIO()
+    cjk_font = _CJK_FONT_NAME
     doc = SimpleDocTemplate(
         buf, pagesize=A4,
         leftMargin=2*cm, rightMargin=2*cm,
         topMargin=2*cm, bottomMargin=2*cm,
+        pageCompression=0,
     )
     s = _styles()
     story = []
@@ -130,7 +270,7 @@ def generate_pdf(
     kpi_table.setStyle(TableStyle([
         ("BACKGROUND",   (0, 0), (-1, 0), INDIGO),
         ("TEXTCOLOR",    (0, 0), (-1, 0), WHITE),
-        ("FONTNAME",     (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTNAME",     (0, 0), (-1, 0), cjk_font),
         ("FONTSIZE",     (0, 0), (-1, 0), 10),
         ("BACKGROUND",   (0, 1), (-1, -1), LIGHT),
         ("ROWBACKGROUNDS", (0, 1), (-1, -1), [WHITE, LIGHT]),
@@ -159,7 +299,7 @@ def generate_pdf(
     obj_table.setStyle(TableStyle([
         ("BACKGROUND",   (0, 0), (-1, 0), INDIGO),
         ("TEXTCOLOR",    (0, 0), (-1, 0), WHITE),
-        ("FONTNAME",     (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTNAME",     (0, 0), (-1, 0), cjk_font),
         ("FONTSIZE",     (0, 0), (-1, 0), 9),
         ("ROWBACKGROUNDS", (0, 1), (-1, -1), [WHITE, LIGHT]),
         ("GRID",         (0, 0), (-1, -1), 0.5, colors.HexColor("#e2e8f0")),
@@ -189,7 +329,7 @@ def generate_pdf(
     met_table.setStyle(TableStyle([
         ("BACKGROUND",   (0, 0), (-1, 0), SLATE),
         ("TEXTCOLOR",    (0, 0), (-1, 0), WHITE),
-        ("FONTNAME",     (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTNAME",     (0, 0), (-1, 0), cjk_font),
         ("FONTSIZE",     (0, 0), (-1, 0), 9),
         ("ROWBACKGROUNDS", (0, 1), (-1, -1), [WHITE, LIGHT]),
         ("GRID",         (0, 0), (-1, -1), 0.5, colors.HexColor("#e2e8f0")),
@@ -201,6 +341,14 @@ def generate_pdf(
     ]))
     story.append(met_table)
     story.append(Spacer(1, 14))
+
+    chart = _make_scope_bar_chart(
+        data.scope1_co2e_tonnes,
+        data.scope2_co2e_tonnes,
+        data.scope3_co2e_tonnes,
+    )
+    story.append(_ChartFlowable(chart))
+    story.append(Spacer(1, 0.5 * cm))
 
     # ── Gaps ──────────────────────────────────────────────────────────────
     if gaps:

@@ -16,6 +16,7 @@ class DimensionScore(BaseModel):
 class FrameworkScoreResult(BaseModel):
     framework: str            # "EU Taxonomy" | "China CSRC 2023" | "CSRD/ESRS"
     framework_id: str         # "eu_taxonomy" | "csrc_2023" | "csrd"
+    framework_region: str = "Global"   # EU / CN / US / Global
     company_name: str
     report_year: int
     total_score: float        # 0.0 – 1.0（加权综合）
