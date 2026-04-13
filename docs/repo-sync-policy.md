@@ -55,6 +55,9 @@ bash scripts/install_git_guards.sh
    - 写入脚本：`scripts/write_deploy_fingerprint.sh`
    - 远端打点：`scripts/stamp_remote_fingerprint.sh`
    - 默认文件：`/opt/esg-research-toolkit/.deploy-fingerprint.json`
+10. coco 守卫安装与统一发布流水线：
+   - 远端安装 hook：`scripts/setup_coco_guards.sh`
+   - 统一执行（本地→coco→可选部署）：`scripts/release_pipeline.sh`
 
 ## 处理“已上传但应本地保留”的标准动作
 
@@ -71,3 +74,13 @@ git rm --cached PROJECT_PROGRESS.md SECURITY.md SECURITY_SUMMARY.md SUMMARY.md
 2. 再执行 `bash scripts/review_file_zones.sh --staged --block-local`
 3. 推送前执行 `bash scripts/review_push_guard.sh origin/main`
 4. 全部通过后再 `git push`
+
+## 推荐发布入口（统一模板）
+
+```bash
+# 仅校验与同步到 coco（不部署）
+bash scripts/release_pipeline.sh --no-push
+
+# 从本地直接走到 VPS（包含 preflight + 重试 + 指纹）
+bash scripts/release_pipeline.sh --deploy-vps
+```
