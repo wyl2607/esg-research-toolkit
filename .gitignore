@@ -101,3 +101,10 @@ INCIDENT_LOG.md
 SECURITY.md
 SECURITY_SUMMARY.md
 SUMMARY.md
+
+# 本地开发约束/流程资产（不进入 GitHub）
+AGENTS.md
+docs/repo-sync-policy.md
+.guard/
+docs/codex-tasks/
+scripts/omx_*
