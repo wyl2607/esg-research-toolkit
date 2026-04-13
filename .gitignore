@@ -72,6 +72,8 @@ logs/
 .cache/
 tmp/
 .local/
+dev-local/
+local/
 
 # User-specific files (不要上传个人信息)
 PERSONAL_*

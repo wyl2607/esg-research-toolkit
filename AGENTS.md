@@ -24,6 +24,7 @@
 
 - Before push, run `scripts/review_push_guard.sh origin/main`.
 - Never push local-only files or conversational/non-engineering prose.
+- Every changed file must be classified (`public` or `local`) via `.guard/*-prefixes.txt` rules; unclassified files must not be pushed.
 
 ## Size Guardrails
 

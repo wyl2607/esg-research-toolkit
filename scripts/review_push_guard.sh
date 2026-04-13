@@ -27,6 +27,12 @@ fi
 echo "[guard] scanning range: $RANGE"
 
 FAILED=0
+
+# 文件分区审计：必须归类，且 local-only 变更默认阻断（删除 local 文件允许）
+if ! scripts/review_file_zones.sh --range "$RANGE" --block-local; then
+  FAILED=1
+fi
+
 LOCAL_ONLY_LIST=".guard/local-only-files.txt"
 if [ -f "$LOCAL_ONLY_LIST" ]; then
   while IFS= read -r local_only; do

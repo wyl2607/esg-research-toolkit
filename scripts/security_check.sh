@@ -10,6 +10,14 @@ cd "$PROJECT_DIR"
 echo "🔒 开始安全检查..."
 
 STAGED_FILES="$(git diff --cached --name-only)"
+FOUND_SENSITIVE=0
+
+# 文件分区审计：必须归类，且 local-only 变更默认阻断（删除 local 文件允许）
+if ! scripts/review_file_zones.sh --staged --block-local >/tmp/security_zone_check.out 2>&1; then
+  echo "❌ 文件分区审计失败（未归类或命中 local-only 变更）"
+  cat /tmp/security_zone_check.out
+  FOUND_SENSITIVE=1
+fi
 
 # 检查是否有敏感文件被暂存
 SENSITIVE_PATTERNS=(
@@ -29,8 +37,6 @@ SENSITIVE_PATTERNS=(
   "_PRIVATE\."
   "_PERSONAL\."
 )
-
-FOUND_SENSITIVE=0
 
 for pattern in "${SENSITIVE_PATTERNS[@]}"; do
   if printf '%s\n' "$STAGED_FILES" | grep -E "$pattern" > /dev/null 2>&1; then
