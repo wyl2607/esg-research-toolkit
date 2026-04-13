@@ -14,7 +14,7 @@ from esg_frameworks.api import _SCORERS
 from esg_frameworks.schemas import DimensionScore, FrameworkScoreResult
 from esg_frameworks.storage import save_framework_result
 from report_parser.api import list_company_reports
-from report_parser.api import get_company_history, get_company_profile
+from report_parser.api import get_company_history, get_company_profile, get_dashboard_stats
 from report_parser.analyzer import AIExtractionError, analyze_esg_data
 from report_parser.extractor import extract_text_from_pdf
 from report_parser.storage import CompanyReport, get_report, list_reports, save_report
@@ -387,3 +387,81 @@ def test_evidence_anchors_stay_stable_for_empty_and_legacy_records(
     assert profile["latest_period"]["framework_metadata"] == []
     assert profile["framework_metadata"] == []
     assert len(profile["framework_scores"]) == len(_SCORERS)
+
+
+def test_get_dashboard_stats_returns_empty_payload_for_no_records(db_session: Session) -> None:
+    payload = get_dashboard_stats(db=db_session)
+    assert payload["total_companies"] == 0
+    assert payload["avg_taxonomy_aligned"] == 0
+    assert payload["avg_renewable_pct"] == 0
+    assert payload["yearly_trend"] == []
+    assert payload["top_emitters"] == []
+    assert payload["bottom_emitters"] == []
+    assert payload["coverage_rates"] == {}
+
+
+def test_get_dashboard_stats_returns_aggregates_rankings_and_coverage(
+    db_session: Session,
+    make_company_data,
+) -> None:
+    save_report(
+        db_session,
+        make_company_data(
+            company_name="A Corp",
+            report_year=2023,
+            scope1_co2e_tonnes=100.0,
+            scope3_co2e_tonnes=1100.0,
+            renewable_energy_pct=20.0,
+            taxonomy_aligned_revenue_pct=10.0,
+            female_pct=40.0,
+        ),
+        pdf_filename="a-2023.pdf",
+    )
+    save_report(
+        db_session,
+        make_company_data(
+            company_name="B Corp",
+            report_year=2024,
+            scope1_co2e_tonnes=300.0,
+            scope3_co2e_tonnes=1300.0,
+            renewable_energy_pct=40.0,
+            taxonomy_aligned_revenue_pct=30.0,
+            female_pct=50.0,
+            water_usage_m3=5000.0,
+        ),
+        pdf_filename="b-2024.pdf",
+    )
+    save_report(
+        db_session,
+        make_company_data(
+            company_name="C Corp",
+            report_year=2024,
+            scope1_co2e_tonnes=50.0,
+            renewable_energy_pct=None,
+            taxonomy_aligned_revenue_pct=None,
+            female_pct=None,
+            scope3_co2e_tonnes=None,
+            water_usage_m3=None,
+            waste_recycled_pct=None,
+        ),
+        pdf_filename="c-2024.pdf",
+    )
+
+    payload = get_dashboard_stats(db=db_session)
+    assert payload["total_companies"] == 3
+    assert payload["avg_taxonomy_aligned"] == pytest.approx(20.0)
+    assert payload["avg_renewable_pct"] == pytest.approx(30.0)
+    assert payload["yearly_trend"] == [
+        {"year": 2023, "count": 1},
+        {"year": 2024, "count": 2},
+    ]
+
+    assert payload["top_emitters"][0]["company"] == "B Corp"
+    assert payload["top_emitters"][0]["scope1"] == pytest.approx(300.0)
+    assert payload["bottom_emitters"][0]["company"] == "C Corp"
+    assert payload["bottom_emitters"][0]["scope1"] == pytest.approx(50.0)
+
+    assert payload["coverage_rates"]["scope1_co2e_tonnes"] == pytest.approx(100.0)
+    assert payload["coverage_rates"]["scope3_co2e_tonnes"] == pytest.approx(66.7)
+    assert payload["coverage_rates"]["taxonomy_aligned_revenue_pct"] == pytest.approx(66.7)
+    assert payload["coverage_rates"]["female_pct"] == pytest.approx(66.7)
