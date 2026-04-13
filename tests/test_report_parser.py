@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from core.database import Base
 from core.schemas import CompanyESGData
+from esg_frameworks.api import _SCORERS
 from esg_frameworks.schemas import DimensionScore, FrameworkScoreResult
 from esg_frameworks.storage import save_framework_result
 from report_parser.api import list_company_reports
@@ -258,6 +259,10 @@ def test_list_company_reports_keeps_legacy_and_metric_fields(
     assert row["reporting_period_label"] == "2025"
     assert row["reporting_period_type"] == "annual"
     assert row["source_document_type"] == "sustainability_report"
+    assert row["period"]["legacy_report_year"] == 2025
+    assert row["period"]["label"] == "2025"
+    assert row["period"]["type"] == "annual"
+    assert row["period"]["source_document_type"] == "sustainability_report"
     assert row["evidence_summary"] == []
 
 
@@ -272,7 +277,14 @@ def test_company_history_and_profile_include_period_and_framework_results(
         reporting_period_label="FY2023",
         reporting_period_type="annual",
         source_document_type="annual_report",
-        evidence_summary=[{"metric": "renewable_energy_pct", "page": 10}],
+        evidence_summary=[
+            {
+                "metric": "renewable_energy_pct",
+                "page": 10,
+                "snippet": "Renewable electricity share reached 30%.",
+                "source": "Trend Corp Annual Report 2023",
+            }
+        ],
     )
     save_report(
         db_session,
@@ -281,7 +293,14 @@ def test_company_history_and_profile_include_period_and_framework_results(
         reporting_period_label="FY2024",
         reporting_period_type="annual",
         source_document_type="sustainability_report",
-        evidence_summary=[{"metric": "renewable_energy_pct", "page": 12}],
+        evidence_summary=[
+            {
+                "metric": "renewable_energy_pct",
+                "page": 12,
+                "snippet": "Renewable electricity share increased to 45%.",
+                "source": "Trend Corp Sustainability Report 2024",
+            }
+        ],
     )
 
     result = FrameworkScoreResult(
@@ -303,11 +322,68 @@ def test_company_history_and_profile_include_period_and_framework_results(
     assert history["company_name"] == "Trend Corp"
     assert len(history["periods"]) == 2
     assert history["periods"][0]["reporting_period_label"] == "FY2023"
+    assert history["periods"][0]["period"]["legacy_report_year"] == 2023
+    assert history["periods"][0]["period"]["label"] == "FY2023"
+    assert history["periods"][0]["period"]["type"] == "annual"
+    assert history["periods"][0]["period"]["source_document_type"] == "annual_report"
+    assert history["periods"][0]["evidence_anchors"][0]["page"] == 10
+    assert history["periods"][0]["evidence_anchors"][0]["source"] == "Trend Corp Annual Report 2023"
+    assert history["periods"][0]["evidence_anchors"][0]["snippet"] is not None
+    assert history["periods"][0]["framework_metadata"] == []
+    assert len(history["periods"][1]["framework_metadata"]) == 1
+    assert history["periods"][1]["framework_metadata"][0]["framework_id"] == "eu_taxonomy"
+    assert history["framework_metadata"][0]["framework_version"] == "2020/852"
     assert history["trend"][1]["renewable_pct"] == pytest.approx(45.0)
 
     profile = get_company_profile(company_name="Trend Corp", db=db_session)
     assert profile["latest_year"] == 2024
     assert profile["latest_period"]["reporting_period_label"] == "FY2024"
+    assert profile["latest_period"]["period"]["legacy_report_year"] == 2024
+    assert profile["latest_period"]["period"]["label"] == "FY2024"
+    assert profile["latest_period"]["period"]["type"] == "annual"
+    assert profile["latest_period"]["period"]["source_document_type"] == "sustainability_report"
+    assert profile["latest_period"]["framework_metadata"][0]["framework_id"] == "eu_taxonomy"
+    assert profile["framework_metadata"][0]["framework_version"] == "2020/852"
     assert len(profile["framework_results"]) == 1
     assert profile["framework_results"][0]["framework_version"] == "2020/852"
-    assert profile["evidence_summary"] == [{"metric": "renewable_energy_pct", "page": 12}]
+    assert profile["framework_results"][0]["framework_id"] == "eu_taxonomy"
+    assert len(profile["framework_scores"]) == len(_SCORERS)
+    assert {item["framework_id"] for item in profile["framework_scores"]} == set(_SCORERS.keys())
+    assert profile["evidence_summary"][0]["metric"] == "renewable_energy_pct"
+    assert profile["evidence_summary"][0]["page"] == 12
+    assert profile["evidence_anchors"][0]["page"] == 12
+
+
+def test_evidence_anchors_stay_stable_for_empty_and_legacy_records(
+    db_session: Session,
+    make_company_data,
+) -> None:
+    legacy = save_report(
+        db_session,
+        make_company_data(company_name="Legacy Corp", report_year=2022, renewable_energy_pct=20.0),
+        source_url="https://example.com/legacy-2022.pdf",
+        evidence_summary=[{"metric": "renewable_energy_pct", "source_type": "pdf"}],
+    )
+    empty = save_report(
+        db_session,
+        make_company_data(company_name="Legacy Corp", report_year=2023, renewable_energy_pct=25.0),
+        evidence_summary=[],
+    )
+    # simulate malformed historical payload
+    legacy.evidence_summary = "{not-json}"
+    db_session.commit()
+    db_session.refresh(legacy)
+    db_session.refresh(empty)
+
+    history = get_company_history(company_name="Legacy Corp", db=db_session)
+    assert history["periods"][0]["evidence_anchors"] == []
+    assert history["periods"][1]["evidence_anchors"] == []
+    assert history["periods"][0]["framework_metadata"] == []
+    assert history["framework_metadata"] == []
+
+    profile = get_company_profile(company_name="Legacy Corp", db=db_session)
+    assert profile["evidence_summary"] == []
+    assert profile["evidence_anchors"] == []
+    assert profile["latest_period"]["framework_metadata"] == []
+    assert profile["framework_metadata"] == []
+    assert len(profile["framework_scores"]) == len(_SCORERS)

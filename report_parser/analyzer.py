@@ -56,7 +56,31 @@ def _extract_relevant_sections(text: str) -> str:
 
 def _parse_number(s: str) -> float | None:
     """把 '930,440.28' 这类字符串转为 float。"""
-    s = s.replace(",", "").replace("，", "").strip()
+    s = s.strip().replace(" ", "").replace("，", ",")
+    if not s:
+        return None
+
+    # Handle mixed separators by treating the last separator as decimal.
+    if "," in s and "." in s:
+        if s.rfind(",") > s.rfind("."):
+            # German style: 1.234,56
+            s = s.replace(".", "").replace(",", ".")
+        else:
+            # English style: 1,234.56
+            s = s.replace(",", "")
+    elif "," in s:
+        # Only comma present: decimal if short suffix, else thousands.
+        parts = s.split(",")
+        if len(parts) == 2 and len(parts[1]) <= 2:
+            s = s.replace(",", ".")
+        else:
+            s = s.replace(",", "")
+    elif "." in s:
+        # Only dot present: detect German thousands style like 11.200 or 9.800.
+        parts = s.split(".")
+        if len(parts) > 1 and all(len(p) == 3 for p in parts[1:]):
+            s = "".join(parts)
+
     try:
         return float(s)
     except ValueError:
