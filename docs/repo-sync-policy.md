@@ -24,14 +24,21 @@
 
 1. `.gitignore` 已忽略 L3 文件与目录。
 2. `.guard/local-only-files.txt` 定义本地专用文件白名单（禁止提交）。
-3. `scripts/security_check.sh` 会在提交前阻断：
+3. `.guard/local-prefixes.txt` / `.guard/public-prefixes.txt` 定义目录级分区规则。
+4. `scripts/security_check.sh` 会在提交前阻断：
    - 本地专用文件
    - 中转/第三方 API 端点
    - 非官方 `OPENAI_BASE_URL`
-4. `scripts/review_push_guard.sh` 用于 push 前复核：
+5. `scripts/review_push_guard.sh` 用于 push 前复核：
 
 ```bash
 bash scripts/review_push_guard.sh origin/main
+```
+
+6. `scripts/review_file_zones.sh` 用于分层审查（含未分类文件阻断）：
+
+```bash
+bash scripts/review_file_zones.sh --staged --block-local
 ```
 
 ## 处理“已上传但应本地保留”的标准动作
@@ -46,5 +53,6 @@ git rm --cached PROJECT_PROGRESS.md SECURITY.md SECURITY_SUMMARY.md SUMMARY.md
 ## 日常提交建议
 
 1. 先执行 `bash scripts/security_check.sh`
-2. 再执行 `bash scripts/review_push_guard.sh origin/main`
-3. 通过后再 `git push`
+2. 再执行 `bash scripts/review_file_zones.sh --staged --block-local`
+3. 推送前执行 `bash scripts/review_push_guard.sh origin/main`
+4. 全部通过后再 `git push`

@@ -20,6 +20,12 @@
 - Use `{{COMPOSE}}` placeholder (resolved by preflight script) instead of hardcoding `docker compose`/`docker-compose`.
 - Treat DNS-to-expected-IP mismatch as warning unless task explicitly requires direct-IP DNS.
 
+## Push Review Gate (Mandatory)
+
+- Before push, run `scripts/review_push_guard.sh origin/main`.
+- Never push local-only files or conversational/non-engineering prose.
+- Every changed file must be classified (`public` or `local`) via `.guard/*-prefixes.txt` rules; unclassified files must not be pushed.
+
 ## Size Guardrails
 
 - `PROJECT_PROGRESS.md`: target <= 120 lines, hard cap <= 200
