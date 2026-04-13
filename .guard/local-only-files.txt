@@ -1,0 +1,4 @@
+# Files listed here are treated as local-only and must never be pushed.
+# One path per line, repo-root relative.
+
+SECURITY.md

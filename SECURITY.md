@@ -218,6 +218,7 @@ git grep -i "api[_-]key" | grep -v "\.example"
 
 如果发现安全问题：
 - GitHub Issues: https://github.com/wyl2607/esg-research-toolkit/issues
+- Email: wyl2607@gmail.com（标题加 [SECURITY]）
 
 ---
 
