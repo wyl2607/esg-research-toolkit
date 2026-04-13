@@ -25,6 +25,28 @@
     --ring: 221.2 83.2% 53.3%;
     --radius: 0.5rem;
   }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 6%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 7%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 75.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
+  }
 }
 
 @layer base {
@@ -34,5 +56,36 @@
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
+  }
+}
+
+@layer base {
+  .dark .bg-white {
+    background-color: hsl(var(--card));
+  }
+  .dark .bg-slate-50 {
+    background-color: rgb(15 23 42 / 0.55);
+  }
+  .dark .bg-slate-100 {
+    background-color: rgb(30 41 59 / 0.65);
+  }
+  .dark .border-slate-300 {
+    border-color: rgb(71 85 105 / 0.9);
+  }
+  .dark .text-slate-900 {
+    color: rgb(241 245 249);
+  }
+  .dark .text-slate-800 {
+    color: rgb(226 232 240);
+  }
+  .dark .text-slate-700 {
+    color: rgb(203 213 225);
+  }
+  .dark .text-slate-600,
+  .dark .text-slate-500 {
+    color: rgb(148 163 184);
+  }
+  .dark .text-slate-400 {
+    color: rgb(100 116 139);
   }
 }

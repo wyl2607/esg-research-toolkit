@@ -1,13 +1,15 @@
 import { Outlet } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { LanguageSwitcher } from './LanguageSwitcher'
+import { ThemeSwitcher } from './ThemeSwitcher'
 
 export function Layout() {
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden">
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="h-10 border-b bg-white flex items-center justify-end px-6 shrink-0">
+        <header className="h-10 border-b bg-white flex items-center justify-end px-6 shrink-0 gap-2">
+          <ThemeSwitcher />
           <LanguageSwitcher />
         </header>
         <main className="flex-1 overflow-y-auto">

@@ -44,8 +44,8 @@ export function Sidebar() {
               )
             }
           >
-            <Icon size={16} />
-            {label}
+            <Icon size={16} className="shrink-0" />
+            <span className="min-w-0 truncate">{label}</span>
           </NavLink>
         ))}
       </nav>
