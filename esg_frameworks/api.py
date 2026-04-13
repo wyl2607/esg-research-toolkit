@@ -1,4 +1,5 @@
 import json
+from dataclasses import asdict
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -7,6 +8,7 @@ from sqlalchemy.orm import Session
 from core.database import get_db
 from core.schemas import CompanyESGData
 from esg_frameworks import csrc_2023, csrd, eu_taxonomy
+from esg_frameworks.comparison import build_comparison
 from esg_frameworks.schemas import FrameworkScoreResult, MultiFrameworkReport
 from esg_frameworks.storage import (
     get_framework_result,
@@ -83,6 +85,22 @@ def compare_frameworks(
         frameworks=results,
         summary=_make_summary(results),
     )
+
+
+@router.get("/compare/regional")
+def compare_regional_frameworks(
+    company_name: str = Query(...),
+    report_year: int = Query(...),
+    db: Session = Depends(get_db),
+):
+    """三地对比分析：返回 RegionalComparisonReport。"""
+    data = _load_company(db, company_name, report_year)
+    now = datetime.now(timezone.utc).isoformat()
+    results = [scorer(data).model_copy(update={"analyzed_at": now}) for scorer in _SCORERS.values()]
+    for result in results:
+        save_framework_result(db, result, framework_version=result.framework_version)
+    report = build_comparison(data, results)
+    return asdict(report)
 
 
 @router.post("/score/upload", response_model=MultiFrameworkReport)
