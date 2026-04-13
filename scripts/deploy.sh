@@ -26,7 +26,7 @@ mkdir -p "$DATA_DIR" "$REPORTS_DIR"
 # 4. Check .env.prod exists
 if [ ! -f "$REPO_DIR/.env.prod" ]; then
     echo "ERROR: $REPO_DIR/.env.prod not found!"
-    echo "Create it with: OPENAI_API_KEY, OPENAI_BASE_URL, OPENAI_MODEL"
+    echo "Create it with: OPENAI_API_KEY, OPENAI_MODEL (OPENAI_BASE_URL optional, defaults to official OpenAI endpoint)"
     exit 1
 fi
 

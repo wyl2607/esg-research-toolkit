@@ -1,0 +1,9 @@
+# Files listed here are treated as local-only and must never be pushed.
+# One path per line, repo-root relative.
+
+SECURITY.md
+SECURITY_SUMMARY.md
+SUMMARY.md
+PROJECT_PROGRESS.md
+INCIDENT_LOG.md
+.guard/ENGINEERING_MEMORY.md

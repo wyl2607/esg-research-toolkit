@@ -27,10 +27,10 @@ fi
 if [ ! -f "$REPO_DIR/.env.prod" ]; then
     cat > "$REPO_DIR/.env.prod" << 'ENV'
 OPENAI_API_KEY=sk-YOUR-KEY-HERE
-OPENAI_BASE_URL=https://relay.nf.video/v1
 OPENAI_MODEL=gpt-5.3-codex
 DATABASE_URL=sqlite:///./data/esg_toolkit.db
 ENV
+    echo "NOTICE: .env.prod 不再预置任何中转/自定义 URL 端点，默认使用官方 OpenAI API。"
     echo "IMPORTANT: Edit $REPO_DIR/.env.prod and add your API key!"
 fi
 
