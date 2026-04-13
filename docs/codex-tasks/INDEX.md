@@ -96,8 +96,9 @@ ssh usa-vps "echo 'SSH OK'"
 
 Task 05 需要配置 `.env.prod`，请准备好：
 - `OPENAI_API_KEY`
-- `OPENAI_BASE_URL`（可选，默认 https://api.openai.com/v1）
 - `OPENAI_MODEL`（可选，默认 gpt-4o-mini）
+
+> GitHub 仓库内容不应包含任何中转/第三方 API 端点；`OPENAI_BASE_URL` 如需自定义，仅在私有环境变量中设置。
 
 ### 3. 确认 DNS 解析
 

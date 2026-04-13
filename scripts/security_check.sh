@@ -48,8 +48,12 @@ if [ -f "$LOCAL_ONLY_LIST" ]; then
       \#*) continue ;;
     esac
     if printf '%s\n' "$STAGED_FILES" | grep -Fx "$local_only" > /dev/null 2>&1; then
-      echo "❌ 本地专用文件禁止提交: $local_only"
-      FOUND_SENSITIVE=1
+      # 删除本地专用文件（D）是允许的；新增/修改/重命名不允许。
+      local_status="$(git diff --cached --name-status -- "$local_only" | awk 'NR==1 {print $1}')"
+      if [ -n "$local_status" ] && [ "$local_status" != "D" ]; then
+        echo "❌ 本地专用文件禁止提交: $local_only (status=$local_status)"
+        FOUND_SENSITIVE=1
+      fi
     fi
   done < "$LOCAL_ONLY_LIST"
 fi

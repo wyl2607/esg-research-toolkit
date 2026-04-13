@@ -71,6 +71,7 @@ logs/
 *.temp
 .cache/
 tmp/
+.local/
 
 # User-specific files (不要上传个人信息)
 PERSONAL_*
@@ -78,6 +79,7 @@ PRIVATE_*
 *_PRIVATE.*
 *_PERSONAL.*
 .superpowers/
+.guard/ENGINEERING_MEMORY.md
 
 # 三层部署文档（包含内网 IP 和 VPS IP）
 docs/codex-tasks/task_05_*.md
@@ -94,3 +96,6 @@ docs/codex-tasks/THREE_TIER_INDEX.md
 # 项目进度和事件日志（可能包含敏感路径）
 PROJECT_PROGRESS.md
 INCIDENT_LOG.md
+SECURITY.md
+SECURITY_SUMMARY.md
+SUMMARY.md

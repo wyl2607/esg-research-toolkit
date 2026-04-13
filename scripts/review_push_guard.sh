@@ -32,11 +32,15 @@ if [ -f "$LOCAL_ONLY_LIST" ]; then
   while IFS= read -r local_only; do
     [ -z "$local_only" ] && continue
     case "$local_only" in
-      \\#*) continue ;;
+      \#*) continue ;;
     esac
     if printf '%s\n' "$CHANGED_FILES" | grep -Fx "$local_only" >/dev/null 2>&1; then
-      echo "[guard][FAIL] local-only file changed in push range: $local_only"
-      FAILED=1
+      # 删除本地专用文件允许推送；其他变更类型阻断。
+      if git diff --name-status "$RANGE" -- "$local_only" \
+        | grep -E '^(A|M|R|C|T|U|X|B)' >/dev/null 2>&1; then
+        echo "[guard][FAIL] local-only file changed in push range: $local_only"
+        FAILED=1
+      fi
     fi
   done < "$LOCAL_ONLY_LIST"
 fi
@@ -56,6 +60,21 @@ for prose in "${BLOCKED_PROSE_PATTERNS[@]}"; do
     FAILED=1
   fi
 done
+
+if git diff "$RANGE" \
+  | grep -E '^\+' | grep -vE '^\+\+\+' \
+  | grep -E "(relay\\.nf\\.video|api\\.longcat\\.chat|ark\\.cn-beijing\\.volces\\.com)" >/dev/null 2>&1; then
+  echo "[guard][FAIL] relay/third-party API endpoint found in outgoing changes"
+  FAILED=1
+fi
+
+if git diff "$RANGE" \
+  | grep -E '^\+' | grep -vE '^\+\+\+' \
+  | grep -E "OPENAI_BASE_URL\\s*=\\s*https?://" \
+  | grep -vE "OPENAI_BASE_URL\\s*=\\s*https://api\\.openai\\.com/v1" >/dev/null 2>&1; then
+  echo "[guard][FAIL] OPENAI_BASE_URL must be official endpoint or omitted"
+  FAILED=1
+fi
 
 EMAIL_REGEX="[A-Za-z0-9][A-Za-z0-9._%+-]*@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}"
 
