@@ -18,10 +18,10 @@ Use:
 
 ```bash
 bash scripts/preflight_safe_exec.sh \
-  --target root@192.227.130.69 \
+  --target root@<vps-host-or-ip> \
   --remote-dir /opt/esg-research-toolkit \
   --domain esg.meichen.beauty \
-  --expected-ip 192.227.130.69 \
+  --expected-ip <expected-public-ip> \
   --preflight-only
 ```
 
@@ -29,10 +29,10 @@ Then execute actions via the same script:
 
 ```bash
 bash scripts/preflight_safe_exec.sh \
-  --target root@192.227.130.69 \
+  --target root@<vps-host-or-ip> \
   --remote-dir /opt/esg-research-toolkit \
   --domain esg.meichen.beauty \
-  --expected-ip 192.227.130.69 \
+  --expected-ip <expected-public-ip> \
   --exec "cd /opt/esg-research-toolkit && {{COMPOSE}} -f docker-compose.prod.yml ps" \
   --exec "curl -sf http://127.0.0.1:8001/health"
 ```

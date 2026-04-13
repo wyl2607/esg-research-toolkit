@@ -43,10 +43,10 @@ Template tips:
 
 Example:
   $SCRIPT_NAME \
-    --target root@192.227.130.69 \
+    --target root@<vps-host-or-ip> \
     --remote-dir /opt/esg-research-toolkit \
     --domain esg.meichen.beauty \
-    --expected-ip 192.227.130.69 \
+    --expected-ip <expected-public-ip> \
     --exec "cd /opt/esg-research-toolkit && {{COMPOSE}} -f docker-compose.prod.yml ps"
 USAGE
 }
