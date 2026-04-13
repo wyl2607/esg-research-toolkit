@@ -169,23 +169,15 @@ Codex 完成所有任务后，项目将达到：
 
 ---
 
-## 💤 现在你可以睡觉了！
-
-所有准备工作已完成。明天醒来后：
+## 执行检查清单
 
 1. 运行 `./scripts/codex_loop.sh`
-2. 等待 Codex 完成所有任务（约 2-4 小时）
-3. 检查 `logs/` 目录查看执行日志
-4. 如果一切顺利，推送代码并打 v0.2.0 tag
+2. 等待任务执行完成并检查 `logs/` 目录
+3. 验证测试与部署结果
+4. 通过后再执行代码推送与版本标签发布
 
 ---
 
-## 📞 联系方式
+## 支持渠道
 
-- GitHub: https://github.com/wyl2607/esg-research-toolkit
 - Issues: https://github.com/wyl2607/esg-research-toolkit/issues
-- Email: wyl2607@gmail.com
-
----
-
-**祝你好梦！🌙**

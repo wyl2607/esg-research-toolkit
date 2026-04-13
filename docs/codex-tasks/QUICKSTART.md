@@ -169,4 +169,3 @@ git push origin v0.2.0
 
 - GitHub: https://github.com/wyl2607/esg-research-toolkit
 - Issues: https://github.com/wyl2607/esg-research-toolkit/issues
-- Email: wyl2607@gmail.com

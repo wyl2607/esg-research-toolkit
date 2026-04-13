@@ -124,4 +124,3 @@ report_parser  analyzer    taxonomy_scorer  techno    reporter
 ## 联系方式
 
 - GitHub Issues: https://github.com/wyl2607/esg-research-toolkit/issues
-- 项目维护者: wyl2607@gmail.com
