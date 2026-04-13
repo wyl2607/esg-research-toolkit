@@ -11,7 +11,18 @@ jobs:
     needs: []
 
     steps:
+      - name: Validate deploy secrets
+        id: deploy_secrets
+        run: |
+          if [ -z "${{ secrets.VPS_HOST }}" ] || [ -z "${{ secrets.VPS_DEPLOY_KEY }}" ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Skipping VPS deploy: set VPS_HOST and VPS_DEPLOY_KEY repository secrets."
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Deploy to USA VPS
+        if: steps.deploy_secrets.outputs.ready == 'true'
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -34,3 +45,7 @@ jobs:
               sleep 3
             done
             echo "✗ Health check failed" && exit 1
+
+      - name: Deploy skipped (missing secrets)
+        if: steps.deploy_secrets.outputs.ready != 'true'
+        run: echo "Deploy step skipped because required secrets are not configured."
