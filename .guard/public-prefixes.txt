@@ -7,6 +7,7 @@
 .guard/public-prefixes.txt
 .guard/ZONE_POLICY.md
 .gitignore
+.dockerignore
 AGENTS.md
 Dockerfile
 docker-compose.yml

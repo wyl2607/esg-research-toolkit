@@ -5,8 +5,12 @@ __pycache__/
 .git/
 .env
 .omx/
+.local/
+.guard/
 logs/
 data/
 reports/
 .mypy_cache/
 .ruff_cache/
+frontend/node_modules/
+frontend/dist/

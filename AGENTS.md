@@ -4,12 +4,13 @@
 
 1. `~/AGENTS.md`
 2. `tools/automation/workspace-guides/project-records-standard.md`
-3. `PROJECT_PROGRESS.md`
-4. `INCIDENT_LOG.md` (if present)
+3. `.local/engineering-records/`（本地工程记录）
+4. `.guard/ENGINEERING_MEMORY.md`（本地记忆，若存在）
 
 ## Record Contract (Mandatory)
 
-- `PROJECT_PROGRESS.md` / `INCIDENT_LOG.md` only store code-related, verifiable truth.
+- 本项目工程过程记录默认写入 `.local/engineering-records/`（不上传）。
+- 仅在明确需要公开同步时，才新增/更新仓库内公开记录文档。
 - One status item has one canonical location; link elsewhere instead of copy-paste duplication.
 - If state is unchanged, do not append new dated prose.
 
@@ -28,8 +29,7 @@
 
 ## Size Guardrails
 
-- `PROJECT_PROGRESS.md`: target <= 120 lines, hard cap <= 200
-- `INCIDENT_LOG.md`: target <= 120 lines, hard cap <= 220
+- 本地工程记录按主题拆分，避免单文件过大（建议单文件 <= 200 行）
 
 ## Active Development Exception
 
