@@ -5,6 +5,20 @@ import { Badge } from '@/components/ui/badge'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 
+const readinessFields = [
+  'scope1_co2e_tonnes',
+  'scope2_co2e_tonnes',
+  'scope3_co2e_tonnes',
+  'energy_consumption_mwh',
+  'renewable_energy_pct',
+  'water_usage_m3',
+  'waste_recycled_pct',
+  'total_revenue_eur',
+  'total_capex_eur',
+  'total_employees',
+  'female_pct',
+] as const
+
 export function DashboardPage() {
   const navigate = useNavigate()
   const { data: companies = [], isLoading } = useQuery({
@@ -12,17 +26,43 @@ export function DashboardPage() {
     queryFn: listCompanies,
   })
 
-  const avgTaxonomy =
-    companies.length
-      ? (
-          companies.reduce(
-            (s, c) => s + (c.taxonomy_aligned_revenue_pct ?? 0),
-            0
-          ) / companies.length
-        ).toFixed(1)
-      : '—'
+  const taxonomyAvailable = companies.filter(
+    (c) => c.taxonomy_aligned_revenue_pct != null
+  )
+  const avgTaxonomy = taxonomyAvailable.length
+    ? (
+        taxonomyAvailable.reduce(
+          (s, c) => s + (c.taxonomy_aligned_revenue_pct ?? 0),
+          0
+        ) / taxonomyAvailable.length
+      ).toFixed(1)
+    : '—'
 
-  const recent = [...companies].slice(-5).reverse()
+  const avgReadiness = companies.length
+    ? (
+        companies.reduce((sum, company) => {
+          const filled = readinessFields.filter(
+            (field) => company[field] !== null && company[field] !== undefined
+          ).length
+          const activitiesReady = company.primary_activities?.length ? 1 : 0
+          const total = readinessFields.length + 1
+          return sum + ((filled + activitiesReady) / total) * 100
+        }, 0) / companies.length
+      ).toFixed(1)
+    : '—'
+
+  const taxonomyCardLabel = taxonomyAvailable.length
+    ? 'Avg Taxonomy Alignment'
+    : 'Avg Taxonomy Readiness (Proxy)'
+  const taxonomyCardValue = taxonomyAvailable.length
+    ? `${avgTaxonomy}%`
+    : isLoading
+      ? '…'
+      : `${avgReadiness}%`
+
+  const recent = [...companies]
+    .sort((a, b) => b.report_year - a.report_year)
+    .slice(0, 5)
 
   return (
     <div className="space-y-8">
@@ -38,8 +78,8 @@ export function DashboardPage() {
           color="blue"
         />
         <MetricCard
-          label="Avg Taxonomy Alignment"
-          value={isLoading ? '…' : `${avgTaxonomy}%`}
+          label={taxonomyCardLabel}
+          value={taxonomyCardValue}
           color="green"
         />
         <MetricCard
@@ -49,11 +89,7 @@ export function DashboardPage() {
               ? '…'
               : companies.length === 0
                 ? '—'
-                : companies.filter(
-                    (c) =>
-                      c.taxonomy_aligned_revenue_pct !== null &&
-                      (c.taxonomy_aligned_revenue_pct ?? 0) > 0
-                  ).length
+                : taxonomyAvailable.length
           }
         />
       </div>

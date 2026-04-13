@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from core.database import Base
 from core.schemas import CompanyESGData
+from report_parser.api import list_company_reports
 from report_parser.analyzer import AIExtractionError, analyze_esg_data
 from report_parser.extractor import extract_text_from_pdf
 from report_parser.storage import CompanyReport, get_report, list_reports, save_report
@@ -173,3 +174,29 @@ def test_list_reports(
         ("Alpha Energy", 2023),
         ("Beta Renewables", 2024),
     }
+
+
+def test_list_company_reports_keeps_legacy_and_metric_fields(
+    db_session: Session,
+    make_company_data,
+) -> None:
+    save_report(
+        db_session,
+        make_company_data(company_name="Legacy Check", report_year=2025),
+        pdf_filename="legacy-check.pdf",
+    )
+
+    rows = list_company_reports(db=db_session)
+    assert len(rows) == 1
+
+    row = rows[0]
+    assert row["company_name"] == "Legacy Check"
+    assert row["report_year"] == 2025
+    assert row["pdf_filename"] == "legacy-check.pdf"
+    assert isinstance(row["created_at"], str)
+    assert "T" in row["created_at"]
+
+    # keep full metrics payload for frontend dashboards and comparisons
+    assert row["scope1_co2e_tonnes"] == pytest.approx(123.4)
+    assert row["taxonomy_aligned_revenue_pct"] is None
+    assert row["primary_activities"] == ["solar_pv"]

@@ -161,7 +161,23 @@ def list_company_reports(skip: int = 0, limit: int = 50, db: Session = Depends(g
             "company_name": record.company_name,
             "report_year": record.report_year,
             "pdf_filename": record.pdf_filename,
-            "created_at": record.created_at.isoformat(),
+            "created_at": (
+                record.created_at.isoformat() if record.created_at else None
+            ),
+            "scope1_co2e_tonnes": record.scope1_co2e_tonnes,
+            "scope2_co2e_tonnes": record.scope2_co2e_tonnes,
+            "scope3_co2e_tonnes": record.scope3_co2e_tonnes,
+            "energy_consumption_mwh": record.energy_consumption_mwh,
+            "renewable_energy_pct": record.renewable_energy_pct,
+            "water_usage_m3": record.water_usage_m3,
+            "waste_recycled_pct": record.waste_recycled_pct,
+            "total_revenue_eur": record.total_revenue_eur,
+            "taxonomy_aligned_revenue_pct": record.taxonomy_aligned_revenue_pct,
+            "total_capex_eur": record.total_capex_eur,
+            "taxonomy_aligned_capex_pct": record.taxonomy_aligned_capex_pct,
+            "total_employees": record.total_employees,
+            "female_pct": record.female_pct,
+            "primary_activities": json.loads(record.primary_activities) if record.primary_activities else [],
         }
         for record in records
     ]
