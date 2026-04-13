@@ -1,13 +1,16 @@
 import json
+import threading
 from dataclasses import asdict
 from datetime import datetime, timezone
 
+from cachetools import TTLCache
+from cachetools.keys import hashkey
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from core.database import get_db
 from core.schemas import CompanyESGData
-from esg_frameworks import csrc_2023, csrd, eu_taxonomy
+from esg_frameworks import csrc_2023, csrd, eu_taxonomy, gri_standards, sasb_standards, sec_climate
 from esg_frameworks.comparison import build_comparison
 from esg_frameworks.schemas import FrameworkScoreResult, MultiFrameworkReport
 from esg_frameworks.storage import (
@@ -22,7 +25,13 @@ _SCORERS = {
     "eu_taxonomy": eu_taxonomy.score,
     "csrc_2023": csrc_2023.score,
     "csrd": csrd.score,
+    "sec_climate": sec_climate.score,
+    "gri_universal": gri_standards.score,
+    "sasb_standards": sasb_standards.score,
 }
+
+_score_cache: TTLCache = TTLCache(maxsize=200, ttl=300)
+_cache_lock = threading.Lock()
 
 
 def _load_company(db: Session, company_name: str, report_year: int) -> CompanyESGData:
@@ -48,14 +57,17 @@ def _make_summary(results: list[FrameworkScoreResult]) -> str:
         parts.append(f"{r.framework}: {r.grade}（{r.total_score:.0%}，覆盖率 {r.coverage_pct:.0f}%）")
     avg = sum(r.total_score for r in results) / len(results)
     level = "良好" if avg >= 0.6 else "中等" if avg >= 0.4 else "待改进"
-    return f"三框架综合评级 {level}（均分 {avg:.0%}）。" + " | ".join(parts)
+    return f"{len(results)} 框架综合评级 {level}（均分 {avg:.0%}）。" + " | ".join(parts)
 
 
 @router.get("/score", response_model=FrameworkScoreResult)
 def score_single_framework(
     company_name: str = Query(...),
     report_year: int = Query(...),
-    framework: str = Query(..., description="eu_taxonomy | csrc_2023 | csrd"),
+    framework: str = Query(
+        ...,
+        description="eu_taxonomy | csrc_2023 | csrd | sec_climate | gri_universal | sasb_standards",
+    ),
     db: Session = Depends(get_db),
 ) -> FrameworkScoreResult:
     """对指定公司按单一框架打分。"""
@@ -74,17 +86,26 @@ def compare_frameworks(
     db: Session = Depends(get_db),
 ) -> MultiFrameworkReport:
     """对指定公司同时跑三个框架，返回并排对比报告。"""
+    cache_key = hashkey(company_name.strip().lower(), report_year)
+    with _cache_lock:
+        cached_report = _score_cache.get(cache_key)
+    if cached_report is not None:
+        return cached_report
+
     data = _load_company(db, company_name, report_year)
     now = datetime.now(timezone.utc).isoformat()
     results = [scorer(data).model_copy(update={"analyzed_at": now}) for scorer in _SCORERS.values()]
     for result in results:
         save_framework_result(db, result, framework_version=result.framework_version)
-    return MultiFrameworkReport(
+    report = MultiFrameworkReport(
         company_name=data.company_name,
         report_year=data.report_year,
         frameworks=results,
         summary=_make_summary(results),
     )
+    with _cache_lock:
+        _score_cache[cache_key] = report
+    return report
 
 
 @router.get("/compare/regional")
@@ -155,6 +176,7 @@ def list_frameworks() -> list[dict]:
     return [
         {
             "id": "eu_taxonomy",
+            "framework_id": "eu_taxonomy",
             "name": "EU Taxonomy 2020",
             "region": "EU",
             "mandatory_from": "2022",
@@ -162,6 +184,7 @@ def list_frameworks() -> list[dict]:
         },
         {
             "id": "csrc_2023",
+            "framework_id": "csrc_2023",
             "name": "中国证监会 CSRC 2023",
             "region": "China",
             "mandatory_from": "2025（沪深 300）",
@@ -169,9 +192,43 @@ def list_frameworks() -> list[dict]:
         },
         {
             "id": "csrd",
+            "framework_id": "csrd",
             "name": "EU CSRD / ESRS",
             "region": "EU",
             "mandatory_from": "2024（大型企业）",
             "description": "欧盟企业可持续发展报告指令，覆盖 E1-E5 + S1 + G1 共 7 个 ESRS 主题",
         },
+        {
+            "id": "sec_climate",
+            "framework_id": "sec_climate",
+            "name": "SEC Climate Disclosure",
+            "region": "US",
+            "mandatory_from": "2024",
+            "description": "美国 SEC 气候披露规则（2024）",
+        },
+        {
+            "id": "gri_universal",
+            "framework_id": "gri_universal",
+            "name": "GRI Universal Standards 2021",
+            "region": "US",
+            "mandatory_from": "Voluntary/Market practice",
+            "description": "GRI 2/200/300/400 通用可持续披露标准",
+        },
+        {
+            "id": "sasb_standards",
+            "framework_id": "sasb_standards",
+            "name": "SASB Industry Standards",
+            "region": "US",
+            "mandatory_from": "Industry-aligned",
+            "description": "SASB 行业特定可持续会计披露标准",
+        },
     ]
+
+
+@router.post("/cache/clear")
+def clear_framework_cache() -> dict[str, int | str]:
+    """清除框架对比缓存（管理员用）。"""
+    with _cache_lock:
+        removed = len(_score_cache)
+        _score_cache.clear()
+    return {"status": "cache cleared", "entries_removed": removed}

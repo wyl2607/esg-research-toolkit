@@ -1,4 +1,8 @@
 import json
+import threading
+
+from cachetools import TTLCache
+from cachetools.keys import hashkey
 
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import Response
@@ -9,6 +13,8 @@ from taxonomy_scorer.reporter import generate_json_report, generate_text_summary
 from taxonomy_scorer.scorer import score_company
 
 router = APIRouter(prefix="/taxonomy", tags=["taxonomy_scorer"])
+_report_cache: TTLCache = TTLCache(maxsize=200, ttl=300)
+_cache_lock = threading.Lock()
 
 
 def _record_to_company_esg(record) -> CompanyESGData:
@@ -51,6 +57,12 @@ def get_report_by_name(
     report_year: int = Query(...),
 ) -> dict:
     """Fetch stored company data and return taxonomy report (GET convenience endpoint)."""
+    cache_key = hashkey(company_name.strip().lower(), report_year)
+    with _cache_lock:
+        cached_report = _report_cache.get(cache_key)
+    if cached_report is not None:
+        return cached_report
+
     from core.database import get_db
     from report_parser.storage import get_report
 
@@ -64,7 +76,10 @@ def get_report_by_name(
     data = _record_to_company_esg(record)
     result = score_company(data)
     gaps = analyze_gaps(data, result)
-    return generate_json_report(data, result, gaps)
+    report = generate_json_report(data, result, gaps)
+    with _cache_lock:
+        _report_cache[cache_key] = report
+    return report
 
 
 @router.get("/report/pdf")

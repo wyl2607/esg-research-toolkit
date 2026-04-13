@@ -73,6 +73,7 @@ def score(data: CompanyESGData) -> FrameworkScoreResult:
     return FrameworkScoreResult(
         framework="EU Taxonomy 2020",
         framework_id="eu_taxonomy",
+        framework_region="EU",
         framework_version="2020/852",
         company_name=data.company_name,
         report_year=data.report_year,

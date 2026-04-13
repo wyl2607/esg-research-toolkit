@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 from fastapi.testclient import TestClient
 
 from core.database import get_db
@@ -80,3 +82,91 @@ def test_compare_regional_endpoint_returns_expected_shape(monkeypatch) -> None:
     assert {group["region"] for group in body["regional_groups"]} == {"EU", "CN", "US"}
 
     app.dependency_overrides.clear()
+
+
+def test_compare_endpoint_uses_cache_and_can_clear(monkeypatch) -> None:
+    import esg_frameworks.api as frameworks_api
+
+    sample = CompanyESGData(
+        company_name="CATL",
+        report_year=2024,
+        scope1_co2e_tonnes=100,
+        scope2_co2e_tonnes=80,
+        scope3_co2e_tonnes=None,
+        renewable_energy_pct=60,
+        total_employees=1000,
+        female_pct=37.5,
+        primary_activities=["solar_pv"],
+    )
+    call_count = {"count": 0}
+
+    def fake_scorer(data: CompanyESGData) -> FrameworkScoreResult:
+        call_count["count"] += 1
+        return _make_result("eu_taxonomy", "EU Taxonomy", 0.72, "B")
+
+    monkeypatch.setattr(frameworks_api, "_load_company", lambda db, company_name, report_year: sample)
+    monkeypatch.setattr(frameworks_api, "save_framework_result", lambda *args, **kwargs: None)
+    monkeypatch.setattr(frameworks_api, "_SCORERS", {"eu_taxonomy": fake_scorer})
+    frameworks_api._score_cache.clear()
+    app.dependency_overrides[get_db] = lambda: None
+    client = TestClient(app)
+
+    params = {"company_name": "CATL", "report_year": 2024}
+    first = client.get("/frameworks/compare", params=params)
+    second = client.get("/frameworks/compare", params=params)
+    assert first.status_code == 200
+    assert second.status_code == 200
+    assert call_count["count"] == 1
+
+    clear_response = client.post("/frameworks/cache/clear")
+    assert clear_response.status_code == 200
+    assert clear_response.json()["status"] == "cache cleared"
+
+    third = client.get("/frameworks/compare", params=params)
+    assert third.status_code == 200
+    assert call_count["count"] == 2
+
+    app.dependency_overrides.clear()
+
+
+def test_taxonomy_report_get_uses_cache(monkeypatch) -> None:
+    import core.database as core_database
+    import report_parser.storage as report_storage
+    import taxonomy_scorer.api as taxonomy_api
+
+    class _DummyDb:
+        pass
+
+    sample_record = SimpleNamespace(
+        company_name="CATL",
+        report_year=2024,
+        primary_activities='["solar_pv"]',
+    )
+    score_calls = {"count": 0}
+
+    def fake_get_db():
+        yield _DummyDb()
+
+    def fake_score_company(data: CompanyESGData):
+        score_calls["count"] += 1
+        return SimpleNamespace()
+
+    monkeypatch.setattr(core_database, "get_db", fake_get_db)
+    monkeypatch.setattr(report_storage, "get_report", lambda db, company_name, report_year: sample_record)
+    monkeypatch.setattr(taxonomy_api, "score_company", fake_score_company)
+    monkeypatch.setattr(taxonomy_api, "analyze_gaps", lambda data, result: [])
+    monkeypatch.setattr(
+        taxonomy_api,
+        "generate_json_report",
+        lambda data, result, gaps: {"company_name": data.company_name, "report_year": data.report_year},
+    )
+    taxonomy_api._report_cache.clear()
+
+    client = TestClient(app)
+    params = {"company_name": "CATL", "report_year": 2024}
+    first = client.get("/taxonomy/report", params=params)
+    second = client.get("/taxonomy/report", params=params)
+
+    assert first.status_code == 200
+    assert second.status_code == 200
+    assert score_calls["count"] == 1

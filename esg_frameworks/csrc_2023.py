@@ -119,6 +119,7 @@ def score(data: CompanyESGData) -> FrameworkScoreResult:
     return FrameworkScoreResult(
         framework="中国证监会 CSRC 2023",
         framework_id="csrc_2023",
+        framework_region="CN",
         framework_version="2023",
         company_name=data.company_name,
         report_year=data.report_year,
