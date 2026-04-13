@@ -1,0 +1,17 @@
+# Copy this file to ~/.esg-deploy-config and replace placeholders locally.
+# Do NOT commit real hosts/users/tokens.
+
+# coco build host
+COCO_USER=<COCO_USER>
+COCO_HOST=<COCO_HOST_OR_IP>
+COCO_BUILD_DIR=<ABSOLUTE_COCO_BUILD_DIR>
+
+# production VPS
+VPS_USER=<VPS_USER>
+VPS_HOST=<VPS_HOST_OR_IP>
+VPS_DEPLOY_DIR=<ABSOLUTE_VPS_DEPLOY_DIR>
+
+# optional runtime checks
+DEPLOY_DOMAIN=<DEPLOY_DOMAIN_OPTIONAL>
+EXPECTED_PUBLIC_IP=<EXPECTED_PUBLIC_IP_OPTIONAL>
+

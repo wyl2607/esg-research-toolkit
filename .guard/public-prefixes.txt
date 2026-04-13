@@ -7,6 +7,7 @@
 .guard/public-prefixes.txt
 .guard/ZONE_POLICY.md
 .gitignore
+.esg-deploy-config.example
 .dockerignore
 AGENTS.md
 Dockerfile
