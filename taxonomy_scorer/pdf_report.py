@@ -2,15 +2,20 @@
 from __future__ import annotations
 
 import io
+import os
 from datetime import date
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import cm
+from reportlab.graphics import renderPDF
+from reportlab.graphics.shapes import Drawing, Line, Polygon, Rect, String
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
-    HRFlowable, KeepTogether,
+    Flowable, HRFlowable, KeepTogether,
 )
 
 from core.schemas import CompanyESGData, TaxonomyScoreResult
@@ -41,28 +46,241 @@ OBJECTIVE_LABELS = {
     "biodiversity":          "Biodiversity",
 }
 
+_CJK_FONT_CANDIDATES = [
+    ("/System/Library/Fonts/Supplemental/Songti.ttc", "Songti"),
+    ("/System/Library/Fonts/PingFang.ttc", "PingFang"),
+    ("/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc", "NotoSansCJK"),
+    ("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc", "NotoSansCJK"),
+    ("/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc", "WQYZenHei"),
+]
+_CJK_FONT_NAME = "Helvetica"
+
+
+def _register_cjk_font() -> str:
+    """Register first available CJK font and return font name."""
+    global _CJK_FONT_NAME
+    for path, name in _CJK_FONT_CANDIDATES:
+        if not os.path.exists(path):
+            continue
+        try:
+            pdfmetrics.registerFont(TTFont(name, path))
+            _CJK_FONT_NAME = name
+            return name
+        except Exception:
+            continue
+    return _CJK_FONT_NAME
+
+
+_register_cjk_font()
+
+
+class _ChartFlowable(Flowable):
+    """Render a Drawing object inside platypus story."""
+
+    def __init__(self, drawing: Drawing):
+        super().__init__()
+        self.drawing = drawing
+
+    def wrap(self, *_args):  # type: ignore[override]
+        return self.drawing.width, self.drawing.height
+
+    def draw(self):  # type: ignore[override]
+        renderPDF.draw(self.drawing, self.canv, 0, 0)
+
+
+def _make_scope_bar_chart(
+    scope1: float | None,
+    scope2: float | None,
+    scope3: float | None,
+    width: float = 14 * cm,
+    height: float = 6 * cm,
+) -> Drawing:
+    """Create Scope 1/2/3 emissions bar chart as reportlab Drawing."""
+    d = Drawing(width, height)
+    values = [
+        ("Scope 1", float(scope1 or 0), "#ef4444"),
+        ("Scope 2", float(scope2 or 0), "#f97316"),
+        ("Scope 3", float(scope3 or 0), "#6366f1"),
+    ]
+
+    max_val = max((value for _, value, _ in values), default=1.0) or 1.0
+    bar_w = width / 5
+    gap = bar_w * 0.3
+    chart_h = height - (1.6 * cm)
+    y_base = 1 * cm
+
+    for idx, (label, value, color_hex) in enumerate(values):
+        x = gap + idx * (bar_w + gap)
+        bar_h = (value / max_val) * chart_h if max_val else 0
+        d.add(
+            Rect(
+                x,
+                y_base,
+                bar_w,
+                bar_h,
+                fillColor=colors.HexColor(color_hex),
+                strokeColor=None,
+            )
+        )
+        d.add(
+            String(
+                x + bar_w / 2,
+                y_base - 0.35 * cm,
+                label,
+                textAnchor="middle",
+                fontSize=8,
+                fontName=_CJK_FONT_NAME,
+            )
+        )
+        if value > 0:
+            val_str = f"{value / 1000:.1f}k" if value >= 1000 else f"{value:.0f}"
+            d.add(
+                String(
+                    x + bar_w / 2,
+                    y_base + bar_h + 0.08 * cm,
+                    val_str,
+                    textAnchor="middle",
+                    fontSize=7,
+                    fontName=_CJK_FONT_NAME,
+                )
+            )
+
+    d.add(
+        Line(
+            gap / 2,
+            y_base,
+            width - gap / 2,
+            y_base,
+            strokeColor=colors.HexColor("#94a3b8"),
+        )
+    )
+    d.add(
+        String(
+            width / 2,
+            height - 0.25 * cm,
+            "GHG Emissions by Scope (tCO₂e)",
+            textAnchor="middle",
+            fontSize=9,
+            fontName=_CJK_FONT_NAME,
+        )
+    )
+    return d
+
+
+def _make_objective_radar_chart(
+    objective_scores: dict[str, float],
+    width: float = 14 * cm,
+    height: float = 8 * cm,
+) -> Drawing:
+    """Create a simple radar-style polygon chart for objective scores."""
+    d = Drawing(width, height)
+    objective_keys = [
+        "climate_mitigation",
+        "climate_adaptation",
+        "water",
+        "circular_economy",
+        "pollution_prevention",
+        "biodiversity",
+    ]
+    labels = [OBJECTIVE_LABELS.get(k, k.replace("_", " ").title()) for k in objective_keys]
+    values = [max(0.0, min(1.0, float(objective_scores.get(k, 0.0)))) for k in objective_keys]
+
+    center_x = width / 2
+    center_y = height / 2
+    radius = min(width, height) * 0.34
+    levels = [0.25, 0.5, 0.75, 1.0]
+
+    def _point(angle_deg: float, r: float) -> tuple[float, float]:
+        import math
+
+        rad = math.radians(angle_deg)
+        return center_x + r * math.cos(rad), center_y + r * math.sin(rad)
+
+    count = len(values)
+    angle_step = 360 / count
+    start_angle = 90.0
+
+    for level in levels:
+        ring_points: list[float] = []
+        for idx in range(count):
+            px, py = _point(start_angle - idx * angle_step, radius * level)
+            ring_points.extend([px, py])
+        d.add(
+            Polygon(
+                ring_points,
+                fillColor=None,
+                strokeColor=colors.HexColor("#cbd5e1"),
+                strokeWidth=0.8,
+            )
+        )
+
+    score_points: list[float] = []
+    for idx, value in enumerate(values):
+        axis_angle = start_angle - idx * angle_step
+        ax_x, ax_y = _point(axis_angle, radius)
+        d.add(Line(center_x, center_y, ax_x, ax_y, strokeColor=colors.HexColor("#94a3b8")))
+
+        label_x, label_y = _point(axis_angle, radius * 1.18)
+        d.add(
+            String(
+                label_x,
+                label_y,
+                labels[idx],
+                fontName=_CJK_FONT_NAME,
+                fontSize=7,
+                textAnchor="middle",
+            )
+        )
+
+        sc_x, sc_y = _point(axis_angle, radius * value)
+        score_points.extend([sc_x, sc_y])
+    d.add(
+        Polygon(
+            score_points,
+            fillColor=colors.HexColor("#6366f1AA"),
+            strokeColor=colors.HexColor("#4338ca"),
+            strokeWidth=1.2,
+        )
+    )
+    d.add(
+        String(
+            width / 2,
+            height - 0.25 * cm,
+            "Environmental Objective Radar",
+            textAnchor="middle",
+            fontSize=9,
+            fontName=_CJK_FONT_NAME,
+        )
+    )
+    return d
+
 
 def _styles():
     base = getSampleStyleSheet()
     return {
         "title": ParagraphStyle(
             "title", parent=base["Title"],
+            fontName=_CJK_FONT_NAME,
             fontSize=22, textColor=INDIGO, spaceAfter=4,
         ),
         "subtitle": ParagraphStyle(
             "subtitle", parent=base["Normal"],
+            fontName=_CJK_FONT_NAME,
             fontSize=10, textColor=SLATE, spaceAfter=12,
         ),
         "h2": ParagraphStyle(
             "h2", parent=base["Heading2"],
+            fontName=_CJK_FONT_NAME,
             fontSize=13, textColor=BLACK, spaceBefore=14, spaceAfter=6,
         ),
         "body": ParagraphStyle(
             "body", parent=base["Normal"],
+            fontName=_CJK_FONT_NAME,
             fontSize=9, textColor=BLACK, leading=14,
         ),
         "small": ParagraphStyle(
             "small", parent=base["Normal"],
+            fontName=_CJK_FONT_NAME,
             fontSize=8, textColor=SLATE, leading=12,
         ),
     }
@@ -101,6 +319,7 @@ def generate_pdf(
         buf, pagesize=A4,
         leftMargin=2*cm, rightMargin=2*cm,
         topMargin=2*cm, bottomMargin=2*cm,
+        pageCompression=0,
     )
     s = _styles()
     story = []
@@ -130,7 +349,7 @@ def generate_pdf(
     kpi_table.setStyle(TableStyle([
         ("BACKGROUND",   (0, 0), (-1, 0), INDIGO),
         ("TEXTCOLOR",    (0, 0), (-1, 0), WHITE),
-        ("FONTNAME",     (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTNAME",     (0, 0), (-1, 0), _CJK_FONT_NAME),
         ("FONTSIZE",     (0, 0), (-1, 0), 10),
         ("BACKGROUND",   (0, 1), (-1, -1), LIGHT),
         ("ROWBACKGROUNDS", (0, 1), (-1, -1), [WHITE, LIGHT]),
@@ -159,7 +378,7 @@ def generate_pdf(
     obj_table.setStyle(TableStyle([
         ("BACKGROUND",   (0, 0), (-1, 0), INDIGO),
         ("TEXTCOLOR",    (0, 0), (-1, 0), WHITE),
-        ("FONTNAME",     (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTNAME",     (0, 0), (-1, 0), _CJK_FONT_NAME),
         ("FONTSIZE",     (0, 0), (-1, 0), 9),
         ("ROWBACKGROUNDS", (0, 1), (-1, -1), [WHITE, LIGHT]),
         ("GRID",         (0, 0), (-1, -1), 0.5, colors.HexColor("#e2e8f0")),
@@ -170,6 +389,8 @@ def generate_pdf(
         ("LEFTPADDING",  (0, 0), (-1, -1), 8),
     ]))
     story.append(obj_table)
+    story.append(Spacer(1, 0.5 * cm))
+    story.append(_ChartFlowable(_make_objective_radar_chart(result.objective_scores)))
     story.append(Spacer(1, 14))
 
     # ── ESG Data ──────────────────────────────────────────────────────────
@@ -177,6 +398,7 @@ def generate_pdf(
     metrics = [
         ("Scope 1 Emissions", f"{data.scope1_co2e_tonnes:,.0f} t CO₂e" if data.scope1_co2e_tonnes else "—"),
         ("Scope 2 Emissions", f"{data.scope2_co2e_tonnes:,.0f} t CO₂e" if data.scope2_co2e_tonnes else "—"),
+        ("Scope 3 Emissions", f"{data.scope3_co2e_tonnes:,.0f} t CO₂e" if data.scope3_co2e_tonnes else "—"),
         ("Renewable Energy",  f"{data.renewable_energy_pct:.1f}%" if data.renewable_energy_pct else "—"),
         ("Water Consumption", f"{data.water_usage_m3:,.0f} m³" if data.water_usage_m3 else "—"),
         ("Waste Recycled",    f"{data.waste_recycled_pct:.1f}%" if data.waste_recycled_pct else "—"),
@@ -189,7 +411,7 @@ def generate_pdf(
     met_table.setStyle(TableStyle([
         ("BACKGROUND",   (0, 0), (-1, 0), SLATE),
         ("TEXTCOLOR",    (0, 0), (-1, 0), WHITE),
-        ("FONTNAME",     (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTNAME",     (0, 0), (-1, 0), _CJK_FONT_NAME),
         ("FONTSIZE",     (0, 0), (-1, 0), 9),
         ("ROWBACKGROUNDS", (0, 1), (-1, -1), [WHITE, LIGHT]),
         ("GRID",         (0, 0), (-1, -1), 0.5, colors.HexColor("#e2e8f0")),
@@ -200,6 +422,13 @@ def generate_pdf(
         ("LEFTPADDING",  (0, 0), (-1, -1), 8),
     ]))
     story.append(met_table)
+    chart = _make_scope_bar_chart(
+        data.scope1_co2e_tonnes,
+        data.scope2_co2e_tonnes,
+        data.scope3_co2e_tonnes,
+    )
+    story.append(Spacer(1, 0.5 * cm))
+    story.append(_ChartFlowable(chart))
     story.append(Spacer(1, 14))
 
     # ── Gaps ──────────────────────────────────────────────────────────────
