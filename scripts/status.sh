@@ -19,6 +19,14 @@ echo "--- Disk Usage ---"
 df -h /opt/esg-data /opt/esg-reports | tail -2
 echo
 
+echo "--- Deploy Fingerprint ---"
+if [ -f /opt/esg-research-toolkit/.deploy-fingerprint.json ]; then
+  cat /opt/esg-research-toolkit/.deploy-fingerprint.json
+else
+  echo "No deploy fingerprint found"
+fi
+echo
+
 echo "--- Recent Requests (last 10) ---"
 tail -10 /var/log/nginx/esg-access.log 2>/dev/null || echo "No esg-access log yet"
 echo

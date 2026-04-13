@@ -41,6 +41,21 @@ bash scripts/review_push_guard.sh origin/main
 bash scripts/review_file_zones.sh --staged --block-local
 ```
 
+7. Git hooks 自动化（一次安装）：
+
+```bash
+bash scripts/install_git_guards.sh
+```
+
+8. CI 级审核（避免本地绕过）：
+   - Workflow: `.github/workflows/repo-guard.yml`
+   - 在 PR 和 main push 上执行 `scripts/review_push_guard.sh`
+
+9. 部署可追溯指纹：
+   - 写入脚本：`scripts/write_deploy_fingerprint.sh`
+   - 远端打点：`scripts/stamp_remote_fingerprint.sh`
+   - 默认文件：`/opt/esg-research-toolkit/.deploy-fingerprint.json`
+
 ## 处理“已上传但应本地保留”的标准动作
 
 ```bash

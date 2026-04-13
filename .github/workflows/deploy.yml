@@ -24,14 +24,8 @@ jobs:
             echo "→ Pull latest code"
             git pull origin main
 
-            echo "→ Build frontend"
-            cd frontend
-            npm install --silent
-            npm run build
-            cd ..
-
-            echo "→ Restart API service"
-            systemctl restart esg-toolkit
+            echo "→ Run unified deploy script"
+            bash scripts/deploy.sh
 
             echo "→ Health check"
             for i in $(seq 1 10); do

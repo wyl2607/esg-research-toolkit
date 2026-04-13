@@ -1,0 +1,51 @@
+name: Repo Guard
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve base ref
+        id: base
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
+            echo "value=origin/${{ github.base_ref }}" >> "$GITHUB_OUTPUT"
+          else
+            BEFORE="${{ github.event.before }}"
+            if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+              echo "value=HEAD~1" >> "$GITHUB_OUTPUT"
+            else
+              echo "value=$BEFORE" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+
+      - name: Fetch base branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
+            git fetch --no-tags --depth=200 origin "${{ github.base_ref }}"
+          else
+            git fetch --no-tags --depth=200 origin main
+          fi
+
+      - name: Run push guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x scripts/review_push_guard.sh scripts/review_file_zones.sh
+          scripts/review_push_guard.sh "${{ steps.base.outputs.value }}"
