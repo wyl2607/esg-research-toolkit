@@ -7,7 +7,8 @@
     "companies": "公司列表",
     "compare": "对比分析",
     "frameworks": "多框架",
-    "appName": "ESG 工具包"
+    "appName": "ESG 工具包",
+    "regional": "区域对比"
   },
   "common": {
     "loading": "加载中…",
@@ -194,5 +195,17 @@
     "toggle": "切换主题",
     "light": "浅色",
     "dark": "深色"
+  },
+  "regional": {
+    "title": "三地 ESG 框架对比",
+    "subtitle": "欧盟 · 中国 · 美国监管框架合规度分析",
+    "overallReadiness": "综合合规准备度",
+    "dimensionRadar": "各区域维度得分雷达",
+    "keyInsights": "核心洞察",
+    "crossMatrix": "监管要求对比矩阵",
+    "dimension": "维度",
+    "gapAnalysis": "差距分析",
+    "compliancePriority": "合规优先行动",
+    "selectPrompt": "选择企业以查看三地 ESG 框架对比分析"
   }
 }

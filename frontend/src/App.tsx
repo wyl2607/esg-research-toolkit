@@ -9,6 +9,7 @@ import { CompaniesPage } from '@/pages/CompaniesPage'
 import { ComparePage } from '@/pages/ComparePage'
 import { FrameworksPage } from '@/pages/FrameworksPage'
 import { CompanyProfilePage } from '@/pages/CompanyProfilePage'
+import { RegionalPage } from '@/pages/RegionalPage'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
@@ -28,6 +29,8 @@ export default function App() {
             <Route path="companies/:companyName" element={<CompanyProfilePage />} />
             <Route path="compare" element={<ComparePage />} />
             <Route path="frameworks" element={<FrameworksPage />} />
+            <Route path="regional" element={<RegionalPage />} />
+            <Route path="frameworks/regional" element={<RegionalPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

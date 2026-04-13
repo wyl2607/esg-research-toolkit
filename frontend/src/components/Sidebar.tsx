@@ -7,6 +7,7 @@ import {
   Building2,
   GitCompare,
   Globe,
+  Map,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
@@ -22,6 +23,7 @@ export function Sidebar() {
     { to: '/companies', label: t('nav.companies'), icon: Building2 },
     { to: '/compare', label: t('nav.compare'), icon: GitCompare },
     { to: '/frameworks', label: t('nav.frameworks'), icon: Globe },
+    { to: '/regional', label: t('nav.regional'), icon: Map },
   ]
 
   return (
