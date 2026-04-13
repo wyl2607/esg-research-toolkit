@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import re
 
 from core.ai_client import complete
@@ -54,12 +55,89 @@ def _extract_relevant_sections(text: str) -> str:
 # ── 正则 fallback：提取基础字段 ────────────────────────────────────────────────
 
 def _parse_number(s: str) -> float | None:
-    """把 '930,440.28' 或 '93万' 类型字符串转为 float。"""
-    s = s.replace(",", "").strip()
+    """把 '930,440.28' 这类字符串转为 float。"""
+    s = s.replace(",", "").replace("，", "").strip()
     try:
         return float(s)
     except ValueError:
         return None
+
+
+def _parse_scaled_value(number_str: str, context: str) -> float | None:
+    val = _parse_number(number_str)
+    if val is None:
+        return None
+
+    lowered = context.lower()
+    if "亿" in context:
+        return val * 1e8
+    if "万" in context:
+        return val * 1e4
+    if "10 thousand" in lowered:
+        return val * 1e4
+    if "million" in lowered:
+        return val * 1e6
+    if "billion" in lowered:
+        return val * 1e9
+    return val
+
+
+def _extract_metric(text: str, patterns: list[str]) -> float | None:
+    for pat in patterns:
+        match = re.search(pat, text, re.IGNORECASE)
+        if not match:
+            continue
+        value = _parse_scaled_value(match.group(1), match.group(0))
+        if value is not None:
+            return value
+    return None
+
+
+def _extract_percentage(text: str, patterns: list[str]) -> float | None:
+    value = _extract_metric(text, patterns)
+    if value is None:
+        return None
+    if 0 <= value <= 100:
+        return value
+    if 0 <= value <= 1:
+        return value * 100
+    return None
+
+
+def _extract_primary_activities(text: str) -> list[str]:
+    mapping = {
+        "solar_pv": [r"solar(?:\s+pv)?", r"光伏", r"太阳能"],
+        "wind_onshore": [r"onshore\s+wind", r"陆上风电"],
+        "wind_offshore": [r"offshore\s+wind", r"海上风电"],
+        "battery_storage": [r"battery\s+storage", r"储能", r"电池储能"],
+        "battery_manufacturing": [r"battery\s+manufactur", r"电池制造"],
+        "hydrogen": [r"hydrogen", r"氢能"],
+    }
+    lowered = text.lower()
+    activities: list[str] = []
+    for activity, pats in mapping.items():
+        if any(re.search(pat, lowered, re.IGNORECASE) for pat in pats):
+            activities.append(activity)
+    return activities
+
+
+def _is_fallback_usable(data: CompanyESGData) -> bool:
+    return any(
+        value is not None
+        for value in [
+            data.scope1_co2e_tonnes,
+            data.scope2_co2e_tonnes,
+            data.scope3_co2e_tonnes,
+            data.energy_consumption_mwh,
+            data.renewable_energy_pct,
+            data.water_usage_m3,
+            data.waste_recycled_pct,
+            data.taxonomy_aligned_revenue_pct,
+            data.taxonomy_aligned_capex_pct,
+            data.total_employees,
+            data.female_pct,
+        ]
+    )
 
 
 def _regex_fallback(text: str, filename: str = "") -> CompanyESGData:
@@ -73,6 +151,14 @@ def _regex_fallback(text: str, filename: str = "") -> CompanyESGData:
         "scope1_co2e_tonnes": None,
         "scope2_co2e_tonnes": None,
         "scope3_co2e_tonnes": None,
+        "energy_consumption_mwh": None,
+        "renewable_energy_pct": None,
+        "water_usage_m3": None,
+        "waste_recycled_pct": None,
+        "taxonomy_aligned_revenue_pct": None,
+        "taxonomy_aligned_capex_pct": None,
+        "total_employees": None,
+        "female_pct": None,
         "primary_activities": [],
     }
 
@@ -128,6 +214,70 @@ def _regex_fallback(text: str, filename: str = "") -> CompanyESGData:
             val *= 10000
         result["scope3_co2e_tonnes"] = val
 
+    result["energy_consumption_mwh"] = _extract_metric(
+        text,
+        [
+            r"(?:energy consumption|energy used|能源消费总量|综合能耗|energieverbrauch|gesamtenergieverbrauch)[^\d]{0,40}([\d,.]+)\s*(?:mwh|兆瓦时|万千瓦时|kwh)",
+        ],
+    )
+    if result["energy_consumption_mwh"] and re.search(r"万千瓦时", text, re.IGNORECASE):
+        result["energy_consumption_mwh"] = result["energy_consumption_mwh"] * 10000 / 1000
+    if result["energy_consumption_mwh"] and re.search(r"\bkwh\b", text, re.IGNORECASE):
+        result["energy_consumption_mwh"] = result["energy_consumption_mwh"] / 1000
+
+    result["renewable_energy_pct"] = _extract_percentage(
+        text,
+        [
+            r"(?:renewable energy(?: ratio| share| percentage)?|可再生能源(?:占比|比例)?|anteil erneuerbarer energien|erneuerbare(?:r)?\s+energie(?:n)?(?:anteil|quote)?)[^\d]{0,40}([\d,.]+)\s*%",
+        ],
+    )
+
+    result["water_usage_m3"] = _extract_metric(
+        text,
+        [
+            r"(?:water (?:consumption|usage)|用水(?:总量|量)?|wasserverbrauch|wasserentnahme)[^\d]{0,40}([\d,.]+)\s*(?:m3|m³|立方米|万立方米|万m3)",
+        ],
+    )
+    if result["water_usage_m3"] and re.search(r"(万立方米|万m3)", text, re.IGNORECASE):
+        result["water_usage_m3"] *= 10000
+
+    result["waste_recycled_pct"] = _extract_percentage(
+        text,
+        [
+            r"(?:waste recycled(?: rate| percentage)?|waste recycling(?: rate)?|废弃物(?:回收率|资源化利用率)|循环利用率|recyclingquote|abfall(?:recycling|verwertungs)quote)[^\d]{0,40}([\d,.]+)\s*%",
+        ],
+    )
+
+    result["taxonomy_aligned_revenue_pct"] = _extract_percentage(
+        text,
+        [
+            r"(?:taxonomy[-\s]?aligned revenue|taxonomy alignment(?: of)? revenue|分类法对齐(?:收入|营收)占比|taxonomiekonformer(?:r)?\s+umsatz|umsatz(?:anteil)?\s+taxonomiekonform)[^\d]{0,40}([\d,.]+)\s*%",
+        ],
+    )
+    result["taxonomy_aligned_capex_pct"] = _extract_percentage(
+        text,
+        [
+            r"(?:taxonomy[-\s]?aligned capex|taxonomy alignment(?: of)? capex|分类法对齐(?:资本开支|capex)占比|taxonomiekonformer(?:s)?\s+capex|capex(?:anteil)?\s+taxonomiekonform)[^\d]{0,40}([\d,.]+)\s*%",
+        ],
+    )
+
+    employees = _extract_metric(
+        text,
+        [
+            r"(?:total employees|number of employees|员工总数|职工总数|mitarbeiter(?:zahl)?|anzahl der mitarbeiter)[^\d]{0,40}([\d,.]+)\s*(?:people|人)?",
+        ],
+    )
+    result["total_employees"] = int(employees) if employees is not None else None
+
+    result["female_pct"] = _extract_percentage(
+        text,
+        [
+            r"(?:female(?: employee)?(?: ratio| percentage)?|women employees(?: ratio| percentage)?|女性员工(?:占比|比例)?|女员工比例|frauenanteil|anteil weiblicher mitarbeiter(?:innen)?)[^\d]{0,40}([\d,.]+)\s*%",
+        ],
+    )
+
+    result["primary_activities"] = _extract_primary_activities(text)
+
     return CompanyESGData(**result)
 
 
@@ -148,12 +298,21 @@ def analyze_esg_data(text: str, filename: str = "") -> CompanyESGData:
     - AI 失败（API 错误）→ 抛出 AIExtractionError
     - JSON 解析失败 → 先尝试正则 fallback；fallback 也无法提取则抛出 AIExtractionError
     """
+    fallback = _regex_fallback(text, filename)
+    regex_only_mode = os.getenv("PARSER_REGEX_ONLY", "0").lower() in {"1", "true", "yes"}
+    if regex_only_mode and _is_fallback_usable(fallback):
+        logging.info("PARSER_REGEX_ONLY enabled, returning regex extraction for %s", fallback.company_name)
+        return fallback
+
     extracted = _extract_relevant_sections(text)
     user = f"Corporate Report Text:\n\n{extracted}"
 
     try:
         raw = complete(_SYSTEM, user, max_tokens=2048)
     except Exception as exc:
+        if _is_fallback_usable(fallback):
+            logging.warning("AI call failed, returning regex fallback: %s", exc)
+            return fallback
         err_str = str(exc)
         if "401" in err_str or "authentication" in err_str.lower() or "api_key" in err_str.lower():
             raise AIExtractionError("AI 提取失败：API Key 无效或未配置，请检查 OPENAI_API_KEY 设置", exc)
@@ -169,8 +328,7 @@ def analyze_esg_data(text: str, filename: str = "") -> CompanyESGData:
         return CompanyESGData(**data)
     except Exception as exc:
         logging.warning("AI JSON parse failed, trying regex fallback: %s", exc)
-        fallback = _regex_fallback(text, filename)
-        if fallback.company_name != "Unknown" or fallback.scope1_co2e_tonnes is not None:
+        if _is_fallback_usable(fallback):
             logging.info("Regex fallback extracted partial data for %s", fallback.company_name)
             return fallback
         raise AIExtractionError(

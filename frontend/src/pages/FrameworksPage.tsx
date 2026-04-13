@@ -12,6 +12,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer, Tooltip } from 'recharts'
 import { useTranslation } from 'react-i18next'
+import { localizeErrorMessage } from '@/lib/error-utils'
 
 // ── Grade badge ────────────────────────────────────────────────────────────
 
@@ -164,14 +165,14 @@ export function FrameworksPage() {
   const { t } = useTranslation()
   const [selected, setSelected] = useState('')
 
-  const { data: companies = [] } = useQuery({
+  const { data: companies = [], error: companiesError } = useQuery({
     queryKey: ['companies'],
     queryFn: listCompanies,
   })
 
   const [companyName, companyYear] = selected ? selected.split('|') : [null, null]
 
-  const { data: report, isLoading } = useQuery({
+  const { data: report, isLoading, error: reportError } = useQuery({
     queryKey: ['frameworks', companyName, companyYear],
     queryFn: () => getFrameworkComparison(companyName!, Number(companyYear)),
     enabled: !!companyName && !!companyYear,
@@ -185,6 +186,11 @@ export function FrameworksPage() {
           {t('frameworks.subtitle')}
         </p>
       </div>
+      {(companiesError || reportError) && (
+        <p className="text-red-500 text-sm">
+          {localizeErrorMessage(t, reportError ?? companiesError, 'common.error')}
+        </p>
+      )}
 
       <Select value={selected} onValueChange={setSelected}>
         <SelectTrigger className="w-72">

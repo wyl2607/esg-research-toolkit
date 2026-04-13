@@ -24,6 +24,7 @@ import {
 } from 'recharts'
 import type { LCOEInput } from '@/lib/types'
 import { useTranslation } from 'react-i18next'
+import { localizeErrorMessage } from '@/lib/error-utils'
 
 const TECHNOLOGIES = [
   'solar_pv',
@@ -31,6 +32,13 @@ const TECHNOLOGIES = [
   'wind_offshore',
   'battery_storage',
 ]
+
+const TECH_LABEL_KEYS: Record<string, string> = {
+  solar_pv: 'lcoe.technologyOptions.solarPv',
+  wind_onshore: 'lcoe.technologyOptions.windOnshore',
+  wind_offshore: 'lcoe.technologyOptions.windOffshore',
+  battery_storage: 'lcoe.technologyOptions.batteryStorage',
+}
 
 const DEFAULTS: LCOEInput = {
   technology: 'solar_pv',
@@ -105,9 +113,9 @@ export function LcoePage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {TECHNOLOGIES.map((t) => (
-                    <SelectItem key={t} value={t}>
-                      {t.replace(/_/g, ' ')}
+                  {TECHNOLOGIES.map((tech) => (
+                    <SelectItem key={tech} value={tech}>
+                      {t(TECH_LABEL_KEYS[tech] ?? tech)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -120,7 +128,7 @@ export function LcoePage() {
 
           {FIELD_CONFIG.map(([key, labelKey, step]) => (
             <div key={key}>
-              <Label>{labelKey === 'capacity_mw' ? 'Capacity (MW)' : t(labelKey)}</Label>
+              <Label>{labelKey === 'capacity_mw' ? t('lcoe.capacityMw') : t(labelKey)}</Label>
               <Input
                 type="number"
                 step={step}
@@ -142,6 +150,11 @@ export function LcoePage() {
           >
             {lcoeMutation.isPending ? t('lcoe.calculating') : t('lcoe.calculate')}
           </Button>
+          {(lcoeMutation.error || sensitivityMutation.error) && (
+            <p className="text-sm text-red-500">
+              {localizeErrorMessage(t, lcoeMutation.error ?? sensitivityMutation.error, 'common.error')}
+            </p>
+          )}
         </form>
 
         {/* Results */}
@@ -185,7 +198,7 @@ export function LcoePage() {
               <XAxis dataKey="idx" hide />
               <YAxis
                 label={{
-                  value: '€/MWh',
+                  value: t('lcoe.axisEurPerMwh'),
                   angle: -90,
                   position: 'insideLeft',
                 }}

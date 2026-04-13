@@ -22,3 +22,7 @@ def get_db() -> Generator[Session, None, None]:
 
 def init_db() -> None:
     Base.metadata.create_all(bind=engine)
+    # Keep SQLite deployments forward-compatible for additive columns.
+    from report_parser.storage import ensure_storage_schema
+
+    ensure_storage_schema(engine)

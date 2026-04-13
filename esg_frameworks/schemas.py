@@ -18,6 +18,8 @@ class FrameworkScoreResult(BaseModel):
     framework_id: str         # "eu_taxonomy" | "csrc_2023" | "csrd"
     company_name: str
     report_year: int
+    framework_version: str = "v1"
+    analyzed_at: str | None = None
     total_score: float        # 0.0 – 1.0（加权综合）
     grade: str                # A/B/C/D/F
     dimensions: list[DimensionScore]

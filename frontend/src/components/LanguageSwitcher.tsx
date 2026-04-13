@@ -1,17 +1,17 @@
 import { useTranslation } from 'react-i18next'
 
 const LANGS = [
-  { code: 'en', flag: '🇬🇧', label: 'EN' },
-  { code: 'zh', flag: '🇨🇳', label: '中' },
-  { code: 'de', flag: '🇩🇪', label: 'DE' },
+  { code: 'de', flag: '🇩🇪' },
+  { code: 'en', flag: '🇬🇧' },
+  { code: 'zh', flag: '🇨🇳' },
 ] as const
 
 export function LanguageSwitcher() {
-  const { i18n } = useTranslation()
+  const { i18n, t } = useTranslation()
 
   return (
     <div className="flex items-center gap-1">
-      {LANGS.map(({ code, flag, label }) => (
+      {LANGS.map(({ code, flag }) => (
         <button
           key={code}
           onClick={() => i18n.changeLanguage(code)}
@@ -23,7 +23,7 @@ export function LanguageSwitcher() {
           title={code}
           type="button"
         >
-          {flag} {label}
+          {flag} {t(`language.${code}`)}
         </button>
       ))}
     </div>

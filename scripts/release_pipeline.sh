@@ -27,6 +27,7 @@ VPS_TARGET=""
 VPS_DIR=""
 DEPLOY_DOMAIN="${DEPLOY_DOMAIN:-}"
 EXPECTED_PUBLIC_IP="${EXPECTED_PUBLIC_IP:-}"
+LOCAL_HEAD_SHA=""
 
 usage() {
   cat <<USAGE
@@ -69,6 +70,40 @@ log() {
 fail() {
   log "ERROR: $1"
   exit 1
+}
+
+sync_remote_scripts() {
+  local label="$1"
+  local target="$2"
+  local remote_dir="$3"
+  shift 3
+
+  [ "$#" -gt 0 ] || return 0
+
+  local local_paths=()
+  local remote_checks=""
+  local rel_path=""
+  local base_name=""
+  for rel_path in "$@"; do
+    [ -f "$PROJECT_DIR/$rel_path" ] || fail "missing local sync file: $rel_path"
+    local_paths+=("$PROJECT_DIR/$rel_path")
+    base_name="$(basename "$rel_path")"
+    remote_checks="$remote_checks test -x '$remote_dir/scripts/$base_name';"
+  done
+
+  retry_cmd "${label}-prepare" \
+    ssh "$target" \
+    "set -eu; mkdir -p '$remote_dir/scripts'" \
+    || fail "failed to prepare remote script dir for $label"
+
+  retry_cmd "${label}-rsync" \
+    rsync -az "${local_paths[@]}" "$target:$remote_dir/scripts/" \
+    || fail "failed to sync helper scripts for $label"
+
+  retry_cmd "${label}-verify" \
+    ssh "$target" \
+    "set -eu; chmod +x '$remote_dir/scripts/'*.sh; $remote_checks" \
+    || fail "failed to verify synced helper scripts for $label"
 }
 
 require_bin() {
@@ -184,6 +219,9 @@ if [ "$BRANCH" = "HEAD" ]; then
   fail "detached HEAD is not supported; checkout a branch first"
 fi
 
+LOCAL_HEAD_SHA="$(git rev-parse HEAD)"
+[ -n "$LOCAL_HEAD_SHA" ] || fail "failed to resolve local HEAD sha"
+
 if [ -n "${COCO_USER:-}" ] && [ -n "${COCO_HOST:-}" ]; then
   COCO_TARGET="${COCO_USER}@${COCO_HOST}"
 fi
@@ -215,6 +253,7 @@ fi
 log "START $SCRIPT_NAME"
 log "LOG_FILE=$LOG_FILE"
 log "BRANCH=$BRANCH MAX_RETRIES=$MAX_RETRIES DRY_RUN=$DRY_RUN"
+log "LOCAL_HEAD_SHA=$LOCAL_HEAD_SHA"
 log "FLAGS skip_local=$SKIP_LOCAL_CHECKS skip_coco=$SKIP_COCO setup_coco_guards=$SETUP_COCO_GUARDS coco_build=$COCO_BUILD deploy_coco=$DEPLOY_COCO deploy_vps=$DEPLOY_VPS no_push=$NO_PUSH"
 
 if [ "$SKIP_LOCAL_CHECKS" -eq 0 ]; then
@@ -309,20 +348,39 @@ EOF
 fi
 
 if [ "$DEPLOY_VPS" -eq 1 ]; then
+  VPS_PREFLIGHT_ARGS=(
+    --target "$VPS_TARGET"
+    --remote-dir "$VPS_DIR"
+  )
   PREFLIGHT_ARGS=(
     --target "$VPS_TARGET"
     --remote-dir "$VPS_DIR"
   )
   if [ -n "$DEPLOY_DOMAIN" ]; then
+    VPS_PREFLIGHT_ARGS+=(--domain "$DEPLOY_DOMAIN")
     PREFLIGHT_ARGS+=(--domain "$DEPLOY_DOMAIN")
   fi
   if [ -n "$EXPECTED_PUBLIC_IP" ]; then
+    VPS_PREFLIGHT_ARGS+=(--expected-ip "$EXPECTED_PUBLIC_IP")
     PREFLIGHT_ARGS+=(--expected-ip "$EXPECTED_PUBLIC_IP")
   fi
   PREFLIGHT_ARGS+=(
     --exec "cd $VPS_DIR && {{COMPOSE}} -f docker-compose.prod.yml up -d"
     --exec "curl -fsS http://localhost:8001/health"
   )
+
+  retry_cmd "vps-preflight" \
+    bash "$PROJECT_DIR/scripts/preflight_safe_exec.sh" "${VPS_PREFLIGHT_ARGS[@]}" \
+    --preflight-only \
+    || fail "vps preflight failed"
+
+  retry_cmd "vps-git-sha-align" \
+    ssh "$VPS_TARGET" \
+    "set -eu; cd '$VPS_DIR'; remote_sha=\$(git rev-parse HEAD); [ \"\$remote_sha\" = '$LOCAL_HEAD_SHA' ]" \
+    || fail "vps git sha mismatch (remote != local HEAD). sync/push code first, then deploy"
+
+  sync_remote_scripts "sync-vps-helper-scripts" "$VPS_TARGET" "$VPS_DIR" \
+    "scripts/write_deploy_fingerprint.sh"
 
   retry_cmd "vps-deploy" \
     bash "$PROJECT_DIR/scripts/preflight_safe_exec.sh" "${PREFLIGHT_ARGS[@]}" \
@@ -335,6 +393,11 @@ if [ "$DEPLOY_VPS" -eq 1 ]; then
     --env "vps-prod" \
     --source "release_pipeline.sh" \
     || fail "stamping vps fingerprint failed"
+
+  retry_cmd "verify-vps-fingerprint" \
+    ssh "$VPS_TARGET" \
+    "set -eu; test -s '$VPS_DIR/.deploy-fingerprint.json'" \
+    || fail "vps fingerprint file verification failed"
 fi
 
 log "PIPELINE_STATUS=SUCCESS"

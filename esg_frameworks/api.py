@@ -1,8 +1,18 @@
-from fastapi import APIRouter, HTTPException, Query
+import json
+from datetime import datetime, timezone
 
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.orm import Session
+
+from core.database import get_db
 from core.schemas import CompanyESGData
 from esg_frameworks import csrc_2023, csrd, eu_taxonomy
 from esg_frameworks.schemas import FrameworkScoreResult, MultiFrameworkReport
+from esg_frameworks.storage import (
+    get_framework_result,
+    list_framework_results,
+    save_framework_result,
+)
 
 router = APIRouter(prefix="/frameworks", tags=["esg_frameworks"])
 
@@ -13,13 +23,10 @@ _SCORERS = {
 }
 
 
-def _load_company(company_name: str, report_year: int) -> CompanyESGData:
+def _load_company(db: Session, company_name: str, report_year: int) -> CompanyESGData:
     """从数据库加载公司数据，未找到时抛 404。"""
-    from core.database import get_db
     from report_parser.storage import get_report
-    import json
 
-    db = next(get_db())
     record = get_report(db, company_name, report_year)
     if not record:
         raise HTTPException(404, f"No report found for {company_name} ({report_year})")
@@ -27,6 +34,8 @@ def _load_company(company_name: str, report_year: int) -> CompanyESGData:
     raw = record.__dict__.copy()
     if isinstance(raw.get("primary_activities"), str):
         raw["primary_activities"] = json.loads(raw["primary_activities"])
+    if isinstance(raw.get("evidence_summary"), str):
+        raw["evidence_summary"] = json.loads(raw["evidence_summary"])
 
     return CompanyESGData.model_validate(raw)
 
@@ -45,22 +54,29 @@ def score_single_framework(
     company_name: str = Query(...),
     report_year: int = Query(...),
     framework: str = Query(..., description="eu_taxonomy | csrc_2023 | csrd"),
+    db: Session = Depends(get_db),
 ) -> FrameworkScoreResult:
     """对指定公司按单一框架打分。"""
     if framework not in _SCORERS:
         raise HTTPException(400, f"Unknown framework '{framework}'. Choose: {list(_SCORERS)}")
-    data = _load_company(company_name, report_year)
-    return _SCORERS[framework](data)
+    data = _load_company(db, company_name, report_year)
+    result = _SCORERS[framework](data)
+    save_framework_result(db, result, framework_version=result.framework_version)
+    return result.model_copy(update={"analyzed_at": datetime.now(timezone.utc).isoformat()})
 
 
 @router.get("/compare", response_model=MultiFrameworkReport)
 def compare_frameworks(
     company_name: str = Query(...),
     report_year: int = Query(...),
+    db: Session = Depends(get_db),
 ) -> MultiFrameworkReport:
     """对指定公司同时跑三个框架，返回并排对比报告。"""
-    data = _load_company(company_name, report_year)
-    results = [scorer(data) for scorer in _SCORERS.values()]
+    data = _load_company(db, company_name, report_year)
+    now = datetime.now(timezone.utc).isoformat()
+    results = [scorer(data).model_copy(update={"analyzed_at": now}) for scorer in _SCORERS.values()]
+    for result in results:
+        save_framework_result(db, result, framework_version=result.framework_version)
     return MultiFrameworkReport(
         company_name=data.company_name,
         report_year=data.report_year,
@@ -72,12 +88,46 @@ def compare_frameworks(
 @router.post("/score/upload", response_model=MultiFrameworkReport)
 def score_from_data(data: CompanyESGData) -> MultiFrameworkReport:
     """直接传入 CompanyESGData，跑三框架（无需数据库记录）。"""
-    results = [scorer(data) for scorer in _SCORERS.values()]
+    now = datetime.now(timezone.utc).isoformat()
+    results = [scorer(data).model_copy(update={"analyzed_at": now}) for scorer in _SCORERS.values()]
     return MultiFrameworkReport(
         company_name=data.company_name,
         report_year=data.report_year,
         frameworks=results,
         summary=_make_summary(results),
+    )
+
+
+@router.get("/results")
+def get_saved_results(
+    company_name: str = Query(...),
+    report_year: int = Query(...),
+    db: Session = Depends(get_db),
+):
+    rows = list_framework_results(db, company_name=company_name, report_year=report_year)
+    payload: list[dict] = []
+    for row in rows:
+        result = json.loads(row.result_payload)
+        result["analysis_result_id"] = row.id
+        result["stored_at"] = row.created_at.isoformat() if row.created_at else None
+        payload.append(result)
+    return payload
+
+
+@router.get("/results/{result_id}", response_model=FrameworkScoreResult)
+def get_saved_result_by_id(
+    result_id: int,
+    db: Session = Depends(get_db),
+) -> FrameworkScoreResult:
+    row = get_framework_result(db, result_id)
+    if not row:
+        raise HTTPException(404, "Framework analysis result not found")
+    result = FrameworkScoreResult.model_validate(json.loads(row.result_payload))
+    return result.model_copy(
+        update={
+            "framework_version": row.framework_version,
+            "analyzed_at": row.created_at.isoformat() if row.created_at else None,
+        }
     )
 
 

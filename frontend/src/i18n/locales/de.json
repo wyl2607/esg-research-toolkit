@@ -35,10 +35,13 @@
     "title": "Dashboard",
     "companiesAnalyzed": "Analysierte Unternehmen",
     "avgTaxonomy": "Ø Taxonomie-Ausrichtung",
+    "avgTaxonomyReadinessProxy": "Ø Taxonomie-Bereitschaft (Proxy)",
     "reportsWithData": "Berichte mit Taxonomiedaten",
     "recentAnalyses": "Letzte Analysen",
     "keyMetrics": "Kennzahlen",
     "noCompanies": "Noch keine Unternehmen. Laden Sie einen PDF-Bericht hoch.",
+    "noReportsYet": "Noch keine Berichte. Laden Sie Ihren ersten ESG-Bericht hoch.",
+    "taxonomyPct": "Taxonomie %",
     "runTaxonomy": "Taxonomie-Bewertung starten →",
     "uploadReport": "Bericht hochladen"
   },
@@ -60,7 +63,8 @@
     "queued": "In Warteschlange",
     "viewTaxonomy": "Taxonomie-Auswertung →",
     "renewableEnergy": "Erneuerbare Energien",
-    "taxonomyAligned": "Taxonomiekonforme Einnahmen"
+    "taxonomyAligned": "Taxonomiekonforme Einnahmen",
+    "moreFiles": "+{{count}} weitere Dateien"
   },
   "taxonomy": {
     "title": "Taxonomie-Bewertung",
@@ -75,6 +79,14 @@
     "dnshAllMet": "Alle DNSH-Kriterien erfüllt",
     "dnshNotMet": "DNSH-Kriterien nicht vollständig erfüllt",
     "objectiveScores": "Ziel-Bewertungen",
+    "objectives": {
+      "climateMitigation": "Klimaschutz",
+      "climateAdaptation": "Anpassung an den Klimawandel",
+      "water": "Wasser",
+      "circularEconomy": "Kreislaufwirtschaft",
+      "pollutionPrevention": "Vermeidung von Umweltverschmutzung",
+      "biodiversity": "Biodiversität"
+    },
     "dnshCheck": "DNSH-Prüfung",
     "loadingData": "Taxonomiedaten werden geladen…",
     "selectPrompt": "Bitte wählen Sie oben ein Unternehmen aus."
@@ -82,6 +94,12 @@
   "lcoe": {
     "title": "Stromgestehungskosten-Analyse",
     "technology": "Technologie",
+    "technologyOptions": {
+      "solarPv": "Solar-Photovoltaik",
+      "windOnshore": "Wind Onshore",
+      "windOffshore": "Wind Offshore",
+      "batteryStorage": "Batteriespeicher"
+    },
     "calculate": "Berechnen",
     "calculating": "Wird berechnet…",
     "loadBenchmark": "Benchmark laden",
@@ -93,6 +111,8 @@
     "sensitivityAnalysis": "Sensitivitätsanalyse",
     "capex": "Investitionskosten (€/kW)",
     "opex": "Betriebskosten (€/kW/Jahr)",
+    "capacityMw": "Leistung (MW)",
+    "axisEurPerMwh": "€/MWh",
     "capacityFactor": "Kapazitätsfaktor",
     "lifetime": "Lebensdauer (Jahre)",
     "discountRate": "Diskontierungssatz"
@@ -116,6 +136,7 @@
     "selectUp4": "Bis zu 4 Unternehmen zum Vergleich auswählen",
     "revenueAligned": "Taxonomiekonforme Einnahmen",
     "renewable": "Erneuerbare Energien",
+    "waterUsage": "Wasserverbrauch (m³)",
     "femalePct": "Frauenanteil",
     "noSelection": "Bitte wählen Sie oben Unternehmen für den Vergleich."
   },
@@ -129,6 +150,19 @@
     "viewGaps": "Lücken ({{count}}) und Empfehlungen ({{recs}}) anzeigen",
     "collapse": "Einklappen",
     "disclosed": "{{n}}/{{total}} offengelegt"
+  },
+  "profile": {
+    "backToCompanies": "Zurück zur Unternehmensliste",
+    "trendTitle": "Historischer Trend",
+    "trendLegend": "Linien: Scope 1 (rot), Erneuerbare % (grün), taxonomiekonformer Umsatz % (indigo)",
+    "frameworkTitle": "Rahmenwerk-Ergebnisse",
+    "noFrameworkResults": "Noch keine gespeicherten Rahmenwerk-Ergebnisse. Bitte zuerst Bewertung ausführen.",
+    "frameworkVersion": "Rahmenwerk-Version",
+    "periodTitle": "Berichtszeiträume",
+    "evidenceTitle": "Evidenz-Zusammenfassung",
+    "noEvidence": "Keine Evidenz-Zusammenfassung verfügbar.",
+    "metricFallback": "Metrik",
+    "sourceFallback": "Quelle"
   },
   "errors": {
     "networkError": "Netzwerkfehler — bitte Verbindung prüfen",
@@ -144,5 +178,10 @@
     "en": "English",
     "zh": "中文",
     "de": "Deutsch"
+  },
+  "theme": {
+    "toggle": "Darstellung umschalten",
+    "light": "Hell",
+    "dark": "Dunkel"
   }
 }

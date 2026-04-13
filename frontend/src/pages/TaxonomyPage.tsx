@@ -14,20 +14,21 @@ import {
 import { Button } from '@/components/ui/button'
 import { CheckCircle, XCircle, Download } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { localizeErrorMessage } from '@/lib/error-utils'
 
 export function TaxonomyPage() {
   const { t } = useTranslation()
   const [selected, setSelected] = useState<string>('')
   const [pdfLoading, setPdfLoading] = useState(false)
 
-  const { data: companies = [] } = useQuery({
+  const { data: companies = [], error: companiesError } = useQuery({
     queryKey: ['companies'],
     queryFn: listCompanies,
   })
 
   const [companyName, companyYear] = selected ? selected.split('|') : [null, null]
 
-  const { data: report, isLoading } = useQuery({
+  const { data: report, isLoading, error: reportError } = useQuery({
     queryKey: ['taxonomy', companyName, companyYear],
     queryFn: () => getTaxonomyReport(companyName!, Number(companyYear)),
     enabled: !!companyName && !!companyYear,
@@ -55,6 +56,11 @@ export function TaxonomyPage() {
           </Button>
         )}
       </div>
+      {(companiesError || reportError) && (
+        <p className="text-red-500 text-sm">
+          {localizeErrorMessage(t, reportError ?? companiesError, 'common.error')}
+        </p>
+      )}
 
       <Select value={selected} onValueChange={setSelected}>
         <SelectTrigger className="w-72">

@@ -1,5 +1,8 @@
 # Task List — ESG Research Toolkit
 
+> Note: this is an earlier bootstrap task list.  
+> For the current recommended order, see [task_NEXT_SPRINT.md](./task_NEXT_SPRINT.md) and [../CAREER_PRODUCT_ROADMAP.md](../CAREER_PRODUCT_ROADMAP.md).
+
 **最后更新**: 2026-04-12  
 **版本目标**: v0.2.0
 

@@ -1,6 +1,7 @@
 // Typed fetch wrappers for all 15 backend endpoints
 import type {
   BatchStatusResponse,
+  CompanyProfile,
   CompanyESGData,
   FrameworkScoreResult,
   LCOEInput,
@@ -13,12 +14,29 @@ import type {
 
 const BASE = '/api'
 
+export class ApiError extends Error {
+  status: number
+  detail: string
+
+  constructor(status: number, detail: string) {
+    super(detail || `HTTP ${status}`)
+    this.name = 'ApiError'
+    this.status = status
+    this.detail = detail
+  }
+}
+
+async function toApiError(res: Response): Promise<ApiError> {
+  const detail = (await res.text()).trim()
+  return new ApiError(res.status, detail)
+}
+
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(BASE + path, {
     headers: { 'Content-Type': 'application/json' },
     ...init,
   })
-  if (!res.ok) throw new Error(`${res.status} ${await res.text()}`)
+  if (!res.ok) throw await toApiError(res)
   return res.json() as Promise<T>
 }
 
@@ -28,8 +46,8 @@ export const uploadReport = (file: File): Promise<CompanyESGData> => {
   const form = new FormData()
   form.append('file', file)
   return fetch(BASE + '/report/upload', { method: 'POST', body: form }).then(
-    (r) => {
-      if (!r.ok) throw new Error(r.statusText)
+    async (r) => {
+      if (!r.ok) throw await toApiError(r)
       return r.json() as Promise<CompanyESGData>
     }
   )
@@ -39,8 +57,8 @@ export const uploadReportsBatch = (files: File[]): Promise<BatchStatusResponse> 
   const form = new FormData()
   files.forEach((file) => form.append('files', file))
   return fetch(BASE + '/report/upload/batch', { method: 'POST', body: form }).then(
-    (r) => {
-      if (!r.ok) throw new Error(r.statusText)
+    async (r) => {
+      if (!r.ok) throw await toApiError(r)
       return r.json() as Promise<BatchStatusResponse>
     }
   )
@@ -57,6 +75,9 @@ export const getCompany = (
   year: number
 ): Promise<CompanyESGData> =>
   req(`/report/companies/${encodeURIComponent(name)}/${year}`)
+
+export const getCompanyProfile = (name: string): Promise<CompanyProfile> =>
+  req(`/report/companies/${encodeURIComponent(name)}/profile`)
 
 export const updateCompany = (
   name: string,
@@ -98,7 +119,7 @@ export const downloadTaxonomyPdf = async (
   const res = await fetch(
     `${BASE}/taxonomy/report/pdf?company_name=${encodeURIComponent(name)}&report_year=${year}`
   )
-  if (!res.ok) throw new Error(`${res.status} ${await res.text()}`)
+  if (!res.ok) throw await toApiError(res)
   const blob = await res.blob()
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')

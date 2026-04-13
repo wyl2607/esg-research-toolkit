@@ -55,9 +55,11 @@ bash scripts/install_git_guards.sh
    - 写入脚本：`scripts/write_deploy_fingerprint.sh`
    - 远端打点：`scripts/stamp_remote_fingerprint.sh`
    - 默认文件：`/opt/esg-research-toolkit/.deploy-fingerprint.json`
+   - `scripts/release_pipeline.sh --deploy-vps` 会先自动同步指纹脚本到 VPS，再写入并校验指纹文件，避免远端缺脚本导致发布尾段失败
 10. coco 守卫安装与统一发布流水线：
    - 远端安装 hook：`scripts/setup_coco_guards.sh`
    - 统一执行（本地→coco→可选部署）：`scripts/release_pipeline.sh`
+   - `--deploy-vps` 前新增 `git sha` 对齐闸门：VPS `HEAD` 必须等于本地 `HEAD`，否则直接终止部署，防止“重启了旧代码容器”
 
 ## 处理“已上传但应本地保留”的标准动作
 

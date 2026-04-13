@@ -7,17 +7,20 @@ import { Input } from '@/components/ui/input'
 import { Trash2, Search, Download } from 'lucide-react'
 import type { CompanyESGData } from '@/lib/types'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
+import { localizeErrorMessage } from '@/lib/error-utils'
 
 type SortKey = 'company_name' | 'report_year' | 'taxonomy_aligned_revenue_pct'
 
 export function CompaniesPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [search, setSearch] = useState('')
   const [sortKey, setSortKey] = useState<SortKey>('report_year')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
 
-  const { data: companies = [], isLoading } = useQuery({
+  const { data: companies = [], isLoading, error } = useQuery({
     queryKey: ['companies'],
     queryFn: listCompanies,
   })
@@ -66,6 +69,12 @@ export function CompaniesPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-slate-900">{t('companies.title')}</h1>
+      {error && (
+        <p className="text-red-500 text-sm">{localizeErrorMessage(t, error, 'common.error')}</p>
+      )}
+      {deleteMutation.error && (
+        <p className="text-red-500 text-sm">{localizeErrorMessage(t, deleteMutation.error, 'companies.deleteError')}</p>
+      )}
 
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="relative w-full md:w-72">
@@ -140,14 +149,18 @@ export function CompaniesPage() {
             </thead>
             <tbody>
               {filtered.map((c, i) => (
-                <tr key={i} className="border-b last:border-0 hover:bg-slate-50">
+                <tr
+                  key={i}
+                  className="border-b last:border-0 hover:bg-slate-50 cursor-pointer"
+                  onClick={() => navigate(`/companies/${encodeURIComponent(c.company_name)}`)}
+                >
                   <td className="px-4 py-3 font-medium">{c.company_name}</td>
                   <td className="px-4 py-3 text-slate-600">{c.report_year}</td>
                   <td className="px-4 py-3 text-slate-600">
-                    {c.scope1_co2e_tonnes?.toLocaleString() ?? '—'}
+                    {c.scope1_co2e_tonnes?.toLocaleString(i18n.resolvedLanguage) ?? '—'}
                   </td>
                   <td className="px-4 py-3 text-slate-600">
-                    {c.total_employees?.toLocaleString() ?? '—'}
+                    {c.total_employees?.toLocaleString(i18n.resolvedLanguage) ?? '—'}
                   </td>
                   <td className="px-4 py-3">
                     {c.taxonomy_aligned_revenue_pct != null ? (
@@ -169,7 +182,10 @@ export function CompaniesPage() {
                       variant="ghost"
                       size="sm"
                       className="text-red-500 hover:text-red-700"
-                      onClick={() => handleDelete(c)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleDelete(c)
+                      }}
                     >
                       <Trash2 size={14} />
                     </Button>

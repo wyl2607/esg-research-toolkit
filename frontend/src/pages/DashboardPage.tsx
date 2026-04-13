@@ -4,6 +4,7 @@ import { MetricCard } from '@/components/MetricCard'
 import { Badge } from '@/components/ui/badge'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
+import { useTranslation } from 'react-i18next'
 
 const readinessFields = [
   'scope1_co2e_tonnes',
@@ -20,6 +21,7 @@ const readinessFields = [
 ] as const
 
 export function DashboardPage() {
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const { data: companies = [], isLoading } = useQuery({
     queryKey: ['companies'],
@@ -52,8 +54,8 @@ export function DashboardPage() {
     : '—'
 
   const taxonomyCardLabel = taxonomyAvailable.length
-    ? 'Avg Taxonomy Alignment'
-    : 'Avg Taxonomy Readiness (Proxy)'
+    ? t('dashboard.avgTaxonomy')
+    : t('dashboard.avgTaxonomyReadinessProxy')
   const taxonomyCardValue = taxonomyAvailable.length
     ? `${avgTaxonomy}%`
     : isLoading
@@ -67,13 +69,13 @@ export function DashboardPage() {
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
-        <Button onClick={() => navigate('/upload')}>Upload Report</Button>
+        <h1 className="text-2xl font-bold text-slate-900">{t('dashboard.title')}</h1>
+        <Button onClick={() => navigate('/upload')}>{t('dashboard.uploadReport')}</Button>
       </div>
 
       <div className="grid grid-cols-3 gap-4">
         <MetricCard
-          label="Companies Analyzed"
+          label={t('dashboard.companiesAnalyzed')}
           value={isLoading ? '…' : companies.length}
           color="blue"
         />
@@ -83,7 +85,7 @@ export function DashboardPage() {
           color="green"
         />
         <MetricCard
-          label="Reports with Taxonomy Data"
+          label={t('dashboard.reportsWithData')}
           value={
             isLoading
               ? '…'
@@ -95,12 +97,12 @@ export function DashboardPage() {
       </div>
 
       <div>
-        <h2 className="text-lg font-semibold mb-3">Recent Analyses</h2>
+        <h2 className="text-lg font-semibold mb-3">{t('dashboard.recentAnalyses')}</h2>
         {isLoading ? (
-          <p className="text-slate-400">Loading…</p>
+          <p className="text-slate-400">{t('common.loading')}</p>
         ) : recent.length === 0 ? (
           <p className="text-slate-400">
-            No reports yet. Upload your first ESG report.
+            {t('dashboard.noReportsYet')}
           </p>
         ) : (
           <div className="rounded-lg border overflow-hidden">
@@ -108,16 +110,16 @@ export function DashboardPage() {
               <thead className="bg-slate-50 border-b">
                 <tr>
                   <th className="px-4 py-3 text-left font-medium text-slate-600">
-                    Company
+                    {t('common.company')}
                   </th>
                   <th className="px-4 py-3 text-left font-medium text-slate-600">
-                    Year
+                    {t('common.year')}
                   </th>
                   <th className="px-4 py-3 text-left font-medium text-slate-600">
-                    Taxonomy %
+                    {t('dashboard.taxonomyPct')}
                   </th>
                   <th className="px-4 py-3 text-left font-medium text-slate-600">
-                    Employees
+                    {t('companies.employees')}
                   </th>
                 </tr>
               </thead>
@@ -147,7 +149,7 @@ export function DashboardPage() {
                       </Badge>
                     </td>
                     <td className="px-4 py-3 text-slate-600">
-                      {c.total_employees?.toLocaleString() ?? '—'}
+                      {c.total_employees?.toLocaleString(i18n.resolvedLanguage) ?? '—'}
                     </td>
                   </tr>
                 ))}

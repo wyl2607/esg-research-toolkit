@@ -1,5 +1,8 @@
 # ESG Research Toolkit — 重审后开发计划
 
+> Note: this file documents an earlier engineering restructuring phase.  
+> For the current career-first / moat-first roadmap, see [CAREER_PRODUCT_ROADMAP.md](./CAREER_PRODUCT_ROADMAP.md).
+
 ## 第一性原理
 
 **这个工具存在的唯一理由**：帮助分析一家真实企业的 ESG 合规状况，并对其可再生能源项目做技术经济评估。

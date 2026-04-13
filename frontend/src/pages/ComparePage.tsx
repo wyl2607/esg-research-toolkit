@@ -4,11 +4,12 @@ import { listCompanies } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import type { CompanyESGData } from '@/lib/types'
 import { useTranslation } from 'react-i18next'
+import { localizeErrorMessage } from '@/lib/error-utils'
 
 type RowDef = [string, (c: CompanyESGData) => string]
 
 export function ComparePage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [selected, setSelected] = useState<string[]>([])
   const rows: RowDef[] = [
     [
@@ -18,18 +19,18 @@ export function ComparePage() {
           ? `${c.taxonomy_aligned_revenue_pct.toFixed(1)}%`
           : '—',
     ],
-    [t('companies.scope1'), (c) => c.scope1_co2e_tonnes?.toLocaleString() ?? '—'],
+    [t('companies.scope1'), (c) => c.scope1_co2e_tonnes?.toLocaleString(i18n.resolvedLanguage) ?? '—'],
     [
       t('compare.renewable'),
       (c) =>
         c.renewable_energy_pct != null ? `${c.renewable_energy_pct.toFixed(1)}%` : '—',
     ],
-    [t('companies.employees'), (c) => c.total_employees?.toLocaleString() ?? '—'],
+    [t('companies.employees'), (c) => c.total_employees?.toLocaleString(i18n.resolvedLanguage) ?? '—'],
     [t('compare.femalePct'), (c) => c.female_pct != null ? `${c.female_pct.toFixed(1)}%` : '—'],
-    ['Water (m³)', (c) => c.water_usage_m3?.toLocaleString() ?? '—'],
+    [t('compare.waterUsage'), (c) => c.water_usage_m3?.toLocaleString(i18n.resolvedLanguage) ?? '—'],
   ]
 
-  const { data: companies = [] } = useQuery({
+  const { data: companies = [], isLoading, error } = useQuery({
     queryKey: ['companies'],
     queryFn: listCompanies,
   })
@@ -56,6 +57,12 @@ export function ComparePage() {
   return (
     <div className="space-y-8">
       <h1 className="text-2xl font-bold text-slate-900">{t('compare.title')}</h1>
+      {error && (
+        <p className="text-red-500 text-sm">{localizeErrorMessage(t, error, 'common.error')}</p>
+      )}
+      {isLoading && (
+        <p className="text-slate-400 text-sm">{t('common.loading')}</p>
+      )}
 
       <div>
         <p className="text-sm text-slate-500 mb-3">

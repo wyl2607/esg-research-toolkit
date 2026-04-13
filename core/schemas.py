@@ -6,6 +6,9 @@ from pydantic import BaseModel, Field
 class CompanyESGData(BaseModel):
     company_name: str
     report_year: int
+    reporting_period_label: str | None = None
+    reporting_period_type: str | None = None
+    source_document_type: str | None = None
     scope1_co2e_tonnes: float | None = None
     scope2_co2e_tonnes: float | None = None
     scope3_co2e_tonnes: float | None = None
@@ -20,6 +23,7 @@ class CompanyESGData(BaseModel):
     total_employees: int | None = None
     female_pct: float | None = None
     primary_activities: list[str] = []
+    evidence_summary: list[dict[str, str | int | float | None]] = []
 
 
 class BatchJobItem(BaseModel):

@@ -2,6 +2,7 @@ import json
 from collections.abc import Callable
 from collections.abc import Generator
 from unittest.mock import patch
+import os
 
 import pytest
 from sqlalchemy import create_engine
@@ -9,7 +10,10 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from core.database import Base
 from core.schemas import CompanyESGData
+from esg_frameworks.schemas import DimensionScore, FrameworkScoreResult
+from esg_frameworks.storage import save_framework_result
 from report_parser.api import list_company_reports
+from report_parser.api import get_company_history, get_company_profile
 from report_parser.analyzer import AIExtractionError, analyze_esg_data
 from report_parser.extractor import extract_text_from_pdf
 from report_parser.storage import CompanyReport, get_report, list_reports, save_report
@@ -138,6 +142,56 @@ def test_analyze_esg_data_invalid_json_with_regex_fallback() -> None:
     assert result.scope2_co2e_tonnes == pytest.approx(12500.0)
 
 
+def test_analyze_esg_data_ai_error_uses_regex_fallback() -> None:
+    text = (
+        "Example Corp 2024 Sustainability Report\n"
+        "Scope 1 emissions: 10,500 tCO2e\n"
+        "Renewable energy ratio: 38.5%\n"
+        "Total employees: 1200"
+    )
+    with patch("report_parser.analyzer.complete", side_effect=Exception("401 authentication failed")):
+        result = analyze_esg_data(text, filename="Example_2024.pdf")
+
+    assert result.company_name == "Example"
+    assert result.scope1_co2e_tonnes == pytest.approx(10500.0)
+    assert result.renewable_energy_pct == pytest.approx(38.5)
+    assert result.total_employees == 1200
+
+
+def test_analyze_esg_data_regex_only_mode_extracts_extended_metrics() -> None:
+    text = (
+        "CATL 2024 ESG Report\n"
+        "Scope 1: 93,440 tCO2e\n"
+        "Scope 2: 12,500 tCO2e\n"
+        "Energy consumption: 1,000,000 MWh\n"
+        "Renewable energy percentage: 45.6%\n"
+        "Water consumption: 12,345 m3\n"
+        "Waste recycling rate: 81.2%\n"
+        "Taxonomy-aligned revenue: 22.5%\n"
+        "Taxonomy-aligned CapEx: 18.1%\n"
+        "Total employees: 34,500\n"
+        "Female employee ratio: 36.4%\n"
+        "Business includes battery manufacturing and solar PV."
+    )
+
+    with patch.dict(os.environ, {"PARSER_REGEX_ONLY": "1"}), patch("report_parser.analyzer.complete") as mock_complete:
+        result = analyze_esg_data(text, filename="CATL_2024.pdf")
+
+    mock_complete.assert_not_called()
+    assert result.scope1_co2e_tonnes == pytest.approx(93440.0)
+    assert result.scope2_co2e_tonnes == pytest.approx(12500.0)
+    assert result.energy_consumption_mwh == pytest.approx(1000000.0)
+    assert result.renewable_energy_pct == pytest.approx(45.6)
+    assert result.water_usage_m3 == pytest.approx(12345.0)
+    assert result.waste_recycled_pct == pytest.approx(81.2)
+    assert result.taxonomy_aligned_revenue_pct == pytest.approx(22.5)
+    assert result.taxonomy_aligned_capex_pct == pytest.approx(18.1)
+    assert result.total_employees == 34500
+    assert result.female_pct == pytest.approx(36.4)
+    assert "battery_manufacturing" in result.primary_activities
+    assert "solar_pv" in result.primary_activities
+
+
 def test_save_and_get_report(
     db_session: Session,
     make_company_data,
@@ -200,3 +254,60 @@ def test_list_company_reports_keeps_legacy_and_metric_fields(
     assert row["scope1_co2e_tonnes"] == pytest.approx(123.4)
     assert row["taxonomy_aligned_revenue_pct"] is None
     assert row["primary_activities"] == ["solar_pv"]
+
+    assert row["reporting_period_label"] == "2025"
+    assert row["reporting_period_type"] == "annual"
+    assert row["source_document_type"] == "sustainability_report"
+    assert row["evidence_summary"] == []
+
+
+def test_company_history_and_profile_include_period_and_framework_results(
+    db_session: Session,
+    make_company_data,
+) -> None:
+    save_report(
+        db_session,
+        make_company_data(company_name="Trend Corp", report_year=2023, renewable_energy_pct=30.0),
+        pdf_filename="trend-2023.pdf",
+        reporting_period_label="FY2023",
+        reporting_period_type="annual",
+        source_document_type="annual_report",
+        evidence_summary=[{"metric": "renewable_energy_pct", "page": 10}],
+    )
+    save_report(
+        db_session,
+        make_company_data(company_name="Trend Corp", report_year=2024, renewable_energy_pct=45.0),
+        pdf_filename="trend-2024.pdf",
+        reporting_period_label="FY2024",
+        reporting_period_type="annual",
+        source_document_type="sustainability_report",
+        evidence_summary=[{"metric": "renewable_energy_pct", "page": 12}],
+    )
+
+    result = FrameworkScoreResult(
+        framework="EU Taxonomy 2020",
+        framework_id="eu_taxonomy",
+        framework_version="2020/852",
+        company_name="Trend Corp",
+        report_year=2024,
+        total_score=0.66,
+        grade="B",
+        dimensions=[DimensionScore(name="Climate", score=0.66, weight=1.0, disclosed=1, total=1)],
+        gaps=[],
+        recommendations=[],
+        coverage_pct=100.0,
+    )
+    save_framework_result(db_session, result, framework_version=result.framework_version)
+
+    history = get_company_history(company_name="Trend Corp", db=db_session)
+    assert history["company_name"] == "Trend Corp"
+    assert len(history["periods"]) == 2
+    assert history["periods"][0]["reporting_period_label"] == "FY2023"
+    assert history["trend"][1]["renewable_pct"] == pytest.approx(45.0)
+
+    profile = get_company_profile(company_name="Trend Corp", db=db_session)
+    assert profile["latest_year"] == 2024
+    assert profile["latest_period"]["reporting_period_label"] == "FY2024"
+    assert len(profile["framework_results"]) == 1
+    assert profile["framework_results"][0]["framework_version"] == "2020/852"
+    assert profile["evidence_summary"] == [{"metric": "renewable_energy_pct", "page": 12}]

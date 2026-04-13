@@ -3,6 +3,9 @@
 export interface CompanyESGData {
   company_name: string
   report_year: number
+  reporting_period_label?: string | null
+  reporting_period_type?: string | null
+  source_document_type?: string | null
   scope1_co2e_tonnes: number | null
   scope2_co2e_tonnes: number | null
   scope3_co2e_tonnes: number | null
@@ -17,6 +20,7 @@ export interface CompanyESGData {
   total_employees: number | null
   female_pct: number | null
   primary_activities: string[]
+  evidence_summary?: Array<Record<string, string | number | null>>
 }
 
 export interface BatchJobItem {
@@ -93,6 +97,8 @@ export interface FrameworkScoreResult {
   framework_id: string
   company_name: string
   report_year: number
+  framework_version?: string
+  analyzed_at?: string | null
   total_score: number
   grade: string
   dimensions: DimensionScore[]
@@ -113,4 +119,41 @@ export interface TaxonomyActivity {
   name: string
   sector: string
   ghg_threshold_gco2e_per_kwh: number | null
+}
+
+export interface CompanyHistoryPeriod {
+  report_year: number
+  reporting_period_label: string
+  reporting_period_type: string
+  source_document_type: string | null
+  source_url: string | null
+  downloaded_at: string | null
+}
+
+export interface CompanyTrendPoint {
+  year: number
+  scope1: number | null
+  scope2: number | null
+  scope3: number | null
+  renewable_pct: number | null
+  taxonomy_aligned_revenue_pct: number | null
+  taxonomy_aligned_capex_pct: number | null
+  female_pct: number | null
+}
+
+export interface CompanyProfile {
+  company_name: string
+  years_available: number[]
+  latest_year: number
+  latest_period: {
+    report_year: number
+    reporting_period_label: string
+    reporting_period_type: string
+    source_document_type: string | null
+  }
+  latest_metrics: CompanyESGData
+  trend: CompanyTrendPoint[]
+  periods: CompanyHistoryPeriod[]
+  framework_results: Array<FrameworkScoreResult & { analysis_result_id?: number; stored_at?: string | null }>
+  evidence_summary: Array<Record<string, string | number | null>>
 }

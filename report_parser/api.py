@@ -20,6 +20,7 @@ from report_parser.storage import (
     get_report,
     hard_delete_report,
     list_reports,
+    list_reports_for_company,
     request_deletion,
     save_report,
 )
@@ -79,6 +80,14 @@ if _MULTIPART_AVAILABLE:
             pdf_filename=safe_name,
             file_hash=file_hash,
             downloaded_at=datetime.now(timezone.utc),
+            reporting_period_label=str(esg_data.report_year),
+            reporting_period_type="annual",
+            source_document_type="sustainability_report",
+            evidence_summary=[
+                {"metric": "scope1_co2e_tonnes", "source_type": "pdf", "file_hash": file_hash},
+                {"metric": "scope2_co2e_tonnes", "source_type": "pdf", "file_hash": file_hash},
+                {"metric": "renewable_energy_pct", "source_type": "pdf", "file_hash": file_hash},
+            ],
         )
         return esg_data
 
@@ -123,19 +132,14 @@ else:
         raise HTTPException(500, 'File uploads require the "python-multipart" package')
 
 
-@router.get("/companies/{company_name}/{report_year:int}", response_model=CompanyESGData)
-def get_company_report(
-    company_name: str,
-    report_year: int,
-    db: Session = Depends(get_db),
-):
-    record = get_report(db, company_name, report_year)
-    if not record:
-        raise HTTPException(404, "Report not found")
-
+def _record_to_company_data(record) -> CompanyESGData:
+    evidence_summary = json.loads(record.evidence_summary) if record.evidence_summary else []
     return CompanyESGData(
         company_name=record.company_name,
         report_year=record.report_year,
+        reporting_period_label=record.reporting_period_label,
+        reporting_period_type=record.reporting_period_type,
+        source_document_type=record.source_document_type,
         scope1_co2e_tonnes=record.scope1_co2e_tonnes,
         scope2_co2e_tonnes=record.scope2_co2e_tonnes,
         scope3_co2e_tonnes=record.scope3_co2e_tonnes,
@@ -150,7 +154,107 @@ def get_company_report(
         total_employees=record.total_employees,
         female_pct=record.female_pct,
         primary_activities=json.loads(record.primary_activities) if record.primary_activities else [],
+        evidence_summary=evidence_summary if isinstance(evidence_summary, list) else [],
     )
+
+
+@router.get("/companies/{company_name}/{report_year:int}", response_model=CompanyESGData)
+def get_company_report(
+    company_name: str,
+    report_year: int,
+    db: Session = Depends(get_db),
+):
+    record = get_report(db, company_name, report_year)
+    if not record:
+        raise HTTPException(404, "Report not found")
+    return _record_to_company_data(record)
+
+
+@router.get("/companies/{company_name}/history")
+def get_company_history(
+    company_name: str,
+    db: Session = Depends(get_db),
+):
+    records = list_reports_for_company(db, company_name)
+    if not records:
+        raise HTTPException(404, f"No reports found for {company_name}")
+
+    trend = []
+    periods = []
+    for record in records:
+        periods.append(
+            {
+                "report_year": record.report_year,
+                "reporting_period_label": record.reporting_period_label or str(record.report_year),
+                "reporting_period_type": record.reporting_period_type or "annual",
+                "source_document_type": record.source_document_type,
+                "source_url": record.source_url,
+                "downloaded_at": record.downloaded_at.isoformat() if record.downloaded_at else None,
+            }
+        )
+        trend.append(
+            {
+                "year": record.report_year,
+                "scope1": record.scope1_co2e_tonnes,
+                "scope2": record.scope2_co2e_tonnes,
+                "scope3": record.scope3_co2e_tonnes,
+                "renewable_pct": record.renewable_energy_pct,
+                "taxonomy_aligned_revenue_pct": record.taxonomy_aligned_revenue_pct,
+                "taxonomy_aligned_capex_pct": record.taxonomy_aligned_capex_pct,
+                "female_pct": record.female_pct,
+            }
+        )
+
+    return {
+        "company_name": company_name,
+        "periods": periods,
+        "trend": trend,
+    }
+
+
+@router.get("/companies/{company_name}/profile")
+def get_company_profile(
+    company_name: str,
+    db: Session = Depends(get_db),
+):
+    from esg_frameworks.storage import list_framework_results
+
+    records = list_reports_for_company(db, company_name)
+    if not records:
+        raise HTTPException(404, f"No reports found for {company_name}")
+
+    latest = records[-1]
+    history = get_company_history(company_name=company_name, db=db)
+    latest_data = _record_to_company_data(latest)
+
+    framework_rows = list_framework_results(
+        db,
+        company_name=company_name,
+        report_year=latest.report_year,
+    )
+    framework_results = []
+    for row in framework_rows:
+        result = json.loads(row.result_payload)
+        result["analysis_result_id"] = row.id
+        result["stored_at"] = row.created_at.isoformat() if row.created_at else None
+        framework_results.append(result)
+
+    return {
+        "company_name": company_name,
+        "years_available": [record.report_year for record in records],
+        "latest_year": latest.report_year,
+        "latest_period": {
+            "report_year": latest.report_year,
+            "reporting_period_label": latest.reporting_period_label or str(latest.report_year),
+            "reporting_period_type": latest.reporting_period_type or "annual",
+            "source_document_type": latest.source_document_type,
+        },
+        "latest_metrics": latest_data.model_dump(),
+        "trend": history["trend"],
+        "periods": history["periods"],
+        "framework_results": framework_results,
+        "evidence_summary": latest_data.evidence_summary,
+    }
 
 
 @router.get("/companies")
@@ -161,6 +265,14 @@ def list_company_reports(skip: int = 0, limit: int = 50, db: Session = Depends(g
             "company_name": record.company_name,
             "report_year": record.report_year,
             "pdf_filename": record.pdf_filename,
+            "source_url": record.source_url,
+            "file_hash": record.file_hash,
+            "downloaded_at": (
+                record.downloaded_at.isoformat() if record.downloaded_at else None
+            ),
+            "reporting_period_label": record.reporting_period_label or str(record.report_year),
+            "reporting_period_type": record.reporting_period_type or "annual",
+            "source_document_type": record.source_document_type,
             "created_at": (
                 record.created_at.isoformat() if record.created_at else None
             ),
@@ -178,6 +290,7 @@ def list_company_reports(skip: int = 0, limit: int = 50, db: Session = Depends(g
             "total_employees": record.total_employees,
             "female_pct": record.female_pct,
             "primary_activities": json.loads(record.primary_activities) if record.primary_activities else [],
+            "evidence_summary": json.loads(record.evidence_summary) if record.evidence_summary else [],
         }
         for record in records
     ]

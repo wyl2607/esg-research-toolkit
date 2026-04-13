@@ -35,10 +35,13 @@
     "title": "仪表盘",
     "companiesAnalyzed": "已分析公司数",
     "avgTaxonomy": "平均分类法对齐率",
+    "avgTaxonomyReadinessProxy": "平均分类法就绪度（代理）",
     "reportsWithData": "含分类法数据的报告",
     "recentAnalyses": "最近分析",
     "keyMetrics": "关键指标",
     "noCompanies": "暂无公司。请上传 PDF 报告开始分析。",
+    "noReportsYet": "暂无报告。请先上传第一份 ESG 报告。",
+    "taxonomyPct": "分类法 %",
     "runTaxonomy": "进行分类法评分 →",
     "uploadReport": "上传报告"
   },
@@ -60,7 +63,8 @@
     "queued": "排队中",
     "viewTaxonomy": "查看分类法评分 →",
     "renewableEnergy": "可再生能源比例",
-    "taxonomyAligned": "分类法对齐收入"
+    "taxonomyAligned": "分类法对齐收入",
+    "moreFiles": "+{{count}} 个更多文件"
   },
   "taxonomy": {
     "title": "EU 分类法评分",
@@ -75,6 +79,14 @@
     "dnshAllMet": "所有 DNSH 标准均已满足",
     "dnshNotMet": "DNSH 标准未完全满足",
     "objectiveScores": "六大目标得分",
+    "objectives": {
+      "climateMitigation": "气候减缓",
+      "climateAdaptation": "气候适应",
+      "water": "水资源",
+      "circularEconomy": "循环经济",
+      "pollutionPrevention": "污染防治",
+      "biodiversity": "生物多样性"
+    },
     "dnshCheck": "DNSH 检查",
     "loadingData": "正在加载分类法数据…",
     "selectPrompt": "请在上方选择公司以查看分析结果。"
@@ -82,6 +94,12 @@
   "lcoe": {
     "title": "度电成本分析",
     "technology": "技术类型",
+    "technologyOptions": {
+      "solarPv": "光伏",
+      "windOnshore": "陆上风电",
+      "windOffshore": "海上风电",
+      "batteryStorage": "电池储能"
+    },
     "calculate": "计算",
     "calculating": "计算中…",
     "loadBenchmark": "加载基准参数",
@@ -93,6 +111,8 @@
     "sensitivityAnalysis": "敏感性分析",
     "capex": "资本支出（€/kW）",
     "opex": "运营成本（€/kW/年）",
+    "capacityMw": "装机容量（MW）",
+    "axisEurPerMwh": "€/MWh",
     "capacityFactor": "容量因子",
     "lifetime": "使用寿命（年）",
     "discountRate": "折现率"
@@ -116,6 +136,7 @@
     "selectUp4": "最多选择 4 家公司进行对比",
     "revenueAligned": "收入对齐率",
     "renewable": "可再生能源",
+    "waterUsage": "用水量（m³）",
     "femalePct": "女性员工比例",
     "noSelection": "请在上方选择公司以比较指标。"
   },
@@ -129,6 +150,19 @@
     "viewGaps": "查看差距（{{count}}）和建议（{{recs}}）",
     "collapse": "收起",
     "disclosed": "{{n}}/{{total}} 项已披露"
+  },
+  "profile": {
+    "backToCompanies": "返回公司列表",
+    "trendTitle": "历史趋势",
+    "trendLegend": "曲线：范围一排放（红）、可再生能源占比（绿）、分类法对齐收入占比（靛蓝）",
+    "frameworkTitle": "框架分析结果",
+    "noFrameworkResults": "暂无已保存框架结果，请先运行框架评分。",
+    "frameworkVersion": "框架版本",
+    "periodTitle": "报告时期",
+    "evidenceTitle": "证据摘要",
+    "noEvidence": "暂无证据摘要。",
+    "metricFallback": "指标",
+    "sourceFallback": "来源"
   },
   "errors": {
     "networkError": "网络错误——请检查网络连接",
@@ -144,5 +178,10 @@
     "en": "English",
     "zh": "中文",
     "de": "Deutsch"
+  },
+  "theme": {
+    "toggle": "切换主题",
+    "light": "浅色",
+    "dark": "深色"
   }
 }

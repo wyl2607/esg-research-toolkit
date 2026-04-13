@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { getBatchStatus, uploadReport, uploadReportsBatch } from '@/lib/api'
+import { ApiError } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -9,9 +10,10 @@ import { Upload, FileText, CheckCircle, AlertCircle, Clock3 } from 'lucide-react
 import type { BatchStatusResponse, CompanyESGData } from '@/lib/types'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { localizeErrorMessage } from '@/lib/error-utils'
 
 export function UploadPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const [result, setResult] = useState<CompanyESGData | null>(null)
   const [batchId, setBatchId] = useState<string | null>(null)
@@ -68,13 +70,13 @@ export function UploadPage() {
         [
           t('companies.scope1'),
           result.scope1_co2e_tonnes != null
-            ? `${result.scope1_co2e_tonnes.toLocaleString()} t`
+            ? `${result.scope1_co2e_tonnes.toLocaleString(i18n.resolvedLanguage)} t`
             : '—',
         ],
         [
           t('companies.scope2'),
           result.scope2_co2e_tonnes != null
-            ? `${result.scope2_co2e_tonnes.toLocaleString()} t`
+            ? `${result.scope2_co2e_tonnes.toLocaleString(i18n.resolvedLanguage)} t`
             : '—',
         ],
         [
@@ -83,7 +85,7 @@ export function UploadPage() {
             ? `${result.renewable_energy_pct.toFixed(1)}%`
             : '—',
         ],
-        [t('companies.employees'), result.total_employees?.toLocaleString() ?? '—'],
+        [t('companies.employees'), result.total_employees?.toLocaleString(i18n.resolvedLanguage) ?? '—'],
         [
           t('upload.taxonomyAligned'),
           result.taxonomy_aligned_revenue_pct != null
@@ -96,11 +98,9 @@ export function UploadPage() {
 
   const isUploading = singleMutation.isPending || batchMutation.isPending
   const uploadError = (singleMutation.error as Error | null) ?? (batchMutation.error as Error | null)
-  const errMsg = uploadError?.message?.includes('401')
-    ? t('errors.unauthorized')
-    : uploadError?.message?.includes('422')
-      ? t('upload.aiError')
-      : t('upload.error')
+  const errMsg = uploadError instanceof ApiError && uploadError.status === 422
+    ? t('upload.aiError')
+    : localizeErrorMessage(t, uploadError, 'upload.error')
 
   const statusText = (status: string) => {
     if (status === 'completed') return t('upload.completed')
@@ -144,7 +144,9 @@ export function UploadPage() {
               </div>
             ))}
             {acceptedFiles.length > 5 && (
-              <div className="text-slate-400">+{acceptedFiles.length - 5} more files</div>
+              <div className="text-slate-400">
+                {t('upload.moreFiles', { count: acceptedFiles.length - 5 })}
+              </div>
             )}
           </div>
         )}

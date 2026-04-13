@@ -2,6 +2,13 @@
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
+## Frontend Localization Policy (German-first)
+
+- Default UI language: `de` (Deutsch)
+- Translation priority for new UI text: `de` → `en` → `zh`
+- Do not hardcode visible UI strings in components; always use `t('...')` keys from `src/i18n/locales/*.json`
+- For dashboard/homepage and any new pages, add German keys first, then provide English and Chinese equivalents in the same change
+
 Currently, two official plugins are available:
 
 - [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
