@@ -7,3 +7,6 @@ SUMMARY.md
 PROJECT_PROGRESS.md
 INCIDENT_LOG.md
 .guard/ENGINEERING_MEMORY.md
+.local/engineering-records/CANONICAL_MEMORY.md
+.local/engineering-records/canonical_memory.json
+.local/scripts/load_canonical_context.sh

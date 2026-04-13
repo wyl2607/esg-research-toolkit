@@ -19,6 +19,17 @@
 - 本地安全/审计草稿：`SECURITY.md` `SECURITY_SUMMARY.md`
 - 本地工作区产物：`.local/`、`logs/`、`data/`、`.omx/`、`.codex/`、`.claude/`
 - 任何密钥、私人配置、临时脚本和实验文件
+- 核心工程记忆资产（仅本机 + coco）：  
+  `.local/engineering-records/CANONICAL_MEMORY.md`  
+  `.local/engineering-records/canonical_memory.json`  
+  `.guard/ENGINEERING_MEMORY.md`  
+  `.local/scripts/load_canonical_context.sh`
+
+### L3 强约束（GitHub / VPS）
+
+- L3 资产不得进入 GitHub 提交范围。
+- L3 资产不得作为 VPS 部署输入或同步对象。
+- 如需在 coco 使用，保留 local-only 目录同步，不进入公开仓库。
 
 ## 已落地的保护机制
 

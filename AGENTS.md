@@ -3,9 +3,9 @@
 ## Load Order
 
 1. `~/AGENTS.md`
-2. `tools/automation/workspace-guides/project-records-standard.md`
-3. `.local/engineering-records/`（本地工程记录）
-4. `.guard/ENGINEERING_MEMORY.md`（本地记忆，若存在）
+2. `.local/engineering-records/CANONICAL_MEMORY.md`（本地工程记录，canonical source）
+3. `.guard/ENGINEERING_MEMORY.md`（本地记忆，若存在）
+4. `tools/automation/workspace-guides/project-records-standard.md`（参考）
 
 ## Record Contract (Mandatory)
 
