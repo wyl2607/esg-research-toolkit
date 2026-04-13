@@ -24,6 +24,7 @@ import {
 } from 'recharts'
 import type { LCOEInput } from '@/lib/types'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 
 const TECHNOLOGIES = [
   'solar_pv',
@@ -43,7 +44,7 @@ const DEFAULTS: LCOEInput = {
 }
 
 const FIELD_CONFIG: [keyof LCOEInput, string, string][] = [
-  ['capacity_mw', 'capacity_mw', '0.1'],
+  ['capacity_mw', 'lcoe.capacity', '0.1'],
   ['capacity_factor', 'lcoe.capacityFactor', '0.01'],
   ['capex_eur_per_kw', 'lcoe.capex', '1'],
   ['opex_eur_per_kw_year', 'lcoe.opex', '0.1'],
@@ -57,8 +58,18 @@ export function LcoePage() {
   const { t } = useTranslation()
   const [form, setForm] = useState<LCOEInput>(DEFAULTS)
 
-  const lcoeMutation = useMutation({ mutationFn: calcLcoe })
-  const sensitivityMutation = useMutation({ mutationFn: calcSensitivity })
+  const lcoeMutation = useMutation({
+    mutationFn: calcLcoe,
+    onError: () => {
+      toast.error(t('errors.unknown'))
+    },
+  })
+  const sensitivityMutation = useMutation({
+    mutationFn: calcSensitivity,
+    onError: () => {
+      toast.error(t('errors.unknown'))
+    },
+  })
 
   const { data: benchmarks } = useQuery({
     queryKey: ['benchmarks'],
@@ -120,7 +131,7 @@ export function LcoePage() {
 
           {FIELD_CONFIG.map(([key, labelKey, step]) => (
             <div key={key}>
-              <Label>{labelKey === 'capacity_mw' ? 'Capacity (MW)' : t(labelKey)}</Label>
+              <Label>{t(labelKey)}</Label>
               <Input
                 type="number"
                 step={step}

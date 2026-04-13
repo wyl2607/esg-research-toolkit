@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
+import { Skeleton } from '@/components/ui/skeleton'
 import { RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer, Tooltip } from 'recharts'
 import { useTranslation } from 'react-i18next'
 
@@ -202,7 +203,16 @@ export function FrameworksPage() {
         </SelectContent>
       </Select>
 
-      {isLoading && <p className="text-slate-400">{t('frameworks.calculating')}</p>}
+      {isLoading && (
+        <div className="space-y-4">
+          <Skeleton className="h-16 rounded-xl" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-[420px] rounded-xl" />
+            ))}
+          </div>
+        </div>
+      )}
 
       {report && (
         <div className="space-y-4">

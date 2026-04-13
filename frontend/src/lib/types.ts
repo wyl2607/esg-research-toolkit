@@ -114,3 +114,22 @@ export interface TaxonomyActivity {
   sector: string
   ghg_threshold_gco2e_per_kwh: number | null
 }
+
+export interface CompanyTrendPoint {
+  year: number
+  scope1: number | null
+  scope2: number | null
+  scope3: number | null
+  renewable_pct: number | null
+  taxonomy_aligned: number | null
+  female_pct: number | null
+}
+
+export interface CompanyProfile {
+  company_name: string
+  years_available: number[]
+  latest_year: number
+  trend: CompanyTrendPoint[]
+  framework_scores: FrameworkScoreResult[]
+  latest_metrics: CompanyESGData
+}

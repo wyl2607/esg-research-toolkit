@@ -7,6 +7,7 @@
     "companies": "Companies",
     "compare": "Compare",
     "frameworks": "Frameworks",
+    "regional": "Regional Analysis",
     "appName": "ESG Toolkit"
   },
   "common": {
@@ -29,7 +30,8 @@
     "missing": "Missing",
     "coverage": "Coverage",
     "grade": "Grade",
-    "summary": "Summary"
+    "summary": "Summary",
+    "metric": "Metric"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -38,6 +40,10 @@
     "reportsWithData": "Reports with Taxonomy Data",
     "recentAnalyses": "Recent Analyses",
     "keyMetrics": "Key Metrics",
+    "yearlyTrend": "Yearly Upload Trend",
+    "topEmitters": "Top 5 Emitters (Scope 1)",
+    "coverageRates": "Data Coverage Rates",
+    "uploads": "Uploads",
     "noCompanies": "No companies yet. Upload a PDF report to get started.",
     "runTaxonomy": "Run Taxonomy Score →",
     "uploadReport": "Upload Report"
@@ -60,7 +66,8 @@
     "queued": "Queued",
     "viewTaxonomy": "View Taxonomy →",
     "renewableEnergy": "Renewable Energy",
-    "taxonomyAligned": "Taxonomy Aligned Revenue"
+    "taxonomyAligned": "Taxonomy Aligned Revenue",
+    "moreFiles": "+{{count}} more files"
   },
   "taxonomy": {
     "title": "Taxonomy Scoring",
@@ -91,6 +98,7 @@
     "payback": "Payback",
     "years": "yr",
     "sensitivityAnalysis": "Sensitivity Analysis",
+    "capacity": "Capacity (MW)",
     "capex": "CapEx (€/kW)",
     "opex": "OpEx (€/kW/yr)",
     "capacityFactor": "Capacity Factor",
@@ -117,6 +125,7 @@
     "revenueAligned": "Revenue Aligned",
     "renewable": "Renewable Energy",
     "femalePct": "Female Employees",
+    "waterUsage": "Water Usage",
     "noSelection": "Select companies above to compare metrics."
   },
   "frameworks": {
@@ -129,6 +138,27 @@
     "viewGaps": "View gaps ({{count}}) and recommendations ({{recs}})",
     "collapse": "Collapse",
     "disclosed": "{{n}}/{{total}} disclosed"
+  },
+  "regional": {
+    "title": "Three-Region ESG Comparison",
+    "subtitle": "EU · China · US regulatory framework alignment",
+    "overallReadiness": "Overall Compliance Readiness",
+    "dimensionRadar": "Dimension Scores by Region",
+    "keyInsights": "Key Insights",
+    "crossMatrix": "Regulatory Requirement Matrix",
+    "dimension": "Dimension",
+    "gapAnalysis": "Gap Analysis",
+    "compliancePriority": "Compliance Priority Actions",
+    "selectPrompt": "Select a company to view three-region ESG comparison."
+  },
+  "profile": {
+    "backToList": "← Back to list",
+    "yearsAvailable": "Years",
+    "frameworkRadar": "Six-Framework Radar",
+    "trendChart": "Historical Trend",
+    "frameworkDetails": "Framework Details",
+    "totalScore": "Total Score",
+    "dimensions": "Dimension Breakdown"
   },
   "errors": {
     "networkError": "Network error — please check your connection",

@@ -7,6 +7,7 @@
     "companies": "Unternehmen",
     "compare": "Vergleich",
     "frameworks": "Rahmenwerke",
+    "regional": "Regionalvergleich",
     "appName": "ESG Toolkit"
   },
   "common": {
@@ -29,7 +30,8 @@
     "missing": "Fehlend",
     "coverage": "Abdeckung",
     "grade": "Bewertung",
-    "summary": "Zusammenfassung"
+    "summary": "Zusammenfassung",
+    "metric": "Kennzahl"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -38,6 +40,10 @@
     "reportsWithData": "Berichte mit Taxonomiedaten",
     "recentAnalyses": "Letzte Analysen",
     "keyMetrics": "Kennzahlen",
+    "yearlyTrend": "Jährlicher Upload-Trend",
+    "topEmitters": "Top 5 Emittenten (Scope 1)",
+    "coverageRates": "Datenabdeckungsraten",
+    "uploads": "Uploads",
     "noCompanies": "Noch keine Unternehmen. Laden Sie einen PDF-Bericht hoch.",
     "runTaxonomy": "Taxonomie-Bewertung starten →",
     "uploadReport": "Bericht hochladen"
@@ -60,7 +66,8 @@
     "queued": "In Warteschlange",
     "viewTaxonomy": "Taxonomie-Auswertung →",
     "renewableEnergy": "Erneuerbare Energien",
-    "taxonomyAligned": "Taxonomiekonforme Einnahmen"
+    "taxonomyAligned": "Taxonomiekonforme Einnahmen",
+    "moreFiles": "+{{count}} weitere Dateien"
   },
   "taxonomy": {
     "title": "Taxonomie-Bewertung",
@@ -91,6 +98,7 @@
     "payback": "Amortisationszeit",
     "years": "Jahre",
     "sensitivityAnalysis": "Sensitivitätsanalyse",
+    "capacity": "Kapazität (MW)",
     "capex": "Investitionskosten (€/kW)",
     "opex": "Betriebskosten (€/kW/Jahr)",
     "capacityFactor": "Kapazitätsfaktor",
@@ -117,6 +125,7 @@
     "revenueAligned": "Taxonomiekonforme Einnahmen",
     "renewable": "Erneuerbare Energien",
     "femalePct": "Frauenanteil",
+    "waterUsage": "Wasserverbrauch",
     "noSelection": "Bitte wählen Sie oben Unternehmen für den Vergleich."
   },
   "frameworks": {
@@ -129,6 +138,27 @@
     "viewGaps": "Lücken ({{count}}) und Empfehlungen ({{recs}}) anzeigen",
     "collapse": "Einklappen",
     "disclosed": "{{n}}/{{total}} offengelegt"
+  },
+  "regional": {
+    "title": "Drei-Regionen ESG-Vergleich",
+    "subtitle": "EU · China · US regulatorischer Rahmenvergleich",
+    "overallReadiness": "Gesamte Compliance-Bereitschaft",
+    "dimensionRadar": "Dimensionswerte nach Region",
+    "keyInsights": "Wichtige Erkenntnisse",
+    "crossMatrix": "Regulatorische Anforderungsmatrix",
+    "dimension": "Dimension",
+    "gapAnalysis": "Lückenanalyse",
+    "compliancePriority": "Compliance-Prioritäten",
+    "selectPrompt": "Unternehmen auswählen für Drei-Regionen-ESG-Vergleich"
+  },
+  "profile": {
+    "backToList": "← Zur Liste",
+    "yearsAvailable": "Jahre",
+    "frameworkRadar": "Radar mit sechs Rahmenwerken",
+    "trendChart": "Historischer Trend",
+    "frameworkDetails": "Rahmenwerk-Details",
+    "totalScore": "Gesamtpunktzahl",
+    "dimensions": "Dimensionsaufschlüsselung"
   },
   "errors": {
     "networkError": "Netzwerkfehler — bitte Verbindung prüfen",

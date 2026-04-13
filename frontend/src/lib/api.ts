@@ -2,6 +2,7 @@
 import type {
   BatchStatusResponse,
   CompanyESGData,
+  CompanyProfile,
   FrameworkScoreResult,
   LCOEInput,
   LCOEResult,
@@ -52,11 +53,27 @@ export const getBatchStatus = (batchId: string): Promise<BatchStatusResponse> =>
 export const listCompanies = (): Promise<CompanyESGData[]> =>
   req('/report/companies')
 
+export interface DashboardStats {
+  total_companies: number
+  avg_taxonomy_aligned: number
+  avg_renewable_pct: number
+  yearly_trend: Array<{ year: number; count: number }>
+  top_emitters: Array<{ company: string; year: number; scope1: number }>
+  bottom_emitters: Array<{ company: string; year: number; scope1: number }>
+  coverage_rates: Record<string, number>
+}
+
+export const getDashboardStats = (): Promise<DashboardStats> =>
+  req('/report/dashboard/stats')
+
 export const getCompany = (
   name: string,
   year: number
 ): Promise<CompanyESGData> =>
   req(`/report/companies/${encodeURIComponent(name)}/${year}`)
+
+export const getCompanyProfile = (name: string): Promise<CompanyProfile> =>
+  req(`/report/companies/${encodeURIComponent(name)}/profile`)
 
 export const updateCompany = (
   name: string,
@@ -134,6 +151,42 @@ export const getFrameworkComparison = (
   year: number
 ): Promise<MultiFrameworkReport> =>
   req(`/frameworks/compare?company_name=${encodeURIComponent(name)}&report_year=${year}`)
+
+export interface RegionalGroup {
+  region: string
+  avg_score: number
+  avg_grade: string
+  strongest_area: string
+  weakest_area: string
+  frameworks: FrameworkScoreResult[]
+}
+
+export interface DimensionCrossMatrix {
+  dimension_name: string
+  eu_requirement: string
+  cn_requirement: string
+  us_requirement: string
+  eu_score: number | null
+  cn_score: number | null
+  us_score: number | null
+  gap_analysis: string
+}
+
+export interface RegionalComparisonReport {
+  company_name: string
+  report_year: number
+  regional_groups: RegionalGroup[]
+  cross_matrix: DimensionCrossMatrix[]
+  compliance_priority: string[]
+  overall_readiness: string
+  key_insights: string[]
+}
+
+export const getRegionalComparison = (
+  companyName: string,
+  reportYear: number
+): Promise<RegionalComparisonReport> =>
+  req(`/frameworks/compare/regional?company_name=${encodeURIComponent(companyName)}&report_year=${reportYear}`)
 
 export const getFrameworkScore = (
   name: string,

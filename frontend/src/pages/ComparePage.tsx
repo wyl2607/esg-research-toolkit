@@ -26,7 +26,7 @@ export function ComparePage() {
     ],
     [t('companies.employees'), (c) => c.total_employees?.toLocaleString() ?? '—'],
     [t('compare.femalePct'), (c) => c.female_pct != null ? `${c.female_pct.toFixed(1)}%` : '—'],
-    ['Water (m³)', (c) => c.water_usage_m3?.toLocaleString() ?? '—'],
+    [t('compare.waterUsage'), (c) => c.water_usage_m3?.toLocaleString() ?? '—'],
   ]
 
   const { data: companies = [] } = useQuery({
@@ -88,7 +88,7 @@ export function ComparePage() {
                 <thead className="bg-slate-50 border-b">
                   <tr>
                     <th className="px-4 py-3 text-left font-medium text-slate-600">
-                      {t('common.summary')}
+                      {t('common.metric')}
                     </th>
                     {selectedCompanies.map((c) => (
                       <th

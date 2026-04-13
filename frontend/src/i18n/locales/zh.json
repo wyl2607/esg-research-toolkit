@@ -7,6 +7,7 @@
     "companies": "公司列表",
     "compare": "对比分析",
     "frameworks": "多框架",
+    "regional": "区域对比",
     "appName": "ESG 工具包"
   },
   "common": {
@@ -29,7 +30,8 @@
     "missing": "缺失",
     "coverage": "覆盖率",
     "grade": "评级",
-    "summary": "摘要"
+    "summary": "摘要",
+    "metric": "指标"
   },
   "dashboard": {
     "title": "仪表盘",
@@ -38,6 +40,10 @@
     "reportsWithData": "含分类法数据的报告",
     "recentAnalyses": "最近分析",
     "keyMetrics": "关键指标",
+    "yearlyTrend": "年度上传趋势",
+    "topEmitters": "Scope 1 排放 Top 5",
+    "coverageRates": "数据覆盖率",
+    "uploads": "上传量",
     "noCompanies": "暂无公司。请上传 PDF 报告开始分析。",
     "runTaxonomy": "进行分类法评分 →",
     "uploadReport": "上传报告"
@@ -60,7 +66,8 @@
     "queued": "排队中",
     "viewTaxonomy": "查看分类法评分 →",
     "renewableEnergy": "可再生能源比例",
-    "taxonomyAligned": "分类法对齐收入"
+    "taxonomyAligned": "分类法对齐收入",
+    "moreFiles": "+{{count}} 个更多文件"
   },
   "taxonomy": {
     "title": "EU 分类法评分",
@@ -91,6 +98,7 @@
     "payback": "回收期",
     "years": "年",
     "sensitivityAnalysis": "敏感性分析",
+    "capacity": "装机容量（MW）",
     "capex": "资本支出（€/kW）",
     "opex": "运营成本（€/kW/年）",
     "capacityFactor": "容量因子",
@@ -117,6 +125,7 @@
     "revenueAligned": "收入对齐率",
     "renewable": "可再生能源",
     "femalePct": "女性员工比例",
+    "waterUsage": "用水量",
     "noSelection": "请在上方选择公司以比较指标。"
   },
   "frameworks": {
@@ -129,6 +138,27 @@
     "viewGaps": "查看差距（{{count}}）和建议（{{recs}}）",
     "collapse": "收起",
     "disclosed": "{{n}}/{{total}} 项已披露"
+  },
+  "regional": {
+    "title": "三地 ESG 框架对比",
+    "subtitle": "欧盟 · 中国 · 美国监管框架合规度分析",
+    "overallReadiness": "综合合规准备度",
+    "dimensionRadar": "各区域维度得分雷达",
+    "keyInsights": "核心洞察",
+    "crossMatrix": "监管要求对比矩阵",
+    "dimension": "维度",
+    "gapAnalysis": "差距分析",
+    "compliancePriority": "合规优先行动",
+    "selectPrompt": "选择企业以查看三地 ESG 框架对比分析"
+  },
+  "profile": {
+    "backToList": "← 返回列表",
+    "yearsAvailable": "可用年份",
+    "frameworkRadar": "六框架雷达图",
+    "trendChart": "历年趋势",
+    "frameworkDetails": "框架详情",
+    "totalScore": "总分",
+    "dimensions": "维度拆解"
   },
   "errors": {
     "networkError": "网络错误——请检查网络连接",

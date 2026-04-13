@@ -14,6 +14,8 @@ import {
 import { Button } from '@/components/ui/button'
 import { CheckCircle, XCircle, Download } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { Skeleton } from '@/components/ui/skeleton'
+import { toast } from 'sonner'
 
 export function TaxonomyPage() {
   const { t } = useTranslation()
@@ -45,6 +47,8 @@ export function TaxonomyPage() {
               setPdfLoading(true)
               try {
                 await downloadTaxonomyPdf(companyName, Number(companyYear))
+              } catch {
+                toast.error(t('errors.unknown'))
               } finally {
                 setPdfLoading(false)
               }
@@ -73,12 +77,22 @@ export function TaxonomyPage() {
       </Select>
 
       {isLoading && (
-        <p className="text-slate-400">{t('taxonomy.loadingData')}</p>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-24 rounded-xl" />
+            ))}
+          </div>
+          <div className="grid grid-cols-2 gap-6">
+            <Skeleton className="h-80 rounded-xl" />
+            <Skeleton className="h-80 rounded-xl" />
+          </div>
+        </div>
       )}
 
       {report && (
         <div className="space-y-6">
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <MetricCard
               label={t('taxonomy.revenueAligned')}
               value={`${report.revenue_aligned_pct.toFixed(1)}%`}

@@ -5,10 +5,12 @@ import { getBatchStatus, uploadReport, uploadReportsBatch } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Progress } from '@/components/ui/progress'
 import { Upload, FileText, CheckCircle, AlertCircle, Clock3 } from 'lucide-react'
 import type { BatchStatusResponse, CompanyESGData } from '@/lib/types'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 
 export function UploadPage() {
   const { t } = useTranslation()
@@ -22,6 +24,9 @@ export function UploadPage() {
       setBatchId(null)
       setResult(data)
     },
+    onError: () => {
+      toast.error(t('upload.error'))
+    },
   })
 
   const batchMutation = useMutation({
@@ -29,6 +34,9 @@ export function UploadPage() {
     onSuccess: (data) => {
       setResult(null)
       setBatchId(data.batch_id)
+    },
+    onError: () => {
+      toast.error(t('upload.error'))
     },
   })
 
@@ -119,7 +127,7 @@ export function UploadPage() {
         {...getRootProps()}
         className={`border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-colors ${
           isDragActive
-            ? 'border-indigo-400 bg-indigo-50'
+            ? 'border-indigo-500 bg-indigo-50'
             : 'border-slate-300 hover:border-indigo-300 hover:bg-slate-50'
         }`}
       >
@@ -140,11 +148,16 @@ export function UploadPage() {
             {acceptedFiles.slice(0, 5).map((file) => (
               <div key={file.name} className="flex items-center justify-center gap-2">
                 <FileText size={14} />
-                {file.name}
+                <span>{file.name}</span>
+                <span className="text-slate-400">
+                  ({(file.size / 1024 / 1024).toFixed(1)} MB)
+                </span>
               </div>
             ))}
             {acceptedFiles.length > 5 && (
-              <div className="text-slate-400">+{acceptedFiles.length - 5} more files</div>
+              <div className="text-slate-400">
+                {t('upload.moreFiles', { count: acceptedFiles.length - 5 })}
+              </div>
             )}
           </div>
         )}
@@ -152,11 +165,12 @@ export function UploadPage() {
 
       {isUploading && (
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="space-y-4 pt-6">
             <div className="flex items-center gap-3 text-slate-600">
               <div className="animate-spin w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full" />
               {singleMutation.isPending ? t('upload.uploading') : t('upload.processing')}
             </div>
+            <Progress value={72} className="animate-pulse" />
           </CardContent>
         </Card>
       )}
@@ -179,7 +193,7 @@ export function UploadPage() {
               <div className="font-semibold">{t('upload.batchProgress')}</div>
               <Badge variant="secondary">{batchStatus.progress_pct.toFixed(0)}%</Badge>
             </div>
-            <div className="grid grid-cols-4 gap-3 text-sm">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
               <div className="border rounded px-3 py-2">{t('upload.queued')}: {batchStatus.queued_jobs}</div>
               <div className="border rounded px-3 py-2">{t('upload.processing')}: {batchStatus.running_jobs}</div>
               <div className="border rounded px-3 py-2 text-green-700">
@@ -215,10 +229,10 @@ export function UploadPage() {
       )}
 
       {result && (
-        <Card>
+        <Card className="animate-fade-in">
           <CardContent className="pt-6 space-y-4">
             <div className="flex items-center gap-2">
-              <CheckCircle size={18} className="text-green-500" />
+              <CheckCircle size={18} className="text-green-500 animate-fade-in" />
               <span className="font-semibold">
                 {t('upload.success')}: {result.company_name} ({result.report_year})
               </span>
