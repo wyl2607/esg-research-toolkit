@@ -13,3 +13,5 @@ logs/
 data/
 reports/
 dev-local/
+scripts/omx_
+docs/codex-tasks/SELF_

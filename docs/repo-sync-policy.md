@@ -24,6 +24,10 @@
   `.local/engineering-records/canonical_memory.json`  
   `.guard/ENGINEERING_MEMORY.md`  
   `.local/scripts/load_canonical_context.sh`
+- 本地开发指导/循环执行资产（固定 local-only，不上 GitHub）：
+  - `docs/codex-tasks/SELF_*`
+  - `docs/codex-tasks/task_27A_*` `task_27B_*` `task_27C_*`
+  - `scripts/omx_*`
 
 ### L3 强约束（GitHub / VPS）
 

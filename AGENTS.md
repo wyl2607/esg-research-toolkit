@@ -26,6 +26,10 @@
 - Before push, run `scripts/review_push_guard.sh origin/main`.
 - Never push local-only files or conversational/non-engineering prose.
 - Every changed file must be classified (`public` or `local`) via `.guard/*-prefixes.txt` rules; unclassified files must not be pushed.
+- Hard constraint (no reminder needed): self-dev loop manuals and OMX local loop scripts are always local-only and must never be pushed.
+  - `docs/codex-tasks/SELF_*`
+  - `docs/codex-tasks/task_27A_*` `task_27B_*` `task_27C_*`
+  - `scripts/omx_*`
 
 ## Size Guardrails
 
