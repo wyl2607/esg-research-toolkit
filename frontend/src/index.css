@@ -72,6 +72,12 @@
     font-feature-settings: 'tnum' 1, 'cv11' 1;
   }
 
+  button,
+  [role='button'] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
   h1,
   h2,
   h3,
