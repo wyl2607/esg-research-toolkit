@@ -17,6 +17,7 @@ type SortKey = 'company_name' | 'report_year' | 'taxonomy_aligned_revenue_pct'
 export function CompaniesPage() {
   const { t, i18n } = useTranslation()
   const [search, setSearch] = useState('')
+  const [visibleCount, setVisibleCount] = useState(9)
   const [sortKey, setSortKey] = useState<SortKey>('report_year')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
   const queryClient = useQueryClient()
@@ -45,7 +46,10 @@ export function CompaniesPage() {
       return sortDir === 'asc' ? cmp : -cmp
     })
 
+  const visibleCompanies = filtered.slice(0, visibleCount)
+
   const toggleSort = (key: SortKey) => {
+    setVisibleCount(9)
     if (sortKey === key) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
     else {
       setSortKey(key)
@@ -116,7 +120,10 @@ export function CompaniesPage() {
             className="h-11 rounded-xl border-slate-200 bg-white/90 pl-8"
             placeholder={t('companies.searchPlaceholder')}
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value)
+              setVisibleCount(9)
+            }}
           />
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -173,14 +180,15 @@ export function CompaniesPage() {
       ) : filtered.length === 0 ? (
         <p className="text-slate-400">{t('companies.noResults')}</p>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {filtered.map((c) => (
-            <Card
-              key={`${c.company_name}-${c.report_year}`}
-              className="surface-card group cursor-pointer overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_24px_56px_-34px_rgba(15,23,42,0.36)]"
-              onClick={() => navigate(`/companies/${encodeURIComponent(c.company_name)}`)}
-            >
-              <CardContent className="space-y-5 p-5">
+        <div className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {visibleCompanies.map((c) => (
+              <Card
+                key={`${c.company_name}-${c.report_year}`}
+                className="surface-card group cursor-pointer overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_24px_56px_-34px_rgba(15,23,42,0.36)]"
+                onClick={() => navigate(`/companies/${encodeURIComponent(c.company_name)}`)}
+              >
+                <CardContent className="space-y-5 p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0 space-y-3">
                     <div className="flex flex-wrap gap-2">
@@ -247,9 +255,22 @@ export function CompaniesPage() {
                     <p className="mt-1 text-[11px] text-slate-500">{t('companies.unitPercent')}</p>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          {filtered.length > visibleCount ? (
+            <div className="flex justify-center">
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-xl"
+                onClick={() => setVisibleCount((count) => count + 9)}
+              >
+                {t('common.loadMore')}
+              </Button>
+            </div>
+          ) : null}
         </div>
       )}
     </div>

@@ -1,3 +1,4 @@
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getDashboardStats, listCompanies } from '@/lib/api'
 import { MetricCard } from '@/components/MetricCard'
@@ -6,16 +7,12 @@ import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { useTranslation } from 'react-i18next'
 import { ArrowRight } from 'lucide-react'
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts'
+
+const DashboardHeavyCharts = lazy(() =>
+  import('@/components/dashboard/DashboardHeavyCharts').then((module) => ({
+    default: module.DashboardHeavyCharts,
+  }))
+)
 
 const coverageLabelMap: Record<string, string> = {
   scope1_co2e_tonnes: 'Scope 1',
@@ -45,6 +42,12 @@ function CoverageBar({ label, pct }: { label: string; pct: number }) {
 export function DashboardPage() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
+  const [showHeavyCharts, setShowHeavyCharts] = useState(false)
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setShowHeavyCharts(true), 180)
+    return () => window.clearTimeout(timer)
+  }, [])
 
   const { data: companies = [], isLoading: companiesLoading } = useQuery({
     queryKey: ['companies'],
@@ -93,51 +96,29 @@ export function DashboardPage() {
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <section className="editorial-panel p-4 md:p-5" aria-labelledby="yearly-trend-title">
-          <h2 id="yearly-trend-title" className="mb-3 text-2xl font-semibold text-stone-900">
-            {t('dashboard.yearlyTrend')}
-          </h2>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stats?.yearly_trend ?? []} role="img" aria-label={t('dashboard.yearlyTrend')}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="year" />
-                <YAxis allowDecimals={false} />
-                <Tooltip />
-                <Bar dataKey="count" fill="#b45309" name={t('dashboard.uploads')} radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </section>
-
-        <section className="editorial-panel p-4 md:p-5" aria-labelledby="top-emitters-title">
-          <h2 id="top-emitters-title" className="mb-3 text-2xl font-semibold text-stone-900">
-            {t('dashboard.topEmitters')}
-          </h2>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={stats?.top_emitters ?? []}
-                layout="vertical"
-                margin={{ top: 8, right: 16, left: 24, bottom: 8 }}
-                role="img"
-                aria-label={t('dashboard.topEmitters')}
-              >
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                <XAxis type="number" />
-                <YAxis type="category" dataKey="company" width={100} />
-                <Tooltip />
-                <Bar dataKey="scope1" name="Scope 1 (tCO₂e)" radius={[0, 6, 6, 0]}>
-                  {(stats?.top_emitters ?? []).map((entry) => (
-                    <Cell key={`${entry.company}-${entry.year}`} fill="#ef4444" />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </section>
-      </div>
+      {showHeavyCharts ? (
+        <Suspense
+          fallback={
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              <div className="editorial-panel h-[320px] animate-pulse bg-stone-100/70" />
+              <div className="editorial-panel h-[320px] animate-pulse bg-stone-100/70" />
+            </div>
+          }
+        >
+          <DashboardHeavyCharts
+            yearlyTrend={stats?.yearly_trend ?? []}
+            topEmitters={stats?.top_emitters ?? []}
+            yearlyTrendLabel={t('dashboard.yearlyTrend')}
+            topEmittersLabel={t('dashboard.topEmitters')}
+            uploadsLabel={t('dashboard.uploads')}
+          />
+        </Suspense>
+      ) : (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div className="editorial-panel h-[320px] animate-pulse bg-stone-100/70" />
+          <div className="editorial-panel h-[320px] animate-pulse bg-stone-100/70" />
+        </div>
+      )}
 
       <section className="editorial-panel space-y-3 p-4 md:p-5" aria-labelledby="coverage-rates-title">
         <h2 id="coverage-rates-title" className="text-2xl font-semibold text-stone-900">
