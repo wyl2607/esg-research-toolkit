@@ -18,17 +18,21 @@ from core.schemas import (
     ManualReportInput,
     MergePreviewRequest,
     MergePreviewResponse,
+    MergeSourceInput,
 )
 from report_parser.merge_engine import build_merge_preview
+from report_parser.merge_engine import build_merged_result
 from report_parser.analyzer import AIExtractionError, analyze_esg_data
 from report_parser.batch_jobs import batch_manager
 from report_parser.extractor import extract_text_from_pdf
+from report_parser.company_identity import canonical_company_name
 from report_parser.storage import (
     get_report,
     hard_delete_report,
     list_reports,
     list_reports_grouped,
     list_reports_for_company,
+    list_source_reports_for_company_year,
     request_deletion,
     save_report,
 )
@@ -176,6 +180,98 @@ def _framework_metadata_item(row) -> dict[str, str | int | None]:
     }
 
 
+def _record_to_merge_source_input(
+    record,
+    *,
+    canonical_company_name_value: str | None = None,
+) -> MergeSourceInput:
+    primary_activities = json.loads(record.primary_activities) if record.primary_activities else []
+    return MergeSourceInput(
+        source_id=f"db:{record.id}",
+        company_name=canonical_company_name_value or record.company_name,
+        report_year=record.report_year,
+        reporting_period_label=record.reporting_period_label,
+        reporting_period_type=record.reporting_period_type,
+        source_document_type=record.source_document_type,
+        source_url=record.source_url,
+        downloaded_at=record.downloaded_at.isoformat() if record.downloaded_at else None,
+        scope1_co2e_tonnes=record.scope1_co2e_tonnes,
+        scope2_co2e_tonnes=record.scope2_co2e_tonnes,
+        scope3_co2e_tonnes=record.scope3_co2e_tonnes,
+        energy_consumption_mwh=record.energy_consumption_mwh,
+        renewable_energy_pct=record.renewable_energy_pct,
+        water_usage_m3=record.water_usage_m3,
+        waste_recycled_pct=record.waste_recycled_pct,
+        total_revenue_eur=record.total_revenue_eur,
+        taxonomy_aligned_revenue_pct=record.taxonomy_aligned_revenue_pct,
+        total_capex_eur=record.total_capex_eur,
+        taxonomy_aligned_capex_pct=record.taxonomy_aligned_capex_pct,
+        total_employees=record.total_employees,
+        female_pct=record.female_pct,
+        primary_activities=primary_activities,
+        evidence_summary=_evidence_anchors_for_record(record),
+    )
+
+
+def _source_document_payload(record) -> dict[str, str | int | float | list[str] | None]:
+    return {
+        "source_id": f"db:{record.id}",
+        "source_document_type": record.source_document_type,
+        "reporting_period_label": record.reporting_period_label,
+        "reporting_period_type": record.reporting_period_type,
+        "source_url": record.source_url,
+        "file_hash": record.file_hash,
+        "pdf_filename": record.pdf_filename,
+        "downloaded_at": record.downloaded_at.isoformat() if record.downloaded_at else None,
+        "evidence_anchors": _evidence_anchors_for_record(record),
+    }
+
+
+_KEY_DISCLOSURE_METRICS = [
+    "scope1_co2e_tonnes",
+    "scope2_co2e_tonnes",
+    "scope3_co2e_tonnes",
+    "energy_consumption_mwh",
+    "renewable_energy_pct",
+    "water_usage_m3",
+    "waste_recycled_pct",
+    "taxonomy_aligned_revenue_pct",
+    "taxonomy_aligned_capex_pct",
+    "total_employees",
+    "female_pct",
+]
+
+
+def _data_quality_summary(data: CompanyESGData) -> dict[str, int | float | str | list[str]]:
+    present_metrics = [
+        metric
+        for metric in _KEY_DISCLOSURE_METRICS
+        if getattr(data, metric, None) is not None
+    ]
+    missing_metrics = [
+        metric for metric in _KEY_DISCLOSURE_METRICS if metric not in present_metrics
+    ]
+    total_count = len(_KEY_DISCLOSURE_METRICS)
+    present_count = len(present_metrics)
+    completion_percentage = round((present_count / total_count) * 100, 1) if total_count else 0.0
+
+    if completion_percentage >= 80:
+        readiness_label = "showcase-ready"
+    elif completion_percentage >= 50:
+        readiness_label = "usable"
+    else:
+        readiness_label = "draft"
+
+    return {
+        "total_key_metrics_count": total_count,
+        "present_metrics_count": present_count,
+        "present_metrics": present_metrics,
+        "missing_metrics": missing_metrics,
+        "completion_percentage": completion_percentage,
+        "readiness_label": readiness_label,
+    }
+
+
 def _numeric_values(records, field: str) -> list[float]:
     values: list[float] = []
     for record in records:
@@ -196,6 +292,129 @@ def _coverage_rates(records, fields: list[str]) -> dict[str, float]:
         present = sum(1 for record in records if getattr(record, field, None) is not None)
         coverage[field] = round((present / total) * 100, 1)
     return coverage
+
+
+def _narrative_summary(
+    *,
+    latest_data: CompanyESGData,
+    previous_trend_point: dict | None,
+    periods_count: int,
+    years_available: list[int],
+    framework_count: int,
+    data_quality_summary: dict[str, int | float | str | list[str]],
+) -> dict[str, object]:
+    trend_rules = {
+        "scope1_co2e_tonnes": ("scope1", "down"),
+        "scope2_co2e_tonnes": ("scope2", "down"),
+        "scope3_co2e_tonnes": ("scope3", "down"),
+        "renewable_energy_pct": ("renewable_pct", "up"),
+        "taxonomy_aligned_revenue_pct": ("taxonomy_aligned_revenue_pct", "up"),
+        "taxonomy_aligned_capex_pct": ("taxonomy_aligned_capex_pct", "up"),
+        "female_pct": ("female_pct", "up"),
+    }
+    epsilon = 1e-9
+    improved_metrics: list[str] = []
+    weakened_metrics: list[str] = []
+    stable_metrics: list[str] = []
+
+    for metric_key, (trend_key, preferred_direction) in trend_rules.items():
+        current_value = getattr(latest_data, metric_key, None)
+        previous_value = previous_trend_point.get(trend_key) if previous_trend_point else None
+        if current_value is None or previous_value is None:
+            continue
+        delta = float(current_value) - float(previous_value)
+        if abs(delta) <= epsilon:
+            stable_metrics.append(metric_key)
+            continue
+        if preferred_direction == "up":
+            (improved_metrics if delta > 0 else weakened_metrics).append(metric_key)
+        else:
+            (improved_metrics if delta < 0 else weakened_metrics).append(metric_key)
+
+    return {
+        "snapshot": {
+            "periods_count": periods_count,
+            "years_count": len(years_available),
+            "latest_year": latest_data.report_year,
+            "framework_count": framework_count,
+            "readiness_label": data_quality_summary["readiness_label"],
+        },
+        "has_previous_period": previous_trend_point is not None,
+        "previous_year": previous_trend_point.get("year") if previous_trend_point else None,
+        "improved_metrics": improved_metrics,
+        "weakened_metrics": weakened_metrics,
+        "stable_metrics": stable_metrics,
+        "disclosure_strength_metrics": data_quality_summary["present_metrics"],
+        "disclosure_gap_metrics": data_quality_summary["missing_metrics"],
+    }
+
+
+def _identity_provenance_summary(
+    *,
+    requested_company_name: str,
+    canonical_company_name_value: str,
+    latest_source_document_type: str | None,
+    observed_company_names: list[str] | None = None,
+    source_priority_preview: str | None = None,
+    merge_priority_preview: str | None = None,
+) -> dict[str, str | bool | list[str] | None]:
+    normalized_canonical = canonical_company_name(canonical_company_name_value)
+    normalized_canonical_key = normalized_canonical.lower()
+    alias_candidates: set[str] = set()
+
+    for candidate in observed_company_names or []:
+        if not isinstance(candidate, str):
+            continue
+        trimmed = candidate.strip()
+        if not trimmed:
+            continue
+        if trimmed.lower() == normalized_canonical_key:
+            continue
+        if canonical_company_name(trimmed) == normalized_canonical:
+            alias_candidates.add(trimmed)
+
+    trimmed_requested = requested_company_name.strip()
+    if trimmed_requested and canonical_company_name(trimmed_requested) == normalized_canonical:
+        if trimmed_requested.lower() != normalized_canonical_key:
+            alias_candidates.add(trimmed_requested)
+
+    aliases = sorted(alias_candidates, key=lambda item: item.lower())
+    return {
+        "canonical_company_name": normalized_canonical,
+        "requested_company_name": requested_company_name,
+        "has_alias_consolidation": len(aliases) > 0,
+        "consolidated_aliases": aliases,
+        "latest_source_document_type": latest_source_document_type,
+        "source_priority_preview": source_priority_preview,
+        "merge_priority_preview": merge_priority_preview,
+    }
+
+
+def _source_metadata_gap_preview(records) -> str | None:
+    if not records:
+        return None
+
+    total = len(records)
+    missing_source_document_type = sum(1 for record in records if not record.source_document_type)
+    missing_period_label = sum(1 for record in records if not record.reporting_period_label)
+    missing_period_type = sum(1 for record in records if not record.reporting_period_type)
+
+    gaps: list[str] = []
+    if missing_source_document_type:
+        gaps.append(f"source_document_type {missing_source_document_type}/{total}")
+    if missing_period_label:
+        gaps.append(f"reporting_period_label {missing_period_label}/{total}")
+    if missing_period_type:
+        gaps.append(f"reporting_period_type {missing_period_type}/{total}")
+
+    if not gaps:
+        return None
+
+    return (
+        "Legacy metadata gaps detected ("
+        + ", ".join(gaps)
+        + "); defaults are shown until upstream metadata is backfilled."
+    )
 
 
 if _MULTIPART_AVAILABLE:
@@ -383,6 +602,20 @@ def get_company_history(
     periods = []
     framework_metadata = []
     for record in records:
+        source_records = list_source_reports_for_company_year(
+            db,
+            resolved_name,
+            record.report_year,
+        )
+        merge_documents = [
+            _record_to_merge_source_input(
+                item,
+                canonical_company_name_value=resolved_name,
+            )
+            for item in source_records
+        ]
+        merged_result = build_merged_result(merge_documents)
+        merged_metrics = merged_result.merged_metrics
         anchors = _evidence_anchors_for_record(record)
         period = _period_metadata(record)
         framework_rows = list_framework_results(
@@ -403,18 +636,20 @@ def get_company_history(
                 "downloaded_at": record.downloaded_at.isoformat() if record.downloaded_at else None,
                 "evidence_anchors": anchors,
                 "framework_metadata": period_framework_metadata,
+                "source_documents": [_source_document_payload(item) for item in source_records],
+                "merged_result": merged_result.model_dump(),
             }
         )
         trend.append(
             {
                 "year": record.report_year,
-                "scope1": record.scope1_co2e_tonnes,
-                "scope2": record.scope2_co2e_tonnes,
-                "scope3": record.scope3_co2e_tonnes,
-                "renewable_pct": record.renewable_energy_pct,
-                "taxonomy_aligned_revenue_pct": record.taxonomy_aligned_revenue_pct,
-                "taxonomy_aligned_capex_pct": record.taxonomy_aligned_capex_pct,
-                "female_pct": record.female_pct,
+                "scope1": merged_metrics.scope1_co2e_tonnes,
+                "scope2": merged_metrics.scope2_co2e_tonnes,
+                "scope3": merged_metrics.scope3_co2e_tonnes,
+                "renewable_pct": merged_metrics.renewable_energy_pct,
+                "taxonomy_aligned_revenue_pct": merged_metrics.taxonomy_aligned_revenue_pct,
+                "taxonomy_aligned_capex_pct": merged_metrics.taxonomy_aligned_capex_pct,
+                "female_pct": merged_metrics.female_pct,
             }
         )
 
@@ -440,10 +675,36 @@ def get_company_profile(
     resolved_name = records[0].company_name
 
     latest = records[-1]
+    observed_company_names: set[str] = set()
+    for record in records:
+        year_source_records = list_source_reports_for_company_year(
+            db,
+            resolved_name,
+            record.report_year,
+            collapse_duplicates=False,
+        )
+        observed_company_names.update(item.company_name for item in year_source_records if item.company_name)
+
+    latest_source_records = list_source_reports_for_company_year(
+        db,
+        resolved_name,
+        latest.report_year,
+    )
+    latest_merged_result = build_merged_result(
+        [
+            _record_to_merge_source_input(
+                item,
+                canonical_company_name_value=resolved_name,
+            )
+            for item in latest_source_records
+        ]
+    )
     history = get_company_history(company_name=resolved_name, db=db)
     latest_data = _record_to_company_data(latest)
     latest_evidence_anchors = _evidence_anchors_for_record(latest)
     latest_period = _period_metadata(latest)
+    data_quality_summary = _data_quality_summary(latest_data)
+    profile_evidence_summary = latest_data.evidence_summary or latest_evidence_anchors
 
     framework_rows = list_framework_results(
         db,
@@ -461,10 +722,32 @@ def get_company_profile(
         framework_results.append(result)
     latest_framework_metadata = [_framework_metadata_item(row) for row in framework_rows]
     framework_scores = [scorer(latest_data).model_dump() for scorer in _SCORERS.values()]
+    years_available = [record.report_year for record in records]
+    previous_trend_point = history["trend"][-2] if len(history["trend"]) >= 2 else None
+    narrative_summary = _narrative_summary(
+        latest_data=latest_data,
+        previous_trend_point=previous_trend_point,
+        periods_count=len(history["periods"]),
+        years_available=years_available,
+        framework_count=len(framework_rows),
+        data_quality_summary=data_quality_summary,
+    )
+    identity_provenance_summary = _identity_provenance_summary(
+        requested_company_name=company_name,
+        canonical_company_name_value=resolved_name,
+        latest_source_document_type=latest_period["source_document_type"],
+        observed_company_names=sorted(observed_company_names),
+        source_priority_preview=_source_metadata_gap_preview(latest_source_records),
+        merge_priority_preview=(
+            "Canonical identity merge active across multiple source records."
+            if len(latest_source_records) > 1
+            else None
+        ),
+    )
 
     return {
         "company_name": resolved_name,
-        "years_available": [record.report_year for record in records],
+        "years_available": years_available,
         "latest_year": latest.report_year,
         "latest_period": {
             "report_year": latest.report_year,
@@ -480,8 +763,13 @@ def get_company_profile(
         "framework_metadata": history["framework_metadata"],
         "framework_scores": framework_scores,
         "framework_results": framework_results,
-        "evidence_summary": latest_data.evidence_summary,
+        "evidence_summary": profile_evidence_summary,
         "evidence_anchors": latest_evidence_anchors,
+        "data_quality_summary": data_quality_summary,
+        "narrative_summary": narrative_summary,
+        "identity_provenance_summary": identity_provenance_summary,
+        "latest_sources": [_source_document_payload(item) for item in latest_source_records],
+        "latest_merged_result": latest_merged_result.model_dump(),
     }
 
 

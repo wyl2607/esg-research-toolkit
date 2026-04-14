@@ -5,6 +5,8 @@ from datetime import datetime
 
 from core.schemas import (
     CompanyESGData,
+    MergedMetricResult,
+    MergedResult,
     MergeMetricCandidate,
     MergeMetricDecision,
     MergePreviewResponse,
@@ -195,4 +197,26 @@ def build_merge_preview(documents: list[MergeSourceInput]) -> MergePreviewRespon
             "event",
         ],
         unresolved_metrics=unresolved_metrics,
+    )
+
+
+def build_merged_result(documents: list[MergeSourceInput]) -> MergedResult:
+    preview = build_merge_preview(documents)
+    metrics: dict[str, MergedMetricResult] = {}
+    for decision in preview.decisions:
+        metrics[decision.metric] = MergedMetricResult(
+            metric=decision.metric,
+            chosen_value=decision.selected_value,
+            candidate_values=decision.candidates,
+            chosen_source=decision.selected_source_id,
+            chosen_source_document_type=decision.selected_source_document_type,
+            merge_reason=decision.merge_reason,
+            conflict_detected=decision.conflict_detected,
+        )
+    return MergedResult(
+        company_name=preview.company_name,
+        report_year=preview.report_year,
+        merged_metrics=preview.merged_metrics,
+        metrics=metrics,
+        source_count=len(documents),
     )

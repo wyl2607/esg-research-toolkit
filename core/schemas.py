@@ -1,6 +1,17 @@
-from typing import Literal
+from typing import Literal, TypeAlias
 
 from pydantic import BaseModel, Field
+
+
+SourceDocumentType: TypeAlias = Literal[
+    "annual_report",
+    "sustainability_report",
+    "annual_sustainability_report",
+    "filing",
+    "announcement",
+    "manual_case",
+    "event",
+]
 
 
 class CompanyESGData(BaseModel):
@@ -8,7 +19,7 @@ class CompanyESGData(BaseModel):
     report_year: int
     reporting_period_label: str | None = None
     reporting_period_type: str | None = None
-    source_document_type: str | None = None
+    source_document_type: SourceDocumentType | str | None = None
     scope1_co2e_tonnes: float | None = None
     scope2_co2e_tonnes: float | None = None
     scope3_co2e_tonnes: float | None = None
@@ -56,6 +67,24 @@ class MergeMetricDecision(BaseModel):
     merge_reason: str
     candidates: list[MergeMetricCandidate] = []
     conflict_detected: bool = False
+
+
+class MergedMetricResult(BaseModel):
+    metric: str
+    chosen_value: str | int | float | list[str] | None = None
+    candidate_values: list[MergeMetricCandidate] = []
+    chosen_source: str | None = None
+    chosen_source_document_type: str | None = None
+    merge_reason: str
+    conflict_detected: bool = False
+
+
+class MergedResult(BaseModel):
+    company_name: str
+    report_year: int
+    merged_metrics: CompanyESGData
+    metrics: dict[str, MergedMetricResult]
+    source_count: int
 
 
 class MergePreviewResponse(BaseModel):

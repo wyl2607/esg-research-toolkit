@@ -24,7 +24,13 @@ from report_parser.api import (
 )
 from report_parser.analyzer import AIExtractionError, analyze_esg_data
 from report_parser.extractor import extract_text_from_pdf
-from report_parser.storage import CompanyReport, get_report, list_reports, save_report
+from report_parser.storage import (
+    CompanyReport,
+    get_report,
+    list_reports,
+    list_source_reports_for_company_year,
+    save_report,
+)
 
 
 @pytest.fixture
@@ -305,6 +311,12 @@ def test_save_manual_report_persists_period_and_manual_evidence(
     profile = get_company_profile(company_name="Manual Demo AG", db=db_session)
     assert profile["latest_period"]["source_document_type"] == "manual_case"
     assert profile["evidence_summary"][0]["source_type"] == "manual_entry"
+    assert profile["identity_provenance_summary"]["canonical_company_name"] == "Manual Demo AG"
+    assert profile["identity_provenance_summary"]["has_alias_consolidation"] is False
+    assert profile["identity_provenance_summary"]["latest_source_document_type"] == "manual_case"
+    assert profile["identity_provenance_summary"]["source_priority_preview"] is None
+    assert profile["identity_provenance_summary"]["merge_priority_preview"] is None
+    assert profile["data_quality_summary"]["readiness_label"] == "draft"
 
 
 def test_alias_names_collapse_into_single_company_profile_and_listing(
@@ -362,6 +374,17 @@ def test_alias_names_collapse_into_single_company_profile_and_listing(
     assert profile["company_name"] == "Contemporary Amperex Technology Co., Limited"
     assert profile["years_available"] == [2024, 2025]
     assert profile["latest_year"] == 2025
+    assert profile["identity_provenance_summary"]["canonical_company_name"] == "Contemporary Amperex Technology Co., Limited"
+    assert profile["identity_provenance_summary"]["has_alias_consolidation"] is True
+    assert "CATL" in profile["identity_provenance_summary"]["consolidated_aliases"]
+    assert profile["identity_provenance_summary"]["latest_source_document_type"] == "sustainability_report"
+    assert profile["narrative_summary"]["snapshot"]["periods_count"] == 2
+    assert profile["narrative_summary"]["snapshot"]["framework_count"] == 0
+    assert profile["narrative_summary"]["improved_metrics"] == [
+        "scope1_co2e_tonnes",
+        "renewable_energy_pct",
+    ]
+    assert profile["narrative_summary"]["weakened_metrics"] == []
 
     rows = list_company_reports(db=db_session)
     catl_rows = [row for row in rows if row["company_name"] == "Contemporary Amperex Technology Co., Limited"]
@@ -410,6 +433,194 @@ def test_legacy_alias_duplicates_are_collapsed_for_listing_and_history(
     assert history["company_name"] == "Volkswagen AG"
     assert len(history["trend"]) == 1
     assert history["trend"][0]["renewable_pct"] == pytest.approx(36.0)
+
+    profile = get_company_profile(company_name="Volkswagen AG", db=db_session)
+    assert profile["identity_provenance_summary"]["canonical_company_name"] == "Volkswagen AG"
+    assert profile["identity_provenance_summary"]["has_alias_consolidation"] is True
+    assert "volkswagen" in {
+        alias.lower() for alias in profile["identity_provenance_summary"]["consolidated_aliases"]
+    }
+    assert profile["identity_provenance_summary"]["merge_priority_preview"] is not None
+
+
+def test_volkswagen_profile_explains_legacy_metadata_gaps_without_fake_completeness(
+    db_session: Session,
+) -> None:
+    db_session.add_all(
+        [
+            CompanyReport(
+                company_name="Volkswagen AG",
+                report_year=2024,
+                source_document_type=None,
+                reporting_period_label=None,
+                reporting_period_type=None,
+                pdf_filename="volkswagen_2024_esrs_sustainability_report.pdf",
+                scope1_co2e_tonnes=1370000.0,
+                scope2_co2e_tonnes=90000.0,
+                energy_consumption_mwh=1750000.0,
+                water_usage_m3=700000.0,
+                total_employees=112091,
+                female_pct=18.9,
+                primary_activities=json.dumps(["automotive"]),
+                evidence_summary=json.dumps([]),
+            ),
+            CompanyReport(
+                company_name="volkswagen",
+                report_year=2024,
+                source_document_type=None,
+                reporting_period_label=None,
+                reporting_period_type=None,
+                pdf_filename="volkswagen_2024_esrs_sustainability_report.pdf",
+                scope1_co2e_tonnes=15.0,
+                scope2_co2e_tonnes=290.0,
+                scope3_co2e_tonnes=9653769.0,
+                primary_activities=json.dumps(["automotive"]),
+                evidence_summary=json.dumps([]),
+            ),
+        ]
+    )
+    db_session.commit()
+
+    source_rows = list_source_reports_for_company_year(
+        db=db_session,
+        company_name="Volkswagen AG",
+        report_year=2024,
+    )
+    assert len(source_rows) == 1
+    assert source_rows[0].company_name == "Volkswagen AG"
+
+    profile = get_company_profile(company_name="Volkswagen AG", db=db_session)
+    assert profile["company_name"] == "Volkswagen AG"
+    assert profile["identity_provenance_summary"]["has_alias_consolidation"] is True
+    assert "volkswagen" in {
+        alias.lower() for alias in profile["identity_provenance_summary"]["consolidated_aliases"]
+    }
+    assert profile["identity_provenance_summary"]["source_priority_preview"] is not None
+    assert profile["latest_period"]["source_document_type"] == "sustainability_report"
+    assert profile["data_quality_summary"]["readiness_label"] == "usable"
+    assert len(profile["periods"]) == 1
+    assert len(profile["trend"]) == 1
+
+
+def test_identity_alias_consolidation_depends_on_observed_or_requested_aliases(
+    db_session: Session,
+    make_company_data,
+) -> None:
+    save_report(
+        db_session,
+        make_company_data(
+            company_name="Siemens AG",
+            report_year=2024,
+            scope1_co2e_tonnes=200.0,
+            renewable_energy_pct=46.0,
+            taxonomy_aligned_revenue_pct=28.0,
+            taxonomy_aligned_capex_pct=22.0,
+            female_pct=34.0,
+        ),
+        source_document_type="annual_report",
+    )
+
+    canonical_profile = get_company_profile(company_name="Siemens AG", db=db_session)
+    assert canonical_profile["company_name"] == "Siemens AG"
+    assert canonical_profile["identity_provenance_summary"]["canonical_company_name"] == "Siemens AG"
+    assert canonical_profile["identity_provenance_summary"]["has_alias_consolidation"] is False
+    assert canonical_profile["identity_provenance_summary"]["consolidated_aliases"] == []
+
+    alias_profile = get_company_profile(company_name="siemens", db=db_session)
+    assert alias_profile["identity_provenance_summary"]["canonical_company_name"] == "Siemens AG"
+    assert alias_profile["identity_provenance_summary"]["has_alias_consolidation"] is True
+    assert "siemens" in {
+        alias.lower() for alias in alias_profile["identity_provenance_summary"]["consolidated_aliases"]
+    }
+
+
+def test_third_showcase_siemens_profile_layers_are_reusable(
+    db_session: Session,
+    make_company_data,
+) -> None:
+    save_report(
+        db_session,
+        make_company_data(
+            company_name="CATL",
+            report_year=2024,
+            scope1_co2e_tonnes=95.0,
+            renewable_energy_pct=45.0,
+        ),
+        source_document_type="sustainability_report",
+    )
+    save_report(
+        db_session,
+        make_company_data(
+            company_name="Volkswagen AG",
+            report_year=2024,
+            scope1_co2e_tonnes=255.0,
+            renewable_energy_pct=36.0,
+        ),
+        source_document_type="annual_report",
+    )
+    save_report(
+        db_session,
+        make_company_data(
+            company_name="Siemens AG",
+            report_year=2023,
+            scope1_co2e_tonnes=210.0,
+            renewable_energy_pct=41.0,
+            taxonomy_aligned_revenue_pct=24.0,
+            taxonomy_aligned_capex_pct=18.0,
+            female_pct=33.0,
+            scope3_co2e_tonnes=900.0,
+            water_usage_m3=18000.0,
+        ),
+        source_document_type="annual_report",
+    )
+    save_report(
+        db_session,
+        make_company_data(
+            company_name="Siemens AG",
+            report_year=2024,
+            scope1_co2e_tonnes=198.0,
+            renewable_energy_pct=46.0,
+            taxonomy_aligned_revenue_pct=30.0,
+            taxonomy_aligned_capex_pct=21.0,
+            female_pct=34.0,
+            scope3_co2e_tonnes=860.0,
+            water_usage_m3=17000.0,
+        ),
+        source_document_type="sustainability_report",
+    )
+
+    profile = get_company_profile(company_name="siemens", db=db_session)
+    assert profile["company_name"] == "Siemens AG"
+    assert profile["latest_year"] == 2024
+    assert len(profile["periods"]) == 2
+
+    # profile layer
+    assert profile["latest_metrics"]["scope1_co2e_tonnes"] == pytest.approx(198.0)
+    assert profile["trend"][-1]["renewable_pct"] == pytest.approx(46.0)
+
+    # identity layer
+    identity = profile["identity_provenance_summary"]
+    assert identity["canonical_company_name"] == "Siemens AG"
+    assert identity["latest_source_document_type"] == "sustainability_report"
+
+    # quality layer
+    quality = profile["data_quality_summary"]
+    assert quality["present_metrics_count"] >= 8
+    assert quality["readiness_label"] in {"usable", "showcase-ready"}
+
+    # narrative layer
+    narrative = profile["narrative_summary"]
+    assert narrative["snapshot"]["periods_count"] == 2
+    assert narrative["has_previous_period"] is True
+    assert narrative["previous_year"] == 2023
+    assert "scope1_co2e_tonnes" in narrative["improved_metrics"]
+
+    rows = list_company_reports(db=db_session)
+    assert sorted({row["company_name"] for row in rows}) == [
+        "Contemporary Amperex Technology Co., Limited",
+        "Siemens AG",
+        "Volkswagen AG",
+    ]
 
 
 def test_preview_merge_prefers_annual_report_and_marks_conflict() -> None:
@@ -465,6 +676,75 @@ def test_preview_merge_prefers_annual_report_and_marks_conflict() -> None:
     assert decisions["renewable_energy_pct"].merge_reason == "supplement_filled_gap"
     assert decisions["primary_activities"].merge_reason == "activity_union"
     assert "scope1_co2e_tonnes" in result.unresolved_metrics
+
+
+def test_multi_source_persistence_keeps_same_year_records(
+    db_session: Session,
+    make_company_data,
+) -> None:
+    save_report(
+        db_session,
+        make_company_data(
+            company_name="Source Stack Corp",
+            report_year=2024,
+            scope1_co2e_tonnes=100.0,
+            renewable_energy_pct=None,
+        ),
+        source_document_type="annual_report",
+        source_url="https://example.com/source-stack-annual",
+        file_hash="hash-annual-1",
+    )
+    save_report(
+        db_session,
+        make_company_data(
+            company_name="Source Stack Corp",
+            report_year=2024,
+            scope1_co2e_tonnes=92.0,
+            renewable_energy_pct=55.0,
+        ),
+        source_document_type="sustainability_report",
+        source_url="https://example.com/source-stack-sr",
+        file_hash="hash-sr-1",
+    )
+    save_report(
+        db_session,
+        make_company_data(
+            company_name="Source Stack Corp",
+            report_year=2024,
+            scope1_co2e_tonnes=None,
+            renewable_energy_pct=57.0,
+        ),
+        source_document_type="announcement",
+        source_url="https://example.com/source-stack-announcement",
+        file_hash="hash-announcement-1",
+    )
+
+    source_rows = list_source_reports_for_company_year(
+        db_session, "Source Stack Corp", 2024
+    )
+    assert len(source_rows) == 3
+    assert {row.source_document_type for row in source_rows} == {
+        "annual_report",
+        "sustainability_report",
+        "announcement",
+    }
+
+    history = get_company_history(company_name="Source Stack Corp", db=db_session)
+    assert len(history["periods"]) == 1
+    period = history["periods"][0]
+    assert len(period["source_documents"]) == 3
+    assert period["merged_result"]["source_count"] == 3
+    assert period["merged_result"]["merged_metrics"]["scope1_co2e_tonnes"] == pytest.approx(100.0)
+    assert period["merged_result"]["merged_metrics"]["renewable_energy_pct"] == pytest.approx(55.0)
+
+    scope1_merge = period["merged_result"]["metrics"]["scope1_co2e_tonnes"]
+    renewable_merge = period["merged_result"]["metrics"]["renewable_energy_pct"]
+    assert scope1_merge["merge_reason"] == "annual_report_baseline"
+    assert renewable_merge["merge_reason"] == "supplement_filled_gap"
+    assert scope1_merge["chosen_source_document_type"] == "annual_report"
+    assert renewable_merge["chosen_source_document_type"] == "sustainability_report"
+    assert len(scope1_merge["candidate_values"]) == 2
+    assert len(renewable_merge["candidate_values"]) == 2
 
 
 def test_preview_merge_rejects_mixed_company_or_year() -> None:
@@ -565,6 +845,97 @@ def test_company_history_and_profile_include_period_and_framework_results(
     assert profile["evidence_summary"][0]["metric"] == "renewable_energy_pct"
     assert profile["evidence_summary"][0]["page"] == 12
     assert profile["evidence_anchors"][0]["page"] == 12
+    assert profile["data_quality_summary"]["total_key_metrics_count"] == 11
+    assert profile["data_quality_summary"]["present_metrics_count"] == 6
+    assert profile["data_quality_summary"]["completion_percentage"] == pytest.approx(54.5)
+    assert profile["data_quality_summary"]["readiness_label"] == "usable"
+
+
+@pytest.mark.parametrize(
+    ("company_name", "overrides", "expected_label", "expected_present", "expected_completion"),
+    [
+        (
+            "Draft Corp",
+            {
+                "scope2_co2e_tonnes": None,
+                "energy_consumption_mwh": None,
+                "renewable_energy_pct": None,
+                "water_usage_m3": None,
+                "waste_recycled_pct": None,
+                "taxonomy_aligned_revenue_pct": None,
+                "taxonomy_aligned_capex_pct": None,
+                "total_employees": None,
+                "female_pct": None,
+            },
+            "draft",
+            1,
+            9.1,
+        ),
+        (
+            "Usable Corp",
+            {
+                "scope3_co2e_tonnes": None,
+                "water_usage_m3": None,
+                "waste_recycled_pct": None,
+                "taxonomy_aligned_revenue_pct": None,
+                "taxonomy_aligned_capex_pct": None,
+            },
+            "usable",
+            6,
+            54.5,
+        ),
+        (
+            "Showcase Corp",
+            {
+                "scope3_co2e_tonnes": 800.0,
+                "water_usage_m3": 12000.0,
+                "waste_recycled_pct": None,
+                "taxonomy_aligned_revenue_pct": 42.0,
+                "taxonomy_aligned_capex_pct": 36.0,
+            },
+            "showcase-ready",
+            10,
+            90.9,
+        ),
+    ],
+)
+def test_company_profile_data_quality_summary_readiness_bands(
+    db_session: Session,
+    make_company_data,
+    company_name: str,
+    overrides: dict[str, float | int | None],
+    expected_label: str,
+    expected_present: int,
+    expected_completion: float,
+) -> None:
+    save_report(
+        db_session,
+        make_company_data(company_name=company_name, report_year=2024, **overrides),
+        pdf_filename=f"{company_name.lower().replace(' ', '-')}.pdf",
+    )
+
+    profile = get_company_profile(company_name=company_name, db=db_session)
+    summary = profile["data_quality_summary"]
+
+    assert summary["total_key_metrics_count"] == 11
+    assert summary["present_metrics_count"] == expected_present
+    assert summary["completion_percentage"] == pytest.approx(expected_completion)
+    assert summary["readiness_label"] == expected_label
+    assert sorted(summary["present_metrics"] + summary["missing_metrics"]) == sorted(
+        [
+            "scope1_co2e_tonnes",
+            "scope2_co2e_tonnes",
+            "scope3_co2e_tonnes",
+            "energy_consumption_mwh",
+            "renewable_energy_pct",
+            "water_usage_m3",
+            "waste_recycled_pct",
+            "taxonomy_aligned_revenue_pct",
+            "taxonomy_aligned_capex_pct",
+            "total_employees",
+            "female_pct",
+        ]
+    )
 
 
 def test_evidence_anchors_stay_stable_for_empty_and_legacy_records(

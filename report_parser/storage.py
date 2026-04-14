@@ -7,7 +7,12 @@ from sqlalchemy.orm import Session
 
 from core.database import Base
 from core.schemas import CompanyESGData
-from report_parser.company_identity import canonical_company_name, collapse_company_records, company_name_variants
+from report_parser.company_identity import (
+    canonical_company_name,
+    collapse_company_records,
+    company_name_variants,
+    report_quality_score,
+)
 
 DEFAULT_REPORTING_PERIOD_TYPE = "annual"
 DEFAULT_SOURCE_DOCUMENT_TYPE = "sustainability_report"
@@ -83,7 +88,7 @@ def save_report(
     source_document_type: str | None = None,
     evidence_summary: list[dict[str, str | int | float | None]] | None = None,
 ) -> CompanyReport:
-    """保存企业报告（含来源追溯字段）。company_name + report_year 已存在则更新。"""
+    """保存企业报告（含来源追溯字段）。同一 company+year 保留多来源，按来源指纹去重更新。"""
     canonical_name = canonical_company_name(data.company_name)
     normalized_data = data.model_copy(update={"company_name": canonical_name})
     period_label, period_type, document_type = _normalized_period_fields(
@@ -94,14 +99,45 @@ def save_report(
     )
     name_variants = [variant.lower() for variant in company_name_variants(canonical_name)]
 
-    record = (
+    candidates = (
         db.query(CompanyReport)
         .filter(
             func.lower(CompanyReport.company_name).in_(name_variants),
             CompanyReport.report_year == normalized_data.report_year,
         )
-        .first()
+        .all()
     )
+    record: CompanyReport | None = None
+    if file_hash:
+        record = next((item for item in candidates if item.file_hash == file_hash), None)
+    if record is None and source_url:
+        record = next(
+            (
+                item
+                for item in candidates
+                if item.source_url == source_url and item.source_document_type == document_type
+            ),
+            None,
+        )
+    if record is None and pdf_filename:
+        record = next(
+            (
+                item
+                for item in candidates
+                if item.pdf_filename == pdf_filename and item.source_document_type == document_type
+            ),
+            None,
+        )
+    if record is None and not (file_hash or source_url or pdf_filename):
+        record = next(
+            (
+                item
+                for item in candidates
+                if item.source_document_type == document_type
+                and (item.reporting_period_label or str(item.report_year)) == period_label
+            ),
+            None,
+        )
     now = datetime.now(timezone.utc)
     if record is None:
         record = CompanyReport(
@@ -194,6 +230,61 @@ def list_reports_for_company(
         query = query.filter(CompanyReport.deletion_requested.is_(False))
     records = query.order_by(CompanyReport.report_year.asc()).all()
     return collapse_company_records(records)
+
+
+def list_source_reports_for_company_year(
+    db: Session,
+    company_name: str,
+    report_year: int,
+    *,
+    include_deleted: bool = False,
+    collapse_duplicates: bool = True,
+) -> list[CompanyReport]:
+    def _collapse_source_duplicates(records: list[CompanyReport]) -> list[CompanyReport]:
+        grouped: dict[tuple[str, int, str, str, str, str, str, str], list[CompanyReport]] = {}
+        for record in records:
+            canonical = canonical_company_name(record.company_name)
+            key = (
+                canonical.lower(),
+                record.report_year,
+                (record.source_document_type or "").strip().lower(),
+                (record.reporting_period_label or "").strip().lower(),
+                (record.reporting_period_type or "").strip().lower(),
+                (record.source_url or "").strip().lower(),
+                (record.file_hash or "").strip().lower(),
+                (record.pdf_filename or "").strip().lower(),
+            )
+            grouped.setdefault(key, []).append(record)
+
+        collapsed: list[CompanyReport] = []
+        for candidates in grouped.values():
+            best = max(candidates, key=report_quality_score)
+            collapsed.append(best)
+
+        collapsed.sort(
+            key=lambda item: (
+                item.report_year,
+                (item.source_document_type or "").lower(),
+                item.id,
+            )
+        )
+        return collapsed
+
+    variants = [variant.lower() for variant in company_name_variants(company_name)]
+    query = db.query(CompanyReport).filter(
+        func.lower(CompanyReport.company_name).in_(variants),
+        CompanyReport.report_year == report_year,
+    )
+    if not include_deleted:
+        query = query.filter(CompanyReport.deletion_requested.is_(False))
+    records = query.order_by(
+        CompanyReport.updated_at.asc(),
+        CompanyReport.created_at.asc(),
+        CompanyReport.id.asc(),
+    ).all()
+    if not collapse_duplicates:
+        return records
+    return _collapse_source_duplicates(records)
 
 
 def list_reports_grouped(
