@@ -85,7 +85,10 @@ export function UploadPage() {
             ? `${result.renewable_energy_pct.toFixed(1)}%`
             : '—',
         ],
-        [t('companies.employees'), result.total_employees?.toLocaleString(i18n.resolvedLanguage) ?? '—'],
+        [
+          t('companies.employees'),
+          result.total_employees?.toLocaleString(i18n.resolvedLanguage) ?? '—',
+        ],
         [
           t('upload.taxonomyAligned'),
           result.taxonomy_aligned_revenue_pct != null
@@ -97,10 +100,12 @@ export function UploadPage() {
     : []
 
   const isUploading = singleMutation.isPending || batchMutation.isPending
-  const uploadError = (singleMutation.error as Error | null) ?? (batchMutation.error as Error | null)
-  const errMsg = uploadError instanceof ApiError && uploadError.status === 422
-    ? t('upload.aiError')
-    : localizeErrorMessage(t, uploadError, 'upload.error')
+  const uploadError =
+    (singleMutation.error as Error | null) ?? (batchMutation.error as Error | null)
+  const errMsg =
+    uploadError instanceof ApiError && uploadError.status === 422
+      ? t('upload.aiError')
+      : localizeErrorMessage(t, uploadError, 'upload.error')
 
   const statusText = (status: string) => {
     if (status === 'completed') return t('upload.completed')
@@ -113,30 +118,45 @@ export function UploadPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-bold text-slate-900">{t('upload.title')}</h1>
+      <section className="editorial-panel space-y-4">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="space-y-3">
+            <p className="section-kicker">{t('upload.kicker')}</p>
+            <div className="space-y-2">
+              <h1 className="text-4xl text-slate-900">{t('upload.title')}</h1>
+              <p className="max-w-3xl text-sm leading-6 text-slate-600">
+                {t('upload.subtitle')}
+              </p>
+            </div>
+          </div>
+          <div className="max-w-sm rounded-2xl border border-amber-200 bg-amber-50/90 px-4 py-4 text-sm leading-6 text-amber-900">
+            {t('upload.supportedHint')}
+          </div>
+        </div>
+      </section>
 
       <div
         {...getRootProps()}
-        className={`border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-colors ${
+        className={`editorial-panel cursor-pointer border-2 border-dashed p-12 text-center transition-colors ${
           isDragActive
-            ? 'border-indigo-400 bg-indigo-50'
-            : 'border-slate-300 hover:border-indigo-300 hover:bg-slate-50'
+            ? 'border-amber-500 bg-amber-50/80'
+            : 'border-stone-300 hover:border-amber-400 hover:bg-amber-50/60'
         }`}
       >
         <input {...getInputProps()} />
-        <Upload className="mx-auto mb-4 text-slate-400" size={40} />
+        <Upload className="mx-auto mb-4 text-amber-700" size={40} />
         {isDragActive ? (
-          <p className="text-indigo-600 font-medium">{t('upload.dropzone')}</p>
+          <p className="font-medium text-amber-800">{t('upload.dropzone')}</p>
         ) : (
           <>
-            <p className="text-slate-600 font-medium">{t('upload.dropzoneHint')}</p>
-            <p className="text-sm text-slate-400 mt-1">
+            <p className="font-medium text-slate-700">{t('upload.dropzoneHint')}</p>
+            <p className="mt-1 text-sm text-slate-500">
               {t('upload.singleUpload')} · {t('upload.batchUpload')}
             </p>
           </>
         )}
         {acceptedFiles.length > 0 && (
-          <div className="mt-4 space-y-1 text-sm text-slate-600">
+          <div className="mt-4 space-y-1 text-sm text-slate-700">
             {acceptedFiles.slice(0, 5).map((file) => (
               <div key={file.name} className="flex items-center justify-center gap-2">
                 <FileText size={14} />
@@ -153,10 +173,10 @@ export function UploadPage() {
       </div>
 
       {isUploading && (
-        <Card>
+        <Card className="surface-card border-amber-200/70">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3 text-slate-600">
-              <div className="animate-spin w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full" />
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-amber-600 border-t-transparent" />
               {singleMutation.isPending ? t('upload.uploading') : t('upload.processing')}
             </div>
           </CardContent>
@@ -175,28 +195,48 @@ export function UploadPage() {
       )}
 
       {batchStatus && (
-        <Card>
-          <CardContent className="pt-6 space-y-4">
+        <Card className="surface-card">
+          <CardContent className="space-y-4 pt-6">
             <div className="flex items-center justify-between">
-              <div className="font-semibold">{t('upload.batchProgress')}</div>
-              <Badge variant="secondary">{batchStatus.progress_pct.toFixed(0)}%</Badge>
+              <div>
+                <p className="section-kicker">{t('upload.kicker')}</p>
+                <div className="font-semibold text-slate-900">{t('upload.batchProgress')}</div>
+              </div>
+              <Badge variant="secondary" className="bg-amber-100 text-amber-900">
+                {batchStatus.progress_pct.toFixed(0)}%
+              </Badge>
             </div>
-            <div className="grid grid-cols-4 gap-3 text-sm">
-              <div className="border rounded px-3 py-2">{t('upload.queued')}: {batchStatus.queued_jobs}</div>
-              <div className="border rounded px-3 py-2">{t('upload.processing')}: {batchStatus.running_jobs}</div>
-              <div className="border rounded px-3 py-2 text-green-700">
+            <div className="grid gap-3 text-sm md:grid-cols-4">
+              <div className="rounded-xl border border-stone-200 bg-white/70 px-3 py-3">
+                {t('upload.queued')}: {batchStatus.queued_jobs}
+              </div>
+              <div className="rounded-xl border border-stone-200 bg-white/70 px-3 py-3">
+                {t('upload.processing')}: {batchStatus.running_jobs}
+              </div>
+              <div className="rounded-xl border border-green-200 bg-green-50/70 px-3 py-3 text-green-700">
                 {t('upload.completed')}: {batchStatus.completed_jobs}
               </div>
-              <div className="border rounded px-3 py-2 text-red-700">{t('upload.failed')}: {batchStatus.failed_jobs}</div>
+              <div className="rounded-xl border border-red-200 bg-red-50/70 px-3 py-3 text-red-700">
+                {t('upload.failed')}: {batchStatus.failed_jobs}
+              </div>
             </div>
-            <div className="space-y-2 max-h-64 overflow-auto">
+            <div className="max-h-64 space-y-2 overflow-auto">
               {batchStatus.jobs.map((job) => (
-                <div key={job.job_id} className="flex items-center justify-between border rounded px-3 py-2 text-sm">
+                <div
+                  key={job.job_id}
+                  className="flex items-center justify-between rounded-xl border border-stone-200 bg-white/80 px-3 py-2 text-sm"
+                >
                   <div className="truncate pr-4">{job.filename}</div>
                   <div className="flex items-center gap-2">
-                    {job.status === 'processing' && <Clock3 size={14} className="text-amber-600" />}
-                    {job.status === 'completed' && <CheckCircle size={14} className="text-green-600" />}
-                    {job.status === 'failed' && <AlertCircle size={14} className="text-red-600" />}
+                    {job.status === 'processing' && (
+                      <Clock3 size={14} className="text-amber-600" />
+                    )}
+                    {job.status === 'completed' && (
+                      <CheckCircle size={14} className="text-green-600" />
+                    )}
+                    {job.status === 'failed' && (
+                      <AlertCircle size={14} className="text-red-600" />
+                    )}
                     <Badge
                       variant={job.status === 'failed' ? 'destructive' : 'secondary'}
                       className="capitalize"
@@ -217,19 +257,24 @@ export function UploadPage() {
       )}
 
       {result && (
-        <Card>
-          <CardContent className="pt-6 space-y-4">
+        <Card className="surface-card">
+          <CardContent className="space-y-4 pt-6">
             <div className="flex items-center gap-2">
               <CheckCircle size={18} className="text-green-500" />
               <span className="font-semibold">
                 {t('upload.success')}: {result.company_name} ({result.report_year})
               </span>
             </div>
-            <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="grid gap-3 text-sm md:grid-cols-2">
               {fields.map(([k, v]) => (
-                <div key={k} className="flex justify-between border rounded px-3 py-2">
+                <div
+                  key={k}
+                  className="flex justify-between rounded-xl border border-stone-200 bg-white/80 px-3 py-3"
+                >
                   <span className="text-slate-500">{k}</span>
-                  <Badge variant="secondary">{v}</Badge>
+                  <Badge variant="secondary" className="bg-stone-100 text-slate-700">
+                    {v}
+                  </Badge>
                 </div>
               ))}
             </div>

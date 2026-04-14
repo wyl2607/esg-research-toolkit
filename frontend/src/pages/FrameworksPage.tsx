@@ -10,82 +10,83 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer, Tooltip } from 'recharts'
+import {
+  RadarChart,
+  Radar,
+  PolarGrid,
+  PolarAngleAxis,
+  ResponsiveContainer,
+  Tooltip,
+} from 'recharts'
 import { useTranslation } from 'react-i18next'
 import { localizeErrorMessage } from '@/lib/error-utils'
 
-// ── Grade badge ────────────────────────────────────────────────────────────
-
 function GradeBadge({ grade }: { grade: string }) {
   const colors: Record<string, string> = {
-    A: 'bg-green-100 text-green-800 border-green-300',
-    B: 'bg-blue-100 text-blue-800 border-blue-300',
-    C: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-    D: 'bg-orange-100 text-orange-800 border-orange-300',
-    F: 'bg-red-100 text-red-800 border-red-300',
+    A: 'border-green-300 bg-green-50 text-green-800',
+    B: 'border-sky-300 bg-sky-50 text-sky-800',
+    C: 'border-amber-300 bg-amber-50 text-amber-800',
+    D: 'border-orange-300 bg-orange-50 text-orange-800',
+    F: 'border-red-300 bg-red-50 text-red-800',
   }
+
   return (
-    <span className={`inline-flex items-center justify-center w-10 h-10 rounded-full border-2 font-bold text-lg ${colors[grade] ?? colors.F}`}>
+    <span
+      className={`inline-flex h-10 w-10 items-center justify-center rounded-full border-2 font-bold text-lg ${colors[grade] ?? colors.F}`}
+    >
       {grade}
     </span>
   )
 }
 
-// ── Score bar ──────────────────────────────────────────────────────────────
-
 function ScoreBar({ value, max = 1 }: { value: number; max?: number }) {
   const pct = Math.round((value / max) * 100)
-  const color = pct >= 80 ? 'bg-green-500' : pct >= 60 ? 'bg-blue-500' : pct >= 40 ? 'bg-yellow-500' : 'bg-red-500'
+  const color =
+    pct >= 80 ? 'bg-green-600' : pct >= 60 ? 'bg-amber-600' : pct >= 40 ? 'bg-orange-500' : 'bg-red-500'
+
   return (
     <div className="flex items-center gap-2">
-      <div className="flex-1 bg-slate-100 rounded-full h-2">
+      <div className="h-2 flex-1 rounded-full bg-stone-200">
         <div className={`${color} h-2 rounded-full transition-all`} style={{ width: `${pct}%` }} />
       </div>
-      <span className="text-xs text-slate-500 w-8 text-right">{pct}%</span>
+      <span className="w-8 text-right text-xs text-slate-500">{pct}%</span>
     </div>
   )
 }
 
-// ── Framework card ─────────────────────────────────────────────────────────
-
 const FRAMEWORK_COLORS: Record<string, string> = {
-  eu_taxonomy: '#6366f1',
-  csrc_2023:   '#f59e0b',
-  csrd:        '#10b981',
+  eu_taxonomy: '#b45309',
+  csrc_2023: '#9a3412',
+  csrd: '#3f6212',
 }
 
 function FrameworkCard({ fw }: { fw: FrameworkScoreResult }) {
   const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
-  const color = FRAMEWORK_COLORS[fw.framework_id] ?? '#6366f1'
+  const color = FRAMEWORK_COLORS[fw.framework_id] ?? '#b45309'
   const radarData = fw.dimensions.map((d: DimensionScore) => ({
     subject: d.name.split(' ')[0],
     score: Math.round(d.score * 100),
   }))
 
   return (
-    <div className="border rounded-xl p-5 bg-white shadow-sm space-y-4">
-      {/* Header */}
+    <div className="surface-card space-y-4">
       <div className="flex items-start justify-between">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="w-3 h-3 rounded-full inline-block" style={{ background: color }} />
+          <div className="mb-1 flex items-center gap-2">
+            <span className="inline-block h-3 w-3 rounded-full" style={{ background: color }} />
             <h3 className="font-semibold text-slate-800">{fw.framework}</h3>
           </div>
-          <p className="text-xs text-slate-400">
-            {t('frameworks.coverage', { pct: fw.coverage_pct })}
-          </p>
+          <p className="text-xs text-slate-400">{t('frameworks.coverage', { pct: fw.coverage_pct })}</p>
         </div>
         <GradeBadge grade={fw.grade} />
       </div>
 
-      {/* Total score bar */}
       <div>
-        <p className="text-xs text-slate-500 mb-1">{t('frameworks.totalScore')}</p>
+        <p className="mb-1 text-xs text-slate-500">{t('frameworks.totalScore')}</p>
         <ScoreBar value={fw.total_score} />
       </div>
 
-      {/* Radar */}
       <div className="h-44">
         <ResponsiveContainer width="100%" height="100%">
           <RadarChart data={radarData}>
@@ -97,11 +98,10 @@ function FrameworkCard({ fw }: { fw: FrameworkScoreResult }) {
         </ResponsiveContainer>
       </div>
 
-      {/* Dimensions */}
       <div className="space-y-2">
         {fw.dimensions.map((d: DimensionScore) => (
           <div key={d.name}>
-            <div className="flex justify-between text-xs text-slate-600 mb-0.5">
+            <div className="mb-0.5 flex justify-between text-xs text-slate-600">
               <span>{d.name}</span>
               <span>{t('frameworks.disclosed', { n: d.disclosed, total: d.total })}</span>
             </div>
@@ -110,9 +110,8 @@ function FrameworkCard({ fw }: { fw: FrameworkScoreResult }) {
         ))}
       </div>
 
-      {/* Gaps / Recs toggle */}
       <button
-        className="text-xs text-indigo-600 hover:underline"
+        className="text-xs text-amber-800 hover:underline"
         onClick={() => setExpanded(!expanded)}
         type="button"
       >
@@ -125,14 +124,14 @@ function FrameworkCard({ fw }: { fw: FrameworkScoreResult }) {
       </button>
 
       {expanded && (
-        <div className="space-y-3 pt-2 border-t">
+        <div className="space-y-3 border-t border-stone-200 pt-2">
           {fw.gaps.length > 0 && (
             <div>
-              <p className="text-xs font-medium text-slate-700 mb-1">{t('common.gaps')}</p>
+              <p className="mb-1 text-xs font-medium text-slate-700">{t('common.gaps')}</p>
               <ul className="space-y-1">
                 {fw.gaps.map((g, i) => (
                   <li key={i} className="flex gap-2 text-xs text-slate-600">
-                    <Badge variant="outline" className="shrink-0 text-[10px] px-1">
+                    <Badge variant="outline" className="shrink-0 px-1 text-[10px]">
                       {t('common.missing')}
                     </Badge>
                     {g}
@@ -141,14 +140,17 @@ function FrameworkCard({ fw }: { fw: FrameworkScoreResult }) {
               </ul>
             </div>
           )}
+
           {fw.recommendations.length > 0 && (
             <div>
-              <p className="text-xs font-medium text-slate-700 mb-1">
+              <p className="mb-1 text-xs font-medium text-slate-700">
                 {t('common.recommendations')}
               </p>
               <ul className="space-y-1">
                 {fw.recommendations.map((r, i) => (
-                  <li key={i} className="text-xs text-slate-600">• {r}</li>
+                  <li key={i} className="text-xs text-slate-600">
+                    • {r}
+                  </li>
                 ))}
               </ul>
             </div>
@@ -158,8 +160,6 @@ function FrameworkCard({ fw }: { fw: FrameworkScoreResult }) {
     </div>
   )
 }
-
-// ── Page ───────────────────────────────────────────────────────────────────
 
 export function FrameworksPage() {
   const { t } = useTranslation()
@@ -180,45 +180,52 @@ export function FrameworksPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">{t('frameworks.title')}</h1>
-        <p className="text-sm text-slate-500 mt-1">
-          {t('frameworks.subtitle')}
-        </p>
-      </div>
+      <section className="editorial-panel space-y-3">
+        <p className="section-kicker">{t('frameworks.kicker')}</p>
+        <div>
+          <h1 className="text-4xl text-slate-900">{t('frameworks.title')}</h1>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+            {t('frameworks.subtitle')}
+          </p>
+        </div>
+      </section>
+
       {(companiesError || reportError) && (
-        <p className="text-red-500 text-sm">
+        <p className="text-sm text-red-500">
           {localizeErrorMessage(t, reportError ?? companiesError, 'common.error')}
         </p>
       )}
 
-      <Select value={selected} onValueChange={setSelected}>
-        <SelectTrigger className="w-72">
-          <SelectValue placeholder={t('common.selectCompany')} />
-        </SelectTrigger>
-        <SelectContent>
-          {companies.map((c) => (
-            <SelectItem
-              key={`${c.company_name}|${c.report_year}`}
-              value={`${c.company_name}|${c.report_year}`}
-            >
-              {c.company_name} ({c.report_year})
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <div className="surface-card max-w-xl">
+        <p className="mb-3 text-xs uppercase tracking-[0.2em] text-stone-500">
+          {t('frameworks.kicker')}
+        </p>
+        <Select value={selected} onValueChange={setSelected}>
+          <SelectTrigger className="w-full border-stone-300 bg-white/90">
+            <SelectValue placeholder={t('common.selectCompany')} />
+          </SelectTrigger>
+          <SelectContent>
+            {companies.map((c) => (
+              <SelectItem
+                key={`${c.company_name}|${c.report_year}`}
+                value={`${c.company_name}|${c.report_year}`}
+              >
+                {c.company_name} ({c.report_year})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       {isLoading && <p className="text-slate-400">{t('frameworks.calculating')}</p>}
 
       {report && (
         <div className="space-y-4">
-          {/* Summary banner */}
-          <div className="bg-indigo-50 border border-indigo-200 rounded-lg px-5 py-3 text-sm text-indigo-800">
+          <div className="rounded-2xl border border-amber-200 bg-amber-50/90 px-5 py-4 text-sm leading-6 text-amber-900">
             {report.summary}
           </div>
 
-          {/* Three framework cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
             {report.frameworks.map((fw) => (
               <FrameworkCard key={fw.framework_id} fw={fw} />
             ))}
@@ -227,9 +234,7 @@ export function FrameworksPage() {
       )}
 
       {!selected && (
-        <p className="text-slate-400 text-center py-12">
-          {t('frameworks.selectPrompt')}
-        </p>
+        <p className="py-12 text-center text-slate-400">{t('frameworks.selectPrompt')}</p>
       )}
     </div>
   )

@@ -194,10 +194,11 @@ export function ManualCaseBuilderPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-2">
-          <Badge variant="secondary" className="w-fit">
+          <p className="section-kicker">{t('manual.kicker')}</p>
+          <Badge variant="secondary" className="w-fit bg-amber-100 text-amber-900">
             {t('manual.badge')}
           </Badge>
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
+          <h1 className="text-4xl tracking-tight text-slate-900">
             {t('manual.title')}
           </h1>
           <p className="max-w-3xl text-sm leading-6 text-slate-600">
@@ -211,10 +212,10 @@ export function ManualCaseBuilderPage() {
 
       <div className="grid gap-4 lg:grid-cols-[1.45fr_0.95fr]">
         <div className="space-y-4">
-          <Card>
+          <Card className="surface-card">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
-                <PencilLine size={16} className="text-indigo-600" />
+                <PencilLine size={16} className="text-amber-700" />
                 {t('manual.formTitle')}
               </CardTitle>
             </CardHeader>
@@ -333,7 +334,7 @@ export function ManualCaseBuilderPage() {
                 </div>
               </div>
 
-              <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-xs leading-5 text-slate-600">
+              <div className="rounded-xl border border-dashed border-stone-300 bg-stone-50 px-4 py-4 text-xs leading-5 text-slate-600">
                 {t('manual.overwriteHint')}
               </div>
 
@@ -360,18 +361,18 @@ export function ManualCaseBuilderPage() {
         </div>
 
         <div className="space-y-4">
-          <Card className="border-indigo-100 bg-indigo-50/60">
+          <Card className="rounded-2xl border-amber-200 bg-amber-50/70">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base text-indigo-950">
-                <FlaskConical size={16} className="text-indigo-700" />
+              <CardTitle className="flex items-center gap-2 text-base text-amber-950">
+                <FlaskConical size={16} className="text-amber-700" />
                 {t('manual.heroTitle')}
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3 text-sm text-indigo-950">
+            <CardContent className="space-y-3 text-sm text-amber-950">
               <p>{t('manual.heroBody')}</p>
               <div className="grid gap-3">
                 <div className="rounded-lg border border-white/70 bg-white/80 px-3 py-3">
-                  <p className="text-xs uppercase tracking-wide text-indigo-700">
+                  <p className="text-xs uppercase tracking-wide text-amber-700">
                     {t('manual.heroPoint1Title')}
                   </p>
                   <p className="mt-1 text-xs leading-5 text-slate-700">
@@ -379,7 +380,7 @@ export function ManualCaseBuilderPage() {
                   </p>
                 </div>
                 <div className="rounded-lg border border-white/70 bg-white/80 px-3 py-3">
-                  <p className="text-xs uppercase tracking-wide text-indigo-700">
+                  <p className="text-xs uppercase tracking-wide text-amber-700">
                     {t('manual.heroPoint2Title')}
                   </p>
                   <p className="mt-1 text-xs leading-5 text-slate-700">
@@ -390,10 +391,10 @@ export function ManualCaseBuilderPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="surface-card">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
-                <ArrowRight size={16} className="text-indigo-600" />
+                <ArrowRight size={16} className="text-amber-700" />
                 {t('manual.recentCompanies')}
               </CardTitle>
             </CardHeader>
@@ -411,7 +412,7 @@ export function ManualCaseBuilderPage() {
                         company_name: company.company_name,
                       }))
                     }
-                    className="rounded-full border bg-white px-3 py-1.5 text-sm text-slate-700 hover:border-indigo-300 hover:text-indigo-700"
+                    className="rounded-full border bg-white px-3 py-1.5 text-left text-sm leading-5 text-slate-700 hover:border-amber-300 hover:text-amber-800"
                   >
                     {company.company_name}
                   </button>
@@ -420,10 +421,10 @@ export function ManualCaseBuilderPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="surface-card">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
-                <FileJson size={16} className="text-indigo-600" />
+                <FileJson size={16} className="text-amber-700" />
                 {t('manual.jsonTitle')}
               </CardTitle>
             </CardHeader>
@@ -443,7 +444,7 @@ export function ManualCaseBuilderPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="surface-card">
             <CardHeader>
               <CardTitle className="text-base">{t('manual.previewTitle')}</CardTitle>
             </CardHeader>

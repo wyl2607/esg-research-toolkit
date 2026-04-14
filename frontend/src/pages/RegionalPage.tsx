@@ -62,42 +62,49 @@ export function RegionalPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center gap-3">
-        <Globe className="text-indigo-500" size={28} />
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">{t('regional.title')}</h1>
-          <p className="text-slate-500 text-sm">{t('regional.subtitle')}</p>
+      <section className="editorial-panel space-y-4">
+        <div className="flex items-center gap-3">
+          <Globe className="text-amber-700" size={28} />
+          <div>
+            <p className="section-kicker">{t('regional.kicker')}</p>
+            <h1 className="text-4xl text-slate-900">{t('regional.title')}</h1>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+              {t('regional.subtitle')}
+            </p>
+          </div>
         </div>
-      </div>
+      </section>
 
       {(companiesError || reportError) && (
-        <p className="text-red-500 text-sm">
+        <p className="text-sm text-red-500">
           {localizeErrorMessage(t, reportError ?? companiesError, 'common.error')}
         </p>
       )}
 
-      <Select value={selected} onValueChange={setSelected}>
-        <SelectTrigger className="w-72">
-          <SelectValue placeholder={t('common.selectCompany')} />
-        </SelectTrigger>
-        <SelectContent>
-          {companies.map((c) => (
-            <SelectItem
-              key={`${c.company_name}|${c.report_year}`}
-              value={`${c.company_name}|${c.report_year}`}
-            >
-              {c.company_name} ({c.report_year})
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <div className="surface-card max-w-xl">
+        <Select value={selected} onValueChange={setSelected}>
+          <SelectTrigger className="w-full border-stone-300 bg-white/90">
+            <SelectValue placeholder={t('common.selectCompany')} />
+          </SelectTrigger>
+          <SelectContent>
+            {companies.map((c) => (
+              <SelectItem
+                key={`${c.company_name}|${c.report_year}`}
+                value={`${c.company_name}|${c.report_year}`}
+              >
+                {c.company_name} ({c.report_year})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       {isLoading && <p className="text-slate-400">{t('common.loading')}</p>}
 
       {report && (
         <div className="space-y-6">
-          <Card className={`border-l-4 ${readinessBorderClass}`}>
-            <CardContent className="pt-4 flex items-center justify-between">
+          <Card className={`surface-card border-l-4 ${readinessBorderClass}`}>
+            <CardContent className="flex items-center justify-between pt-4">
               <div>
                 <p className="text-sm text-slate-500">{t('regional.overallReadiness')}</p>
                 <p className="text-2xl font-bold text-slate-900">{report.overall_readiness}</p>
@@ -108,22 +115,22 @@ export function RegionalPage() {
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             {report.regional_groups.map((g) => (
-              <Card key={g.region}>
+              <Card key={g.region} className="surface-card">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-base flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-base">
                     <span
-                      className="w-3 h-3 rounded-full inline-block"
+                      className="inline-block h-3 w-3 rounded-full"
                       style={{
                         backgroundColor:
                           g.region === 'EU'
-                            ? '#6366f1'
+                            ? '#b45309'
                             : g.region === 'CN'
-                              ? '#ef4444'
+                              ? '#dc2626'
                               : g.region === 'US'
-                                ? '#22c55e'
-                                : '#f59e0b',
+                                ? '#65a30d'
+                                : '#d97706',
                       }}
                     />
                     {g.region}
@@ -132,13 +139,13 @@ export function RegionalPage() {
                 <CardContent>
                   <p className="text-3xl font-bold text-slate-900">{g.avg_grade}</p>
                   <p className="text-lg text-slate-600">{Math.round(g.avg_score * 100)}%</p>
-                  <p className="text-xs text-slate-400 mt-1">↑ {g.strongest_area}</p>
+                  <p className="mt-1 text-xs text-slate-400">↑ {g.strongest_area}</p>
                   <p className="text-xs text-red-400">↓ {g.weakest_area}</p>
                   <div className="mt-2 space-y-1">
                     {g.frameworks.map((f) => (
-                      <div key={f.framework_id} className="flex justify-between text-xs gap-2">
-                        <span className="text-slate-600 truncate">{f.framework}</span>
-                        <span className="font-medium shrink-0">{f.grade}</span>
+                      <div key={f.framework_id} className="flex justify-between gap-2 text-xs">
+                        <span className="truncate text-slate-600">{f.framework}</span>
+                        <span className="shrink-0 font-medium">{f.grade}</span>
                       </div>
                     ))}
                   </div>
@@ -147,8 +154,8 @@ export function RegionalPage() {
             ))}
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <Card className="editorial-panel">
               <CardHeader>
                 <CardTitle className="text-base">{t('regional.dimensionRadar')}</CardTitle>
               </CardHeader>
@@ -157,26 +164,26 @@ export function RegionalPage() {
                   <RadarChart data={radarData}>
                     <PolarGrid />
                     <PolarAngleAxis dataKey="dimension" tick={{ fontSize: 11 }} />
-                    <Radar name="EU" dataKey="EU" stroke="#6366f1" fill="#6366f1" fillOpacity={0.2} />
-                    <Radar name="CN" dataKey="CN" stroke="#ef4444" fill="#ef4444" fillOpacity={0.2} />
-                    <Radar name="US" dataKey="US" stroke="#22c55e" fill="#22c55e" fillOpacity={0.2} />
+                    <Radar name="EU" dataKey="EU" stroke="#b45309" fill="#d97706" fillOpacity={0.16} />
+                    <Radar name="CN" dataKey="CN" stroke="#b91c1c" fill="#dc2626" fillOpacity={0.12} />
+                    <Radar name="US" dataKey="US" stroke="#4d7c0f" fill="#65a30d" fillOpacity={0.12} />
                     <Legend />
                   </RadarChart>
                 </ResponsiveContainer>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="editorial-panel">
               <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  <TrendingUp size={16} className="text-indigo-500" />
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <TrendingUp size={16} className="text-amber-700" />
                   {t('regional.keyInsights')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {report.key_insights.map((insight, i) => (
                   <div key={`${insight}-${i}`} className="flex gap-2 text-sm">
-                    <CheckCircle size={14} className="text-green-500 mt-0.5 shrink-0" />
+                    <CheckCircle size={14} className="mt-0.5 shrink-0 text-green-500" />
                     <span className="text-slate-600">{insight}</span>
                   </div>
                 ))}
@@ -184,7 +191,7 @@ export function RegionalPage() {
             </Card>
           </div>
 
-          <Card>
+          <Card className="editorial-panel">
             <CardHeader>
               <CardTitle className="text-base">{t('regional.crossMatrix')}</CardTitle>
             </CardHeader>
@@ -192,21 +199,30 @@ export function RegionalPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b text-slate-500">
-                      <th className="text-left py-2 pr-4 font-medium">{t('regional.dimension')}</th>
-                      <th className="text-left py-2 pr-4 font-medium text-indigo-600">🇪🇺 EU</th>
-                      <th className="text-left py-2 pr-4 font-medium text-red-600">🇨🇳 CN</th>
-                      <th className="text-left py-2 pr-4 font-medium text-green-600">🇺🇸 US</th>
-                      <th className="text-left py-2 font-medium">{t('regional.gapAnalysis')}</th>
+                    <tr className="border-b border-stone-200 text-slate-500">
+                      <th className="py-2 pr-4 text-left font-medium">{t('regional.dimension')}</th>
+                      <th className="py-2 pr-4 text-left font-medium text-amber-700">EU</th>
+                      <th className="py-2 pr-4 text-left font-medium text-red-600">CN</th>
+                      <th className="py-2 pr-4 text-left font-medium text-green-700">US</th>
+                      <th className="py-2 text-left font-medium">{t('regional.gapAnalysis')}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {report.cross_matrix.map((row, i) => (
-                      <tr key={`${row.dimension_name}-${i}`} className="border-b last:border-0 align-top">
+                      <tr
+                        key={`${row.dimension_name}-${i}`}
+                        className="align-top border-b border-stone-200 last:border-0"
+                      >
                         <td className="py-3 pr-4 font-medium text-slate-800">{row.dimension_name}</td>
-                        <td className="py-3 pr-4 text-slate-600 text-xs max-w-[160px]">{row.eu_requirement}</td>
-                        <td className="py-3 pr-4 text-slate-600 text-xs max-w-[160px]">{row.cn_requirement}</td>
-                        <td className="py-3 pr-4 text-slate-600 text-xs max-w-[160px]">{row.us_requirement}</td>
+                        <td className="max-w-[160px] py-3 pr-4 text-xs text-slate-600">
+                          {row.eu_requirement}
+                        </td>
+                        <td className="max-w-[160px] py-3 pr-4 text-xs text-slate-600">
+                          {row.cn_requirement}
+                        </td>
+                        <td className="max-w-[160px] py-3 pr-4 text-xs text-slate-600">
+                          {row.us_requirement}
+                        </td>
                         <td className="py-3 text-xs text-slate-500">{row.gap_analysis}</td>
                       </tr>
                     ))}
@@ -217,9 +233,9 @@ export function RegionalPage() {
           </Card>
 
           {report.compliance_priority.length > 0 && (
-            <Card className="border-orange-200 bg-orange-50">
+            <Card className="rounded-2xl border-orange-200 bg-orange-50">
               <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2 text-orange-700">
+                <CardTitle className="flex items-center gap-2 text-base text-orange-700">
                   <AlertTriangle size={16} />
                   {t('regional.compliancePriority')}
                 </CardTitle>
@@ -227,7 +243,7 @@ export function RegionalPage() {
               <CardContent className="space-y-2">
                 {report.compliance_priority.map((item, i) => (
                   <div key={`${item}-${i}`} className="flex items-start gap-2 text-sm text-orange-800">
-                    <span className="font-bold shrink-0">{i + 1}.</span>
+                    <span className="shrink-0 font-bold">{i + 1}.</span>
                     <span>{item}</span>
                   </div>
                 ))}
@@ -237,7 +253,7 @@ export function RegionalPage() {
         </div>
       )}
 
-      {!selected && <p className="text-slate-400 text-center py-12">{t('regional.selectPrompt')}</p>}
+      {!selected && <p className="py-12 text-center text-slate-400">{t('regional.selectPrompt')}</p>}
     </div>
   )
 }

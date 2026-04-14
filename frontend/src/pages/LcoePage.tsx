@@ -3,6 +3,7 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { calcLcoe, calcSensitivity, getBenchmarks } from '@/lib/api'
 import { MetricCard } from '@/components/MetricCard'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -25,6 +26,8 @@ import {
 import type { LCOEInput } from '@/lib/types'
 import { useTranslation } from 'react-i18next'
 import { localizeErrorMessage } from '@/lib/error-utils'
+import { Badge } from '@/components/ui/badge'
+import { CircleAlert, FlaskConical, LineChart as LineChartIcon } from 'lucide-react'
 
 const TECHNOLOGIES = [
   'solar_pv',
@@ -61,6 +64,15 @@ const FIELD_CONFIG: [keyof LCOEInput, string, string][] = [
 
 const COLORS = ['#6366f1', '#22c55e', '#f59e0b', '#ef4444']
 
+const FIELD_UNIT_KEYS: Partial<Record<keyof LCOEInput, string>> = {
+  capacity_mw: 'lcoe.unitMw',
+  capacity_factor: 'lcoe.unitRatio',
+  capex_eur_per_kw: 'lcoe.unitEurPerKw',
+  opex_eur_per_kw_year: 'lcoe.unitEurPerKwYear',
+  lifetime_years: 'lcoe.unitYears',
+  discount_rate: 'lcoe.unitPercentApprox',
+}
+
 export function LcoePage() {
   const { t } = useTranslation()
   const [form, setForm] = useState<LCOEInput>(DEFAULTS)
@@ -83,6 +95,16 @@ export function LcoePage() {
     if (benchmarks?.[form.technology]) setForm(benchmarks[form.technology])
   }
 
+  const validationMessages = [
+    form.capacity_mw > 0 ? null : t('lcoe.validation.capacity'),
+    form.capacity_factor > 0 && form.capacity_factor <= 1 ? null : t('lcoe.validation.capacityFactor'),
+    form.capex_eur_per_kw > 0 ? null : t('lcoe.validation.capex'),
+    form.opex_eur_per_kw_year >= 0 ? null : t('lcoe.validation.opex'),
+    form.lifetime_years > 0 ? null : t('lcoe.validation.lifetime'),
+    form.discount_rate >= 0 && form.discount_rate < 1 ? null : t('lcoe.validation.discountRate'),
+  ].filter(Boolean) as string[]
+  const isValid = validationMessages.length === 0
+
   // Build chart data: merge sensitivity series by index
   const sensitivityChartData = sensitivityMutation.data
     ? sensitivityMutation.data[0]?.values.map((_, idx) => {
@@ -97,12 +119,28 @@ export function LcoePage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-bold text-slate-900">{t('lcoe.title')}</h1>
+      <div className="space-y-2">
+        <p className="section-kicker">{t('lcoe.kicker')}</p>
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-semibold text-slate-900">{t('lcoe.title')}</h1>
+            <p className="max-w-3xl text-sm leading-6 text-slate-600">{t('lcoe.subtitle')}</p>
+          </div>
+          <Badge variant="outline" className="w-fit rounded-full border-slate-300 bg-white/80 px-3 py-1 text-slate-600">
+            <FlaskConical size={13} className="mr-1.5" />
+            {t('lcoe.analysisBadge')}
+          </Badge>
+        </div>
+      </div>
 
-      <div className="grid grid-cols-2 gap-8">
-        {/* Input form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4 items-end">
+      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+        <Card className="surface-card">
+          <CardHeader>
+            <CardTitle className="text-lg">{t('lcoe.formTitle')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="grid gap-4 md:grid-cols-[1.4fr_auto] md:items-end">
             <div>
               <Label>{t('lcoe.technology')}</Label>
               <Select
@@ -121,17 +159,24 @@ export function LcoePage() {
                 </SelectContent>
               </Select>
             </div>
-            <Button type="button" variant="outline" onClick={loadBenchmark}>
+            <Button type="button" variant="outline" className="rounded-xl" onClick={loadBenchmark}>
               {t('lcoe.loadBenchmark')}
             </Button>
           </div>
 
+          <div className="grid gap-4 md:grid-cols-2">
           {FIELD_CONFIG.map(([key, labelKey, step]) => (
-            <div key={key}>
-              <Label>{labelKey === 'capacity_mw' ? t('lcoe.capacityMw') : t(labelKey)}</Label>
+            <div key={key} className="space-y-2 rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+              <div className="flex items-center justify-between gap-2">
+                <Label className="text-sm font-medium text-slate-700">
+                  {labelKey === 'capacity_mw' ? t('lcoe.capacityMw') : t(labelKey)}
+                </Label>
+                {FIELD_UNIT_KEYS[key] ? <span className="metric-unit">{t(FIELD_UNIT_KEYS[key]!)}</span> : null}
+              </div>
               <Input
                 type="number"
                 step={step}
+                className="h-11 rounded-xl border-slate-200 bg-white"
                 value={form[key] as number}
                 onChange={(e) =>
                   setForm((f) => ({
@@ -140,13 +185,29 @@ export function LcoePage() {
                   }))
                 }
               />
+              <p className="text-xs leading-5 text-slate-500">{t(`lcoe.fieldHelp.${key}`)}</p>
             </div>
           ))}
+          </div>
+
+          {validationMessages.length > 0 ? (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              <div className="flex items-start gap-2">
+                <CircleAlert size={16} className="mt-0.5 shrink-0" />
+                <div className="space-y-1">
+                  <p className="font-medium">{t('lcoe.validationTitle')}</p>
+                  {validationMessages.map((message) => (
+                    <p key={message}>{message}</p>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : null}
 
           <Button
             type="submit"
-            disabled={lcoeMutation.isPending}
-            className="w-full"
+            disabled={lcoeMutation.isPending || !isValid}
+            className="h-11 w-full rounded-xl"
           >
             {lcoeMutation.isPending ? t('lcoe.calculating') : t('lcoe.calculate')}
           </Button>
@@ -156,42 +217,63 @@ export function LcoePage() {
             </p>
           )}
         </form>
+          </CardContent>
+        </Card>
 
-        {/* Results */}
         <div className="space-y-4">
+          <Card className="surface-card">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <LineChartIcon size={18} className="text-indigo-600" />
+                {t('lcoe.resultTitle')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
           {lcoeMutation.data ? (
             <div className="grid grid-cols-2 gap-3">
               <MetricCard
                 label={t('lcoe.lcoe')}
-                value={`€${lcoeMutation.data.lcoe_eur_per_mwh.toFixed(1)}/MWh`}
+                value={lcoeMutation.data.lcoe_eur_per_mwh.toFixed(1)}
+                unit={t('lcoe.unitEurPerMwh')}
+                sub={t('lcoe.resultHintLcoe')}
                 color="blue"
               />
               <MetricCard
                 label={t('lcoe.npv')}
                 value={`€${(lcoeMutation.data.npv_eur / 1e6).toFixed(1)}M`}
+                sub={t('lcoe.resultHintNpv')}
                 color={lcoeMutation.data.npv_eur > 0 ? 'green' : 'red'}
               />
               <MetricCard
                 label={t('lcoe.irr')}
                 value={`${(lcoeMutation.data.irr * 100).toFixed(1)}%`}
+                sub={t('lcoe.resultHintIrr')}
                 color="blue"
               />
               <MetricCard
                 label={t('lcoe.payback')}
                 value={`${lcoeMutation.data.payback_years.toFixed(1)} ${t('lcoe.years')}`}
+                sub={t('lcoe.resultHintPayback')}
               />
             </div>
           ) : (
-            <p className="text-slate-400 text-center py-8">
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/80 px-4 py-8 text-center">
+            <p className="text-slate-400 text-center">
               {t('common.noData')}
             </p>
+            </div>
           )}
+            </CardContent>
+          </Card>
         </div>
       </div>
 
       {sensitivityMutation.data && sensitivityChartData.length > 0 && (
-        <div>
-          <h2 className="text-lg font-semibold mb-3">{t('lcoe.sensitivityAnalysis')}</h2>
+        <Card className="surface-card">
+          <CardHeader>
+            <CardTitle className="text-lg">{t('lcoe.sensitivityAnalysis')}</CardTitle>
+          </CardHeader>
+          <CardContent>
           <ResponsiveContainer width="100%" height={280}>
             <LineChart data={sensitivityChartData}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -216,7 +298,8 @@ export function LcoePage() {
               ))}
             </LineChart>
           </ResponsiveContainer>
-        </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   )

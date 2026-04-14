@@ -3,8 +3,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { listCompanies, deleteCompany } from '@/lib/api'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Trash2, Search, Download } from 'lucide-react'
+import { Trash2, Search, Download, Building2, CalendarRange, FileStack } from 'lucide-react'
 import type { CompanyESGData } from '@/lib/types'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
@@ -51,11 +52,6 @@ export function CompaniesPage() {
     }
   }
 
-  const thCls = (key: SortKey) =>
-    `px-4 py-3 text-left font-medium cursor-pointer hover:text-indigo-600 ${
-      sortKey === key ? 'text-indigo-600' : 'text-slate-600'
-    }`
-
   const handleDelete = (c: CompanyESGData) => {
     if (
       confirm(
@@ -68,7 +64,39 @@ export function CompaniesPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-slate-900">{t('companies.title')}</h1>
+      <div className="space-y-2">
+        <p className="section-kicker">{t('companies.kicker')}</p>
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-semibold text-slate-900">{t('companies.title')}</h1>
+            <p className="max-w-3xl text-sm leading-6 text-slate-600">
+              {t('companies.subtitle')}
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
+            <Card className="surface-card border-slate-200/80">
+              <CardContent className="px-4 py-4">
+                <p className="section-kicker">{t('companies.summaryCompanies')}</p>
+                <p className="mt-2 numeric-mono text-2xl font-semibold text-slate-900">{filtered.length}</p>
+              </CardContent>
+            </Card>
+            <Card className="surface-card border-slate-200/80">
+              <CardContent className="px-4 py-4">
+                <p className="section-kicker">{t('companies.summaryYears')}</p>
+                <p className="mt-2 numeric-mono text-2xl font-semibold text-slate-900">
+                  {new Set(filtered.map((company) => company.report_year)).size}
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="surface-card border-slate-200/80 col-span-2 sm:col-span-1">
+              <CardContent className="px-4 py-4">
+                <p className="section-kicker">{t('companies.summaryRows')}</p>
+                <p className="mt-2 numeric-mono text-2xl font-semibold text-slate-900">{companies.length}</p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
       {error && (
         <p className="text-red-500 text-sm">{localizeErrorMessage(t, error, 'common.error')}</p>
       )}
@@ -76,23 +104,49 @@ export function CompaniesPage() {
         <p className="text-red-500 text-sm">{localizeErrorMessage(t, deleteMutation.error, 'companies.deleteError')}</p>
       )}
 
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      <Card className="surface-card">
+        <CardContent className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between">
         <div className="relative w-full md:w-72">
           <Search
             size={14}
             className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
           />
           <Input
-            className="pl-8"
+            className="h-11 rounded-xl border-slate-200 bg-white/90 pl-8"
             placeholder={t('companies.searchPlaceholder')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="outline"
             size="sm"
+            className="rounded-xl"
+            onClick={() => toggleSort('company_name')}
+          >
+            {t('companies.sortCompany')}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded-xl"
+            onClick={() => toggleSort('report_year')}
+          >
+            {t('companies.sortYear')}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded-xl"
+            onClick={() => toggleSort('taxonomy_aligned_revenue_pct')}
+          >
+            {t('companies.sortTaxonomy')}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded-xl"
             onClick={() => window.open('/api/report/companies/export/csv')}
           >
             <Download size={14} className="mr-1" />
@@ -101,99 +155,98 @@ export function CompaniesPage() {
           <Button
             variant="outline"
             size="sm"
+            className="rounded-xl"
             onClick={() => window.open('/api/report/companies/export/xlsx')}
           >
             <Download size={14} className="mr-1" />
             {t('companies.excelExport')}
           </Button>
         </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {isLoading ? (
         <p className="text-slate-400">{t('common.loading')}</p>
       ) : filtered.length === 0 ? (
         <p className="text-slate-400">{t('companies.noResults')}</p>
       ) : (
-        <div className="rounded-lg border overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b">
-              <tr>
-                <th
-                  className={thCls('company_name')}
-                  onClick={() => toggleSort('company_name')}
-                >
-                  {t('common.company')}
-                </th>
-                <th
-                  className={thCls('report_year')}
-                  onClick={() => toggleSort('report_year')}
-                >
-                  {t('common.year')}
-                </th>
-                <th className="px-4 py-3 text-left font-medium text-slate-600">
-                  {t('companies.scope1')}
-                </th>
-                <th className="px-4 py-3 text-left font-medium text-slate-600">
-                  {t('companies.employees')}
-                </th>
-                <th
-                  className={thCls('taxonomy_aligned_revenue_pct')}
-                  onClick={() => toggleSort('taxonomy_aligned_revenue_pct')}
-                >
-                  {t('upload.taxonomyAligned')}
-                </th>
-                <th className="px-4 py-3 text-left font-medium text-slate-600">
-                  {t('common.delete')}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((c, i) => (
-                <tr
-                  key={i}
-                  className="border-b last:border-0 hover:bg-slate-50 cursor-pointer"
-                  onClick={() => navigate(`/companies/${encodeURIComponent(c.company_name)}`)}
-                >
-                  <td className="px-4 py-3 font-medium">{c.company_name}</td>
-                  <td className="px-4 py-3 text-slate-600">{c.report_year}</td>
-                  <td className="px-4 py-3 text-slate-600">
-                    {c.scope1_co2e_tonnes?.toLocaleString(i18n.resolvedLanguage) ?? '—'}
-                  </td>
-                  <td className="px-4 py-3 text-slate-600">
-                    {c.total_employees?.toLocaleString(i18n.resolvedLanguage) ?? '—'}
-                  </td>
-                  <td className="px-4 py-3">
-                    {c.taxonomy_aligned_revenue_pct != null ? (
-                      <Badge
-                        variant={
-                          c.taxonomy_aligned_revenue_pct > 50
-                            ? 'default'
-                            : 'secondary'
-                        }
-                      >
-                        {c.taxonomy_aligned_revenue_pct.toFixed(1)}%
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {filtered.map((c) => (
+            <Card
+              key={`${c.company_name}-${c.report_year}`}
+              className="surface-card group cursor-pointer overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_24px_56px_-34px_rgba(15,23,42,0.36)]"
+              onClick={() => navigate(`/companies/${encodeURIComponent(c.company_name)}`)}
+            >
+              <CardContent className="space-y-5 p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0 space-y-3">
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant="secondary" className="rounded-full bg-slate-100 text-slate-700">
+                        <CalendarRange size={12} className="mr-1" />
+                        {c.report_year}
                       </Badge>
-                    ) : (
-                      <span className="text-slate-400">—</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-500 hover:text-red-700"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleDelete(c)
-                      }}
-                    >
-                      <Trash2 size={14} />
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                      {c.source_document_type ? (
+                        <Badge variant="outline" className="rounded-full border-slate-300 text-slate-600">
+                          <FileStack size={12} className="mr-1" />
+                          {c.source_document_type}
+                        </Badge>
+                      ) : null}
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="mt-0.5 rounded-xl bg-slate-100 p-2 text-slate-600">
+                        <Building2 size={18} />
+                      </div>
+                      <div className="min-w-0">
+                        <h2 className="text-lg font-semibold leading-tight text-slate-900 break-words">
+                          {c.company_name}
+                        </h2>
+                        <p className="mt-1 text-xs leading-5 text-slate-500">
+                          {t('companies.companyCardHint')}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="shrink-0 rounded-xl text-red-500 opacity-0 transition-opacity hover:text-red-700 group-hover:opacity-100"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleDelete(c)
+                    }}
+                  >
+                    <Trash2 size={14} />
+                  </Button>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50/90 px-3 py-3">
+                    <p className="section-kicker">{t('companies.metricScope1Short')}</p>
+                    <p className="mt-2 numeric-mono text-base font-semibold text-slate-900">
+                      {c.scope1_co2e_tonnes?.toLocaleString(i18n.resolvedLanguage) ?? '—'}
+                    </p>
+                    <p className="mt-1 text-[11px] text-slate-500">{t('companies.unitTco2e')}</p>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50/90 px-3 py-3">
+                    <p className="section-kicker">{t('companies.metricEmployeesShort')}</p>
+                    <p className="mt-2 numeric-mono text-base font-semibold text-slate-900">
+                      {c.total_employees?.toLocaleString(i18n.resolvedLanguage) ?? '—'}
+                    </p>
+                    <p className="mt-1 text-[11px] text-slate-500">{t('companies.unitPeople')}</p>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50/90 px-3 py-3">
+                    <p className="section-kicker">{t('companies.metricTaxonomyShort')}</p>
+                    <p className="mt-2 numeric-mono text-base font-semibold text-slate-900">
+                      {c.taxonomy_aligned_revenue_pct != null
+                        ? `${c.taxonomy_aligned_revenue_pct.toFixed(1)}`
+                        : '—'}
+                    </p>
+                    <p className="mt-1 text-[11px] text-slate-500">{t('companies.unitPercent')}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       )}
     </div>

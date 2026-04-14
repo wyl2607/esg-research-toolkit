@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, Building2, Clock3, Leaf, ShieldCheck, Sparkles, TrendingUp } from 'lucide-react'
+import { ArrowLeft, Building2, CheckCircle2, Clock3, FileText, Leaf, ShieldCheck, Sparkles, TrendingUp, TriangleAlert } from 'lucide-react'
 import {
   Line,
   LineChart,
@@ -21,7 +21,12 @@ import { MetricCard } from '@/components/MetricCard'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { getCompanyProfile } from '@/lib/api'
-import type { FrameworkScoreResult } from '@/lib/types'
+import type {
+  CompanyDataQualitySummary,
+  CompanyIdentityProvenanceSummary,
+  CompanyNarrativeSummary,
+  FrameworkScoreResult,
+} from '@/lib/types'
 import { useTranslation } from 'react-i18next'
 import { localizeErrorMessage } from '@/lib/error-utils'
 
@@ -42,6 +47,14 @@ function deltaPctLabel(value: number | null | undefined) {
   if (value == null) return '—'
   const prefix = value > 0 ? '+' : ''
   return `${prefix}${value.toFixed(1)}`
+}
+
+function metricDisclosureLabel(t: (key: string) => string, metricKey: string) {
+  return t(`profile.metricLabels.${metricKey}`)
+}
+
+function metricLabelsFromKeys(t: (key: string) => string, metricKeys: string[]) {
+  return metricKeys.map((metricKey) => metricDisclosureLabel(t, metricKey))
 }
 
 export function CompanyProfilePage() {
@@ -74,6 +87,21 @@ export function CompanyProfilePage() {
     }
     return profile.framework_results
   }, [profile])
+
+  const identitySummary: CompanyIdentityProvenanceSummary | null = useMemo(() => {
+    if (!profile) return null
+    return (
+      profile.identity_provenance_summary ?? {
+        canonical_company_name: profile.company_name,
+        requested_company_name: decodedName,
+        has_alias_consolidation: false,
+        consolidated_aliases: [],
+        latest_source_document_type: profile.latest_period.source_document_type,
+        source_priority_preview: null,
+        merge_priority_preview: null,
+      }
+    )
+  }, [decodedName, profile])
 
   const frameworkRadarData = useMemo(
     () =>
@@ -149,9 +177,63 @@ export function CompanyProfilePage() {
     }
   }, [frameworkScores, locale, profile, t, yoySummary])
 
+  const dataQualitySummary: CompanyDataQualitySummary | null = useMemo(() => {
+    if (!profile) return null
+    if (profile.data_quality_summary) return profile.data_quality_summary
+    return {
+      total_key_metrics_count: 0,
+      present_metrics_count: 0,
+      present_metrics: [],
+      missing_metrics: [],
+      completion_percentage: 0,
+      readiness_label: 'draft',
+    }
+  }, [profile])
+
+  const narrativeSummary: CompanyNarrativeSummary | null = useMemo(() => {
+    if (!profile || !dataQualitySummary) return null
+    if (profile.narrative_summary) return profile.narrative_summary
+    const previousYear =
+      profile.trend.length >= 2 ? profile.trend[profile.trend.length - 2].year : null
+    return {
+      snapshot: {
+        periods_count: profile.periods.length,
+        years_count: profile.years_available.length,
+        latest_year: profile.latest_year,
+        framework_count: frameworkScores.length,
+        readiness_label: dataQualitySummary.readiness_label,
+      },
+      has_previous_period: profile.trend.length >= 2,
+      previous_year: previousYear,
+      improved_metrics: [],
+      weakened_metrics: [],
+      stable_metrics: [],
+      disclosure_strength_metrics: dataQualitySummary.present_metrics,
+      disclosure_gap_metrics: dataQualitySummary.missing_metrics,
+    }
+  }, [dataQualitySummary, frameworkScores.length, profile])
+
+  const missingDisclosureLabels = metricLabelsFromKeys(t, dataQualitySummary?.missing_metrics ?? [])
+  const presentDisclosureLabels = metricLabelsFromKeys(t, dataQualitySummary?.present_metrics ?? [])
+  const improvedMetricLabels = metricLabelsFromKeys(t, narrativeSummary?.improved_metrics ?? [])
+  const weakenedMetricLabels = metricLabelsFromKeys(t, narrativeSummary?.weakened_metrics ?? [])
+  const strengthMetricLabels = metricLabelsFromKeys(t, narrativeSummary?.disclosure_strength_metrics ?? [])
+  const gapMetricLabels = metricLabelsFromKeys(t, narrativeSummary?.disclosure_gap_metrics ?? [])
+  const readinessLabel = dataQualitySummary
+    ? t(`profile.readinessLabel.${dataQualitySummary.readiness_label}`)
+    : '—'
+  const readinessToneClass = dataQualitySummary
+    ? {
+        draft: 'bg-slate-100 text-slate-700 border-slate-200',
+        usable: 'bg-amber-100 text-amber-800 border-amber-200',
+        'showcase-ready': 'bg-emerald-100 text-emerald-800 border-emerald-200',
+      }[dataQualitySummary.readiness_label]
+    : 'bg-slate-100 text-slate-700 border-slate-200'
+
   if (isLoading) return <p className="text-slate-400">{t('common.loading')}</p>
   if (error) return <p className="text-red-500">{localizeErrorMessage(t, error, 'common.error')}</p>
   if (!profile) return <p className="text-red-500">{t('common.error')}</p>
+  if (!dataQualitySummary || !narrativeSummary) return <p className="text-red-500">{t('common.error')}</p>
 
   const m = profile.latest_metrics
   const heroToneClasses = {
@@ -162,8 +244,9 @@ export function CompanyProfilePage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="space-y-2">
+      <div className="surface-card overflow-hidden">
+        <div className="flex flex-col gap-4 p-5 md:flex-row md:items-start md:justify-between md:p-6">
+        <div className="space-y-3 min-w-0">
           <Link
             to="/companies"
             className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900"
@@ -171,16 +254,29 @@ export function CompanyProfilePage() {
             <ArrowLeft size={14} />
             {t('profile.backToCompanies')}
           </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-start gap-2">
             <Building2 size={20} className="text-indigo-600" />
-            <h1 className="text-2xl font-bold text-slate-900">{profile.company_name}</h1>
-            <Badge variant="secondary">
+            <h1 className="max-w-4xl text-3xl font-semibold leading-tight text-slate-900 break-words">
+              {profile.company_name}
+            </h1>
+            <Badge variant="secondary" className="rounded-full">
               {profile.latest_period.reporting_period_label}
             </Badge>
           </div>
-          <p className="text-sm text-slate-500">
+          <p className="max-w-3xl text-sm leading-6 text-slate-500">
             {profile.latest_period.source_document_type ?? '—'} · {profile.latest_year}
           </p>
+        </div>
+        <div className="grid grid-cols-2 gap-3 text-sm md:min-w-80">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4">
+            <p className="section-kicker">{t('profile.heroStatPeriods')}</p>
+            <p className="mt-2 numeric-mono text-2xl font-semibold text-slate-900">{profile.periods.length}</p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4">
+            <p className="section-kicker">{t('profile.heroStatFrameworks')}</p>
+            <p className="mt-2 numeric-mono text-2xl font-semibold text-slate-900">{frameworkScores.length}</p>
+          </div>
+        </div>
         </div>
       </div>
 
@@ -194,25 +290,152 @@ export function CompanyProfilePage() {
             <h2 className="text-xl font-semibold">{heroInsight.title}</h2>
             <p className="max-w-3xl text-sm leading-6 opacity-90">{heroInsight.body}</p>
           </div>
-          <div className="grid grid-cols-2 gap-3 text-sm md:min-w-72">
-            <div className="rounded-lg border border-white/40 bg-white/60 px-3 py-3">
-              <p className="text-xs uppercase tracking-wide opacity-70">{t('profile.heroStatPeriods')}</p>
-              <p className="mt-1 text-lg font-semibold">{profile.periods.length}</p>
-            </div>
-            <div className="rounded-lg border border-white/40 bg-white/60 px-3 py-3">
-              <p className="text-xs uppercase tracking-wide opacity-70">{t('profile.heroStatFrameworks')}</p>
-              <p className="mt-1 text-lg font-semibold">{frameworkScores.length}</p>
-            </div>
+          <div className="hidden md:block md:min-w-48" />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Building2 size={16} className="text-indigo-600" />
+            {t('profile.identityTitle')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4 md:grid-cols-2">
+          <div className="rounded-lg border bg-slate-50 px-4 py-3">
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              {t('profile.canonicalNameLabel')}
+            </p>
+            <p className="mt-2 text-sm font-semibold text-slate-900">
+              {identitySummary?.canonical_company_name ?? profile.company_name}
+            </p>
+            {identitySummary?.requested_company_name &&
+            identitySummary.requested_company_name !==
+              (identitySummary?.canonical_company_name ?? profile.company_name) ? (
+              <p className="mt-1 text-xs text-slate-500">
+                {identitySummary.requested_company_name} →{' '}
+                {identitySummary?.canonical_company_name ?? profile.company_name}
+              </p>
+            ) : null}
+          </div>
+          <div className="rounded-lg border bg-slate-50 px-4 py-3">
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              {t('profile.latestSourceTypeLabel')}
+            </p>
+            <p className="mt-2 text-sm font-semibold text-slate-900">
+              {identitySummary?.latest_source_document_type ?? '—'}
+            </p>
+          </div>
+          <div className="rounded-lg border bg-slate-50 px-4 py-3">
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              {t('profile.aliasConsolidationLabel')}
+            </p>
+            <p className="mt-2 text-sm font-semibold text-slate-900">
+              {identitySummary?.has_alias_consolidation
+                ? t('profile.aliasConsolidationYes')
+                : t('profile.aliasConsolidationNo')}
+            </p>
+            <p className="mt-1 text-xs text-slate-500">
+              {identitySummary?.consolidated_aliases?.length
+                ? identitySummary.consolidated_aliases.join(', ')
+                : t('profile.aliasListNone')}
+            </p>
+          </div>
+          <div className="rounded-lg border bg-slate-50 px-4 py-3">
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              {t('profile.sourceMergePriorityLabel')}
+            </p>
+            <p className="mt-2 text-sm text-slate-700">
+              {identitySummary?.merge_priority_preview ?? t('profile.sourceMergePriorityReserved')}
+            </p>
+            {identitySummary?.source_priority_preview ? (
+              <p className="mt-1 text-xs text-amber-700">{identitySummary.source_priority_preview}</p>
+            ) : null}
           </div>
         </CardContent>
       </Card>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <MetricCard label={t('companies.scope1')} value={asNum(m.scope1_co2e_tonnes, locale)} />
-        <MetricCard label={t('companies.scope2')} value={asNum(m.scope2_co2e_tonnes, locale)} />
-        <MetricCard label={t('companies.employees')} value={asNum(m.total_employees, locale)} />
-        <MetricCard label={t('companies.renewable')} value={asPct(m.renewable_energy_pct)} color="green" />
+        <MetricCard label={t('companies.scope1')} value={asNum(m.scope1_co2e_tonnes, locale)} unit="tCO2e" />
+        <MetricCard label={t('companies.scope2')} value={asNum(m.scope2_co2e_tonnes, locale)} unit="tCO2e" />
+        <MetricCard label={t('companies.employees')} value={asNum(m.total_employees, locale)} unit={t('companies.unitPeople')} />
+        <MetricCard label={t('companies.renewable')} value={asPct(m.renewable_energy_pct)} unit={t('companies.unitPercent')} color="green" />
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <ShieldCheck size={16} className="text-indigo-600" />
+            {t('profile.dataQualityTitle')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-col gap-3 rounded-lg border bg-slate-50 px-4 py-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                {t('profile.dataQualityCompletion')}
+              </p>
+              <p className="mt-1 text-2xl font-semibold text-slate-900">
+                {dataQualitySummary.completion_percentage.toFixed(1)}%
+              </p>
+            </div>
+            <Badge className={`border ${readinessToneClass}`}>
+              {t('profile.dataQualityReadiness')}: {readinessLabel}
+            </Badge>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="rounded-lg border bg-white px-4 py-3">
+              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{t('profile.dataQualityTotal')}</p>
+              <p className="mt-2 text-xl font-semibold text-slate-900">{dataQualitySummary.total_key_metrics_count}</p>
+            </div>
+            <div className="rounded-lg border bg-white px-4 py-3">
+              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{t('profile.dataQualityPresent')}</p>
+              <p className="mt-2 text-xl font-semibold text-emerald-700">{dataQualitySummary.present_metrics_count}</p>
+            </div>
+            <div className="rounded-lg border bg-white px-4 py-3">
+              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{t('profile.dataQualityMissing')}</p>
+              <p className="mt-2 text-xl font-semibold text-amber-700">{dataQualitySummary.missing_metrics.length}</p>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              {t('profile.dataQualityPresentList')}
+            </p>
+            {presentDisclosureLabels.length === 0 ? (
+              <p className="text-sm text-slate-500">{t('profile.dataQualityNoPresent')}</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {presentDisclosureLabels.map((label) => (
+                  <span key={label} className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs text-emerald-800">
+                    {label}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              {t('profile.dataQualityMissingList')}
+            </p>
+            {missingDisclosureLabels.length === 0 ? (
+              <p className="text-sm text-emerald-700">{t('profile.dataQualityNoMissing')}</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {missingDisclosureLabels.map((label) => (
+                  <span key={label} className="rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-800">
+                    {label}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <p className="text-xs text-slate-500">{t('profile.dataQualityMissingHint')}</p>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
@@ -456,24 +679,104 @@ export function CompanyProfilePage() {
 
       <Card className="border-slate-200 bg-slate-50/70">
         <CardHeader>
-          <CardTitle className="text-base">{t('profile.whyTitle')}</CardTitle>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <FileText size={16} className="text-indigo-600" />
+            {t('profile.narrativeTitle')}
+          </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3 text-sm text-slate-700">
-          <p>{t('profile.whyIntro')}</p>
-          <div className="grid gap-3 md:grid-cols-3">
-            <div className="rounded-lg border bg-white px-4 py-4">
-              <p className="font-medium text-slate-900">{t('profile.whyPoint1Title')}</p>
-              <p className="mt-2 text-xs leading-5 text-slate-600">{t('profile.whyPoint1Body')}</p>
+        <CardContent className="space-y-5 text-sm text-slate-700">
+          <section className="space-y-2">
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{t('profile.narrativeSnapshotTitle')}</p>
+            <p className="rounded-lg border bg-white px-4 py-3 leading-6">
+              {t('profile.narrativeSnapshotBody', {
+                periods: narrativeSummary.snapshot.periods_count,
+                years: narrativeSummary.snapshot.years_count,
+                frameworks: narrativeSummary.snapshot.framework_count,
+                latestYear: narrativeSummary.snapshot.latest_year,
+                readiness: t(`profile.readinessLabel.${narrativeSummary.snapshot.readiness_label}`),
+              })}
+            </p>
+          </section>
+
+          <section className="space-y-2">
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{t('profile.narrativeChangeTitle')}</p>
+            <div className="grid gap-3 md:grid-cols-2">
+              <div className="rounded-lg border bg-white px-4 py-3">
+                <p className="mb-2 inline-flex items-center gap-1 text-xs font-medium text-emerald-700">
+                  <CheckCircle2 size={14} />
+                  {t('profile.narrativeImprovedLabel')}
+                </p>
+                {improvedMetricLabels.length === 0 ? (
+                  <p className="text-xs text-slate-500">{t('profile.narrativeNoImprovement')}</p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {improvedMetricLabels.map((label) => (
+                      <span key={label} className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs text-emerald-800">
+                        {label}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="rounded-lg border bg-white px-4 py-3">
+                <p className="mb-2 inline-flex items-center gap-1 text-xs font-medium text-amber-700">
+                  <TriangleAlert size={14} />
+                  {t('profile.narrativeWeakenedLabel')}
+                </p>
+                {weakenedMetricLabels.length === 0 ? (
+                  <p className="text-xs text-slate-500">{t('profile.narrativeNoWeakening')}</p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {weakenedMetricLabels.map((label) => (
+                      <span key={label} className="rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-800">
+                        {label}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="rounded-lg border bg-white px-4 py-4">
-              <p className="font-medium text-slate-900">{t('profile.whyPoint2Title')}</p>
-              <p className="mt-2 text-xs leading-5 text-slate-600">{t('profile.whyPoint2Body')}</p>
-            </div>
-            <div className="rounded-lg border bg-white px-4 py-4">
-              <p className="font-medium text-slate-900">{t('profile.whyPoint3Title')}</p>
-              <p className="mt-2 text-xs leading-5 text-slate-600">{t('profile.whyPoint3Body')}</p>
-            </div>
-          </div>
+          </section>
+
+          <section className="space-y-2">
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{t('profile.narrativeStrengthTitle')}</p>
+            {strengthMetricLabels.length === 0 ? (
+              <p className="rounded-lg border bg-white px-4 py-3 text-xs text-slate-500">{t('profile.narrativeNoStrengths')}</p>
+            ) : (
+              <div className="flex flex-wrap gap-2 rounded-lg border bg-white px-4 py-3">
+                {strengthMetricLabels.map((label) => (
+                  <span key={label} className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs text-emerald-800">
+                    {label}
+                  </span>
+                ))}
+              </div>
+            )}
+          </section>
+
+          <section className="space-y-2">
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{t('profile.narrativeGapTitle')}</p>
+            {gapMetricLabels.length === 0 ? (
+              <p className="rounded-lg border bg-white px-4 py-3 text-xs text-emerald-700">{t('profile.narrativeNoGaps')}</p>
+            ) : (
+              <div className="flex flex-wrap gap-2 rounded-lg border bg-white px-4 py-3">
+                {gapMetricLabels.map((label) => (
+                  <span key={label} className="rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-800">
+                    {label}
+                  </span>
+                ))}
+              </div>
+            )}
+          </section>
+
+          <section className="space-y-2">
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{t('profile.narrativePortfolioTitle')}</p>
+            <p className="rounded-lg border bg-white px-4 py-3 leading-6">
+              {t('profile.narrativePortfolioBody', {
+                periods: narrativeSummary.snapshot.periods_count,
+                frameworks: narrativeSummary.snapshot.framework_count,
+              })}
+            </p>
+          </section>
         </CardContent>
       </Card>
     </div>

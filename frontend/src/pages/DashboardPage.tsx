@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { useTranslation } from 'react-i18next'
+import { ArrowRight } from 'lucide-react'
 import {
   Bar,
   BarChart,
@@ -60,9 +61,18 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900">{t('dashboard.title')}</h1>
-        <Button onClick={() => navigate('/upload')}>{t('dashboard.uploadReport')}</Button>
+      <div className="space-y-3">
+        <p className="section-kicker">{t('dashboard.kicker')}</p>
+        <div className="editorial-panel flex flex-col gap-4 p-5 md:flex-row md:items-end md:justify-between md:p-6">
+          <div className="space-y-2">
+            <h1 className="text-4xl font-semibold leading-tight text-stone-900">{t('dashboard.title')}</h1>
+            <p className="max-w-3xl text-sm leading-6 text-stone-600">{t('dashboard.subtitle')}</p>
+          </div>
+          <Button className="h-11 rounded-xl bg-amber-700 text-amber-50 hover:bg-amber-800" onClick={() => navigate('/upload')}>
+            {t('dashboard.uploadReport')}
+            <ArrowRight size={14} className="ml-2" />
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -84,8 +94,8 @@ export function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <section className="rounded-xl border p-4">
-          <h2 className="mb-3 text-lg font-semibold">{t('dashboard.yearlyTrend')}</h2>
+        <section className="editorial-panel p-4 md:p-5">
+          <h2 className="mb-3 text-2xl font-semibold text-stone-900">{t('dashboard.yearlyTrend')}</h2>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={stats?.yearly_trend ?? []}>
@@ -93,14 +103,14 @@ export function DashboardPage() {
                 <XAxis dataKey="year" />
                 <YAxis allowDecimals={false} />
                 <Tooltip />
-                <Bar dataKey="count" fill="#4f46e5" name={t('dashboard.uploads')} radius={[6, 6, 0, 0]} />
+                <Bar dataKey="count" fill="#b45309" name={t('dashboard.uploads')} radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </section>
 
-        <section className="rounded-xl border p-4">
-          <h2 className="mb-3 text-lg font-semibold">{t('dashboard.topEmitters')}</h2>
+        <section className="editorial-panel p-4 md:p-5">
+          <h2 className="mb-3 text-2xl font-semibold text-stone-900">{t('dashboard.topEmitters')}</h2>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
@@ -123,8 +133,8 @@ export function DashboardPage() {
         </section>
       </div>
 
-      <section className="space-y-3 rounded-xl border p-4">
-        <h2 className="text-lg font-semibold">{t('dashboard.coverageRates')}</h2>
+      <section className="editorial-panel space-y-3 p-4 md:p-5">
+        <h2 className="text-2xl font-semibold text-stone-900">{t('dashboard.coverageRates')}</h2>
         {coverageRows.length === 0 ? (
           <p className="text-sm text-slate-400">{t('common.noData')}</p>
         ) : (
@@ -135,15 +145,15 @@ export function DashboardPage() {
       </section>
 
       <div>
-        <h2 className="mb-3 text-lg font-semibold">{t('dashboard.recentAnalyses')}</h2>
+        <h2 className="mb-3 text-2xl font-semibold text-stone-900">{t('dashboard.recentAnalyses')}</h2>
         {companiesLoading ? (
           <p className="text-slate-400">{t('common.loading')}</p>
         ) : recent.length === 0 ? (
           <p className="text-slate-400">{t('dashboard.noReportsYet')}</p>
         ) : (
-          <div className="overflow-hidden rounded-lg border">
+          <div className="editorial-panel overflow-hidden">
             <table className="w-full text-sm">
-              <thead className="border-b bg-slate-50">
+              <thead className="border-b editorial-table-header">
                 <tr>
                   <th className="px-4 py-3 text-left font-medium text-slate-600">{t('common.company')}</th>
                   <th className="px-4 py-3 text-left font-medium text-slate-600">{t('common.year')}</th>

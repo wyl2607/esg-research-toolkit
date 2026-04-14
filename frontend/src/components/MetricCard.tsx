@@ -4,6 +4,7 @@ interface MetricCardProps {
   label: string
   value: string | number
   sub?: string
+  unit?: string
   color?: 'default' | 'green' | 'red' | 'blue'
 }
 
@@ -11,6 +12,7 @@ export function MetricCard({
   label,
   value,
   sub,
+  unit,
   color = 'default',
 }: MetricCardProps) {
   const valueColor = {
@@ -21,15 +23,20 @@ export function MetricCard({
   }[color]
 
   return (
-    <Card>
+    <Card className="surface-card h-full">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-slate-500">
-          {label}
-        </CardTitle>
+        <div className="flex items-start justify-between gap-3">
+          <CardTitle className="text-sm font-medium leading-5 text-slate-600">
+            {label}
+          </CardTitle>
+          {unit ? <span className="metric-unit shrink-0">{unit}</span> : null}
+        </div>
       </CardHeader>
       <CardContent>
-        <div className={`text-2xl font-bold ${valueColor}`}>{value}</div>
-        {sub && <p className="text-xs text-slate-400 mt-1">{sub}</p>}
+        <div className={`numeric-mono text-[1.85rem] font-semibold leading-none ${valueColor}`}>
+          {value}
+        </div>
+        {sub && <p className="mt-2 text-xs leading-5 text-slate-500">{sub}</p>}
       </CardContent>
     </Card>
   )

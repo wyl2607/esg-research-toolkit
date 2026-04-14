@@ -185,4 +185,43 @@ export interface CompanyProfile {
   framework_results: Array<FrameworkScoreResult & { analysis_result_id?: number; stored_at?: string | null }>
   evidence_summary: EvidenceAnchor[]
   evidence_anchors?: EvidenceAnchor[]
+  data_quality_summary: CompanyDataQualitySummary
+  narrative_summary?: CompanyNarrativeSummary
+  identity_provenance_summary?: CompanyIdentityProvenanceSummary
+}
+
+export interface CompanyDataQualitySummary {
+  total_key_metrics_count: number
+  present_metrics_count: number
+  present_metrics: string[]
+  missing_metrics: string[]
+  completion_percentage: number
+  readiness_label: 'draft' | 'usable' | 'showcase-ready'
+}
+
+export interface CompanyIdentityProvenanceSummary {
+  canonical_company_name: string
+  requested_company_name: string
+  has_alias_consolidation: boolean
+  consolidated_aliases: string[]
+  latest_source_document_type: string | null
+  source_priority_preview: string | null
+  merge_priority_preview: string | null
+}
+
+export interface CompanyNarrativeSummary {
+  snapshot: {
+    periods_count: number
+    years_count: number
+    latest_year: number
+    framework_count: number
+    readiness_label: 'draft' | 'usable' | 'showcase-ready'
+  }
+  has_previous_period: boolean
+  previous_year: number | null
+  improved_metrics: string[]
+  weakened_metrics: string[]
+  stable_metrics: string[]
+  disclosure_strength_metrics: string[]
+  disclosure_gap_metrics: string[]
 }
