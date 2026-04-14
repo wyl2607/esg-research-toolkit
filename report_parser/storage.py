@@ -45,6 +45,8 @@ class CompanyReport(Base):
     reporting_period_label = Column(String, nullable=True)
     reporting_period_type = Column(String, nullable=True)  # annual | quarterly | event
     source_document_type = Column(String, nullable=True)  # annual_report | sustainability_report | filing
+    industry_code = Column(String, nullable=True, index=True)
+    industry_sector = Column(String, nullable=True)
 
     # ── ESG metrics ──────────────────────────────────────────────────────────
     scope1_co2e_tonnes = Column(Float, nullable=True)
@@ -183,6 +185,8 @@ def save_report(
     record.scope1_co2e_tonnes = normalized_data.scope1_co2e_tonnes
     record.scope2_co2e_tonnes = normalized_data.scope2_co2e_tonnes
     record.scope3_co2e_tonnes = normalized_data.scope3_co2e_tonnes
+    record.industry_code = normalized_data.industry_code
+    record.industry_sector = normalized_data.industry_sector
     record.energy_consumption_mwh = normalized_data.energy_consumption_mwh
     record.renewable_energy_pct = normalized_data.renewable_energy_pct
     record.water_usage_m3 = normalized_data.water_usage_m3
@@ -367,6 +371,8 @@ def ensure_storage_schema(engine: Engine) -> None:
         "reporting_period_label": "TEXT",
         "reporting_period_type": "TEXT",
         "source_document_type": "TEXT",
+        "industry_code": "TEXT",
+        "industry_sector": "TEXT",
         "evidence_summary": "TEXT",
     }
 
@@ -379,3 +385,9 @@ def ensure_storage_schema(engine: Engine) -> None:
             if name in existing_cols:
                 continue
             conn.execute(text(f"ALTER TABLE company_reports ADD COLUMN {name} {col_type}"))
+        conn.execute(
+            text(
+                "CREATE INDEX IF NOT EXISTS ix_company_reports_industry_code "
+                "ON company_reports (industry_code)"
+            )
+        )

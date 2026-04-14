@@ -19,6 +19,7 @@ import { createManualReport, listCompanies } from '@/lib/api'
 import type { ManualReportInput } from '@/lib/types'
 import { useTranslation } from 'react-i18next'
 import { localizeErrorMessage } from '@/lib/error-utils'
+import { findNaceOption, NACE_OPTIONS } from '@/lib/nace-codes'
 
 type ManualFormState = {
   company_name: string
@@ -135,10 +136,11 @@ function payloadToForm(payload: Partial<ManualReportInput>): ManualFormState {
 }
 
 export function ManualCaseBuilderPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [form, setForm] = useState<ManualFormState>(EMPTY_FORM)
+  const [industryCode, setIndustryCode] = useState<string>('')
   const [draftJson, setDraftJson] = useState('')
   const [jsonError, setJsonError] = useState<string | null>(null)
 
@@ -156,10 +158,28 @@ export function ManualCaseBuilderPage() {
     }).slice(0, 6)
   }, [companies])
 
-  const previewPayload = useMemo(() => buildPayload(form), [form])
+  const selectedIndustry = useMemo(() => findNaceOption(industryCode), [industryCode])
+
+  const previewPayload = useMemo(() => {
+    const payload = buildPayload(form)
+    if (selectedIndustry) {
+      payload.industry_code = selectedIndustry.code
+      payload.industry_sector = selectedIndustry.sectorEn
+    }
+    return payload
+  }, [form, selectedIndustry])
 
   const saveMutation = useMutation({
-    mutationFn: createManualReport,
+    mutationFn: (data: ManualReportInput) =>
+      createManualReport(
+        data,
+        selectedIndustry
+          ? {
+              industryCode: selectedIndustry.code,
+              industrySector: selectedIndustry.sectorEn,
+            }
+          : undefined
+      ),
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['companies'] })
       queryClient.invalidateQueries({ queryKey: ['company-profile', result.company_name] })
@@ -175,6 +195,7 @@ export function ManualCaseBuilderPage() {
     try {
       const parsed = JSON.parse(draftJson) as Partial<ManualReportInput>
       setForm(payloadToForm(parsed))
+      setIndustryCode(typeof parsed.industry_code === 'string' ? parsed.industry_code : '')
       setJsonError(null)
     } catch {
       setJsonError(t('manual.invalidJson'))
@@ -192,6 +213,9 @@ export function ManualCaseBuilderPage() {
 
   return (
     <div className="space-y-6">
+      <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-900">
+        {t('projectAnalysis.modeBanner')}
+      </div>
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-2">
           <p className="section-kicker">{t('manual.kicker')}</p>
@@ -290,6 +314,26 @@ export function ManualCaseBuilderPage() {
                     placeholder="https://example.com/report"
                   />
                 </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="manual-industry-code">{t('upload.industryLabel')}</Label>
+                  <select
+                    id="manual-industry-code"
+                    className="h-10 w-full rounded-xl border border-stone-200 bg-white px-3 text-sm"
+                    value={industryCode}
+                    onChange={(e) => setIndustryCode(e.target.value)}
+                  >
+                    <option value="">{t('upload.industryNone')}</option>
+                    {NACE_OPTIONS.map((option) => (
+                      <option key={option.code} value={option.code}>
+                        {option.code} —{' '}
+                        {i18n.resolvedLanguage?.startsWith('de')
+                          ? option.sectorDe
+                          : option.sectorEn}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-stone-500">{t('upload.industryHint')}</p>
+                </div>
               </div>
 
               <div className="space-y-3">
@@ -345,7 +389,10 @@ export function ManualCaseBuilderPage() {
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => setForm(EMPTY_FORM)}
+                  onClick={() => {
+                    setForm(EMPTY_FORM)
+                    setIndustryCode('')
+                  }}
                   disabled={saveMutation.isPending}
                 >
                   {t('manual.reset')}

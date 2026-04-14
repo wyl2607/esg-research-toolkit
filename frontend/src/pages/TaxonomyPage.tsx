@@ -69,6 +69,9 @@ export function TaxonomyPage() {
             </Button>
           )}
         </div>
+        <div className="rounded-xl border border-stone-300 bg-stone-50 px-4 py-3 text-sm text-stone-700">
+          {t('taxonomy.disclaimer')}
+        </div>
       </div>
 
       {backendOffline ? (

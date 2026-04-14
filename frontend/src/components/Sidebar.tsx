@@ -23,15 +23,18 @@ export function Sidebar({ id, className, onNavigate }: SidebarProps) {
   const { t } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
 
-  const links = [
+  const disclosureLinks = [
     { to: '/', label: t('nav.dashboard'), icon: LayoutDashboard },
     { to: '/upload', label: t('nav.upload'), icon: Upload },
-    { to: '/manual', label: t('nav.manual'), icon: FilePenLine },
-    { to: '/taxonomy', label: t('nav.taxonomy'), icon: Tag },
-    { to: '/lcoe', label: t('nav.lcoe'), icon: Zap },
     { to: '/companies', label: t('nav.companies'), icon: Building2 },
     { to: '/compare', label: t('nav.compare'), icon: GitCompare },
     { to: '/frameworks', label: t('nav.frameworks'), icon: Globe },
+    { to: '/taxonomy', label: t('nav.taxonomy'), icon: Tag },
+  ]
+
+  const projectLinks = [
+    { to: '/manual', label: t('nav.manual'), icon: FilePenLine },
+    { to: '/lcoe', label: t('nav.lcoe'), icon: Zap },
   ]
 
   const handleLinkClick = () => {
@@ -63,26 +66,55 @@ export function Sidebar({ id, className, onNavigate }: SidebarProps) {
             </div>
           </div>
         </div>
-        <nav aria-label={t('nav.main')} className="flex-1 space-y-1 px-3 py-4">
-          {links.map(({ to, label, icon: Icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={to === '/'}
-              className={({ isActive }) =>
-                cn(
-                  'flex min-h-11 items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2',
-                  isActive
-                    ? 'bg-amber-100 text-amber-900 dark:bg-amber-900/30 dark:text-amber-300 shadow-sm'
-                    : 'text-stone-700 dark:text-slate-300 hover:bg-white/80 dark:hover:bg-slate-700/50 hover:text-stone-900 dark:hover:text-slate-100'
-                )
-              }
-              onClick={handleLinkClick}
-            >
-              <Icon size={16} className="shrink-0" aria-hidden="true" />
-              <span className="min-w-0 truncate">{label}</span>
-            </NavLink>
-          ))}
+        <nav aria-label={t('nav.main')} className="flex-1 space-y-4 px-3 py-4">
+          <div className="space-y-1">
+            <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500 dark:text-slate-400">
+              {t('nav.sectionDisclosure')}
+            </p>
+            {disclosureLinks.map(({ to, label, icon: Icon }) => (
+              <NavLink
+                key={to}
+                to={to}
+                end={to === '/'}
+                className={({ isActive }) =>
+                  cn(
+                    'flex min-h-11 items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2',
+                    isActive
+                      ? 'bg-amber-100 text-amber-900 dark:bg-amber-900/30 dark:text-amber-300 shadow-sm'
+                      : 'text-stone-700 dark:text-slate-300 hover:bg-white/80 dark:hover:bg-slate-700/50 hover:text-stone-900 dark:hover:text-slate-100'
+                  )
+                }
+                onClick={handleLinkClick}
+              >
+                <Icon size={16} className="shrink-0" aria-hidden="true" />
+                <span className="min-w-0 truncate">{label}</span>
+              </NavLink>
+            ))}
+          </div>
+          <div className="space-y-1">
+            <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500 dark:text-slate-400">
+              {t('nav.sectionProject')}
+            </p>
+            {projectLinks.map(({ to, label, icon: Icon }) => (
+              <NavLink
+                key={to}
+                to={to}
+                end={to === '/'}
+                className={({ isActive }) =>
+                  cn(
+                    'flex min-h-11 items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2',
+                    isActive
+                      ? 'bg-amber-100 text-amber-900 dark:bg-amber-900/30 dark:text-amber-300 shadow-sm'
+                      : 'text-stone-700 dark:text-slate-300 hover:bg-white/80 dark:hover:bg-slate-700/50 hover:text-stone-900 dark:hover:text-slate-100'
+                  )
+                }
+                onClick={handleLinkClick}
+              >
+                <Icon size={16} className="shrink-0" aria-hidden="true" />
+                <span className="min-w-0 truncate">{label}</span>
+              </NavLink>
+            ))}
+          </div>
         </nav>
       </aside>
 

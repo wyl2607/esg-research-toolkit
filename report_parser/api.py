@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import openpyxl
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
@@ -27,6 +27,7 @@ from report_parser.batch_jobs import batch_manager
 from report_parser.extractor import extract_text_from_pdf
 from report_parser.company_identity import canonical_company_name
 from report_parser.storage import (
+    CompanyReport,
     get_report,
     hard_delete_report,
     list_reports,
@@ -193,6 +194,8 @@ def _record_to_merge_source_input(
         reporting_period_label=record.reporting_period_label,
         reporting_period_type=record.reporting_period_type,
         source_document_type=record.source_document_type,
+        industry_code=record.industry_code,
+        industry_sector=record.industry_sector,
         source_url=record.source_url,
         downloaded_at=record.downloaded_at.isoformat() if record.downloaded_at else None,
         scope1_co2e_tonnes=record.scope1_co2e_tonnes,
@@ -422,6 +425,8 @@ if _MULTIPART_AVAILABLE:
     @router.post("/upload", response_model=CompanyESGData)
     async def upload_report(
         file: UploadFile = File(...),
+        industry_code: str | None = Form(default=None),
+        industry_sector: str | None = Form(default=None),
         db: Session = Depends(get_db),
     ):
         """
@@ -458,6 +463,13 @@ if _MULTIPART_AVAILABLE:
             esg_data = analyze_esg_data(text, filename=file.filename or "")
         except AIExtractionError as exc:
             raise HTTPException(422, str(exc.reason)) from exc
+        if industry_code is not None or industry_sector is not None:
+            esg_data = esg_data.model_copy(
+                update={
+                    "industry_code": industry_code,
+                    "industry_sector": industry_sector,
+                }
+            )
 
         save_report(
             db,
@@ -556,6 +568,8 @@ def _record_to_company_data(record) -> CompanyESGData:
         reporting_period_label=record.reporting_period_label,
         reporting_period_type=record.reporting_period_type,
         source_document_type=record.source_document_type,
+        industry_code=record.industry_code,
+        industry_sector=record.industry_sector,
         scope1_co2e_tonnes=record.scope1_co2e_tonnes,
         scope2_co2e_tonnes=record.scope2_co2e_tonnes,
         scope3_co2e_tonnes=record.scope3_co2e_tonnes,
@@ -572,6 +586,53 @@ def _record_to_company_data(record) -> CompanyESGData:
         primary_activities=json.loads(record.primary_activities) if record.primary_activities else [],
         evidence_summary=evidence_summary,
     )
+
+
+@router.get("/companies/by-industry/{industry_code}")
+def list_companies_by_industry(
+    industry_code: str,
+    db: Session = Depends(get_db),
+) -> dict:
+    """
+    Return the latest report per company for a given NACE industry code,
+    plus the numeric metric values that feed benchmark aggregation.
+    """
+    from benchmark.compute import BENCHMARK_METRICS
+
+    rows = (
+        db.query(CompanyReport)
+        .filter(CompanyReport.industry_code == industry_code)
+        .order_by(CompanyReport.company_name.asc(), CompanyReport.report_year.desc())
+        .all()
+    )
+
+    latest_per_company: dict[str, CompanyReport] = {}
+    for row in rows:
+        existing = latest_per_company.get(row.company_name)
+        if existing is None or (row.report_year or 0) > (existing.report_year or 0):
+            latest_per_company[row.company_name] = row
+
+    companies: list[dict[str, object]] = []
+    for company_name, row in sorted(latest_per_company.items()):
+        metrics: dict[str, float | None] = {}
+        for metric in BENCHMARK_METRICS:
+            value = getattr(row, metric, None)
+            metrics[metric] = float(value) if value is not None else None
+        companies.append(
+            {
+                "company_name": company_name,
+                "report_year": row.report_year,
+                "industry_code": row.industry_code,
+                "industry_sector": row.industry_sector,
+                "metrics": metrics,
+            }
+        )
+
+    return {
+        "industry_code": industry_code,
+        "company_count": len(companies),
+        "companies": companies,
+    }
 
 
 @router.get("/companies/{company_name}/{report_year:int}", response_model=CompanyESGData)
@@ -631,6 +692,8 @@ def get_company_history(
                 "reporting_period_label": period["label"],
                 "reporting_period_type": period["type"],
                 "source_document_type": period["source_document_type"],
+                "industry_code": record.industry_code,
+                "industry_sector": record.industry_sector,
                 "period": period,
                 "source_url": record.source_url,
                 "downloaded_at": record.downloaded_at.isoformat() if record.downloaded_at else None,
@@ -747,6 +810,8 @@ def get_company_profile(
 
     return {
         "company_name": resolved_name,
+        "industry_code": latest_data.industry_code,
+        "industry_sector": latest_data.industry_sector,
         "years_available": years_available,
         "latest_year": latest.report_year,
         "latest_period": {
@@ -754,6 +819,8 @@ def get_company_profile(
             "reporting_period_label": latest_period["label"],
             "reporting_period_type": latest_period["type"],
             "source_document_type": latest_period["source_document_type"],
+            "industry_code": latest_data.industry_code,
+            "industry_sector": latest_data.industry_sector,
             "period": latest_period,
             "framework_metadata": latest_framework_metadata,
         },
@@ -858,6 +925,8 @@ def list_company_reports(skip: int = 0, limit: int = 50, db: Session = Depends(g
                 "reporting_period_label": period["label"],
                 "reporting_period_type": period["type"],
                 "source_document_type": period["source_document_type"],
+                "industry_code": record.industry_code,
+                "industry_sector": record.industry_sector,
                 "period": period,
                 "created_at": (
                     record.created_at.isoformat() if record.created_at else None

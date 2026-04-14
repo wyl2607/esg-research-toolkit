@@ -6,6 +6,8 @@ export interface CompanyESGData {
   reporting_period_label?: string | null
   reporting_period_type?: string | null
   source_document_type?: string | null
+  industry_code?: string | null
+  industry_sector?: string | null
   scope1_co2e_tonnes: number | null
   scope2_co2e_tonnes: number | null
   scope3_co2e_tonnes: number | null
@@ -157,6 +159,8 @@ export interface CompanyHistoryPeriod {
   reporting_period_label: string
   reporting_period_type: string
   source_document_type: string | null
+  industry_code?: string | null
+  industry_sector?: string | null
   period: CompanyNormalizedPeriod
   source_url: string | null
   downloaded_at: string | null
@@ -218,6 +222,8 @@ export interface CompanyProfileLatestPeriod {
   reporting_period_label: string
   reporting_period_type: string
   source_document_type: string | null
+  industry_code?: string | null
+  industry_sector?: string | null
   period: CompanyNormalizedPeriod
   framework_metadata: FrameworkMetadata[]
 }

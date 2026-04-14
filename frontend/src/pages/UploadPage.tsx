@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { getBatchStatus, uploadReport, uploadReportsBatch } from '@/lib/api'
@@ -11,26 +11,40 @@ import type { BatchStatusResponse, CompanyESGData } from '@/lib/types'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { localizeErrorMessage } from '@/lib/error-utils'
+import { findNaceOption, NACE_OPTIONS } from '@/lib/nace-codes'
+
+const BATCH_STORAGE_KEY = 'esg_last_batch_id'
 
 export function UploadPage() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const [result, setResult] = useState<CompanyESGData | null>(null)
-  const [batchId, setBatchId] = useState<string | null>(null)
+  // Init batch_id from localStorage so progress survives page refresh
+  const [batchId, setBatchId] = useState<string | null>(
+    () => localStorage.getItem(BATCH_STORAGE_KEY)
+  )
+  const [industryCode, setIndustryCode] = useState<string>('')
+
+  const selectedIndustry = findNaceOption(industryCode)
+  const industryPayload = selectedIndustry
+    ? { industryCode: selectedIndustry.code, industrySector: selectedIndustry.sectorEn }
+    : undefined
 
   const singleMutation = useMutation({
-    mutationFn: uploadReport,
+    mutationFn: (file: File) => uploadReport(file, industryPayload),
     onSuccess: (data) => {
       setBatchId(null)
+      localStorage.removeItem(BATCH_STORAGE_KEY)
       setResult(data)
     },
   })
 
   const batchMutation = useMutation({
-    mutationFn: uploadReportsBatch,
+    mutationFn: (files: File[]) => uploadReportsBatch(files, industryPayload),
     onSuccess: (data) => {
       setResult(null)
       setBatchId(data.batch_id)
+      localStorage.setItem(BATCH_STORAGE_KEY, data.batch_id)
     },
   })
 
@@ -45,6 +59,17 @@ export function UploadPage() {
       return done >= data.total_jobs ? false : 1500
     },
   })
+
+  // Clear stored batch_id once batch fully completes
+  useEffect(() => {
+    if (!batchId) return
+    const data = batchStatusQuery.data
+    if (!data) return
+    const done = data.completed_jobs + data.failed_jobs
+    if (done >= data.total_jobs && data.total_jobs > 0) {
+      localStorage.removeItem(BATCH_STORAGE_KEY)
+    }
+  }, [batchId, batchStatusQuery.data])
 
   const onDrop = useCallback(
     (files: File[]) => {
@@ -131,6 +156,26 @@ export function UploadPage() {
             {t('upload.supportedHint')}
           </div>
         </div>
+      </div>
+
+      <div className="surface-card space-y-2">
+        <label className="text-sm font-medium text-stone-700">
+          {t('upload.industryLabel')}
+        </label>
+        <select
+          className="h-10 w-full rounded-xl border border-stone-200 bg-white px-3 text-sm"
+          value={industryCode}
+          onChange={(e) => setIndustryCode(e.target.value)}
+        >
+          <option value="">{t('upload.industryNone')}</option>
+          {NACE_OPTIONS.map((option) => (
+            <option key={option.code} value={option.code}>
+              {option.code} —{' '}
+              {i18n.resolvedLanguage?.startsWith('de') ? option.sectorDe : option.sectorEn}
+            </option>
+          ))}
+        </select>
+        <p className="text-xs text-stone-500">{t('upload.industryHint')}</p>
       </div>
 
       <div

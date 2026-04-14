@@ -20,6 +20,8 @@ class CompanyESGData(BaseModel):
     reporting_period_label: str | None = None
     reporting_period_type: str | None = None
     source_document_type: SourceDocumentType | str | None = None
+    industry_code: str | None = None
+    industry_sector: str | None = None
     scope1_co2e_tonnes: float | None = None
     scope2_co2e_tonnes: float | None = None
     scope3_co2e_tonnes: float | None = None

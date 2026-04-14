@@ -12,7 +12,9 @@
     "regional": "Regionalvergleich",
     "main": "Hauptnavigation",
     "openMenu": "Navigationsmenü öffnen",
-    "closeMenu": "Navigationsmenü schließen"
+    "closeMenu": "Navigationsmenü schließen",
+    "sectionDisclosure": "Offenlegungsanalyse",
+    "sectionProject": "Projektanalyse"
   },
   "common": {
     "loading": "Wird geladen…",
@@ -55,7 +57,7 @@
     "noCompanies": "Noch keine Unternehmen. Laden Sie einen PDF-Bericht hoch.",
     "noReportsYet": "Noch keine Berichte. Laden Sie Ihren ersten ESG-Bericht hoch.",
     "taxonomyPct": "Taxonomie %",
-    "runTaxonomy": "Taxonomie-Bewertung starten →",
+    "runTaxonomy": "Taxonomie-Offenlegungsanalyse starten →",
     "uploadReport": "Bericht hochladen",
     "chartsEmptyTitle": "Noch keine Daten vorhanden",
     "chartsEmptyBody": "Laden Sie einen ESG-Bericht hoch, um Trend-Diagramme und Emissionsranglisten freizuschalten.",
@@ -84,12 +86,16 @@
     "viewTaxonomy": "Taxonomie-Auswertung →",
     "renewableEnergy": "Erneuerbare Energien",
     "taxonomyAligned": "Taxonomiekonforme Einnahmen",
-    "moreFiles": "+{{count}} weitere Dateien"
+    "moreFiles": "+{{count}} weitere Dateien",
+    "industryLabel": "Branche (NACE Rev.2)",
+    "industryNone": "Nicht angegeben",
+    "industryHint": "Erforderlich für branchenübergreifende Vergleiche"
   },
   "taxonomy": {
-    "kicker": "Regulatorisches Scoring",
-    "title": "Taxonomie-Bewertung",
-    "subtitle": "Ausrichtungsquoten, DNSH-Status und Zielbereichs-Evidenz in einer Form lesen, die eher wie ein Analysten-Briefing wirkt.",
+    "kicker": "Offenlegungs-Tracking",
+    "title": "EU-Taxonomie Offenlegungsspiegel",
+    "subtitle": "Offengelegte Ausrichtungsquoten, DNSH-Signale und Zielbereichs-Evidenz im Analystenformat prüfen und dabei Vollständigkeit sowie Lücken sichtbar machen.",
+    "disclaimer": "Diese Ansicht spiegelt wider, was das Unternehmen im Rahmen der EU-Taxonomie offengelegt hat, und hebt fehlende Angaben hervor. Es handelt sich NICHT um ein Konformitätsurteil oder eine Prüfungsmeinung.",
     "downloadPdf": "PDF herunterladen",
     "generating": "Wird erstellt…",
     "revenueAligned": "Umsatzkonform",
@@ -100,7 +106,7 @@
     "dnshFail": "✗ Nicht bestanden",
     "dnshAllMet": "Alle DNSH-Kriterien erfüllt",
     "dnshNotMet": "DNSH-Kriterien nicht vollständig erfüllt",
-    "objectiveScores": "Ziel-Bewertungen",
+    "objectiveScores": "Zielbereich-Vollständigkeit",
     "objectives": {
       "climateMitigation": "Klimaschutz",
       "climateAdaptation": "Anpassung an den Klimawandel",
@@ -186,6 +192,9 @@
       "discount_rate": "Abzinsungsfaktor für NPV- und IRR-Annahmen.",
       "electricity_price_eur_per_mwh": "Angenommener Marktverkaufspreis für Strom. Wird für NPV und IRR verwendet. Stammt nicht aus Unternehmensberichten – muss manuell oder über die deutschen Referenzpreise gesetzt werden."
     }
+  },
+  "projectAnalysis": {
+    "modeBanner": "Projektanalyse-Modus — Eingaben sind vom Benutzer bereitgestellte technische Parameter und stammen nicht aus öffentlichen Offenlegungen."
   },
   "companies": {
     "kicker": "Unternehmensintelligenz",

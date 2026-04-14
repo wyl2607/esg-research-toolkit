@@ -3,7 +3,7 @@
     "dashboard": "仪表盘",
     "upload": "上传",
     "manual": "案例构建",
-    "taxonomy": "分类法评分",
+    "taxonomy": "披露分析",
     "lcoe": "度电成本",
     "companies": "公司列表",
     "compare": "对比分析",
@@ -12,7 +12,9 @@
     "regional": "区域对比",
     "main": "主导航",
     "openMenu": "打开导航菜单",
-    "closeMenu": "关闭导航菜单"
+    "closeMenu": "关闭导航菜单",
+    "sectionDisclosure": "披露分析",
+    "sectionProject": "项目分析"
   },
   "common": {
     "loading": "加载中…",
@@ -55,7 +57,7 @@
     "noCompanies": "暂无公司。请上传 PDF 报告开始分析。",
     "noReportsYet": "暂无报告。请先上传第一份 ESG 报告。",
     "taxonomyPct": "分类法 %",
-    "runTaxonomy": "进行分类法评分 →",
+    "runTaxonomy": "进行分类法披露分析 →",
     "uploadReport": "上传报告",
     "chartsEmptyTitle": "暂无数据",
     "chartsEmptyBody": "上传 ESG 报告后，即可查看年度趋势图表和排放排名。",
@@ -81,15 +83,19 @@
     "completed": "已完成",
     "failed": "失败",
     "queued": "排队中",
-    "viewTaxonomy": "查看分类法评分 →",
+    "viewTaxonomy": "查看分类法披露分析 →",
     "renewableEnergy": "可再生能源比例",
     "taxonomyAligned": "分类法对齐收入",
-    "moreFiles": "+{{count}} 个更多文件"
+    "moreFiles": "+{{count}} 个更多文件",
+    "industryLabel": "行业（NACE Rev.2）",
+    "industryNone": "未指定",
+    "industryHint": "跨公司对比所需"
   },
   "taxonomy": {
-    "kicker": "法规评分",
-    "title": "EU 分类法评分",
-    "subtitle": "用更像分析简报的方式查看对齐比例、DNSH 状态和目标层级证据。",
+    "kicker": "披露完整度",
+    "title": "EU 分类法披露镜像",
+    "subtitle": "用分析简报方式查看已披露的对齐比例、DNSH 状态和目标层级证据，并追踪完整度与缺口。",
+    "disclaimer": "本页面镜像企业已披露的 EU Taxonomy 数据，并标注缺失字段。这不是合规判定，也不是审计意见。",
     "downloadPdf": "下载 PDF",
     "generating": "生成中…",
     "revenueAligned": "收入对齐率",
@@ -100,7 +106,7 @@
     "dnshFail": "✗ 未通过",
     "dnshAllMet": "所有 DNSH 标准均已满足",
     "dnshNotMet": "DNSH 标准未完全满足",
-    "objectiveScores": "六大目标得分",
+    "objectiveScores": "六大目标披露完整度",
     "objectives": {
       "climateMitigation": "气候减缓",
       "climateAdaptation": "气候适应",
@@ -186,6 +192,9 @@
       "discount_rate": "用于 NPV 和 IRR 假设的折现因子。",
       "electricity_price_eur_per_mwh": "假设的电力市场售价，用于计算 NPV 和 IRR。该数据不来自公司报告，需手动设置，或使用下方的德国参考价格预设。"
     }
+  },
+  "projectAnalysis": {
+    "modeBanner": "项目分析模式——输入为用户自行提供的技术参数，不从公开披露文档中抽取。"
   },
   "companies": {
     "kicker": "公司分析库",

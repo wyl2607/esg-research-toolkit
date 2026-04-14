@@ -148,6 +148,9 @@ export function LcoePage() {
 
   return (
     <div className="space-y-8">
+      <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-900">
+        {t('projectAnalysis.modeBanner')}
+      </div>
       <div className="space-y-2">
         <p className="section-kicker">{t('lcoe.kicker')}</p>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">

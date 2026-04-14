@@ -15,6 +15,11 @@ import type {
 
 const BASE = '/api'
 
+export interface IndustryMetadataInput {
+  industryCode?: string
+  industrySector?: string
+}
+
 export class ApiError extends Error {
   status: number
   detail: string
@@ -43,9 +48,21 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
 
 // ── Report Parser ──────────────────────────────────────────────────────────
 
-export const uploadReport = (file: File): Promise<CompanyESGData> => {
+const appendIndustryFields = (
+  form: FormData,
+  industry?: IndustryMetadataInput
+) => {
+  if (industry?.industryCode) form.append('industry_code', industry.industryCode)
+  if (industry?.industrySector) form.append('industry_sector', industry.industrySector)
+}
+
+export const uploadReport = (
+  file: File,
+  industry?: IndustryMetadataInput
+): Promise<CompanyESGData> => {
   const form = new FormData()
   form.append('file', file)
+  appendIndustryFields(form, industry)
   return fetch(BASE + '/report/upload', { method: 'POST', body: form }).then(
     async (r) => {
       if (!r.ok) throw await toApiError(r)
@@ -54,9 +71,13 @@ export const uploadReport = (file: File): Promise<CompanyESGData> => {
   )
 }
 
-export const uploadReportsBatch = (files: File[]): Promise<BatchStatusResponse> => {
+export const uploadReportsBatch = (
+  files: File[],
+  industry?: IndustryMetadataInput
+): Promise<BatchStatusResponse> => {
   const form = new FormData()
   files.forEach((file) => form.append('files', file))
+  appendIndustryFields(form, industry)
   return fetch(BASE + '/report/upload/batch', { method: 'POST', body: form }).then(
     async (r) => {
       if (!r.ok) throw await toApiError(r)
@@ -94,9 +115,17 @@ export const getCompanyProfile = (name: string): Promise<CompanyProfile> =>
   req(`/report/companies/${encodeURIComponent(name)}/profile`)
 
 export const createManualReport = (
-  data: ManualReportInput
+  data: ManualReportInput,
+  industry?: IndustryMetadataInput
 ): Promise<CompanyESGData> =>
-  req('/report/manual', { method: 'POST', body: JSON.stringify(data) })
+  req('/report/manual', {
+    method: 'POST',
+    body: JSON.stringify({
+      ...data,
+      ...(industry?.industryCode ? { industry_code: industry.industryCode } : {}),
+      ...(industry?.industrySector ? { industry_sector: industry.industrySector } : {}),
+    }),
+  })
 
 export const updateCompany = (
   name: string,

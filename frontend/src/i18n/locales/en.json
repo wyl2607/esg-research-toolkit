@@ -12,7 +12,9 @@
     "regional": "Regional Analysis",
     "main": "Main navigation",
     "openMenu": "Open navigation menu",
-    "closeMenu": "Close navigation menu"
+    "closeMenu": "Close navigation menu",
+    "sectionDisclosure": "Disclosure Analysis",
+    "sectionProject": "Project Analysis"
   },
   "common": {
     "loading": "Loading…",
@@ -55,7 +57,7 @@
     "noCompanies": "No companies yet. Upload a PDF report to get started.",
     "noReportsYet": "No reports yet. Upload your first ESG report.",
     "taxonomyPct": "Taxonomy %",
-    "runTaxonomy": "Run Taxonomy Score →",
+    "runTaxonomy": "Run Taxonomy Disclosure Analysis →",
     "uploadReport": "Upload Report",
     "chartsEmptyTitle": "No data to display yet",
     "chartsEmptyBody": "Upload an ESG report to unlock trend charts and emission rankings."
@@ -82,12 +84,16 @@
     "viewTaxonomy": "View Taxonomy →",
     "renewableEnergy": "Renewable Energy",
     "taxonomyAligned": "Taxonomy Aligned Revenue",
-    "moreFiles": "+{{count}} more files"
+    "moreFiles": "+{{count}} more files",
+    "industryLabel": "Industry (NACE Rev.2)",
+    "industryNone": "Not specified",
+    "industryHint": "Required for cross-company peer benchmarking"
   },
   "taxonomy": {
-    "kicker": "Regulatory scoring",
-    "title": "Taxonomy Scoring",
-    "subtitle": "Review alignment ratios, DNSH status, and objective-level evidence in a format that reads like a short analyst brief.",
+    "kicker": "Disclosure completeness",
+    "title": "EU Taxonomy Disclosure Mirror",
+    "subtitle": "Review disclosed alignment ratios, DNSH signals, and objective-level evidence while tracking completeness and missing fields.",
+    "disclaimer": "This view mirrors what the company disclosed against the EU Taxonomy framework and highlights missing fields. It is NOT a compliance verdict or audit opinion.",
     "downloadPdf": "Download PDF",
     "generating": "Generating…",
     "revenueAligned": "Revenue Aligned",
@@ -98,7 +104,7 @@
     "dnshFail": "✗ Fail",
     "dnshAllMet": "All DNSH criteria met",
     "dnshNotMet": "DNSH criteria not fully met",
-    "objectiveScores": "Objective Scores",
+    "objectiveScores": "Objective Completeness",
     "objectives": {
       "climateMitigation": "Climate Mitigation",
       "climateAdaptation": "Climate Adaptation",
@@ -184,6 +190,9 @@
       "discount_rate": "Discount factor used for the NPV and IRR assumptions.",
       "electricity_price_eur_per_mwh": "Assumed market selling price for electricity. Used to compute NPV and IRR. Not extracted from company reports — must be set manually or via the Germany reference presets below."
     }
+  },
+  "projectAnalysis": {
+    "modeBanner": "Project Analysis Mode — inputs are user-provided technical parameters, not extracted from public disclosures."
   },
   "companies": {
     "kicker": "Company intelligence",

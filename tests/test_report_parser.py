@@ -5,11 +5,13 @@ from unittest.mock import patch
 import os
 
 import pytest
-from fastapi import HTTPException
+from fastapi import FastAPI, HTTPException
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.pool import StaticPool
 
-from core.database import Base
+from core.database import Base, get_db
 from core.schemas import CompanyESGData, ManualReportInput, MergePreviewRequest, MergeSourceInput
 from esg_frameworks.api import _SCORERS
 from esg_frameworks.schemas import DimensionScore, FrameworkScoreResult
@@ -20,6 +22,7 @@ from report_parser.api import (
     get_company_profile,
     get_dashboard_stats,
     preview_merge,
+    router as report_router,
     save_manual_report,
 )
 from report_parser.analyzer import AIExtractionError, analyze_esg_data
@@ -345,6 +348,203 @@ def test_save_manual_report_persists_period_and_manual_evidence(
     assert profile["identity_provenance_summary"]["source_priority_preview"] is None
     assert profile["identity_provenance_summary"]["merge_priority_preview"] is None
     assert profile["data_quality_summary"]["readiness_label"] == "draft"
+
+
+def test_industry_classification_round_trip_via_profile_and_history_endpoints() -> None:
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    Base.metadata.create_all(bind=engine)
+    db_session = TestingSessionLocal()
+    app = FastAPI()
+    app.include_router(report_router)
+    app.dependency_overrides[get_db] = lambda: db_session
+
+    try:
+        with TestClient(app) as client:
+            manual_response = client.post(
+                "/report/manual",
+                json={
+                    "company_name": "Industry Demo AG",
+                    "report_year": 2024,
+                    "industry_code": "D35.11",
+                    "industry_sector": "Electricity production",
+                },
+            )
+            profile_response = client.get("/report/companies/Industry Demo AG/profile")
+            history_response = client.get("/report/companies/Industry Demo AG/history")
+
+        assert manual_response.status_code == 200
+        assert manual_response.json()["industry_code"] == "D35.11"
+        assert manual_response.json()["industry_sector"] == "Electricity production"
+
+        assert profile_response.status_code == 200
+        assert history_response.status_code == 200
+
+        profile_payload = profile_response.json()
+        history_payload = history_response.json()
+
+        assert profile_payload["industry_code"] == "D35.11"
+        assert profile_payload["industry_sector"] == "Electricity production"
+        assert profile_payload["latest_period"]["industry_code"] == "D35.11"
+        assert profile_payload["latest_period"]["industry_sector"] == "Electricity production"
+
+        assert history_payload["periods"][0]["industry_code"] == "D35.11"
+        assert history_payload["periods"][0]["industry_sector"] == "Electricity production"
+    finally:
+        db_session.close()
+        Base.metadata.drop_all(bind=engine)
+
+
+def test_industry_classification_backward_compatible_for_legacy_records(
+    make_company_data,
+) -> None:
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    Base.metadata.create_all(bind=engine)
+    db_session = TestingSessionLocal()
+    save_report(
+        db_session,
+        make_company_data(company_name="Legacy Industry Corp", report_year=2024),
+        pdf_filename="legacy-industry.pdf",
+    )
+
+    app = FastAPI()
+    app.include_router(report_router)
+    app.dependency_overrides[get_db] = lambda: db_session
+
+    try:
+        with TestClient(app) as client:
+            profile_response = client.get("/report/companies/Legacy Industry Corp/profile")
+            history_response = client.get("/report/companies/Legacy Industry Corp/history")
+
+        assert profile_response.status_code == 200
+        assert history_response.status_code == 200
+
+        profile_payload = profile_response.json()
+        history_payload = history_response.json()
+
+        assert "industry_code" in profile_payload
+        assert "industry_sector" in profile_payload
+        assert profile_payload["industry_code"] is None
+        assert profile_payload["industry_sector"] is None
+        assert "industry_code" in profile_payload["latest_period"]
+        assert "industry_sector" in profile_payload["latest_period"]
+        assert profile_payload["latest_period"]["industry_code"] is None
+        assert profile_payload["latest_period"]["industry_sector"] is None
+
+        assert "industry_code" in history_payload["periods"][0]
+        assert "industry_sector" in history_payload["periods"][0]
+        assert history_payload["periods"][0]["industry_code"] is None
+        assert history_payload["periods"][0]["industry_sector"] is None
+    finally:
+        db_session.close()
+        Base.metadata.drop_all(bind=engine)
+
+
+def test_list_companies_by_industry_returns_matching_reports(
+    make_company_data,
+) -> None:
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    Base.metadata.create_all(bind=engine)
+    db_session = TestingSessionLocal()
+    app = FastAPI()
+    app.include_router(report_router)
+    app.dependency_overrides[get_db] = lambda: db_session
+
+    try:
+        save_report(
+            db_session,
+            make_company_data(
+                company_name="Util A AG",
+                report_year=2024,
+                industry_code="D35.11",
+                industry_sector="Electricity production",
+                scope1_co2e_tonnes=1000.0,
+            ),
+            source_document_type="sustainability_report",
+        )
+        save_report(
+            db_session,
+            make_company_data(
+                company_name="Util B GmbH",
+                report_year=2024,
+                industry_code="D35.11",
+                industry_sector="Electricity production",
+                scope1_co2e_tonnes=2000.0,
+            ),
+            source_document_type="sustainability_report",
+        )
+        save_report(
+            db_session,
+            make_company_data(
+                company_name="Steel X AG",
+                report_year=2024,
+                industry_code="C24.10",
+                industry_sector="Basic iron and steel",
+                scope1_co2e_tonnes=9999.0,
+            ),
+            source_document_type="annual_report",
+        )
+
+        with TestClient(app) as client:
+            response = client.get("/report/companies/by-industry/D35.11")
+
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["industry_code"] == "D35.11"
+        assert payload["company_count"] == 2
+        names = [company["company_name"] for company in payload["companies"]]
+        assert "Util A AG" in names
+        assert "Util B GmbH" in names
+        assert "Steel X AG" not in names
+
+        util_a = next(company for company in payload["companies"] if company["company_name"] == "Util A AG")
+        assert util_a["metrics"]["scope1_co2e_tonnes"] == 1000.0
+    finally:
+        db_session.close()
+        Base.metadata.drop_all(bind=engine)
+
+
+def test_list_companies_by_industry_empty_returns_200_with_empty_payload(
+) -> None:
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    Base.metadata.create_all(bind=engine)
+    db_session = TestingSessionLocal()
+
+    app = FastAPI()
+    app.include_router(report_router)
+    app.dependency_overrides[get_db] = lambda: db_session
+
+    try:
+        with TestClient(app) as client:
+            response = client.get("/report/companies/by-industry/Z99.99")
+
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["industry_code"] == "Z99.99"
+        assert payload["company_count"] == 0
+        assert payload["companies"] == []
+    finally:
+        db_session.close()
+        Base.metadata.drop_all(bind=engine)
 
 
 def test_alias_names_collapse_into_single_company_profile_and_listing(
