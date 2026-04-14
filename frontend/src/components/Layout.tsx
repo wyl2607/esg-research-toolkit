@@ -35,10 +35,10 @@ export function Layout() {
         </div>
       )}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="app-shell h-14 border-b border-stone-200/70 flex items-center justify-between px-4 md:px-6 shrink-0 gap-2">
+        <header className="app-shell h-14 border-b border-stone-200/70 dark:border-slate-700/50 flex items-center px-4 md:px-6 shrink-0 gap-2">
           <button
             type="button"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-stone-200 bg-white text-slate-700 md:hidden"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-stone-200 bg-white text-slate-700 md:hidden shrink-0 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
             aria-label={mobileNavOpen ? t('nav.closeMenu') : t('nav.openMenu')}
             onClick={() => setMobileNavOpen((v) => !v)}
             aria-expanded={mobileNavOpen}
@@ -46,8 +46,10 @@ export function Layout() {
           >
             {mobileNavOpen ? <X size={16} aria-hidden="true" /> : <Menu size={16} aria-hidden="true" />}
           </button>
-          <ThemeSwitcher />
-          <LanguageSwitcher />
+          <div className="ml-auto flex items-center gap-2">
+            <ThemeSwitcher />
+            <LanguageSwitcher />
+          </div>
         </header>
         <main id="main-content" className="flex-1 overflow-y-auto" tabIndex={-1}>
           <div className="mx-auto max-w-7xl p-4 md:p-8">

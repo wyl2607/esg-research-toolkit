@@ -11,8 +11,6 @@ import {
   Map,
   FilePenLine,
   SwatchBook,
-  Menu,
-  X,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
@@ -47,31 +45,22 @@ export function Sidebar({ id, className, onNavigate }: SidebarProps) {
 
   return (
     <>
-      {/* Mobile menu button (visible on sm and below) */}
-      <button
-        className="lg:hidden fixed top-4 left-4 z-40 p-2 rounded-lg bg-white/80 backdrop-blur-sm border border-stone-200/80 hover:bg-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600"
-        onClick={() => setIsOpen(!isOpen)}
-        aria-label={isOpen ? t('a11y.closeMenu') ?? 'Close menu' : t('a11y.openMenu') ?? 'Open menu'}
-      >
-        {isOpen ? <X size={20} /> : <Menu size={20} />}
-      </button>
-
       {/* Sidebar */}
       <aside
         id={id}
         className={cn(
-          'fixed lg:static left-0 top-0 z-30 h-screen w-64 shrink-0 border-r border-stone-200/80 bg-stone-50/90 backdrop-blur-sm flex flex-col transition-transform duration-300 lg:translate-x-0',
+          'fixed lg:static left-0 top-0 z-30 h-screen w-64 shrink-0 border-r border-stone-200/80 dark:border-slate-700/50 bg-stone-50/90 dark:bg-slate-900/95 backdrop-blur-sm flex flex-col transition-transform duration-300 lg:translate-x-0',
           isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
           className
         )}
       >
-        <div className="border-b border-stone-200/80 px-6 py-6">
+        <div className="border-b border-stone-200/80 dark:border-slate-700/50 px-6 py-6">
           <div className="space-y-1">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-stone-500">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-stone-500 dark:text-slate-400">
               ESG Research
             </span>
             <div
-              className="text-[1.45rem] font-semibold leading-none text-amber-800"
+              className="text-[1.45rem] font-semibold leading-none text-amber-800 dark:text-amber-400"
               style={{ fontFamily: "'Newsreader', Georgia, serif" }}
             >
               {t('nav.appName')}
@@ -88,8 +77,8 @@ export function Sidebar({ id, className, onNavigate }: SidebarProps) {
                 cn(
                   'flex min-h-11 items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2',
                   isActive
-                    ? 'bg-amber-100 text-amber-900 shadow-sm'
-                    : 'text-stone-700 hover:bg-white/80 hover:text-stone-900'
+                    ? 'bg-amber-100 text-amber-900 dark:bg-amber-900/30 dark:text-amber-300 shadow-sm'
+                    : 'text-stone-700 dark:text-slate-300 hover:bg-white/80 dark:hover:bg-slate-700/50 hover:text-stone-900 dark:hover:text-slate-100'
                 )
               }
               onClick={handleLinkClick}

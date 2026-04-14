@@ -94,6 +94,7 @@
 }
 
 @layer base {
+  /* ── Light → dark overrides for slate colors ── */
   .dark .bg-white {
     background-color: hsl(var(--card));
   }
@@ -122,30 +123,78 @@
   .dark .text-slate-400 {
     color: rgb(100 116 139);
   }
+
+  /* ── Stone color overrides for dark mode ── */
+  .dark .bg-stone-50,
+  .dark .bg-stone-50\/80,
+  .dark .bg-stone-50\/90 {
+    background-color: rgb(15 20 35 / 0.75);
+  }
+  .dark .bg-stone-100 {
+    background-color: rgb(22 30 50 / 0.7);
+  }
+  .dark .bg-white\/80,
+  .dark .bg-white\/90 {
+    background-color: rgb(20 28 48 / 0.85);
+  }
+  .dark .border-stone-200,
+  .dark .border-stone-200\/80,
+  .dark .border-stone-200\/70 {
+    border-color: rgb(51 65 85 / 0.6);
+  }
+  .dark .text-stone-500 {
+    color: rgb(148 163 184);
+  }
+  .dark .text-stone-600 {
+    color: rgb(148 163 184);
+  }
+  .dark .text-stone-700 {
+    color: rgb(203 213 225);
+  }
+  .dark .bg-amber-100 {
+    background-color: rgb(69 26 3 / 0.7);
+  }
+  .dark .text-amber-900 {
+    color: rgb(253 186 116);
+  }
+  .dark .text-amber-800 {
+    color: rgb(251 191 36);
+  }
+
+  /* ── Dark mode body gradient ── */
+  .dark body {
+    background-image:
+      radial-gradient(circle at top left, rgba(30, 20, 80, 0.18), transparent 24rem),
+      radial-gradient(circle at bottom right, rgba(10, 20, 50, 0.18), transparent 22rem),
+      linear-gradient(to bottom, rgba(8, 12, 28, 0.98), rgba(6, 10, 22, 0.99));
+  }
 }
 
 @layer components {
   .app-shell {
-    @apply bg-stone-50/80 backdrop-blur-sm;
+    @apply bg-stone-50/80 backdrop-blur-sm dark:bg-slate-900/80 dark:border-slate-700/50;
   }
 
   .surface-card {
-    @apply rounded-3xl border border-stone-200/80 bg-white/90 shadow-[0_22px_44px_-34px_rgba(68,38,12,0.22)] backdrop-blur-sm;
+    @apply rounded-3xl border border-stone-200/80 bg-white/90 shadow-[0_22px_44px_-34px_rgba(68,38,12,0.22)] backdrop-blur-sm
+           dark:border-slate-700/50 dark:bg-slate-800/90 dark:shadow-[0_22px_44px_-34px_rgba(0,0,0,0.5)];
   }
 
   .section-kicker {
-    @apply text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500;
+    @apply text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500 dark:text-slate-400;
   }
 
   .metric-unit {
-    @apply rounded-full border border-stone-200 bg-stone-50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-stone-500;
+    @apply rounded-full border border-stone-200 bg-stone-50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-stone-500
+           dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300;
   }
 
   .editorial-panel {
-    @apply rounded-3xl border border-stone-200/80 bg-white/90 shadow-[0_18px_40px_-30px_rgba(68,38,12,0.18)];
+    @apply rounded-3xl border border-stone-200/80 bg-white/90 shadow-[0_18px_40px_-30px_rgba(68,38,12,0.18)]
+           dark:border-slate-700/50 dark:bg-slate-800/90 dark:shadow-[0_18px_40px_-30px_rgba(0,0,0,0.5)];
   }
 
   .editorial-table-header {
-    @apply bg-stone-50/90 text-stone-600;
+    @apply bg-stone-50/90 text-stone-600 dark:bg-slate-900/80 dark:text-slate-300;
   }
 }
