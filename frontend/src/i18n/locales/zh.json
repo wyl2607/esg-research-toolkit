@@ -150,6 +150,10 @@
     "resultHintNpv": "当前情景下的净现值。",
     "resultHintIrr": "基于现金流假设得到的内部收益率。",
     "resultHintPayback": "当前情景下的静态回收期估计。",
+    "electricityPrice": "电力售价",
+    "deMarketRef": "德国参考价格（EPEX SPOT 年均日前价）",
+    "deMarketRefNote": "数据来源：EPEX SPOT / 联邦网络局 SMARD。不来自公司报告，需手动设置。",
+    "priceUsedNote": "NPV/IRR 基于电力售价 {{price}} €/MWh 计算",
     "validationTitle": "运行模型前，请先修正以下假设：",
     "validation": {
       "capacity": "装机容量必须大于 0 MW。",
@@ -157,7 +161,8 @@
       "capex": "CapEx 必须大于 0。",
       "opex": "OpEx 不能为负值。",
       "lifetime": "寿命必须大于 0 年。",
-      "discountRate": "折现率必须在 0 到 1 之间。"
+      "discountRate": "折现率必须在 0 到 1 之间。",
+      "electricityPrice": "电力售价必须大于 0 €/MWh。"
     },
     "fieldHelp": {
       "capacity_mw": "项目或资产组合的总装机规模。",
@@ -165,7 +170,8 @@
       "capex_eur_per_kw": "每千瓦装机的一次性投资强度。",
       "opex_eur_per_kw_year": "每千瓦每年的运营成本。",
       "lifetime_years": "折现现金流模型中采用的经济寿命。",
-      "discount_rate": "用于 NPV 和 IRR 假设的折现因子。"
+      "discount_rate": "用于 NPV 和 IRR 假设的折现因子。",
+      "electricity_price_eur_per_mwh": "假设的电力市场售价，用于计算 NPV 和 IRR。该数据不来自公司报告，需手动设置，或使用下方的德国参考价格预设。"
     }
   },
   "companies": {

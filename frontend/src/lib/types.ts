@@ -89,6 +89,7 @@ export interface LCOEInput {
   opex_eur_per_kw_year: number
   lifetime_years: number
   discount_rate: number
+  electricity_price_eur_per_mwh: number
 }
 
 export interface LCOEResult {
@@ -98,6 +99,7 @@ export interface LCOEResult {
   irr: number
   payback_years: number
   lifetime_years: number
+  electricity_price_eur_per_mwh: number
 }
 
 export interface SensitivityResult {

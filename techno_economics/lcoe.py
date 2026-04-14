@@ -3,7 +3,6 @@ import numpy as np
 from core.schemas import LCOEInput, LCOEResult
 from techno_economics.npv_irr import calculate_irr, calculate_npv, calculate_payback
 
-ELECTRICITY_PRICE_EUR_PER_MWH = 60.0
 HOURS_PER_YEAR = 8760.0
 KWH_PER_MWH = 1000.0
 
@@ -43,7 +42,7 @@ def calculate_lcoe(inp: LCOEInput) -> LCOEResult:
     discounted_energy_kwh = float(np.sum(annual_energy_kwh / discount_factors))
     lcoe_eur_per_mwh = ((inp.capex_eur_per_kw + discounted_opex) / discounted_energy_kwh) * KWH_PER_MWH
 
-    annual_revenue = (annual_energy_kwh[0] / KWH_PER_MWH) * ELECTRICITY_PRICE_EUR_PER_MWH
+    annual_revenue = (annual_energy_kwh[0] / KWH_PER_MWH) * inp.electricity_price_eur_per_mwh
     annual_net_cash_flow = annual_revenue - inp.opex_eur_per_kw_year
     cash_flows = [-inp.capex_eur_per_kw] + [annual_net_cash_flow] * inp.lifetime_years
 
@@ -58,4 +57,5 @@ def calculate_lcoe(inp: LCOEInput) -> LCOEResult:
         irr=irr,
         payback_years=payback_years if np.isinf(payback_years) else round(float(payback_years), 2),
         lifetime_years=inp.lifetime_years,
+        electricity_price_eur_per_mwh=inp.electricity_price_eur_per_mwh,
     )

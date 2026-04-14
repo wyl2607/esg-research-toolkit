@@ -138,6 +138,8 @@ class LCOEInput(BaseModel):
     capacity_factor: float = Field(ge=0.0, le=1.0)
     lifetime_years: int = 25
     discount_rate: float = 0.07
+    # Market electricity selling price used for NPV/IRR; defaults to Germany 2023 annual avg
+    electricity_price_eur_per_mwh: float = Field(default=95.0, ge=0.0)
 
 
 class LCOEResult(BaseModel):
@@ -147,3 +149,4 @@ class LCOEResult(BaseModel):
     irr: float
     payback_years: float
     lifetime_years: int
+    electricity_price_eur_per_mwh: float

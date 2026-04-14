@@ -150,6 +150,10 @@
     "resultHintNpv": "Kapitalwert im aktuellen Szenario.",
     "resultHintIrr": "Interner Zinsfuß aus den modellierten Zahlungsströmen.",
     "resultHintPayback": "Einfache Amortisationsschätzung für dieses Szenario.",
+    "electricityPrice": "Stromverkaufspreis",
+    "deMarketRef": "Deutschland Referenz (EPEX SPOT Jahresdurchschnitt)",
+    "deMarketRefNote": "Quelle: EPEX SPOT / Bundesnetzagentur SMARD. Nicht aus Unternehmensberichten – muss manuell gesetzt werden.",
+    "priceUsedNote": "NPV/IRR berechnet mit Strompreis: {{price}} €/MWh",
     "validationTitle": "Bitte korrigieren Sie vor der Berechnung folgende Annahmen:",
     "validation": {
       "capacity": "Die Leistung muss größer als 0 MW sein.",
@@ -157,7 +161,8 @@
       "capex": "Die Investitionskosten müssen größer als 0 sein.",
       "opex": "Die Betriebskosten dürfen nicht negativ sein.",
       "lifetime": "Die Lebensdauer muss größer als 0 Jahre sein.",
-      "discountRate": "Der Diskontierungssatz muss zwischen 0 und 1 liegen."
+      "discountRate": "Der Diskontierungssatz muss zwischen 0 und 1 liegen.",
+      "electricityPrice": "Der Stromverkaufspreis muss größer als 0 €/MWh sein."
     },
     "fieldHelp": {
       "capacity_mw": "Installierte Leistung des Projekts oder Portfolios.",
@@ -165,7 +170,8 @@
       "capex_eur_per_kw": "Einmalige Investitionsintensität pro installiertem kW.",
       "opex_eur_per_kw_year": "Jährliche Betriebskosten pro kW.",
       "lifetime_years": "Ökonomische Lebensdauer im Discounted-Cashflow-Modell.",
-      "discount_rate": "Abzinsungsfaktor für NPV- und IRR-Annahmen."
+      "discount_rate": "Abzinsungsfaktor für NPV- und IRR-Annahmen.",
+      "electricity_price_eur_per_mwh": "Angenommener Marktverkaufspreis für Strom. Wird für NPV und IRR verwendet. Stammt nicht aus Unternehmensberichten – muss manuell oder über die deutschen Referenzpreise gesetzt werden."
     }
   },
   "companies": {

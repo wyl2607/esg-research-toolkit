@@ -51,7 +51,16 @@ const DEFAULTS: LCOEInput = {
   opex_eur_per_kw_year: 16,
   lifetime_years: 25,
   discount_rate: 0.05,
+  electricity_price_eur_per_mwh: 95,
 }
+
+// German EPEX SPOT annual average day-ahead prices (€/MWh)
+const DE_MARKET_PRICES: { year: number; price: number; note?: string }[] = [
+  { year: 2021, price: 96 },
+  { year: 2022, price: 235, note: '⚡ energy crisis' },
+  { year: 2023, price: 95 },
+  { year: 2024, price: 65 },
+]
 
 const FIELD_CONFIG: [keyof LCOEInput, string, string][] = [
   ['capacity_mw', 'capacity_mw', '0.1'],
@@ -60,6 +69,7 @@ const FIELD_CONFIG: [keyof LCOEInput, string, string][] = [
   ['opex_eur_per_kw_year', 'lcoe.opex', '0.1'],
   ['lifetime_years', 'lcoe.lifetime', '1'],
   ['discount_rate', 'lcoe.discountRate', '0.001'],
+  ['electricity_price_eur_per_mwh', 'lcoe.electricityPrice', '1'],
 ]
 
 const COLORS = ['#6366f1', '#22c55e', '#f59e0b', '#ef4444']
@@ -71,6 +81,7 @@ const FIELD_UNIT_KEYS: Partial<Record<keyof LCOEInput, string>> = {
   opex_eur_per_kw_year: 'lcoe.unitEurPerKwYear',
   lifetime_years: 'lcoe.unitYears',
   discount_rate: 'lcoe.unitPercentApprox',
+  electricity_price_eur_per_mwh: 'lcoe.unitEurPerMwh',
 }
 
 export function LcoePage() {
@@ -102,6 +113,7 @@ export function LcoePage() {
     form.opex_eur_per_kw_year >= 0 ? null : t('lcoe.validation.opex'),
     form.lifetime_years > 0 ? null : t('lcoe.validation.lifetime'),
     form.discount_rate >= 0 && form.discount_rate < 1 ? null : t('lcoe.validation.discountRate'),
+    form.electricity_price_eur_per_mwh > 0 ? null : t('lcoe.validation.electricityPrice'),
   ].filter(Boolean) as string[]
   const isValid = validationMessages.length === 0
 
@@ -190,6 +202,33 @@ export function LcoePage() {
           ))}
           </div>
 
+          {/* Germany market reference price presets */}
+          <div className="rounded-2xl border border-slate-200 bg-slate-50/60 dark:border-slate-700 dark:bg-slate-800/40 px-4 py-3 space-y-2">
+            <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              {t('lcoe.deMarketRef')}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {DE_MARKET_PRICES.map(({ year, price, note }) => (
+                <button
+                  key={year}
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, electricity_price_eur_per_mwh: price }))}
+                  style={{ minHeight: 'unset', minWidth: 'unset' }}
+                  className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 ${
+                    form.electricity_price_eur_per_mwh === price
+                      ? 'bg-amber-100 border-amber-300 text-amber-900 dark:bg-amber-900/40 dark:border-amber-600 dark:text-amber-300'
+                      : 'bg-white border-stone-200 text-stone-600 hover:bg-stone-50 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-300'
+                  }`}
+                >
+                  {year} — {price} €/MWh{note ? ` ${note}` : ''}
+                </button>
+              ))}
+            </div>
+            <p className="text-[11px] text-slate-400 dark:text-slate-500">
+              {t('lcoe.deMarketRefNote')}
+            </p>
+          </div>
+
           {validationMessages.length > 0 ? (
             <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
               <div className="flex items-start gap-2">
@@ -262,6 +301,11 @@ export function LcoePage() {
               {t('common.noData')}
             </p>
             </div>
+          )}
+          {lcoeMutation.data && (
+            <p className="mt-3 text-[11px] text-slate-400 dark:text-slate-500 italic">
+              {t('lcoe.priceUsedNote', { price: lcoeMutation.data.electricity_price_eur_per_mwh })}
+            </p>
           )}
             </CardContent>
           </Card>

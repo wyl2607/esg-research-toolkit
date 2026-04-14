@@ -151,13 +151,18 @@
     "resultHintIrr": "Internal rate of return derived from the modeled cash flows.",
     "resultHintPayback": "Simple payback estimate for the scenario assumptions.",
     "validationTitle": "Please fix the following assumptions before running the model:",
+    "electricityPrice": "Electricity Selling Price",
+    "deMarketRef": "Germany reference (EPEX SPOT annual avg)",
+    "deMarketRefNote": "Source: EPEX SPOT / Bundesnetzagentur SMARD. Not from company reports — set manually.",
+    "priceUsedNote": "NPV/IRR calculated using electricity price: {{price}} €/MWh",
     "validation": {
       "capacity": "Capacity must be greater than 0 MW.",
       "capacityFactor": "Capacity factor must be between 0 and 1.",
       "capex": "CapEx must be greater than 0.",
       "opex": "OpEx cannot be negative.",
       "lifetime": "Lifetime must be greater than 0 years.",
-      "discountRate": "Discount rate must be between 0 and 1."
+      "discountRate": "Discount rate must be between 0 and 1.",
+      "electricityPrice": "Electricity selling price must be greater than 0 €/MWh."
     },
     "fieldHelp": {
       "capacity_mw": "Installed capacity of the project or asset fleet.",
@@ -165,7 +170,8 @@
       "capex_eur_per_kw": "Upfront investment intensity per kW installed.",
       "opex_eur_per_kw_year": "Recurring annual operating cost per kW.",
       "lifetime_years": "Economic lifetime used in the discounted cash-flow model.",
-      "discount_rate": "Discount factor used for the NPV and IRR assumptions."
+      "discount_rate": "Discount factor used for the NPV and IRR assumptions.",
+      "electricity_price_eur_per_mwh": "Assumed market selling price for electricity. Used to compute NPV and IRR. Not extracted from company reports — must be set manually or via the Germany reference presets below."
     }
   },
   "companies": {
