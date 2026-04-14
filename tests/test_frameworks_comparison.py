@@ -1,14 +1,22 @@
 from __future__ import annotations
 
+from collections.abc import Generator
 from types import SimpleNamespace
 
+import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.pool import StaticPool
 
+from core.database import Base
 from core.database import get_db
 from core.schemas import CompanyESGData
 from esg_frameworks.comparison import build_comparison
 from esg_frameworks.schemas import DimensionScore, FrameworkScoreResult
+from esg_frameworks.storage import list_framework_results
 from main import app
+from report_parser.storage import save_report
 
 
 def _make_result(framework_id: str, framework: str, total_score: float, grade: str) -> FrameworkScoreResult:
@@ -25,6 +33,39 @@ def _make_result(framework_id: str, framework: str, total_score: float, grade: s
         gaps=[],
         recommendations=[],
         coverage_pct=80.0,
+    )
+
+
+@pytest.fixture
+def framework_db_session_factory() -> Generator[sessionmaker, None, None]:
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    testing_session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    Base.metadata.create_all(bind=engine)
+    try:
+        yield testing_session_local
+    finally:
+        app.dependency_overrides.clear()
+        Base.metadata.drop_all(bind=engine)
+
+
+def _seed_company_report(session: Session) -> None:
+    save_report(
+        session,
+        CompanyESGData(
+            company_name="CATL",
+            report_year=2024,
+            scope1_co2e_tonnes=100,
+            scope2_co2e_tonnes=80,
+            renewable_energy_pct=60,
+            total_employees=1000,
+            female_pct=37.5,
+            primary_activities=["solar_pv"],
+        ),
+        pdf_filename="catl-2024.pdf",
     )
 
 
@@ -127,6 +168,103 @@ def test_compare_endpoint_uses_cache_and_can_clear(monkeypatch) -> None:
     assert call_count["count"] == 2
 
     app.dependency_overrides.clear()
+
+
+def test_score_endpoint_persists_idempotently_for_identical_payloads(
+    framework_db_session_factory: sessionmaker,
+    monkeypatch,
+) -> None:
+    import esg_frameworks.api as frameworks_api
+
+    with framework_db_session_factory() as session:
+        _seed_company_report(session)
+
+    def override_get_db():
+        db = framework_db_session_factory()
+        try:
+            yield db
+        finally:
+            db.close()
+
+    def fake_scorer(data: CompanyESGData) -> FrameworkScoreResult:
+        return _make_result("eu_taxonomy", "EU Taxonomy", 0.72, "B").model_copy(
+            update={
+                "company_name": data.company_name,
+                "report_year": data.report_year,
+                "framework_version": "2020/852",
+            }
+        )
+
+    monkeypatch.setattr(frameworks_api, "_SCORERS", {"eu_taxonomy": fake_scorer})
+    frameworks_api._score_cache.clear()
+    app.dependency_overrides[get_db] = override_get_db
+
+    client = TestClient(app)
+    params = {"company_name": "CATL", "report_year": 2024, "framework": "eu_taxonomy"}
+    first = client.get("/frameworks/score", params=params)
+    second = client.get("/frameworks/score", params=params)
+
+    assert first.status_code == 200
+    assert second.status_code == 200
+
+    with framework_db_session_factory() as session:
+        rows = list_framework_results(session, company_name="CATL", report_year=2024)
+
+    assert len(rows) == 1
+    assert rows[0].framework_id == "eu_taxonomy"
+    assert rows[0].framework_version == "2020/852"
+
+
+def test_compare_endpoint_allows_new_row_when_payload_changes(
+    framework_db_session_factory: sessionmaker,
+    monkeypatch,
+) -> None:
+    import esg_frameworks.api as frameworks_api
+
+    with framework_db_session_factory() as session:
+        _seed_company_report(session)
+
+    def override_get_db():
+        db = framework_db_session_factory()
+        try:
+            yield db
+        finally:
+            db.close()
+
+    score_state = {"score": 0.72, "grade": "B"}
+
+    def fake_scorer(data: CompanyESGData) -> FrameworkScoreResult:
+        return _make_result("eu_taxonomy", "EU Taxonomy", score_state["score"], score_state["grade"]).model_copy(
+            update={
+                "company_name": data.company_name,
+                "report_year": data.report_year,
+                "framework_version": "2020/852",
+            }
+        )
+
+    monkeypatch.setattr(frameworks_api, "_SCORERS", {"eu_taxonomy": fake_scorer})
+    frameworks_api._score_cache.clear()
+    app.dependency_overrides[get_db] = override_get_db
+
+    client = TestClient(app)
+    params = {"company_name": "CATL", "report_year": 2024}
+    first = client.get("/frameworks/compare", params=params)
+    assert first.status_code == 200
+
+    clear_response = client.post("/frameworks/cache/clear")
+    assert clear_response.status_code == 200
+
+    score_state["score"] = 0.81
+    score_state["grade"] = "A"
+    second = client.get("/frameworks/compare", params=params)
+    assert second.status_code == 200
+
+    with framework_db_session_factory() as session:
+        rows = list_framework_results(session, company_name="CATL", report_year=2024)
+
+    assert len(rows) == 2
+    assert {row.grade for row in rows} == {"A", "B"}
+    assert {row.framework_version for row in rows} == {"2020/852"}
 
 
 def test_taxonomy_report_get_uses_cache(monkeypatch) -> None:

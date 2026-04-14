@@ -108,3 +108,12 @@ Per deployment:
 - SHA aligned on VPS
 - Health check passed
 - Deployment fingerprint written
+
+
+## 相关文件
+
+[[PARALLEL_EXECUTION_TEMPLATE]]
+[[task_11_parallel_guide]]
+[[task_12_parallel_guide]]
+[[task_13_parallel_guide]]
+[[task_14_parallel_guide]]

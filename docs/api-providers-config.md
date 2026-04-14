@@ -35,3 +35,15 @@ DATABASE_URL=sqlite:///./data/esg_toolkit.db
 - [ ] 不含 `sk-` 等密钥字样
 - [ ] 不含中转域名/第三方 API 端点
 - [ ] `.env*` 文件仅保留示例或占位符
+
+
+## 相关文件
+
+[[01-configuration]]
+[[Claude Code Configuration]]
+[[Claude Code Configuration__dup2]]
+[[Surfshark_Config]]
+[[Surfshark_Config_1]]
+[[Surfshark_Config__dup2]]
+[[config-backup-guide]]
+[[config-backup-guide__dup2]]

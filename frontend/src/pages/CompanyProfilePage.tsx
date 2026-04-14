@@ -1,34 +1,28 @@
-import { useMemo } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft, Building2, CheckCircle2, Clock3, FileText, Leaf, ShieldCheck, Sparkles, TrendingUp, TriangleAlert } from 'lucide-react'
-import {
-  Line,
-  LineChart,
-  Radar,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Legend,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts'
 
 import { MetricCard } from '@/components/MetricCard'
+import { QueryStateCard } from '@/components/QueryStateCard'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { getCompanyProfile } from '@/lib/api'
 import type {
   CompanyDataQualitySummary,
   CompanyIdentityProvenanceSummary,
+  CompanySourceDocument,
   CompanyNarrativeSummary,
   FrameworkScoreResult,
 } from '@/lib/types'
 import { useTranslation } from 'react-i18next'
 import { localizeErrorMessage } from '@/lib/error-utils'
+
+const CompanyProfileHeavyCharts = lazy(() =>
+  import('@/components/company-profile/CompanyProfileHeavyCharts').then((module) => ({
+    default: module.CompanyProfileHeavyCharts,
+  }))
+)
 
 function asPct(v: number | null | undefined) {
   return v == null ? '—' : `${v.toFixed(1)}%`
@@ -50,11 +44,88 @@ function deltaPctLabel(value: number | null | undefined) {
 }
 
 function metricDisclosureLabel(t: (key: string) => string, metricKey: string) {
-  return t(`profile.metricLabels.${metricKey}`)
+  const translated = t(`profile.metricLabels.${metricKey}`)
+  return translated === `profile.metricLabels.${metricKey}`
+    ? prettifyToken(metricKey)
+    : translated
 }
 
 function metricLabelsFromKeys(t: (key: string) => string, metricKeys: string[]) {
   return metricKeys.map((metricKey) => metricDisclosureLabel(t, metricKey))
+}
+
+function asDate(value: string | null | undefined, locale: string) {
+  if (!value) return '—'
+  const parsed = new Date(value)
+  return Number.isNaN(parsed.getTime())
+    ? value
+    : parsed.toLocaleDateString(locale, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      })
+}
+
+function compactList(values: Array<string | null | undefined>, max = 3) {
+  const unique = Array.from(new Set(values.filter((value): value is string => Boolean(value))))
+  if (unique.length <= max) return unique.join(', ')
+  return `${unique.slice(0, max).join(', ')} +${unique.length - max}`
+}
+
+function sourceOriginLabel(source: CompanySourceDocument | null | undefined) {
+  if (!source) return '—'
+  if (source.source_url) {
+    try {
+      return new URL(source.source_url).hostname
+    } catch {
+      return source.source_url
+    }
+  }
+  return source.pdf_filename ?? source.file_hash ?? source.source_id
+}
+
+function prettifyToken(value: string | null | undefined) {
+  if (!value) return '—'
+  return value.replace(/_/g, ' ')
+}
+
+type FrameworkDisplayResult = FrameworkScoreResult & {
+  analysis_result_id?: number
+  stored_at?: string | null
+}
+
+function frameworkRunKey(framework: FrameworkDisplayResult) {
+  const stableId = framework.analysis_result_id != null ? `id:${framework.analysis_result_id}` : null
+  const version = framework.framework_version ?? 'unknown-version'
+  const timestamp = framework.analyzed_at ?? framework.stored_at ?? 'unknown-time'
+  return [
+    framework.framework_id,
+    stableId ?? `version:${version}`,
+    stableId ? null : `at:${timestamp}`,
+  ]
+    .filter(Boolean)
+    .join('|')
+}
+
+function DeferredHeavyCharts({
+  ready,
+  fallback,
+  children,
+}: {
+  ready: boolean
+  fallback: ReactNode
+  children: ReactNode
+}) {
+  const [revealed, setRevealed] = useState(false)
+
+  useEffect(() => {
+    if (!ready || revealed) return
+
+    const timer = window.setTimeout(() => setRevealed(true), 180)
+    return () => window.clearTimeout(timer)
+  }, [ready, revealed])
+
+  return ready && revealed ? children : fallback
 }
 
 export function CompanyProfilePage() {
@@ -63,7 +134,7 @@ export function CompanyProfilePage() {
   const { companyName = '' } = useParams<{ companyName: string }>()
   const decodedName = decodeURIComponent(companyName)
 
-  const { data: profile, isLoading, error } = useQuery({
+  const { data: profile, isLoading, error, refetch } = useQuery({
     queryKey: ['company-profile', decodedName],
     queryFn: () => getCompanyProfile(decodedName),
     enabled: !!decodedName,
@@ -80,12 +151,29 @@ export function CompanyProfilePage() {
     [profile]
   )
 
-  const frameworkScores: FrameworkScoreResult[] = useMemo(() => {
+  const frameworkScores: FrameworkDisplayResult[] = useMemo(() => {
     if (!profile) return []
-    if (profile.framework_scores && profile.framework_scores.length > 0) {
-      return profile.framework_scores
+
+    const merged = new Map<string, FrameworkDisplayResult>()
+
+    for (const framework of profile.framework_scores ?? []) {
+      merged.set(frameworkRunKey(framework), framework)
     }
-    return profile.framework_results
+
+    for (const framework of profile.framework_results ?? []) {
+      const key = frameworkRunKey(framework)
+      const existing = merged.get(key)
+      merged.set(key, {
+        ...(existing ?? framework),
+        ...framework,
+        framework_version:
+          framework.framework_version ?? existing?.framework_version,
+        analyzed_at: framework.analyzed_at ?? existing?.analyzed_at ?? null,
+        stored_at: framework.stored_at ?? existing?.stored_at ?? null,
+      })
+    }
+
+    return Array.from(merged.values())
   }, [profile])
 
   const identitySummary: CompanyIdentityProvenanceSummary | null = useMemo(() => {
@@ -230,17 +318,83 @@ export function CompanyProfilePage() {
       }[dataQualitySummary.readiness_label]
     : 'bg-slate-100 text-slate-700 border-slate-200'
 
-  if (isLoading) return <p className="text-slate-400">{t('common.loading')}</p>
-  if (error) return <p className="text-red-500">{localizeErrorMessage(t, error, 'common.error')}</p>
-  if (!profile) return <p className="text-red-500">{t('common.error')}</p>
-  if (!dataQualitySummary || !narrativeSummary) return <p className="text-red-500">{t('common.error')}</p>
+  if (isLoading) {
+    return (
+      <QueryStateCard
+        tone="loading"
+        title={t('common.loading')}
+        body={t('companies.companyCardHint')}
+        className="max-w-2xl"
+      />
+    )
+  }
+  if (error) {
+    return (
+      <QueryStateCard
+        tone="error"
+        title={t('common.error')}
+        body={localizeErrorMessage(t, error, 'common.error')}
+        actionLabel={t('errorBoundary.retry')}
+        onAction={() => void refetch()}
+        className="max-w-2xl"
+      />
+    )
+  }
+  if (!profile || !dataQualitySummary || !narrativeSummary) {
+    return (
+      <QueryStateCard
+        tone="empty"
+        title={t('common.noData')}
+        body={t('companies.companyCardHint')}
+        actionLabel={t('errorBoundary.retry')}
+        onAction={() => void refetch()}
+        className="max-w-2xl"
+      />
+    )
+  }
 
   const m = profile.latest_metrics
+  const latestSources = profile.latest_sources ?? []
+  const latestSourceTypes = compactList(
+    latestSources.map((source) => prettifyToken(source.source_document_type))
+  )
+  const latestEvidenceSummary =
+    latestSources.flatMap((source) => source.evidence_anchors ?? []).filter(Boolean).length > 0
+      ? latestSources.flatMap((source) => source.evidence_anchors ?? [])
+      : (profile.evidence_summary ?? [])
+  const latestSourceOrigin = sourceOriginLabel(latestSources[0])
+  const latestMergeCue = (() => {
+    const preferredMetrics = [
+      'renewable_energy_pct',
+      'scope1_co2e_tonnes',
+      'taxonomy_aligned_revenue_pct',
+      'scope2_co2e_tonnes',
+    ]
+
+    for (const metricKey of preferredMetrics) {
+      const mergeMetric = profile.latest_merged_result?.metrics?.[metricKey]
+      if (mergeMetric?.chosen_source_document_type) {
+        return {
+          metricKey,
+          chosenSourceDocumentType: mergeMetric.chosen_source_document_type,
+          mergeReason: mergeMetric.merge_reason,
+        }
+      }
+    }
+
+    return null
+  })()
   const heroToneClasses = {
     green: 'border-emerald-200 bg-emerald-50 text-emerald-900',
     amber: 'border-amber-200 bg-amber-50 text-amber-900',
     indigo: 'border-indigo-200 bg-indigo-50 text-indigo-900',
   }[heroInsight.tone]
+  const chartFallback = (
+    <div className="grid gap-4 lg:grid-cols-2">
+      <div className="h-[360px] rounded-2xl border bg-stone-100/70 animate-pulse" />
+      <div className="h-[360px] rounded-2xl border bg-stone-100/70 animate-pulse" />
+    </div>
+  )
 
   return (
     <div className="space-y-6">
@@ -355,6 +509,116 @@ export function CompanyProfilePage() {
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <FileText size={16} className="text-indigo-600" />
+            {t('profile.provenanceTitle')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-lg border bg-slate-50 px-4 py-3">
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              {t('profile.provenancePeriodLabel')}
+            </p>
+            <p className="mt-2 text-sm font-semibold text-slate-900">
+              {profile.latest_period.period?.label ??
+                profile.latest_period.reporting_period_label}
+            </p>
+            <p className="mt-1 text-xs text-slate-500">
+              {t('profile.provenancePeriodSummary', {
+                type:
+                  profile.latest_period.period?.type ??
+                  profile.latest_period.reporting_period_type ??
+                  '—',
+                year:
+                  profile.latest_period.period?.legacy_report_year ??
+                  profile.latest_period.report_year,
+              })}
+            </p>
+          </div>
+
+          <div className="rounded-lg border bg-slate-50 px-4 py-3">
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              {t('profile.provenanceSourcesLabel')}
+            </p>
+            <p
+              className="mt-2 text-sm font-semibold text-slate-900"
+              data-testid="profile-provenance-source-summary"
+            >
+              {t('profile.provenanceSourceSummary', { count: latestSources.length })}
+            </p>
+            <p
+              className="mt-1 text-xs text-slate-500"
+              data-testid="profile-provenance-source-types"
+            >
+              {[latestSourceTypes, latestSourceOrigin].filter(Boolean).join(' · ') || '—'}
+            </p>
+          </div>
+
+          <div className="rounded-lg border bg-slate-50 px-4 py-3">
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              {t('profile.provenanceMergeLabel')}
+            </p>
+            <p
+              className="mt-2 text-sm font-semibold text-slate-900"
+              data-testid="profile-provenance-merge-summary"
+            >
+              {t('profile.provenanceMergeSummary', {
+                count:
+                  profile.latest_merged_result?.source_count ?? latestSources.length,
+              })}
+            </p>
+            <p className="mt-1 text-xs text-slate-500">
+              {latestMergeCue
+                ? t('profile.provenanceMergeMetricCue', {
+                    metric: metricDisclosureLabel(t, latestMergeCue.metricKey),
+                    sourceType: prettifyToken(latestMergeCue.chosenSourceDocumentType),
+                    reason: prettifyToken(latestMergeCue.mergeReason),
+                  })
+                : '—'}
+            </p>
+          </div>
+
+          <div className="rounded-lg border bg-slate-50 px-4 py-3">
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              {t('profile.provenanceFrameworkLabel')}
+            </p>
+            {frameworkScores.length === 0 ? (
+              <p className="mt-2 text-sm text-slate-500">{t('profile.noFrameworkResults')}</p>
+            ) : (
+              <div className="mt-2 space-y-2">
+                {frameworkScores.slice(0, 2).map((framework) => (
+                  <div key={`${framework.framework_id}-${framework.framework_version ?? 'unknown'}`}>
+                    <p className="text-sm font-semibold text-slate-900">
+                      {t('profile.provenanceFrameworkVersion', {
+                        framework: framework.framework,
+                        version: framework.framework_version ?? '—',
+                      })}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {t('profile.provenanceFrameworkTimestamp', {
+                        date: asDate(
+                          framework.analyzed_at ?? framework.stored_at ?? null,
+                          locale
+                        ),
+                      })}
+                    </p>
+                  </div>
+                ))}
+                {frameworkScores.length > 2 ? (
+                  <p className="text-xs text-slate-500">
+                    {t('profile.provenanceFrameworkMore', {
+                      count: frameworkScores.length - 2,
+                    })}
+                  </p>
+                ) : null}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="grid gap-4 md:grid-cols-4">
         <MetricCard label={t('companies.scope1')} value={asNum(m.scope1_co2e_tonnes, locale)} unit="tCO2e" />
         <MetricCard label={t('companies.scope2')} value={asNum(m.scope2_co2e_tonnes, locale)} unit="tCO2e" />
@@ -437,69 +701,24 @@ export function CompanyProfilePage() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <ShieldCheck size={16} className="text-indigo-600" />
-              {t('profile.radarTitle')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {frameworkRadarData.length === 0 ? (
-              <p className="text-sm text-slate-400">{t('profile.noFrameworkResults')}</p>
-            ) : (
-              <>
-                <ResponsiveContainer width="100%" height={260}>
-                  <RadarChart data={frameworkRadarData}>
-                    <PolarGrid />
-                    <PolarAngleAxis dataKey="framework" tick={{ fontSize: 11 }} />
-                    <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fontSize: 10 }} />
-                    <Radar
-                      name={t('common.score')}
-                      dataKey="score"
-                      stroke="#4f46e5"
-                      fill="#4f46e5"
-                      fillOpacity={0.35}
-                    />
-                    <Tooltip formatter={(value) => [`${value}%`, t('common.score')]} />
-                  </RadarChart>
-                </ResponsiveContainer>
-                <p className="mt-2 text-xs text-slate-500">{t('profile.radarLegend')}</p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <TrendingUp size={16} className="text-indigo-600" />
-              {t('profile.trendTitle')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <ResponsiveContainer width="100%" height={260}>
-              <LineChart data={trendData}>
-                <XAxis dataKey="year" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="scope1" stroke="#ef4444" strokeWidth={2} dot name="Scope 1" />
-                <Line
-                  type="monotone"
-                  dataKey="renewable"
-                  stroke="#16a34a"
-                  strokeWidth={2}
-                  dot
-                  name="Renewable %"
-                />
-              </LineChart>
-            </ResponsiveContainer>
-            <p className="mt-2 text-xs text-slate-500">{t('profile.trendLegend')}</p>
-          </CardContent>
-        </Card>
-      </div>
+      <DeferredHeavyCharts key={decodedName} ready={!isLoading} fallback={chartFallback}>
+        <Suspense
+          fallback={chartFallback}
+        >
+          <CompanyProfileHeavyCharts
+            frameworkRadarData={frameworkRadarData}
+            trendData={trendData}
+            radarTitle={t('profile.radarTitle')}
+            trendTitle={t('profile.trendTitle')}
+            radarLegend={t('profile.radarLegend')}
+            trendLegend={t('profile.trendLegend')}
+            noFrameworkResultsLabel={t('profile.noFrameworkResults')}
+            scoreLabel={t('common.score')}
+            scope1Label={t('companies.scope1')}
+            renewableLabel={t('companies.renewable')}
+          />
+        </Suspense>
+      </DeferredHeavyCharts>
 
       <Card>
         <CardHeader>
@@ -625,9 +844,23 @@ export function CompanyProfilePage() {
                       </ul>
                     </div>
                   )}
-                  <p className="text-xs text-slate-500">
-                    {t('profile.frameworkVersion')}: {framework.framework_version ?? 'v1'}
-                  </p>
+                  {framework.framework_version || framework.analyzed_at || framework.stored_at ? (
+                    <p className="mt-2 text-xs text-slate-400">
+                      {framework.framework_version
+                        ? t('profile.frameworkVersion', {
+                            version: framework.framework_version,
+                          })
+                        : null}
+                      {framework.analyzed_at || framework.stored_at
+                        ? ` · ${t('profile.frameworkAnalyzedAt', {
+                            date: asDate(
+                              framework.analyzed_at ?? framework.stored_at ?? null,
+                              locale
+                            ),
+                          })}`
+                        : null}
+                    </p>
+                  ) : null}
                 </div>
               </details>
             ))
@@ -645,12 +878,32 @@ export function CompanyProfilePage() {
           </CardHeader>
           <CardContent className="space-y-2">
             {profile.periods.map((p) => (
-              <div key={`${p.report_year}-${p.reporting_period_label}`} className="flex items-center justify-between rounded-md border px-3 py-2">
+              <div
+                key={`${p.report_year}-${p.reporting_period_label}`}
+                className="flex items-center justify-between gap-3 rounded-md border px-3 py-2"
+              >
                 <div>
                   <p className="text-sm font-medium text-slate-900">{p.reporting_period_label}</p>
-                  <p className="text-xs text-slate-500">{p.source_document_type ?? '—'}</p>
+                  <p className="text-xs text-slate-500">
+                    {[
+                      prettifyToken(p.reporting_period_type),
+                      p.source_document_type ? prettifyToken(p.source_document_type) : null,
+                      t('profile.periodSourcesCount', {
+                        count: p.source_documents?.length ?? 0,
+                      }),
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </p>
                 </div>
-                <Badge variant="secondary">{p.report_year}</Badge>
+                <div className="text-right">
+                  <Badge variant="secondary">{p.report_year}</Badge>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {t('profile.provenanceMergeSummary', {
+                      count: p.merged_result?.source_count ?? p.source_documents?.length ?? 0,
+                    })}
+                  </p>
+                </div>
               </div>
             ))}
           </CardContent>
@@ -664,12 +917,25 @@ export function CompanyProfilePage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            {(profile.evidence_summary ?? []).length === 0 ? (
+            {latestEvidenceSummary.length === 0 ? (
               <p className="text-sm text-slate-400">{t('profile.noEvidence')}</p>
             ) : (
-              profile.evidence_summary.map((e, i) => (
-                <div key={i} className="rounded-md border px-3 py-2 text-sm text-slate-700">
-                  {String(e.metric ?? t('profile.metricFallback'))} · {String(e.source_type ?? t('profile.sourceFallback'))}
+              latestEvidenceSummary.map((e, i) => (
+                <div key={i} className="rounded-md border px-3 py-3 text-sm text-slate-700">
+                  <p className="font-medium text-slate-900">
+                    {e.metric ? metricDisclosureLabel(t, e.metric) : t('profile.metricFallback')}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {[
+                      e.source ?? e.source_type ?? t('profile.sourceFallback'),
+                      e.page != null ? `p. ${e.page}` : null,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </p>
+                  {e.snippet ? (
+                    <p className="mt-2 text-xs leading-5 text-slate-600">{e.snippet}</p>
+                  ) : null}
                 </div>
               ))
             )}

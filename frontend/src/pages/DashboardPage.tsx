@@ -1,12 +1,14 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getDashboardStats, listCompanies } from '@/lib/api'
 import { MetricCard } from '@/components/MetricCard'
+import { QueryStateCard } from '@/components/QueryStateCard'
 import { Badge } from '@/components/ui/badge'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { useTranslation } from 'react-i18next'
 import { ArrowRight } from 'lucide-react'
+import { localizeErrorMessage } from '@/lib/error-utils'
 
 const DashboardHeavyCharts = lazy(() =>
   import('@/components/dashboard/DashboardHeavyCharts').then((module) => ({
@@ -39,28 +41,49 @@ function CoverageBar({ label, pct }: { label: string; pct: number }) {
   )
 }
 
+function DeferredHeavyCharts({
+  ready,
+  fallback,
+  children,
+}: {
+  ready: boolean
+  fallback: ReactNode
+  children: ReactNode
+}) {
+  const [revealed, setRevealed] = useState(false)
+
+  useEffect(() => {
+    if (!ready || revealed) return
+
+    const timer = window.setTimeout(() => setRevealed(true), 180)
+    return () => window.clearTimeout(timer)
+  }, [ready, revealed])
+
+  return ready && revealed ? children : fallback
+}
+
 export function DashboardPage() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
-  const [showHeavyCharts, setShowHeavyCharts] = useState(false)
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => setShowHeavyCharts(true), 180)
-    return () => window.clearTimeout(timer)
-  }, [])
-
-  const { data: companies = [], isLoading: companiesLoading } = useQuery({
+  const { data: companies = [], isLoading: companiesLoading, error: companiesError } = useQuery({
     queryKey: ['companies'],
     queryFn: listCompanies,
   })
 
-  const { data: stats, isLoading: statsLoading } = useQuery({
+  const { data: stats, isLoading: statsLoading, error: statsError } = useQuery({
     queryKey: ['dashboard-stats'],
     queryFn: getDashboardStats,
   })
 
   const recent = [...companies].sort((a, b) => b.report_year - a.report_year).slice(0, 5)
   const coverageRows = Object.entries(stats?.coverage_rates ?? {})
+  const chartFallback = (
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="editorial-panel h-[320px] animate-pulse bg-stone-100/70" />
+      <div className="editorial-panel h-[320px] animate-pulse bg-stone-100/70" />
+    </div>
+  )
 
   return (
     <div className="space-y-8">
@@ -96,14 +119,17 @@ export function DashboardPage() {
         />
       </div>
 
-      {showHeavyCharts ? (
+      {statsError ? (
+        <QueryStateCard
+          tone="error"
+          title={t('common.error')}
+          body={localizeErrorMessage(t, statsError, 'common.error')}
+        />
+      ) : null}
+
+      <DeferredHeavyCharts ready={!statsLoading} fallback={chartFallback}>
         <Suspense
-          fallback={
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-              <div className="editorial-panel h-[320px] animate-pulse bg-stone-100/70" />
-              <div className="editorial-panel h-[320px] animate-pulse bg-stone-100/70" />
-            </div>
-          }
+          fallback={chartFallback}
         >
           <DashboardHeavyCharts
             yearlyTrend={stats?.yearly_trend ?? []}
@@ -113,19 +139,18 @@ export function DashboardPage() {
             uploadsLabel={t('dashboard.uploads')}
           />
         </Suspense>
-      ) : (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <div className="editorial-panel h-[320px] animate-pulse bg-stone-100/70" />
-          <div className="editorial-panel h-[320px] animate-pulse bg-stone-100/70" />
-        </div>
-      )}
+      </DeferredHeavyCharts>
 
       <section className="editorial-panel space-y-3 p-4 md:p-5" aria-labelledby="coverage-rates-title">
         <h2 id="coverage-rates-title" className="text-2xl font-semibold text-stone-900">
           {t('dashboard.coverageRates')}
         </h2>
         {coverageRows.length === 0 ? (
-          <p className="text-sm text-slate-400">{t('common.noData')}</p>
+          <QueryStateCard
+            tone="empty"
+            title={t('common.noData')}
+            body={t('dashboard.noReportsYet')}
+          />
         ) : (
           coverageRows.map(([field, pct]) => (
             <CoverageBar key={field} label={coverageLabelMap[field] ?? field} pct={pct} />
@@ -137,10 +162,25 @@ export function DashboardPage() {
         <h2 id="recent-analyses-title" className="mb-3 text-2xl font-semibold text-stone-900">
           {t('dashboard.recentAnalyses')}
         </h2>
+        {companiesError ? (
+          <QueryStateCard
+            tone="error"
+            title={t('common.error')}
+            body={localizeErrorMessage(t, companiesError, 'common.error')}
+          />
+        ) : null}
         {companiesLoading ? (
-          <p className="text-slate-400">{t('common.loading')}</p>
+          <QueryStateCard
+            tone="loading"
+            title={t('common.loading')}
+            body={t('dashboard.subtitle')}
+          />
         ) : recent.length === 0 ? (
-          <p className="text-slate-400">{t('dashboard.noReportsYet')}</p>
+          <QueryStateCard
+            tone="empty"
+            title={t('dashboard.noReportsYet')}
+            body={t('dashboard.noCompanies')}
+          />
         ) : (
           <div className="editorial-panel overflow-hidden">
             <div className="space-y-3 p-4 md:hidden">

@@ -131,3 +131,17 @@ Add `fastapi.middleware.cors` to `main.py` allowing `http://localhost:5173` in d
 - [ ] Companies table lists stored reports
 - [ ] `npm run build` succeeds with no type errors
 - [ ] CORS configured, frontend talks to backend on different ports
+
+
+## 相关文件
+
+[[2026-03-30]]
+[[2026-04-06-control-plane-closure-wave]]
+[[2026-04-07_A组_金融一体化定义与衡量指标_文献综述报告]]
+[[2026-04-07_亚洲金融一体化_中文快速核验报告]]
+[[2026-04-07_亚洲金融一体化_中文快速核验报告__dup2]]
+[[2026-04-13]]
+[[2026-04-13_copilot-peer-review-bootstrap]]
+[[2026-04-14]]
+[[2026-04-14_copilot-quota-timeline-setup]]
+[[DIGHUM (Digital Humanities) 150A_ Digital Humanities And Archival Design]]

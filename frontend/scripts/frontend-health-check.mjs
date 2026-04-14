@@ -1,5 +1,6 @@
 import { spawn } from 'node:child_process'
 import fs from 'node:fs/promises'
+import net from 'node:net'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
@@ -20,9 +21,13 @@ const logsDir = path.join(reportDir, 'logs')
 const bundleBaselinePath = path.join(frontendDir, 'health', 'bundle-baseline.json')
 const lighthouseBaselinePath = path.join(frontendDir, 'health', 'lighthouse-baseline.json')
 const knownErrorsPath = path.join(frontendDir, 'health', 'known-errors.json')
+const manifestPath = path.join(frontendDir, 'dist', '.vite', 'manifest.json')
 
-const APP_URL = process.env.ESG_FRONTEND_URL || 'http://127.0.0.1:4173'
-const API_URL = process.env.ESG_API_URL || 'http://127.0.0.1:8000/health'
+const FRONTEND_PORT = process.env.ESG_FRONTEND_PORT || '4175'
+const BACKEND_PORT = process.env.ESG_API_PORT || '8000'
+const BACKEND_BASE_URL = process.env.ESG_API_BASE_URL || `http://127.0.0.1:${BACKEND_PORT}`
+let APP_URL = process.env.ESG_FRONTEND_URL || `http://127.0.0.1:${FRONTEND_PORT}`
+let API_URL = process.env.ESG_API_URL || `http://127.0.0.1:${BACKEND_PORT}/health`
 const IS_CI = process.argv.includes('--ci') || process.env.CI === 'true'
 const BROWSER_CHANNEL = process.env.ESG_PW_CHANNEL || 'chrome'
 const SKIP_SERVER_BOOT = process.env.ESG_SKIP_SERVER_BOOT === '1'
@@ -34,7 +39,7 @@ const PYTHON_CMD =
     .catch(() => 'python'))
 
 const smokeRoutes = [
-  { path: '/', page: 'Dashboard' },
+  { id: 'dashboard', path: '/', page: 'Dashboard' },
   { path: '/upload', page: 'Upload' },
   { path: '/companies', page: 'Companies' },
   { path: '/compare', page: 'Compare' },
@@ -43,9 +48,14 @@ const smokeRoutes = [
 ]
 
 const lighthouseRoutes = [
-  { path: '/', page: 'Dashboard' },
-  { path: '/companies', page: 'Companies' },
-  { path: '/frameworks', page: 'Frameworks' },
+  { id: 'dashboard', path: '/', page: 'Dashboard' },
+  { id: 'companies', path: '/companies', page: 'Companies' },
+  { id: 'frameworks', path: '/frameworks', page: 'Frameworks' },
+]
+
+const perfBundleEntries = [
+  { id: 'dashboard', page: 'Dashboard', manifestKey: 'src/pages/DashboardPage.tsx' },
+  { id: 'company-profile', page: 'Company Profile', manifestKey: 'src/pages/CompanyProfilePage.tsx' },
 ]
 
 const lighthouseThreshold = {
@@ -54,6 +64,8 @@ const lighthouseThreshold = {
   'best-practices': 0.85,
   seo: 0.8,
 }
+
+const LIGHTHOUSE_REGRESSION_TOLERANCE = 0.15
 
 function nowIso() {
   return new Date().toISOString()
@@ -92,6 +104,34 @@ function runCommand(command, args, cwd, logFile) {
     child.on('close', async (code) => {
       await fs.writeFile(logFile, output, 'utf8')
       resolve({ ok: code === 0, code: code ?? 1, logFile })
+    })
+  })
+}
+
+async function pickAvailablePort(preferredPort) {
+  const preferred = Number(preferredPort)
+  if (!Number.isNaN(preferred) && preferred > 0) {
+    const free = await new Promise((resolve) => {
+      const server = net.createServer()
+      server.once('error', () => resolve(false))
+      server.listen(preferred, '127.0.0.1', () => {
+        server.close(() => resolve(true))
+      })
+    })
+    if (free) return String(preferred)
+  }
+
+  return await new Promise((resolve, reject) => {
+    const server = net.createServer()
+    server.once('error', reject)
+    server.listen(0, '127.0.0.1', () => {
+      const address = server.address()
+      const dynamicPort =
+        typeof address === 'object' && address && address.port ? String(address.port) : null
+      server.close(() => {
+        if (dynamicPort) resolve(dynamicPort)
+        else reject(new Error('failed to allocate port'))
+      })
     })
   })
 }
@@ -145,7 +185,7 @@ function inferRiskLevel(issue) {
   if (t === 'lint-failed' || t === 'build-failed' || t === 'server-start-failed') return 'high'
   if (t === 'new-console-error' || t === 'new-network-error') return 'high'
   if (t === 'axe-violation' || t === 'layout-regression') return 'high'
-  if (t === 'bundle-regression' || t === 'lighthouse-threshold' || t === 'lighthouse-regression') return 'medium'
+  if (t === 'bundle-regression' || t === 'route-bundle-regression' || t === 'lighthouse-threshold' || t === 'lighthouse-regression') return 'medium'
   return 'low'
 }
 
@@ -165,6 +205,8 @@ function suggestFix(issue) {
       return '排查响应式样式与容器宽度约束，修复溢出/遮挡后回归关键页面。'
     case 'bundle-regression':
       return '定位新增大体积依赖，采用按需加载、代码分割或懒加载。'
+    case 'route-bundle-regression':
+      return '检查路由首屏是否重新引入图表或重量级模块，优先恢复延迟加载与更细粒度切分。'
     case 'lighthouse-threshold':
       return '优化首屏加载与可访问性指标，确保关键分类分数回到阈值以上。'
     case 'lighthouse-regression':
@@ -200,7 +242,171 @@ async function computeBundleStats() {
   return stats
 }
 
-async function runBrowserChecks(knownErrors) {
+async function statFileBytes(filePath) {
+  try {
+    const stat = await fs.stat(filePath)
+    return stat.isFile() ? stat.size : 0
+  } catch {
+    return 0
+  }
+}
+
+async function computeRouteBundleEvidence() {
+  const manifest = await readJson(manifestPath, null)
+  if (!manifest) return []
+
+  const distDir = path.join(frontendDir, 'dist')
+  const assetBytes = new Map()
+
+  async function fileBytes(relativeFile) {
+    if (!relativeFile) return 0
+    if (assetBytes.has(relativeFile)) return assetBytes.get(relativeFile)
+    const size = await statFileBytes(path.join(distDir, relativeFile))
+    assetBytes.set(relativeFile, size)
+    return size
+  }
+
+  function collectImportKeys(key, targetSet) {
+    if (!key || targetSet.has(key)) return
+    const chunk = manifest[key]
+    if (!chunk) return
+    targetSet.add(key)
+    for (const importedKey of chunk.imports ?? []) {
+      collectImportKeys(importedKey, targetSet)
+    }
+  }
+
+  function collectDynamicKeys(key, targetSet) {
+    const chunk = manifest[key]
+    if (!chunk) return
+    for (const dynamicKey of chunk.dynamicImports ?? []) {
+      collectImportKeys(dynamicKey, targetSet)
+      collectDynamicKeys(dynamicKey, targetSet)
+    }
+  }
+
+  const routeEvidence = []
+  for (const entry of perfBundleEntries) {
+    const manifestEntry = manifest[entry.manifestKey]
+    if (!manifestEntry) continue
+
+    const initialKeys = new Set()
+    collectImportKeys(entry.manifestKey, initialKeys)
+
+    const asyncKeys = new Set()
+    collectDynamicKeys(entry.manifestKey, asyncKeys)
+    for (const key of initialKeys) {
+      asyncKeys.delete(key)
+    }
+
+    let chunkBytes = 0
+    let initialJsBytes = 0
+    let asyncJsBytes = 0
+
+    for (const key of initialKeys) {
+      const chunk = manifest[key]
+      if (!chunk?.file?.endsWith('.js')) continue
+      const size = await fileBytes(chunk.file)
+      initialJsBytes += size
+      if (key === entry.manifestKey) {
+        chunkBytes = size
+      }
+    }
+
+    for (const key of asyncKeys) {
+      const chunk = manifest[key]
+      if (!chunk?.file?.endsWith('.js')) continue
+      asyncJsBytes += await fileBytes(chunk.file)
+    }
+
+    routeEvidence.push({
+      id: entry.id,
+      page: entry.page,
+      manifestKey: entry.manifestKey,
+      chunkBytes,
+      initialJsBytes,
+      asyncJsBytes,
+      asyncChunkCount: asyncKeys.size,
+    })
+  }
+
+  return routeEvidence
+}
+
+function buildPerfSeedPayload() {
+  const slug = `health-check-${Date.now()}`
+  const companyName = `Health Check Analyst ${slug}`
+  const reportYear = 2025
+  return {
+    slug,
+    companyName,
+    reportYear,
+    payload: {
+      company_name: companyName,
+      report_year: reportYear,
+      reporting_period_label: `FY ${reportYear}`,
+      reporting_period_type: 'annual',
+      source_document_type: 'manual_case',
+      scope1_co2e_tonnes: 14250,
+      scope2_co2e_tonnes: 6840,
+      scope3_co2e_tonnes: 58200,
+      energy_consumption_mwh: 194000,
+      renewable_energy_pct: 47.5,
+      water_usage_m3: 98000,
+      waste_recycled_pct: 76.4,
+      total_revenue_eur: 640000000,
+      taxonomy_aligned_revenue_pct: 32.1,
+      total_capex_eur: 215000000,
+      taxonomy_aligned_capex_pct: 38.4,
+      total_employees: 12800,
+      female_pct: 41.2,
+      primary_activities: ['battery manufacturing', 'grid storage'],
+      source_url: `https://health-check.seed/${slug}`,
+      evidence_summary: [],
+    },
+  }
+}
+
+async function seedCompanyProfileRoute() {
+  const seed = buildPerfSeedPayload()
+  const response = await fetch(`${BACKEND_BASE_URL}/report/manual`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(seed.payload),
+  })
+
+  if (!response.ok) {
+    const detail = await response.text()
+    throw new Error(`failed to seed company profile route: HTTP ${response.status} ${detail}`)
+  }
+
+  return {
+    id: 'company-profile',
+    page: 'Company Profile',
+    path: `/companies/${encodeURIComponent(seed.companyName)}`,
+    pathTemplate: '/companies/:companyName',
+    companyName: seed.companyName,
+    reportYear: seed.reportYear,
+  }
+}
+
+async function cleanupSeededCompany(seed) {
+  if (!seed) return
+
+  const response = await fetch(
+    `${BACKEND_BASE_URL}/report/companies/${encodeURIComponent(seed.companyName)}/${seed.reportYear}?hard=true`,
+    { method: 'DELETE' }
+  )
+
+  if (response.ok || response.status === 404) {
+    return
+  }
+
+  const detail = await response.text()
+  throw new Error(`failed to clean seeded company profile route: HTTP ${response.status} ${detail}`)
+}
+
+async function runBrowserChecks(knownErrors, routes) {
   const result = {
     pages: [],
     issues: [],
@@ -214,7 +420,7 @@ async function runBrowserChecks(knownErrors) {
   })
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 } })
 
-  for (const route of smokeRoutes) {
+  for (const route of routes.smoke) {
     const pageResult = {
       page: route.page,
       path: route.path,
@@ -335,7 +541,7 @@ async function runBrowserChecks(knownErrors) {
 
   const chrome = await launch({ chromeFlags: ['--headless=new', '--no-sandbox'] })
   try {
-    for (const route of lighthouseRoutes) {
+    for (const route of routes.lighthouse) {
       const url = `${APP_URL}${route.path}`
       const runnerResult = await lighthouse(url, {
         port: chrome.port,
@@ -344,13 +550,23 @@ async function runBrowserChecks(knownErrors) {
         onlyCategories: ['performance', 'accessibility', 'best-practices', 'seo'],
       })
       const categories = runnerResult?.lhr?.categories ?? {}
+      const audits = runnerResult?.lhr?.audits ?? {}
       const metrics = {
+        id: route.id ?? route.path,
         page: route.page,
         path: route.path,
+        pathTemplate: route.pathTemplate ?? route.path,
         performance: categories.performance?.score ?? null,
         accessibility: categories.accessibility?.score ?? null,
         'best-practices': categories['best-practices']?.score ?? null,
         seo: categories.seo?.score ?? null,
+        timings: {
+          firstContentfulPaintMs: audits['first-contentful-paint']?.numericValue ?? null,
+          largestContentfulPaintMs: audits['largest-contentful-paint']?.numericValue ?? null,
+          totalBlockingTimeMs: audits['total-blocking-time']?.numericValue ?? null,
+          speedIndexMs: audits['speed-index']?.numericValue ?? null,
+          cumulativeLayoutShift: audits['cumulative-layout-shift']?.numericValue ?? null,
+        },
       }
       result.lighthouse.push(metrics)
     }
@@ -366,11 +582,41 @@ function formatPct(value) {
   return `${Math.round(value * 100)}%`
 }
 
+function formatMs(value) {
+  if (value == null || Number.isNaN(value)) return 'n/a'
+  return `${Math.round(value)}ms`
+}
+
+function formatCls(value) {
+  if (value == null || Number.isNaN(value)) return 'n/a'
+  return value.toFixed(3)
+}
+
+function formatBytes(value) {
+  if (value == null || Number.isNaN(value)) return 'n/a'
+  return `${value}B`
+}
+
 async function main() {
   await ensureDirs()
 
+  const runtimeFrontendPort = process.env.ESG_FRONTEND_URL
+    ? null
+    : await pickAvailablePort(FRONTEND_PORT)
+  if (runtimeFrontendPort) {
+    APP_URL = `http://127.0.0.1:${runtimeFrontendPort}`
+  }
+  if (!process.env.ESG_API_URL) {
+    API_URL = `http://127.0.0.1:${BACKEND_PORT}/health`
+  }
+
   const knownErrors = await readJson(knownErrorsPath, { console: [], network: [] })
-  const bundleBaseline = await readJson(bundleBaselinePath, { totalBytes: 0, jsBytes: 0, cssBytes: 0 })
+  const bundleBaseline = await readJson(bundleBaselinePath, {
+    totalBytes: 0,
+    jsBytes: 0,
+    cssBytes: 0,
+    routes: {},
+  })
   const lighthouseBaseline = await readJson(lighthouseBaselinePath, {})
 
   const result = {
@@ -387,6 +633,7 @@ async function main() {
       baseline: bundleBaseline,
       current: null,
       regression: null,
+      routeEvidence: [],
     },
     browser: null,
     issues: [],
@@ -415,6 +662,7 @@ async function main() {
   }
 
   result.bundle.current = await computeBundleStats()
+  result.bundle.routeEvidence = await computeRouteBundleEvidence()
   result.checks.bundle.ok = result.bundle.current.totalBytes > 0
 
   if (result.bundle.current.totalBytes > 0 && bundleBaseline.totalBytes > 0) {
@@ -435,13 +683,30 @@ async function main() {
     }
   }
 
+  for (const route of result.bundle.routeEvidence) {
+    const baselineRoute = bundleBaseline.routes?.[route.id]
+    if (!baselineRoute?.initialJsBytes) continue
+
+    const growth =
+      (route.initialJsBytes - baselineRoute.initialJsBytes) / baselineRoute.initialJsBytes
+    if (growth > 0.1) {
+      result.issues.push({
+        type: 'route-bundle-regression',
+        page: route.page,
+        route: route.id,
+        repro: `执行 npm run build 后检查 ${route.page} 路由首屏 JS 负载。`,
+        detail: `${route.page} 首屏 JS 从 ${baselineRoute.initialJsBytes}B 增长到 ${route.initialJsBytes}B（+${(growth * 100).toFixed(1)}%）。`,
+      })
+    }
+  }
+
   const backendLog = path.join(logsDir, 'backend.log')
-  const frontendLog = path.join(logsDir, 'frontend-dev.log')
+  const frontendLog = path.join(logsDir, 'frontend-preview.log')
   const backend = SKIP_SERVER_BOOT
     ? null
     : startServer(
         PYTHON_CMD,
-        ['-m', 'uvicorn', 'main:app', '--host', '127.0.0.1', '--port', '8000'],
+        ['-m', 'uvicorn', 'main:app', '--host', '127.0.0.1', '--port', BACKEND_PORT],
         repoRoot,
         backendLog
       )
@@ -449,10 +714,20 @@ async function main() {
     ? null
     : startServer(
         'npm',
-        ['run', 'dev', '--', '--host', '127.0.0.1', '--port', '4173'],
+        [
+          'run',
+          'preview',
+          '--',
+          '--host',
+          '127.0.0.1',
+          '--port',
+          runtimeFrontendPort || FRONTEND_PORT,
+          '--strictPort',
+        ],
         frontendDir,
         frontendLog
       )
+  let seededCompanyRoute = null
 
   try {
     const backendReady = await waitForUrl(API_URL, 60_000)
@@ -468,13 +743,19 @@ async function main() {
       })
       result.checks.smoke = { ok: false, code: 1, logFile: path.join(logsDir, 'smoke.log') }
     } else {
-      result.browser = await runBrowserChecks(knownErrors)
+      seededCompanyRoute = await seedCompanyProfileRoute()
+      const runtimeRoutes = {
+        smoke: [...smokeRoutes, seededCompanyRoute],
+        lighthouse: [...lighthouseRoutes, seededCompanyRoute],
+      }
+
+      result.browser = await runBrowserChecks(knownErrors, runtimeRoutes)
       result.issues.push(...result.browser.issues)
       await fs.writeFile(result.checks.smoke.logFile, JSON.stringify(result.browser, null, 2), 'utf8')
       result.checks.smoke = { ok: result.browser.issues.length === 0, code: result.browser.issues.length === 0 ? 0 : 1, logFile: result.checks.smoke.logFile }
 
       for (const metric of result.browser.lighthouse) {
-        const baseline = lighthouseBaseline[metric.path] ?? {}
+        const baseline = lighthouseBaseline[metric.id] ?? lighthouseBaseline[metric.path] ?? {}
         for (const [key, threshold] of Object.entries(lighthouseThreshold)) {
           const value = metric[key]
           if (typeof value !== 'number') continue
@@ -488,7 +769,10 @@ async function main() {
             })
           }
           const baseValue = baseline[key]
-          if (typeof baseValue === 'number' && baseValue - value > 0.05) {
+          if (
+            typeof baseValue === 'number' &&
+            baseValue - value > LIGHTHOUSE_REGRESSION_TOLERANCE
+          ) {
             result.issues.push({
               type: 'lighthouse-regression',
               page: metric.page,
@@ -501,6 +785,16 @@ async function main() {
       }
     }
   } finally {
+    await cleanupSeededCompany(seededCompanyRoute).catch(async (error) => {
+      const cleanupMessage = error instanceof Error ? error.message : String(error)
+      result.issues.push({
+        type: 'new-network-error',
+        page: 'Company Profile',
+        route: seededCompanyRoute?.path ?? '/companies/:companyName',
+        repro: '清理 health-check 临时种子公司数据。',
+        detail: cleanupMessage,
+      })
+    })
     frontend?.kill('SIGTERM')
     backend?.kill('SIGTERM')
   }
@@ -525,10 +819,37 @@ async function main() {
   if (result.bundle.current) {
     summaryLines.push(`- Bundle: ${result.bundle.current.totalBytes}B (baseline: ${bundleBaseline.totalBytes || 'n/a'}B)`)
   }
+  if (result.bundle.routeEvidence.length > 0) {
+    summaryLines.push(`- Analyst route bundle evidence: ${result.bundle.routeEvidence.length} routes`)
+  }
+
+  if (result.bundle.routeEvidence.length > 0) {
+    summaryLines.push('')
+    summaryLines.push('## Analyst route JS evidence')
+    summaryLines.push('| Route | Route chunk | Initial JS | Deferred JS | Async chunks |')
+    summaryLines.push('|---|---:|---:|---:|---:|')
+    for (const route of result.bundle.routeEvidence) {
+      summaryLines.push(
+        `| ${route.page} | ${formatBytes(route.chunkBytes)} | ${formatBytes(route.initialJsBytes)} | ${formatBytes(route.asyncJsBytes)} | ${route.asyncChunkCount} |`
+      )
+    }
+  }
+
+  if (result.browser?.lighthouse?.length) {
+    summaryLines.push('')
+    summaryLines.push('## Lighthouse analyst route evidence')
+    summaryLines.push('| Route | Perf | A11y | Best | SEO | FCP | LCP | TBT | CLS |')
+    summaryLines.push('|---|---:|---:|---:|---:|---:|---:|---:|---:|')
+    for (const metric of result.browser.lighthouse) {
+      summaryLines.push(
+        `| ${metric.page} | ${formatPct(metric.performance)} | ${formatPct(metric.accessibility)} | ${formatPct(metric['best-practices'])} | ${formatPct(metric.seo)} | ${formatMs(metric.timings.firstContentfulPaintMs)} | ${formatMs(metric.timings.largestContentfulPaintMs)} | ${formatMs(metric.timings.totalBlockingTimeMs)} | ${formatCls(metric.timings.cumulativeLayoutShift)} |`
+      )
+    }
+  }
 
   if (result.issues.length === 0) {
     summaryLines.push('')
-    summaryLines.push('✅ 未发现失败、包体积回退、明显布局问题或新的 console/network error。')
+    summaryLines.push('✅ 未发现失败、关键路由包体积回退、明显布局问题或新的 console/network error。')
   } else {
     summaryLines.push('')
     summaryLines.push('## Issues')

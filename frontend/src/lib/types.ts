@@ -120,6 +120,7 @@ export interface FrameworkScoreResult {
   framework_id: string
   company_name: string
   report_year: number
+  framework_region?: string
   framework_version?: string
   analyzed_at?: string | null
   total_score: number
@@ -149,10 +150,76 @@ export interface CompanyHistoryPeriod {
   reporting_period_label: string
   reporting_period_type: string
   source_document_type: string | null
+  period: CompanyNormalizedPeriod
   source_url: string | null
   downloaded_at: string | null
-  evidence_anchors?: EvidenceAnchor[]
-  framework_metadata?: FrameworkMetadata[]
+  evidence_anchors: EvidenceAnchor[]
+  framework_metadata: FrameworkMetadata[]
+  source_documents: CompanySourceDocument[]
+  merged_result: CompanyMergedResult
+}
+
+export interface CompanyNormalizedPeriod {
+  period_id: string
+  label: string
+  type: string
+  source_document_type: string | null
+  legacy_report_year: number
+}
+
+export interface CompanySourceDocument {
+  source_id: string
+  source_document_type: string | null
+  reporting_period_label: string | null
+  reporting_period_type: string | null
+  source_url: string | null
+  file_hash: string | null
+  pdf_filename: string | null
+  downloaded_at: string | null
+  evidence_anchors: EvidenceAnchor[]
+}
+
+export interface MergeMetricCandidate {
+  source_id: string
+  source_document_type: string | null
+  source_url: string | null
+  reporting_period_label: string | null
+  priority_rank: number
+  value: string | number | string[] | null
+}
+
+export interface MergedMetricResult {
+  metric: string
+  chosen_value: string | number | string[] | null
+  candidate_values: MergeMetricCandidate[]
+  chosen_source: string | null
+  chosen_source_document_type: string | null
+  merge_reason: string
+  conflict_detected: boolean
+}
+
+export interface CompanyMergedResult {
+  company_name: string
+  report_year: number
+  merged_metrics: CompanyESGData
+  metrics: Record<string, MergedMetricResult>
+  source_count: number
+}
+
+export interface CompanyProfileLatestPeriod {
+  report_year: number
+  reporting_period_label: string
+  reporting_period_type: string
+  source_document_type: string | null
+  period: CompanyNormalizedPeriod
+  framework_metadata: FrameworkMetadata[]
+}
+
+export interface CompanyHistoryResponse {
+  company_name: string
+  periods: CompanyHistoryPeriod[]
+  trend: CompanyTrendPoint[]
+  framework_metadata: FrameworkMetadata[]
 }
 
 export interface CompanyTrendPoint {
@@ -170,13 +237,7 @@ export interface CompanyProfile {
   company_name: string
   years_available: number[]
   latest_year: number
-  latest_period: {
-    report_year: number
-    reporting_period_label: string
-    reporting_period_type: string
-    source_document_type: string | null
-    framework_metadata?: FrameworkMetadata[]
-  }
+  latest_period: CompanyProfileLatestPeriod
   latest_metrics: CompanyESGData
   trend: CompanyTrendPoint[]
   periods: CompanyHistoryPeriod[]
@@ -188,6 +249,8 @@ export interface CompanyProfile {
   data_quality_summary: CompanyDataQualitySummary
   narrative_summary?: CompanyNarrativeSummary
   identity_provenance_summary?: CompanyIdentityProvenanceSummary
+  latest_sources: CompanySourceDocument[]
+  latest_merged_result: CompanyMergedResult
 }
 
 export interface CompanyDataQualitySummary {

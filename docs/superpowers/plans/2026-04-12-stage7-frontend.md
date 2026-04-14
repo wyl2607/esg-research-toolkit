@@ -1173,3 +1173,17 @@ $ERROR
 Rules: only edit files in frontend/src/, do not change backend, run 'npx tsc --noEmit' after fixing."
 done
 ```
+
+
+## 相关文件
+
+[[2026-03-30]]
+[[2026-04-07_A组_金融一体化定义与衡量指标_文献综述报告]]
+[[2026-04-07_亚洲金融一体化_中文快速核验报告]]
+[[2026-04-07_亚洲金融一体化_中文快速核验报告__dup2]]
+[[2026-04-13]]
+[[2026-04-13_career-product-roadmap-docs]]
+[[2026-04-13_omx-self-dev-manual-and-loop-scripts]]
+[[2026-04-13_progress-and-hard-constraints-summary]]
+[[2026-04-13_real-company-analysis-and-regex-tuning]]
+[[2026-04-13_release-pipeline-vps-fingerprint-hardening]]

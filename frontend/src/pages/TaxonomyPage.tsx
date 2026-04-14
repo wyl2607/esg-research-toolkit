@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { listCompanies, getTaxonomyReport, downloadTaxonomyPdf } from '@/lib/api'
 import { TaxonomyRadarChart } from '@/components/RadarChart'
 import { MetricCard } from '@/components/MetricCard'
+import { QueryStateCard } from '@/components/QueryStateCard'
 import { Badge } from '@/components/ui/badge'
 import {
   Select,
@@ -21,14 +22,14 @@ export function TaxonomyPage() {
   const [selected, setSelected] = useState<string>('')
   const [pdfLoading, setPdfLoading] = useState(false)
 
-  const { data: companies = [], error: companiesError } = useQuery({
+  const { data: companies = [], error: companiesError, refetch: refetchCompanies } = useQuery({
     queryKey: ['companies'],
     queryFn: listCompanies,
   })
 
   const [companyName, companyYear] = selected ? selected.split('|') : [null, null]
 
-  const { data: report, isLoading, error: reportError } = useQuery({
+  const { data: report, isLoading, error: reportError, refetch: refetchReport } = useQuery({
     queryKey: ['taxonomy', companyName, companyYear],
     queryFn: () => getTaxonomyReport(companyName!, Number(companyYear)),
     enabled: !!companyName && !!companyYear,
@@ -69,11 +70,22 @@ export function TaxonomyPage() {
         </div>
       </section>
 
-      {(companiesError || reportError) && (
-        <p className="text-sm text-red-500">
-          {localizeErrorMessage(t, reportError ?? companiesError, 'common.error')}
-        </p>
-      )}
+      {(companiesError || reportError) ? (
+        <QueryStateCard
+          tone="error"
+          title={t('common.error')}
+          body={localizeErrorMessage(t, reportError ?? companiesError, 'common.error')}
+          actionLabel={t('errorBoundary.retry')}
+          onAction={() => {
+            if (reportError) {
+              void refetchReport()
+            } else {
+              void refetchCompanies()
+            }
+          }}
+          className="max-w-2xl"
+        />
+      ) : null}
 
       <div className="surface-card max-w-xl">
         <p className="mb-3 text-xs uppercase tracking-[0.2em] text-stone-500">
@@ -96,7 +108,23 @@ export function TaxonomyPage() {
         </Select>
       </div>
 
-      {isLoading && <p className="text-slate-400">{t('taxonomy.loadingData')}</p>}
+      {companies.length === 0 && !companiesError ? (
+        <QueryStateCard
+          tone="empty"
+          title={t('common.noData')}
+          body={t('dashboard.noCompanies')}
+          className="max-w-2xl"
+        />
+      ) : null}
+
+      {isLoading ? (
+        <QueryStateCard
+          tone="loading"
+          title={t('common.loading')}
+          body={t('taxonomy.loadingData')}
+          className="max-w-2xl"
+        />
+      ) : null}
 
       {report && (
         <div className="space-y-6">
@@ -188,9 +216,14 @@ export function TaxonomyPage() {
         </div>
       )}
 
-      {!selected && (
-        <p className="py-12 text-center text-slate-400">{t('taxonomy.selectPrompt')}</p>
-      )}
+      {!selected && companies.length > 0 ? (
+        <QueryStateCard
+          tone="empty"
+          title={t('common.selectCompany')}
+          body={t('taxonomy.selectPrompt')}
+          className="max-w-2xl py-8"
+        />
+      ) : null}
     </div>
   )
 }

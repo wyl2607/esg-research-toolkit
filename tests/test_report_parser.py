@@ -13,7 +13,7 @@ from core.database import Base
 from core.schemas import CompanyESGData, ManualReportInput, MergePreviewRequest, MergeSourceInput
 from esg_frameworks.api import _SCORERS
 from esg_frameworks.schemas import DimensionScore, FrameworkScoreResult
-from esg_frameworks.storage import save_framework_result
+from esg_frameworks.storage import list_framework_results, save_framework_result
 from report_parser.api import (
     list_company_reports,
     get_company_history,
@@ -223,6 +223,34 @@ def test_save_and_get_report(
     assert loaded.pdf_filename == "example-report.pdf"
     assert loaded.scope1_co2e_tonnes == pytest.approx(123.4)
     assert loaded.primary_activities == json.dumps(["solar_pv"])
+
+
+def test_save_framework_result_allows_new_row_when_framework_version_changes(db_session: Session) -> None:
+    result = FrameworkScoreResult(
+        framework="EU Taxonomy 2020",
+        framework_id="eu_taxonomy",
+        framework_version="2020/852",
+        company_name="Version Corp",
+        report_year=2024,
+        total_score=0.66,
+        grade="B",
+        dimensions=[DimensionScore(name="Climate", score=0.66, weight=1.0, disclosed=1, total=1)],
+        gaps=[],
+        recommendations=[],
+        coverage_pct=100.0,
+    )
+
+    first = save_framework_result(db_session, result, framework_version=result.framework_version)
+    second = save_framework_result(
+        db_session,
+        result.model_copy(update={"framework_version": "2021/2139"}),
+        framework_version="2021/2139",
+    )
+    rows = list_framework_results(db_session, company_name="Version Corp", report_year=2024)
+
+    assert first.id != second.id
+    assert len(rows) == 2
+    assert {row.framework_version for row in rows} == {"2020/852", "2021/2139"}
 
 
 def test_list_reports(
@@ -809,7 +837,9 @@ def test_company_history_and_profile_include_period_and_framework_results(
         recommendations=[],
         coverage_pct=100.0,
     )
-    save_framework_result(db_session, result, framework_version=result.framework_version)
+    first_save = save_framework_result(db_session, result, framework_version=result.framework_version)
+    duplicate_save = save_framework_result(db_session, result, framework_version=result.framework_version)
+    assert duplicate_save.id == first_save.id
 
     history = get_company_history(company_name="Trend Corp", db=db_session)
     assert history["company_name"] == "Trend Corp"
@@ -824,6 +854,7 @@ def test_company_history_and_profile_include_period_and_framework_results(
     assert history["periods"][0]["evidence_anchors"][0]["snippet"] is not None
     assert history["periods"][0]["framework_metadata"] == []
     assert len(history["periods"][1]["framework_metadata"]) == 1
+    assert history["periods"][1]["framework_metadata"][0]["analysis_result_id"] == first_save.id
     assert history["periods"][1]["framework_metadata"][0]["framework_id"] == "eu_taxonomy"
     assert history["framework_metadata"][0]["framework_version"] == "2020/852"
     assert history["trend"][1]["renewable_pct"] == pytest.approx(45.0)
@@ -835,6 +866,7 @@ def test_company_history_and_profile_include_period_and_framework_results(
     assert profile["latest_period"]["period"]["label"] == "FY2024"
     assert profile["latest_period"]["period"]["type"] == "annual"
     assert profile["latest_period"]["period"]["source_document_type"] == "sustainability_report"
+    assert len(profile["latest_period"]["framework_metadata"]) == 1
     assert profile["latest_period"]["framework_metadata"][0]["framework_id"] == "eu_taxonomy"
     assert profile["framework_metadata"][0]["framework_version"] == "2020/852"
     assert len(profile["framework_results"]) == 1

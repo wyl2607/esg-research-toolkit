@@ -1,1 +1,70 @@
-{}
+{
+  "dashboard": {
+    "id": "dashboard",
+    "page": "Dashboard",
+    "path": "/",
+    "pathTemplate": "/",
+    "performance": 0.92,
+    "accessibility": 1,
+    "best-practices": 1,
+    "seo": 0.82,
+    "timings": {
+      "firstContentfulPaintMs": 2294.8237499999996,
+      "largestContentfulPaintMs": 3014.155249999999,
+      "totalBlockingTimeMs": 27,
+      "speedIndexMs": 2294.8237499999996,
+      "cumulativeLayoutShift": 0
+    }
+  },
+  "companies": {
+    "id": "companies",
+    "page": "Companies",
+    "path": "/companies",
+    "pathTemplate": "/companies",
+    "performance": 0.9,
+    "accessibility": 0.95,
+    "best-practices": 1,
+    "seo": 0.82,
+    "timings": {
+      "firstContentfulPaintMs": 2863.1324999999997,
+      "largestContentfulPaintMs": 2938.1324999999997,
+      "totalBlockingTimeMs": 0,
+      "speedIndexMs": 2863.1324999999997,
+      "cumulativeLayoutShift": 0.000135
+    }
+  },
+  "frameworks": {
+    "id": "frameworks",
+    "page": "Frameworks",
+    "path": "/frameworks",
+    "pathTemplate": "/frameworks",
+    "performance": 0.84,
+    "accessibility": 1,
+    "best-practices": 1,
+    "seo": 0.82,
+    "timings": {
+      "firstContentfulPaintMs": 3150.59565,
+      "largestContentfulPaintMs": 3517.849,
+      "totalBlockingTimeMs": 0,
+      "speedIndexMs": 3150.59565,
+      "cumulativeLayoutShift": 0.000159
+    }
+  },
+  "company-profile": {
+    "id": "company-profile",
+    "page": "Company Profile",
+    "path": "/companies/:companyName",
+    "pathTemplate": "/companies/:companyName",
+    "performance": 0.88,
+    "accessibility": 1,
+    "best-practices": 1,
+    "seo": 0.82,
+    "timings": {
+      "firstContentfulPaintMs": 2850.7546,
+      "largestContentfulPaintMs": 3213.1014000000005,
+      "totalBlockingTimeMs": 37,
+      "speedIndexMs": 2850.7546,
+      "cumulativeLayoutShift": 0.006739
+    }
+  }
+}

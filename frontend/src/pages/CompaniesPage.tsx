@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { QueryStateCard } from '@/components/QueryStateCard'
 import { Trash2, Search, Download, Building2, CalendarRange, FileStack } from 'lucide-react'
 import type { CompanyESGData } from '@/lib/types'
 import { useTranslation } from 'react-i18next'
@@ -102,12 +103,20 @@ export function CompaniesPage() {
           </div>
         </div>
       </div>
-      {error && (
-        <p className="text-red-500 text-sm">{localizeErrorMessage(t, error, 'common.error')}</p>
-      )}
-      {deleteMutation.error && (
-        <p className="text-red-500 text-sm">{localizeErrorMessage(t, deleteMutation.error, 'companies.deleteError')}</p>
-      )}
+      {error ? (
+        <QueryStateCard
+          tone="error"
+          title={t('common.error')}
+          body={localizeErrorMessage(t, error, 'common.error')}
+        />
+      ) : null}
+      {deleteMutation.error ? (
+        <QueryStateCard
+          tone="error"
+          title={t('companies.deleteError')}
+          body={localizeErrorMessage(t, deleteMutation.error, 'companies.deleteError')}
+        />
+      ) : null}
 
       <Card className="surface-card">
         <CardContent className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between">
@@ -176,9 +185,17 @@ export function CompaniesPage() {
       </Card>
 
       {isLoading ? (
-        <p className="text-slate-400">{t('common.loading')}</p>
+        <QueryStateCard
+          tone="loading"
+          title={t('common.loading')}
+          body={t('companies.subtitle')}
+        />
       ) : filtered.length === 0 ? (
-        <p className="text-slate-400">{t('companies.noResults')}</p>
+        <QueryStateCard
+          tone="empty"
+          title={t('companies.noResults')}
+          body={search ? `${t('common.search')}: “${search}”` : t('companies.subtitle')}
+        />
       ) : (
         <div className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -233,26 +250,26 @@ export function CompaniesPage() {
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-3">
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50/90 px-3 py-3">
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50/90 px-3 py-3 dark:border-slate-600 dark:bg-slate-700/60 min-w-0">
                     <p className="section-kicker">{t('companies.metricScope1Short')}</p>
-                    <p className="mt-2 numeric-mono text-base font-semibold text-slate-900">
+                    <p className="mt-2 numeric-mono text-base font-semibold text-slate-900 dark:text-slate-100 break-all leading-tight">
                       {formatNumber(c.scope1_co2e_tonnes, { locale: i18n.resolvedLanguage })}
                     </p>
-                    <p className="mt-1 text-[11px] text-slate-500">{t('companies.unitTco2e')}</p>
+                    <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">{t('companies.unitTco2e')}</p>
                   </div>
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50/90 px-3 py-3">
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50/90 px-3 py-3 dark:border-slate-600 dark:bg-slate-700/60 min-w-0">
                     <p className="section-kicker">{t('companies.metricEmployeesShort')}</p>
-                    <p className="mt-2 numeric-mono text-base font-semibold text-slate-900">
+                    <p className="mt-2 numeric-mono text-base font-semibold text-slate-900 dark:text-slate-100 break-all leading-tight">
                       {formatNumber(c.total_employees, { locale: i18n.resolvedLanguage })}
                     </p>
-                    <p className="mt-1 text-[11px] text-slate-500">{t('companies.unitPeople')}</p>
+                    <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">{t('companies.unitPeople')}</p>
                   </div>
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50/90 px-3 py-3">
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50/90 px-3 py-3 dark:border-slate-600 dark:bg-slate-700/60 min-w-0">
                     <p className="section-kicker">{t('companies.metricTaxonomyShort')}</p>
-                    <p className="mt-2 numeric-mono text-base font-semibold text-slate-900">
+                    <p className="mt-2 numeric-mono text-base font-semibold text-slate-900 dark:text-slate-100 break-all leading-tight">
                       {formatPercent(c.taxonomy_aligned_revenue_pct, i18n.resolvedLanguage)}
                     </p>
-                    <p className="mt-1 text-[11px] text-slate-500">{t('companies.unitPercent')}</p>
+                    <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">{t('companies.unitPercent')}</p>
                   </div>
                 </div>
                 </CardContent>

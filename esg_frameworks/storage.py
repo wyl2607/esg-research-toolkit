@@ -28,6 +28,37 @@ class FrameworkAnalysisResult(Base):
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
 
+def _normalize_framework_payload(
+    payload: dict,
+    *,
+    framework_version: str,
+) -> dict:
+    normalized = dict(payload)
+    normalized["framework_version"] = normalized.get("framework_version") or framework_version
+    normalized["analyzed_at"] = None
+    return normalized
+
+
+def _serialize_framework_payload(payload: dict) -> str:
+    return json.dumps(payload, ensure_ascii=False, sort_keys=True)
+
+
+def _payload_matches_row(
+    row: FrameworkAnalysisResult,
+    *,
+    expected_payload: dict,
+) -> bool:
+    try:
+        existing_payload = json.loads(row.result_payload)
+    except json.JSONDecodeError:
+        return False
+    normalized_existing = _normalize_framework_payload(
+        existing_payload,
+        framework_version=row.framework_version,
+    )
+    return normalized_existing == expected_payload
+
+
 def save_framework_result(
     db: Session,
     result: FrameworkScoreResult,
@@ -35,17 +66,36 @@ def save_framework_result(
     framework_version: str = "v1",
 ) -> FrameworkAnalysisResult:
     payload = result.model_dump()
+    resolved_framework_version = payload.get("framework_version") or framework_version
+    normalized_payload = _normalize_framework_payload(
+        payload,
+        framework_version=resolved_framework_version,
+    )
     canonical_name = canonical_company_name(result.company_name)
+    existing_records = (
+        db.query(FrameworkAnalysisResult)
+        .filter(
+            FrameworkAnalysisResult.company_name == canonical_name,
+            FrameworkAnalysisResult.report_year == result.report_year,
+            FrameworkAnalysisResult.framework_id == result.framework_id,
+            FrameworkAnalysisResult.framework_version == resolved_framework_version,
+        )
+        .order_by(FrameworkAnalysisResult.created_at.desc(), FrameworkAnalysisResult.id.desc())
+        .all()
+    )
+    for existing_record in existing_records:
+        if _payload_matches_row(existing_record, expected_payload=normalized_payload):
+            return existing_record
     record = FrameworkAnalysisResult(
         company_name=canonical_name,
         report_year=result.report_year,
         framework_id=result.framework_id,
         framework_name=result.framework,
-        framework_version=payload.get("framework_version") or framework_version,
+        framework_version=resolved_framework_version,
         total_score=result.total_score,
         grade=result.grade,
         coverage_pct=result.coverage_pct,
-        result_payload=json.dumps(payload, ensure_ascii=False),
+        result_payload=_serialize_framework_payload(normalized_payload),
     )
     db.add(record)
     db.commit()

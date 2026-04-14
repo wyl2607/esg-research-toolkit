@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { QueryStateCard } from '@/components/QueryStateCard'
 import { localizeErrorMessage } from '@/lib/error-utils'
 
 export function RegionalPage() {
@@ -29,6 +30,7 @@ export function RegionalPage() {
   const {
     data: companies = [],
     error: companiesError,
+    refetch: refetchCompanies,
   } = useQuery({ queryKey: ['companies'], queryFn: listCompanies })
 
   const [companyName, companyYear] = selected ? selected.split('|') : [null, null]
@@ -37,6 +39,7 @@ export function RegionalPage() {
     data: report,
     isLoading,
     error: reportError,
+    refetch: refetchReport,
   } = useQuery({
     queryKey: ['regional', companyName, companyYear],
     queryFn: () => getRegionalComparison(companyName!, Number(companyYear)),
@@ -76,9 +79,20 @@ export function RegionalPage() {
       </section>
 
       {(companiesError || reportError) && (
-        <p className="text-sm text-red-500">
-          {localizeErrorMessage(t, reportError ?? companiesError, 'common.error')}
-        </p>
+        <QueryStateCard
+          tone="error"
+          title={t('common.error')}
+          body={localizeErrorMessage(t, reportError ?? companiesError, 'common.error')}
+          actionLabel={t('errorBoundary.retry')}
+          onAction={() => {
+            if (reportError) {
+              void refetchReport()
+            } else {
+              void refetchCompanies()
+            }
+          }}
+          className="max-w-2xl"
+        />
       )}
 
       <div className="surface-card max-w-xl">
@@ -99,7 +113,23 @@ export function RegionalPage() {
         </Select>
       </div>
 
-      {isLoading && <p className="text-slate-400">{t('common.loading')}</p>}
+      {companies.length === 0 && !companiesError ? (
+        <QueryStateCard
+          tone="empty"
+          title={t('common.noData')}
+          body={t('dashboard.noCompanies')}
+          className="max-w-2xl"
+        />
+      ) : null}
+
+      {isLoading ? (
+        <QueryStateCard
+          tone="loading"
+          title={t('common.loading')}
+          body={t('regional.subtitle')}
+          className="max-w-2xl"
+        />
+      ) : null}
 
       {report && (
         <div className="space-y-6">

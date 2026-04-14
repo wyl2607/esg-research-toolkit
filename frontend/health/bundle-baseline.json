@@ -1,5 +1,25 @@
 {
-  "totalBytes": 1104581,
-  "jsBytes": 1067605,
-  "cssBytes": 36976
+  "totalBytes": 1148127,
+  "jsBytes": 1107468,
+  "cssBytes": 40659,
+  "routes": {
+    "dashboard": {
+      "id": "dashboard",
+      "page": "Dashboard",
+      "manifestKey": "src/pages/DashboardPage.tsx",
+      "chunkBytes": 7621,
+      "initialJsBytes": 127781,
+      "asyncJsBytes": 533867,
+      "asyncChunkCount": 7
+    },
+    "company-profile": {
+      "id": "company-profile",
+      "page": "Company Profile",
+      "manifestKey": "src/pages/CompanyProfilePage.tsx",
+      "chunkBytes": 29463,
+      "initialJsBytes": 148142,
+      "asyncJsBytes": 563868,
+      "asyncChunkCount": 11
+    }
+  }
 }
