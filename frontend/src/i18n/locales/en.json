@@ -3,7 +3,6 @@
     "dashboard": "Dashboard",
     "upload": "Upload",
     "manual": "Case Builder",
-    "designLab": "Design Lab",
     "taxonomy": "Taxonomy",
     "lcoe": "LCOE",
     "companies": "Companies",
@@ -58,60 +57,6 @@
     "taxonomyPct": "Taxonomy %",
     "runTaxonomy": "Run Taxonomy Score →",
     "uploadReport": "Upload Report"
-  },
-  "designLab": {
-    "kicker": "Visual direction testbed",
-    "title": "Design Lab",
-    "subtitle": "Compare three realistic visual directions for the ESG product before we lock the main UI language. Open this page locally and choose the one that feels most credible and most useful for job-showcase storytelling.",
-    "badge": "Local preview only",
-    "recommended": "Recommended",
-    "whatChanges": "What changes if we choose this",
-    "chooseThis": "Choose this direction",
-    "myRecommendation": "My recommendation",
-    "recommendationTitle": "Start with Analyst Blue",
-    "recommendationBody": "It is the strongest match for our product: credible enough for enterprise and consulting contexts, readable enough for long company names and evidence blocks, and structured enough to present ESG analysis as a serious tool instead of a generic startup dashboard.",
-    "mock": {
-      "kicker": "Profile preview",
-      "company": "Contemporary Amperex Technology Co., Limited",
-      "subhead": "Historical trend, framework interpretation, and disclosure quality in one reusable profile.",
-      "metric1": "Scope 1",
-      "metric2": "Renewable",
-      "metric3": "Readiness",
-      "readiness": "current band",
-      "identity": "Identity & provenance"
-    },
-    "styles": {
-      "analyst_blue": {
-        "name": "Analyst Blue",
-        "summary": "Enterprise research tool with structured blue accents and high trust density.",
-        "tone": "High-trust",
-        "fit": "Best for ESG analysis",
-        "behavior": "Long names, units, and evidence blocks stay readable without looking crowded.",
-        "change1": "Company pages look more like a professional analysis console.",
-        "change2": "Long company names wrap cleanly and stop breaking the layout.",
-        "change3": "Units, readiness states, and provenance feel first-class instead of secondary."
-      },
-      "dense_graphite": {
-        "name": "Dense Graphite",
-        "summary": "Dark, compact, data-dense UI with stronger engineering and AI-product energy.",
-        "tone": "Technical",
-        "fit": "Best for power-user mode",
-        "behavior": "Best when we want the product to feel like an internal analyst terminal with richer density.",
-        "change1": "Charts and controls feel more like a research workstation.",
-        "change2": "Advanced users may like the density, but it is less warm for job demos.",
-        "change3": "Good secondary theme later, but risky as the first public-facing style."
-      },
-      "editorial_warm": {
-        "name": "Editorial Warm",
-        "summary": "Softer, document-first UI that feels more like a research brief than a dashboard.",
-        "tone": "Readable",
-        "fit": "Best for case-study reading",
-        "behavior": "Makes narratives and evidence easier to read, but can feel less like a product platform.",
-        "change1": "Case studies and evidence sections become easier to scan.",
-        "change2": "The interface feels warmer and more human for interviews.",
-        "change3": "Less powerful for dense operational dashboards or benchmark-heavy views."
-      }
-    }
   },
   "upload": {
     "kicker": "Document intake",
@@ -467,7 +412,7 @@
   },
   "errorBoundary": {
     "title": "Something went wrong",
-    "suggestion": "Please refresh the page or try again.",
+    "suggestion": "Please refresh the page or contact support.",
     "retry": "Try again"
   },
   "a11y": {
@@ -496,13 +441,5 @@
     "gapAnalysis": "Gap Analysis",
     "compliancePriority": "Compliance Priority Actions",
     "selectPrompt": "Select a company to view three-region ESG comparison."
-  },
-  "errorBoundary": {
-    "title": "Something went wrong",
-    "suggestion": "Please refresh the page or contact support.",
-    "retry": "Try again"
-  },
-  "a11y": {
-    "skipToMain": "Skip to main content"
   }
 }

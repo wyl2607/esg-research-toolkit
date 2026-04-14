@@ -3,7 +3,6 @@
     "dashboard": "仪表盘",
     "upload": "上传",
     "manual": "案例构建",
-    "designLab": "设计实验室",
     "taxonomy": "分类法评分",
     "lcoe": "度电成本",
     "companies": "公司列表",
@@ -58,60 +57,6 @@
     "taxonomyPct": "分类法 %",
     "runTaxonomy": "进行分类法评分 →",
     "uploadReport": "上传报告"
-  },
-  "designLab": {
-    "kicker": "视觉方向实验台",
-    "title": "设计实验室",
-    "subtitle": "先把三种真实可用的视觉方向放在一起比较，再决定正式 UI 语言。你可以直接在本地打开这个页面看，不用靠想象选风格。",
-    "badge": "仅本地预览",
-    "recommended": "推荐",
-    "whatChanges": "如果选择这个方向，会发生什么变化",
-    "chooseThis": "选择这个方向",
-    "myRecommendation": "我的建议",
-    "recommendationTitle": "优先选 Analyst Blue",
-    "recommendationBody": "它最适合我们这个产品：足够像企业和咨询分析工具，长公司名和证据块也更容易读，同时还能把 ESG 分析呈现得像一个真正严肃的产品，而不是普通创业 Dashboard。",
-    "mock": {
-      "kicker": "画像预览",
-      "company": "Contemporary Amperex Technology Co., Limited",
-      "subhead": "把历史趋势、框架解释和披露质量收进同一个可复用的公司画像页。",
-      "metric1": "范围一",
-      "metric2": "可再生能源",
-      "metric3": "完成度",
-      "readiness": "当前等级",
-      "identity": "身份与来源"
-    },
-    "styles": {
-      "analyst_blue": {
-        "name": "Analyst Blue",
-        "summary": "偏企业研究工具的蓝色分析风格，可信度高，结构清晰。",
-        "tone": "高可信",
-        "fit": "最适合 ESG 分析",
-        "behavior": "长公司名、单位和证据说明都能保持清晰，不会显得挤。",
-        "change1": "公司画像页会更像专业分析控制台。",
-        "change2": "长公司名会更自然换行，不再破坏布局。",
-        "change3": "单位、完成度和来源信息会更像一级信息，而不是附属信息。"
-      },
-      "dense_graphite": {
-        "name": "Dense Graphite",
-        "summary": "深色、高密度、偏工程与 AI 产品气质的界面。",
-        "tone": "技术感",
-        "fit": "适合高密度工作台",
-        "behavior": "如果我们想让产品更像内部分析工作站，这个方向会更强。",
-        "change1": "图表和控制区会更像研究工作台。",
-        "change2": "高级用户可能会喜欢，但求职展示时会偏冷。",
-        "change3": "适合以后做 power-user 模式，不建议先做成默认风格。"
-      },
-      "editorial_warm": {
-        "name": "Editorial Warm",
-        "summary": "更偏研究简报和文档阅读体验的温和风格。",
-        "tone": "可读性",
-        "fit": "适合案例展示",
-        "behavior": "叙事和证据块会更好读，但产品平台感会弱一点。",
-        "change1": "案例页和证据段落会更容易读。",
-        "change2": "在面试展示时会更温和、更有人味。",
-        "change3": "但对于后续 benchmark 和数据中台页面，力量感会弱一点。"
-      }
-    }
   },
   "upload": {
     "kicker": "文档录入",
@@ -466,8 +411,8 @@
     "unknown": "发生未知错误"
   },
   "errorBoundary": {
-    "title": "页面发生错误",
-    "suggestion": "请刷新页面后重试。",
+    "title": "出现错误",
+    "suggestion": "请刷新页面或联系支持。",
     "retry": "重试"
   },
   "a11y": {
@@ -496,13 +441,5 @@
     "gapAnalysis": "差距分析",
     "compliancePriority": "合规优先行动",
     "selectPrompt": "选择企业以查看三地 ESG 框架对比分析"
-  },
-  "errorBoundary": {
-    "title": "出现错误",
-    "suggestion": "请刷新页面或联系支持。",
-    "retry": "重试"
-  },
-  "a11y": {
-    "skipToMain": "跳转到主内容"
   }
 }

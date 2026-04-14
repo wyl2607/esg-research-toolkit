@@ -10,7 +10,6 @@ import {
   Globe,
   Map,
   FilePenLine,
-  SwatchBook,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
@@ -29,7 +28,6 @@ export function Sidebar({ id, className, onNavigate }: SidebarProps) {
     { to: '/', label: t('nav.dashboard'), icon: LayoutDashboard },
     { to: '/upload', label: t('nav.upload'), icon: Upload },
     { to: '/manual', label: t('nav.manual'), icon: FilePenLine },
-    { to: '/design-lab', label: t('nav.designLab'), icon: SwatchBook },
     { to: '/taxonomy', label: t('nav.taxonomy'), icon: Tag },
     { to: '/lcoe', label: t('nav.lcoe'), icon: Zap },
     { to: '/companies', label: t('nav.companies'), icon: Building2 },

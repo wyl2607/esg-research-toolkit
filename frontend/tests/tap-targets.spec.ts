@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-const routes = ['/', '/upload', '/companies', '/design-lab', '/compare'] as const
+const routes = ['/', '/upload', '/companies', '/compare'] as const
 
 for (const route of routes) {
   test(`${route} keeps interactive tap targets >= 44x44`, async ({ page }) => {

@@ -3,7 +3,6 @@
     "dashboard": "Dashboard",
     "upload": "Hochladen",
     "manual": "Case Builder",
-    "designLab": "Design-Labor",
     "taxonomy": "Taxonomie",
     "lcoe": "LCOE",
     "companies": "Unternehmen",
@@ -58,60 +57,6 @@
     "taxonomyPct": "Taxonomie %",
     "runTaxonomy": "Taxonomie-Bewertung starten →",
     "uploadReport": "Bericht hochladen"
-  },
-  "designLab": {
-    "kicker": "Visuelles Testfeld",
-    "title": "Design-Labor",
-    "subtitle": "Drei realistische visuelle Richtungen direkt nebeneinander vergleichen, bevor wir die endgültige UI-Sprache festlegen. Diese Seite ist lokal gedacht, damit du nicht blind eine Stilrichtung wählen musst.",
-    "badge": "Nur lokale Vorschau",
-    "recommended": "Empfohlen",
-    "whatChanges": "Was sich mit dieser Richtung verändert",
-    "chooseThis": "Diese Richtung wählen",
-    "myRecommendation": "Meine Empfehlung",
-    "recommendationTitle": "Mit Analyst Blue starten",
-    "recommendationBody": "Diese Richtung passt am besten zu unserem Produkt: glaubwürdig genug für Enterprise- und Consulting-Kontexte, gut lesbar für lange Firmennamen und Evidenzblöcke und strukturiert genug, um ESG-Analysen wie ein ernsthaftes Produkt statt wie ein generisches Startup-Dashboard wirken zu lassen.",
-    "mock": {
-      "kicker": "Profilvorschau",
-      "company": "Contemporary Amperex Technology Co., Limited",
-      "subhead": "Historischer Verlauf, Framework-Interpretation und Offenlegungsqualität in einem wiederverwendbaren Unternehmensprofil.",
-      "metric1": "Scope 1",
-      "metric2": "Erneuerbare",
-      "metric3": "Readiness",
-      "readiness": "aktuelle Stufe",
-      "identity": "Identität & Herkunft"
-    },
-    "styles": {
-      "analyst_blue": {
-        "name": "Analyst Blue",
-        "summary": "Blau geprägte Enterprise-Research-Oberfläche mit hoher Vertrauenswirkung.",
-        "tone": "Vertrauenswürdig",
-        "fit": "Am besten für ESG-Analyse",
-        "behavior": "Lange Namen, Einheiten und Evidenzblöcke bleiben lesbar, ohne gedrängt zu wirken.",
-        "change1": "Unternehmensprofile wirken stärker wie ein professionelles Analyse-Tool.",
-        "change2": "Lange Firmennamen umbrechen sauber und zerstören das Layout nicht mehr.",
-        "change3": "Einheiten, Readiness und Herkunft werden zu Erstklass-Informationen statt zu Randnotizen."
-      },
-      "dense_graphite": {
-        "name": "Dense Graphite",
-        "summary": "Dunkle, kompakte, datenreiche UI mit stärkerem Engineering- und AI-Produktgefühl.",
-        "tone": "Technisch",
-        "fit": "Am besten für Power-User",
-        "behavior": "Stark, wenn das Produkt wie eine interne Analysten-Workstation wirken soll.",
-        "change1": "Charts und Controls fühlen sich stärker wie ein Forschungs-Workspace an.",
-        "change2": "Für Job-Demos ist der Stil jedoch kühler und distanzierter.",
-        "change3": "Später gut als zweites Theme, aber riskant als erste Hauptsprache."
-      },
-      "editorial_warm": {
-        "name": "Editorial Warm",
-        "summary": "Wärmere, dokumentenorientierte UI mit Fokus auf Lesbarkeit und Fallstudien.",
-        "tone": "Lesefreundlich",
-        "fit": "Am besten für Case Studies",
-        "behavior": "Narrative und Evidenz werden leichter lesbar, die Plattformwirkung nimmt aber etwas ab.",
-        "change1": "Case Studies und Evidenzblöcke werden angenehmer zu lesen.",
-        "change2": "Für Interviews wirkt es menschlicher und zugänglicher.",
-        "change3": "Für Benchmark- und Analyse-Dashboards ist es etwas weniger kraftvoll."
-      }
-    }
   },
   "upload": {
     "kicker": "Dokumentenaufnahme",
@@ -466,8 +411,8 @@
     "unknown": "Ein unerwarteter Fehler ist aufgetreten"
   },
   "errorBoundary": {
-    "title": "Etwas ist schiefgelaufen",
-    "suggestion": "Bitte aktualisieren Sie die Seite oder versuchen Sie es erneut.",
+    "title": "Ein Fehler ist aufgetreten",
+    "suggestion": "Bitte aktualisieren Sie die Seite oder kontaktieren Sie den Support.",
     "retry": "Erneut versuchen"
   },
   "a11y": {
@@ -496,13 +441,5 @@
     "gapAnalysis": "Lückenanalyse",
     "compliancePriority": "Compliance-Prioritäten",
     "selectPrompt": "Unternehmen auswählen für Drei-Regionen-ESG-Vergleich"
-  },
-  "errorBoundary": {
-    "title": "Ein Fehler ist aufgetreten",
-    "suggestion": "Bitte aktualisieren Sie die Seite oder kontaktieren Sie den Support.",
-    "retry": "Erneut versuchen"
-  },
-  "a11y": {
-    "skipToMain": "Zum Hauptinhalt springen"
   }
 }

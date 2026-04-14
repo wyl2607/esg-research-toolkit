@@ -33,9 +33,6 @@ const RegionalPage = lazy(() =>
 const ManualCaseBuilderPage = lazy(() =>
   import('@/pages/ManualCaseBuilderPage').then((module) => ({ default: module.ManualCaseBuilderPage }))
 )
-const DesignLabPage = lazy(() =>
-  import('@/pages/DesignLabPage').then((module) => ({ default: module.DesignLabPage }))
-)
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
@@ -55,7 +52,6 @@ export default function App() {
               <Route path="companies" element={<CompaniesPage />} />
               <Route path="companies/:companyName" element={<CompanyProfilePage />} />
               <Route path="manual" element={<ManualCaseBuilderPage />} />
-              <Route path="design-lab" element={<DesignLabPage />} />
               <Route path="compare" element={<ComparePage />} />
               <Route path="frameworks" element={<FrameworksPage />} />
               <Route path="regional" element={<RegionalPage />} />

@@ -18,7 +18,6 @@ export const smokeRoutes: RouteExpectation[] = [
   { path: '/', heading: 'Dashboard', name: 'dashboard' },
   { path: '/upload', heading: 'ESG-Bericht hochladen', name: 'upload' },
   { path: '/manual', heading: 'Manuelle Eingabe / Case Builder', name: 'manual' },
-  { path: '/design-lab', heading: 'Design-Labor', name: 'design-lab' },
   { path: '/taxonomy', heading: 'Taxonomie-Bewertung', name: 'taxonomy' },
   { path: '/lcoe', heading: 'Stromgestehungskosten-Analyse', name: 'lcoe' },
   { path: '/companies', heading: 'Unternehmen', name: 'companies' },
@@ -28,7 +27,7 @@ export const smokeRoutes: RouteExpectation[] = [
 ]
 
 export const a11yRoutes: RouteExpectation[] = smokeRoutes.filter((route) =>
-  ['/', '/upload', '/companies', '/design-lab', '/frameworks'].includes(route.path)
+  ['/', '/upload', '/companies', '/frameworks'].includes(route.path)
 )
 
 export function trackBrowserIssues(page: Page) {
