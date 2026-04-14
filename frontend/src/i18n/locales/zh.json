@@ -10,7 +10,10 @@
     "compare": "对比分析",
     "frameworks": "多框架",
     "appName": "ESG 工具包",
-    "regional": "区域对比"
+    "regional": "区域对比",
+    "main": "主导航",
+    "openMenu": "打开导航菜单",
+    "closeMenu": "关闭导航菜单"
   },
   "common": {
     "loading": "加载中…",
@@ -35,7 +38,9 @@
     "summary": "摘要"
   },
   "dashboard": {
+    "kicker": "组合监控总览",
     "title": "仪表盘",
+    "subtitle": "在同一视图里追踪组合级 ESG 信号、检查最近上传，并快速进入公司分析流程。",
     "companiesAnalyzed": "已分析公司数",
     "avgTaxonomy": "平均分类法对齐率",
     "avgTaxonomyReadinessProxy": "平均分类法就绪度（代理）",
@@ -426,6 +431,14 @@
     "timeout": "请求超时",
     "unknown": "发生未知错误"
   },
+  "errorBoundary": {
+    "title": "页面发生错误",
+    "suggestion": "请刷新页面后重试。",
+    "retry": "重试"
+  },
+  "a11y": {
+    "skipToMain": "跳转到主内容"
+  },
   "language": {
     "label": "语言",
     "en": "English",
@@ -449,5 +462,13 @@
     "gapAnalysis": "差距分析",
     "compliancePriority": "合规优先行动",
     "selectPrompt": "选择企业以查看三地 ESG 框架对比分析"
+  },
+  "errorBoundary": {
+    "title": "出现错误",
+    "suggestion": "请刷新页面或联系支持。",
+    "retry": "重试"
+  },
+  "a11y": {
+    "skipToMain": "跳转到主内容"
   }
 }

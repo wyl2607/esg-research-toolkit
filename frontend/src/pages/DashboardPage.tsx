@@ -32,12 +32,12 @@ const coverageLabelMap: Record<string, string> = {
 function CoverageBar({ label, pct }: { label: string; pct: number }) {
   const colorClass = pct >= 80 ? 'bg-green-500' : pct >= 50 ? 'bg-yellow-400' : 'bg-red-400'
   return (
-    <div className="flex items-center gap-3 text-sm">
-      <span className="w-36 shrink-0 text-slate-600">{label}</span>
+    <div className="flex items-center gap-2 sm:gap-3 text-sm">
+      <span className="w-24 shrink-0 text-slate-600 sm:w-36">{label}</span>
       <div className="h-2 flex-1 rounded-full bg-slate-100">
         <div className={`h-2 rounded-full transition-all ${colorClass}`} style={{ width: `${pct}%` }} />
       </div>
-      <span className="w-12 text-right font-medium text-slate-700">{pct.toFixed(1)}%</span>
+      <span className="w-10 text-right font-medium text-slate-700 sm:w-12">{pct.toFixed(1)}%</span>
     </div>
   )
 }
@@ -94,11 +94,13 @@ export function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <section className="editorial-panel p-4 md:p-5">
-          <h2 className="mb-3 text-2xl font-semibold text-stone-900">{t('dashboard.yearlyTrend')}</h2>
+        <section className="editorial-panel p-4 md:p-5" aria-labelledby="yearly-trend-title">
+          <h2 id="yearly-trend-title" className="mb-3 text-2xl font-semibold text-stone-900">
+            {t('dashboard.yearlyTrend')}
+          </h2>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stats?.yearly_trend ?? []}>
+              <BarChart data={stats?.yearly_trend ?? []} role="img" aria-label={t('dashboard.yearlyTrend')}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="year" />
                 <YAxis allowDecimals={false} />
@@ -109,14 +111,18 @@ export function DashboardPage() {
           </div>
         </section>
 
-        <section className="editorial-panel p-4 md:p-5">
-          <h2 className="mb-3 text-2xl font-semibold text-stone-900">{t('dashboard.topEmitters')}</h2>
+        <section className="editorial-panel p-4 md:p-5" aria-labelledby="top-emitters-title">
+          <h2 id="top-emitters-title" className="mb-3 text-2xl font-semibold text-stone-900">
+            {t('dashboard.topEmitters')}
+          </h2>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={stats?.top_emitters ?? []}
                 layout="vertical"
                 margin={{ top: 8, right: 16, left: 24, bottom: 8 }}
+                role="img"
+                aria-label={t('dashboard.topEmitters')}
               >
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                 <XAxis type="number" />
@@ -133,8 +139,10 @@ export function DashboardPage() {
         </section>
       </div>
 
-      <section className="editorial-panel space-y-3 p-4 md:p-5">
-        <h2 className="text-2xl font-semibold text-stone-900">{t('dashboard.coverageRates')}</h2>
+      <section className="editorial-panel space-y-3 p-4 md:p-5" aria-labelledby="coverage-rates-title">
+        <h2 id="coverage-rates-title" className="text-2xl font-semibold text-stone-900">
+          {t('dashboard.coverageRates')}
+        </h2>
         {coverageRows.length === 0 ? (
           <p className="text-sm text-slate-400">{t('common.noData')}</p>
         ) : (
@@ -144,53 +152,90 @@ export function DashboardPage() {
         )}
       </section>
 
-      <div>
-        <h2 className="mb-3 text-2xl font-semibold text-stone-900">{t('dashboard.recentAnalyses')}</h2>
+      <div aria-labelledby="recent-analyses-title">
+        <h2 id="recent-analyses-title" className="mb-3 text-2xl font-semibold text-stone-900">
+          {t('dashboard.recentAnalyses')}
+        </h2>
         {companiesLoading ? (
           <p className="text-slate-400">{t('common.loading')}</p>
         ) : recent.length === 0 ? (
           <p className="text-slate-400">{t('dashboard.noReportsYet')}</p>
         ) : (
           <div className="editorial-panel overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="border-b editorial-table-header">
-                <tr>
-                  <th className="px-4 py-3 text-left font-medium text-slate-600">{t('common.company')}</th>
-                  <th className="px-4 py-3 text-left font-medium text-slate-600">{t('common.year')}</th>
-                  <th className="px-4 py-3 text-left font-medium text-slate-600">{t('dashboard.taxonomyPct')}</th>
-                  <th className="px-4 py-3 text-left font-medium text-slate-600">{t('companies.employees')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recent.map((company) => (
-                  <tr
-                    key={`${company.company_name}-${company.report_year}`}
-                    className="cursor-pointer border-b last:border-0 hover:bg-slate-50"
-                    onClick={() => navigate('/taxonomy')}
-                  >
-                    <td className="px-4 py-3 font-medium">{company.company_name}</td>
-                    <td className="px-4 py-3 text-slate-600">{company.report_year}</td>
-                    <td className="px-4 py-3">
-                      <Badge
-                        variant={
-                          company.taxonomy_aligned_revenue_pct != null &&
-                          company.taxonomy_aligned_revenue_pct > 50
-                            ? 'default'
-                            : 'secondary'
-                        }
-                      >
-                        {company.taxonomy_aligned_revenue_pct != null
-                          ? `${company.taxonomy_aligned_revenue_pct.toFixed(1)}%`
-                          : '—'}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-3 text-slate-600">
-                      {company.total_employees?.toLocaleString(i18n.resolvedLanguage) ?? '—'}
-                    </td>
+            <div className="space-y-3 p-4 md:hidden">
+              {recent.map((company) => (
+                <button
+                  key={`${company.company_name}-${company.report_year}`}
+                  type="button"
+                  className="w-full rounded-xl border border-stone-200 bg-white/90 p-3 text-left transition hover:border-stone-300 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600"
+                  onClick={() => navigate('/taxonomy')}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-slate-900">{company.company_name}</p>
+                      <p className="text-xs text-slate-500">{company.report_year}</p>
+                    </div>
+                    <Badge
+                      variant={
+                        company.taxonomy_aligned_revenue_pct != null &&
+                        company.taxonomy_aligned_revenue_pct > 50
+                          ? 'default'
+                          : 'secondary'
+                      }
+                    >
+                      {company.taxonomy_aligned_revenue_pct != null
+                        ? `${company.taxonomy_aligned_revenue_pct.toFixed(1)}%`
+                        : '—'}
+                    </Badge>
+                  </div>
+                  <p className="mt-2 text-xs text-slate-600">
+                    {t('companies.employees')}:{' '}
+                    {company.total_employees?.toLocaleString(i18n.resolvedLanguage) ?? '—'}
+                  </p>
+                </button>
+              ))}
+            </div>
+            <div className="hidden overflow-x-auto md:block">
+              <table className="min-w-[640px] w-full text-sm">
+                <thead className="border-b editorial-table-header">
+                  <tr>
+                    <th className="px-4 py-3 text-left font-medium text-slate-600">{t('common.company')}</th>
+                    <th className="px-4 py-3 text-left font-medium text-slate-600">{t('common.year')}</th>
+                    <th className="px-4 py-3 text-left font-medium text-slate-600">{t('dashboard.taxonomyPct')}</th>
+                    <th className="px-4 py-3 text-left font-medium text-slate-600">{t('companies.employees')}</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {recent.map((company) => (
+                    <tr
+                      key={`${company.company_name}-${company.report_year}`}
+                      className="cursor-pointer border-b last:border-0 hover:bg-slate-50"
+                      onClick={() => navigate('/taxonomy')}
+                    >
+                      <td className="px-4 py-3 font-medium">{company.company_name}</td>
+                      <td className="px-4 py-3 text-slate-600">{company.report_year}</td>
+                      <td className="px-4 py-3">
+                        <Badge
+                          variant={
+                            company.taxonomy_aligned_revenue_pct != null &&
+                            company.taxonomy_aligned_revenue_pct > 50
+                              ? 'default'
+                              : 'secondary'
+                          }
+                        >
+                          {company.taxonomy_aligned_revenue_pct != null
+                            ? `${company.taxonomy_aligned_revenue_pct.toFixed(1)}%`
+                            : '—'}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 text-slate-600">
+                        {company.total_employees?.toLocaleString(i18n.resolvedLanguage) ?? '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>

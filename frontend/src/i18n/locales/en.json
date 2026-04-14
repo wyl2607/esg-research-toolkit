@@ -10,7 +10,10 @@
     "compare": "Compare",
     "frameworks": "Frameworks",
     "appName": "ESG Toolkit",
-    "regional": "Regional Analysis"
+    "regional": "Regional Analysis",
+    "main": "Main navigation",
+    "openMenu": "Open navigation menu",
+    "closeMenu": "Close navigation menu"
   },
   "common": {
     "loading": "Loading…",
@@ -35,7 +38,9 @@
     "summary": "Summary"
   },
   "dashboard": {
+    "kicker": "Portfolio command center",
     "title": "Dashboard",
+    "subtitle": "Track portfolio-level ESG signals, inspect recent uploads, and jump into company workflows without losing context.",
     "companiesAnalyzed": "Companies Analyzed",
     "avgTaxonomy": "Avg Taxonomy Alignment",
     "avgTaxonomyReadinessProxy": "Avg Taxonomy Readiness (Proxy)",
@@ -426,6 +431,14 @@
     "timeout": "Request timed out",
     "unknown": "An unexpected error occurred"
   },
+  "errorBoundary": {
+    "title": "Something went wrong",
+    "suggestion": "Please refresh the page or try again.",
+    "retry": "Try again"
+  },
+  "a11y": {
+    "skipToMain": "Skip to main content"
+  },
   "language": {
     "label": "Language",
     "en": "English",
@@ -449,5 +462,13 @@
     "gapAnalysis": "Gap Analysis",
     "compliancePriority": "Compliance Priority Actions",
     "selectPrompt": "Select a company to view three-region ESG comparison."
+  },
+  "errorBoundary": {
+    "title": "Something went wrong",
+    "suggestion": "Please refresh the page or contact support.",
+    "retry": "Try again"
+  },
+  "a11y": {
+    "skipToMain": "Skip to main content"
   }
 }

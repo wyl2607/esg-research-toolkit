@@ -10,7 +10,10 @@
     "compare": "Vergleich",
     "frameworks": "Rahmenwerke",
     "appName": "ESG Toolkit",
-    "regional": "Regionalvergleich"
+    "regional": "Regionalvergleich",
+    "main": "Hauptnavigation",
+    "openMenu": "Navigationsmenü öffnen",
+    "closeMenu": "Navigationsmenü schließen"
   },
   "common": {
     "loading": "Wird geladen…",
@@ -35,7 +38,9 @@
     "summary": "Zusammenfassung"
   },
   "dashboard": {
+    "kicker": "Portfolio-Kommandozentrale",
     "title": "Dashboard",
+    "subtitle": "Portfolioweite ESG-Signale verfolgen, aktuelle Uploads prüfen und direkt in Unternehmens-Workflows springen, ohne Kontext zu verlieren.",
     "companiesAnalyzed": "Analysierte Unternehmen",
     "avgTaxonomy": "Ø Taxonomie-Ausrichtung",
     "avgTaxonomyReadinessProxy": "Ø Taxonomie-Bereitschaft (Proxy)",
@@ -426,6 +431,14 @@
     "timeout": "Zeitüberschreitung der Anfrage",
     "unknown": "Ein unerwarteter Fehler ist aufgetreten"
   },
+  "errorBoundary": {
+    "title": "Etwas ist schiefgelaufen",
+    "suggestion": "Bitte aktualisieren Sie die Seite oder versuchen Sie es erneut.",
+    "retry": "Erneut versuchen"
+  },
+  "a11y": {
+    "skipToMain": "Zum Hauptinhalt springen"
+  },
   "language": {
     "label": "Sprache",
     "en": "English",
@@ -449,5 +462,13 @@
     "gapAnalysis": "Lückenanalyse",
     "compliancePriority": "Compliance-Prioritäten",
     "selectPrompt": "Unternehmen auswählen für Drei-Regionen-ESG-Vergleich"
+  },
+  "errorBoundary": {
+    "title": "Ein Fehler ist aufgetreten",
+    "suggestion": "Bitte aktualisieren Sie die Seite oder kontaktieren Sie den Support.",
+    "retry": "Erneut versuchen"
+  },
+  "a11y": {
+    "skipToMain": "Zum Hauptinhalt springen"
   }
 }
