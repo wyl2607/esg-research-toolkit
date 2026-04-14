@@ -1,6 +1,33 @@
 # React + TypeScript + Vite
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This frontend wraps the FastAPI backend with a React 19 + Vite application and now includes a repeatable browser validation stack for smoke, accessibility, and health checks.
+
+## Frontend Validation
+
+Run the core checks from `frontend/`:
+
+```bash
+npm run lint
+npm run build
+npm run test:smoke
+npm run test:a11y
+npm run health:check
+```
+
+Artifacts are written to:
+
+```text
+frontend/playwright-report/
+frontend/test-results/
+frontend/health-reports/latest/
+```
+
+Notes:
+
+- Playwright defaults to the installed Google Chrome channel via `ESG_PW_CHANNEL=chrome`.
+- If you want a different browser channel, set `ESG_PW_CHANNEL` before running the tests.
+- If you already have backend and frontend servers running, set `ESG_PW_SKIP_WEBSERVER=1` for Playwright and `ESG_SKIP_SERVER_BOOT=1` for `npm run health:check`.
+- A reusable Codex prompt is stored in `frontend/CODEX_FRONTEND_REVIEW_PROMPT.md`.
 
 ## Frontend Localization Policy (German-first)
 

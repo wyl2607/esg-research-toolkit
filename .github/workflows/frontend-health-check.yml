@@ -1,0 +1,65 @@
+name: Frontend Health Check
+
+on:
+  schedule:
+    # Weekday morning (09:00 CST = 01:00 UTC)
+    - cron: "0 1 * * 1-5"
+  workflow_dispatch:
+
+jobs:
+  frontend-health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install backend dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Install Playwright browser
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Run weekday frontend health check
+        working-directory: frontend
+        env:
+          OPENAI_API_KEY: test_key_placeholder
+        run: npm run health:check:ci
+
+      - name: Attach summary to job
+        if: always()
+        run: |
+          if [ -f frontend/health-reports/latest/summary.md ]; then
+            cat frontend/health-reports/latest/summary.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No health summary generated." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload health report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-health-report
+          path: |
+            frontend/health-reports/latest
+          if-no-files-found: warn

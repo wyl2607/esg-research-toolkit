@@ -54,6 +54,21 @@ npm install
 npm run dev
 ```
 
+### Weekday Frontend Health Check
+
+Run a full frontend health pass (lint, build, Playwright smoke, axe, Lighthouse):
+
+```bash
+cd frontend
+npm run health:check
+```
+
+When failures, bundle regressions, obvious layout issues, or new console/network errors are detected, a summary is generated at:
+
+```text
+frontend/health-reports/latest/summary.md
+```
+
 ### Docker
 
 Run the whole backend stack with Docker Compose:
