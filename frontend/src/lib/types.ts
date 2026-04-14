@@ -90,16 +90,21 @@ export interface LCOEInput {
   lifetime_years: number
   discount_rate: number
   electricity_price_eur_per_mwh: number
+  currency: 'EUR' | 'USD' | 'CNY'
+  reference_fx_to_eur: number
 }
 
 export interface LCOEResult {
   technology: string
   lcoe_eur_per_mwh: number
+  lcoe_local_per_mwh: number
   npv_eur: number
   irr: number
   payback_years: number
   lifetime_years: number
   electricity_price_eur_per_mwh: number
+  currency: string
+  reference_fx_to_eur: number
 }
 
 export interface SensitivityResult {

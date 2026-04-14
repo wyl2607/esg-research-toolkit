@@ -52,6 +52,15 @@ const DEFAULTS: LCOEInput = {
   lifetime_years: 25,
   discount_rate: 0.05,
   electricity_price_eur_per_mwh: 95,
+  currency: 'EUR',
+  reference_fx_to_eur: 1.0,
+}
+
+// Reference FX rates (annual avg 2023, EUR as base)
+const FX_PRESETS: Record<'EUR' | 'USD' | 'CNY', { label: string; fx: number }> = {
+  EUR: { label: '1 EUR = 1.000 EUR', fx: 1.0 },
+  USD: { label: '1 USD ≈ 0.920 EUR (2023 avg)', fx: 0.920 },
+  CNY: { label: '1 CNY ≈ 0.127 EUR (2023 avg)', fx: 0.127 },
 }
 
 // German EPEX SPOT annual average day-ahead prices (€/MWh)
@@ -60,6 +69,14 @@ const DE_MARKET_PRICES: { year: number; price: number; note?: string }[] = [
   { year: 2022, price: 235, note: '⚡ energy crisis' },
   { year: 2023, price: 95 },
   { year: 2024, price: 65 },
+]
+
+// China wholesale annual avg electricity prices (¥/MWh, source: CEPCI / NEA)
+const CN_MARKET_PRICES: { year: number; price: number }[] = [
+  { year: 2021, price: 346 },
+  { year: 2022, price: 382 },
+  { year: 2023, price: 363 },
+  { year: 2024, price: 370 },
 ]
 
 const FIELD_CONFIG: [keyof LCOEInput, string, string][] = [
@@ -176,6 +193,46 @@ export function LcoePage() {
             </Button>
           </div>
 
+          {/* Currency + FX section */}
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/40 p-4 space-y-3">
+            <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              {t('lcoe.currencySection')}
+            </p>
+            <div className="grid gap-3 sm:grid-cols-[1fr_1fr]">
+              <div className="space-y-1.5">
+                <Label className="text-sm">{t('lcoe.inputCurrency')}</Label>
+                <Select
+                  value={form.currency}
+                  onValueChange={(v: 'EUR' | 'USD' | 'CNY') =>
+                    setForm((f) => ({ ...f, currency: v, reference_fx_to_eur: FX_PRESETS[v].fx }))
+                  }
+                >
+                  <SelectTrigger className="rounded-xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="EUR">EUR — Euro</SelectItem>
+                    <SelectItem value="USD">USD — US Dollar</SelectItem>
+                    <SelectItem value="CNY">CNY — 人民币</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-sm">{t('lcoe.fxToEur')}</Label>
+                <Input
+                  type="number"
+                  step="0.001"
+                  className="h-10 rounded-xl border-slate-200 bg-white dark:bg-slate-700"
+                  value={form.reference_fx_to_eur}
+                  onChange={(e) => setForm((f) => ({ ...f, reference_fx_to_eur: parseFloat(e.target.value) || 1 }))}
+                />
+              </div>
+            </div>
+            <p className="text-[11px] text-slate-400 dark:text-slate-500">
+              {FX_PRESETS[form.currency]?.label} — {t('lcoe.fxNote')}
+            </p>
+          </div>
+
           <div className="grid gap-4 md:grid-cols-2">
           {FIELD_CONFIG.map(([key, labelKey, step]) => (
             <div key={key} className="space-y-2 rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
@@ -203,6 +260,7 @@ export function LcoePage() {
           </div>
 
           {/* Germany market reference price presets */}
+          {form.currency === 'EUR' && (
           <div className="rounded-2xl border border-slate-200 bg-slate-50/60 dark:border-slate-700 dark:bg-slate-800/40 px-4 py-3 space-y-2">
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
               {t('lcoe.deMarketRef')}
@@ -228,6 +286,36 @@ export function LcoePage() {
               {t('lcoe.deMarketRefNote')}
             </p>
           </div>
+          )}
+
+          {/* China market reference price presets */}
+          {form.currency === 'CNY' && (
+          <div className="rounded-2xl border border-red-100 dark:border-red-900/40 bg-red-50/60 dark:bg-red-900/10 px-4 py-3 space-y-2">
+            <p className="text-xs font-medium text-red-500 dark:text-red-400 uppercase tracking-wide">
+              {t('lcoe.cnMarketRef')}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {CN_MARKET_PRICES.map(({ year, price }: { year: number; price: number }) => (
+                <button
+                  key={year}
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, electricity_price_eur_per_mwh: price }))}
+                  style={{ minHeight: 'unset', minWidth: 'unset' }}
+                  className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 ${
+                    form.electricity_price_eur_per_mwh === price
+                      ? 'bg-red-100 border-red-300 text-red-900 dark:bg-red-800/40 dark:border-red-600 dark:text-red-300'
+                      : 'bg-white border-stone-200 text-stone-600 hover:bg-stone-50 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-300'
+                  }`}
+                >
+                  {year} — ¥{price}/MWh
+                </button>
+              ))}
+            </div>
+            <p className="text-[11px] text-slate-400 dark:text-slate-500">
+              {t('lcoe.cnMarketRefNote')}
+            </p>
+          </div>
+          )}
 
           {validationMessages.length > 0 ? (
             <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
@@ -277,6 +365,15 @@ export function LcoePage() {
                 sub={t('lcoe.resultHintLcoe')}
                 color="blue"
               />
+              {lcoeMutation.data.currency !== 'EUR' && (
+                <MetricCard
+                  label={t('lcoe.lcoeLocal', { currency: lcoeMutation.data.currency })}
+                  value={lcoeMutation.data.lcoe_local_per_mwh.toFixed(1)}
+                  unit={`${lcoeMutation.data.currency}/MWh`}
+                  sub={t('lcoe.resultHintLcoeLocal')}
+                  color="blue"
+                />
+              )}
               <MetricCard
                 label={t('lcoe.npv')}
                 value={`€${(lcoeMutation.data.npv_eur / 1e6).toFixed(1)}M`}
@@ -305,6 +402,9 @@ export function LcoePage() {
           {lcoeMutation.data && (
             <p className="mt-3 text-[11px] text-slate-400 dark:text-slate-500 italic">
               {t('lcoe.priceUsedNote', { price: lcoeMutation.data.electricity_price_eur_per_mwh })}
+              {lcoeMutation.data.currency !== 'EUR' && (
+                <> · {t('lcoe.fxUsedNote', { fx: lcoeMutation.data.reference_fx_to_eur, currency: lcoeMutation.data.currency })}</>
+              )}
             </p>
           )}
             </CardContent>

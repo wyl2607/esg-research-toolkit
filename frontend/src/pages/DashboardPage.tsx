@@ -94,9 +94,12 @@ export function DashboardPage() {
             <h1 className="text-4xl font-semibold leading-tight text-stone-900">{t('dashboard.title')}</h1>
             <p className="max-w-3xl text-sm leading-6 text-stone-600">{t('dashboard.subtitle')}</p>
           </div>
-          <Button className="h-11 rounded-xl bg-amber-700 text-amber-50 hover:bg-amber-800" onClick={() => navigate('/upload')}>
+          <Button
+            className="shrink-0 self-start rounded-xl bg-amber-700 text-amber-50 hover:bg-amber-800 md:self-end"
+            onClick={() => navigate('/upload')}
+          >
             {t('dashboard.uploadReport')}
-            <ArrowRight size={14} className="ml-2" />
+            <ArrowRight size={14} className="ml-1 shrink-0" aria-hidden="true" />
           </Button>
         </div>
       </div>
@@ -137,6 +140,8 @@ export function DashboardPage() {
             yearlyTrendLabel={t('dashboard.yearlyTrend')}
             topEmittersLabel={t('dashboard.topEmitters')}
             uploadsLabel={t('dashboard.uploads')}
+            chartsEmptyTitle={t('dashboard.chartsEmptyTitle')}
+            chartsEmptyBody={t('dashboard.chartsEmptyBody')}
           />
         </Suspense>
       </DeferredHeavyCharts>

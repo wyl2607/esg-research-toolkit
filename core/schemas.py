@@ -140,13 +140,21 @@ class LCOEInput(BaseModel):
     discount_rate: float = 0.07
     # Market electricity selling price used for NPV/IRR; defaults to Germany 2023 annual avg
     electricity_price_eur_per_mwh: float = Field(default=95.0, ge=0.0)
+    # Currency of the input values (capex / opex / electricity price are in this currency)
+    currency: Literal["EUR", "USD", "CNY"] = "EUR"
+    # How many EUR = 1 unit of the selected currency (used to normalize inputs for comparison)
+    # EUR→EUR: 1.0 | USD→EUR: ~0.92 | CNY→EUR: ~0.127
+    reference_fx_to_eur: float = Field(default=1.0, gt=0.0)
 
 
 class LCOEResult(BaseModel):
     technology: str
     lcoe_eur_per_mwh: float
+    lcoe_local_per_mwh: float          # LCOE in the input currency (lcoe_eur / fx)
     npv_eur: float
     irr: float
     payback_years: float
     lifetime_years: int
     electricity_price_eur_per_mwh: float
+    currency: str
+    reference_fx_to_eur: float

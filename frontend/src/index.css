@@ -58,6 +58,8 @@
 
   html {
     font-family: 'IBM Plex Sans', 'Avenir Next', 'Segoe UI', sans-serif;
+    /* Prevent horizontal overflow at all viewport widths */
+    overflow-x: hidden;
   }
 
   body {
@@ -70,6 +72,10 @@
     background-size: auto, auto, auto;
     background-attachment: fixed;
     font-feature-settings: 'tnum' 1, 'cv11' 1;
+    /* i18n: German compound words & all locales — prevent text overflow */
+    overflow-wrap: break-word;
+    word-break: break-word;
+    hyphens: auto;
   }
 
   button,

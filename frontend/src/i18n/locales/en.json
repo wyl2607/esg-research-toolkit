@@ -56,7 +56,9 @@
     "noReportsYet": "No reports yet. Upload your first ESG report.",
     "taxonomyPct": "Taxonomy %",
     "runTaxonomy": "Run Taxonomy Score →",
-    "uploadReport": "Upload Report"
+    "uploadReport": "Upload Report",
+    "chartsEmptyTitle": "No data to display yet",
+    "chartsEmptyBody": "Upload an ESG report to unlock trend charts and emission rankings."
   },
   "upload": {
     "kicker": "Document intake",
@@ -154,6 +156,15 @@
     "electricityPrice": "Electricity Selling Price",
     "deMarketRef": "Germany reference (EPEX SPOT annual avg)",
     "deMarketRefNote": "Source: EPEX SPOT / Bundesnetzagentur SMARD. Not from company reports — set manually.",
+    "cnMarketRef": "China reference (wholesale avg, CEPCI/NEA)",
+    "cnMarketRefNote": "Source: CEPCI / NEA annual data. Prices in CNY/MWh. Not from company reports — set manually.",
+    "currencySection": "Currency & FX settings",
+    "inputCurrency": "Input currency",
+    "fxToEur": "FX rate to EUR (1 unit → EUR)",
+    "fxNote": "All inputs are in this currency. Converted to EUR for calculation and cross-region comparison.",
+    "lcoeLocal": "LCOE ({{currency}})",
+    "resultHintLcoeLocal": "LCOE in input currency, for local market comparison.",
+    "fxUsedNote": "FX rate used: 1 {{currency}} = {{fx}} EUR",
     "priceUsedNote": "NPV/IRR calculated using electricity price: {{price}} €/MWh",
     "validation": {
       "capacity": "Capacity must be greater than 0 MW.",

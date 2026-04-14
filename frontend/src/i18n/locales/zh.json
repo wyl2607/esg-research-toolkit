@@ -56,7 +56,9 @@
     "noReportsYet": "暂无报告。请先上传第一份 ESG 报告。",
     "taxonomyPct": "分类法 %",
     "runTaxonomy": "进行分类法评分 →",
-    "uploadReport": "上传报告"
+    "uploadReport": "上传报告",
+    "chartsEmptyTitle": "暂无数据",
+    "chartsEmptyBody": "上传 ESG 报告后，即可查看年度趋势图表和排放排名。"
   },
   "upload": {
     "kicker": "文档录入",
@@ -153,6 +155,15 @@
     "electricityPrice": "电力售价",
     "deMarketRef": "德国参考价格（EPEX SPOT 年均日前价）",
     "deMarketRefNote": "数据来源：EPEX SPOT / 联邦网络局 SMARD。不来自公司报告，需手动设置。",
+    "cnMarketRef": "中国参考价格（年均批发价，CEPCI/NEA）",
+    "cnMarketRefNote": "数据来源：中电联 / 国家能源局年度数据，单位 元/MWh，不来自公司报告，需手动设置。",
+    "currencySection": "货币与汇率设置",
+    "inputCurrency": "输入货币",
+    "fxToEur": "兑欧元汇率（1单位 → EUR）",
+    "fxNote": "所有输入值均以此货币计价，计算前自动折算为欧元以支持跨地区比较。",
+    "lcoeLocal": "LCOE（{{currency}}）",
+    "resultHintLcoeLocal": "以输入货币表示的LCOE，用于本地市场比较。",
+    "fxUsedNote": "使用汇率：1 {{currency}} = {{fx}} EUR",
     "priceUsedNote": "NPV/IRR 基于电力售价 {{price}} €/MWh 计算",
     "validationTitle": "运行模型前，请先修正以下假设：",
     "validation": {

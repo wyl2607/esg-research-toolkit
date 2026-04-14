@@ -56,7 +56,9 @@
     "noReportsYet": "Noch keine Berichte. Laden Sie Ihren ersten ESG-Bericht hoch.",
     "taxonomyPct": "Taxonomie %",
     "runTaxonomy": "Taxonomie-Bewertung starten →",
-    "uploadReport": "Bericht hochladen"
+    "uploadReport": "Bericht hochladen",
+    "chartsEmptyTitle": "Noch keine Daten vorhanden",
+    "chartsEmptyBody": "Laden Sie einen ESG-Bericht hoch, um Trend-Diagramme und Emissionsranglisten freizuschalten."
   },
   "upload": {
     "kicker": "Dokumentenaufnahme",
@@ -153,6 +155,15 @@
     "electricityPrice": "Stromverkaufspreis",
     "deMarketRef": "Deutschland Referenz (EPEX SPOT Jahresdurchschnitt)",
     "deMarketRefNote": "Quelle: EPEX SPOT / Bundesnetzagentur SMARD. Nicht aus Unternehmensberichten – muss manuell gesetzt werden.",
+    "cnMarketRef": "China Referenz (Großhandelsdurchschnitt, CEPCI/NEA)",
+    "cnMarketRefNote": "Quelle: CEPCI / NEA Jahresdaten, Preise in CNY/MWh. Nicht aus Unternehmensberichten – muss manuell gesetzt werden.",
+    "currencySection": "Währung & Wechselkurs",
+    "inputCurrency": "Eingabewährung",
+    "fxToEur": "Kurs zu EUR (1 Einheit → EUR)",
+    "fxNote": "Alle Eingaben in dieser Währung. Vor der Berechnung automatisch in EUR umgerechnet für regionenübergreifende Vergleiche.",
+    "lcoeLocal": "LCOE ({{currency}})",
+    "resultHintLcoeLocal": "LCOE in Eingabewährung für lokalen Marktvergleich.",
+    "fxUsedNote": "Verwendeter Kurs: 1 {{currency}} = {{fx}} EUR",
     "priceUsedNote": "NPV/IRR berechnet mit Strompreis: {{price}} €/MWh",
     "validationTitle": "Bitte korrigieren Sie vor der Berechnung folgende Annahmen:",
     "validation": {
