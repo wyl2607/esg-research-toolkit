@@ -21,7 +21,8 @@ import {
 } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { QueryStateCard } from '@/components/QueryStateCard'
-import { localizeErrorMessage } from '@/lib/error-utils'
+import { localizeErrorMessage, isBackendOffline } from '@/lib/error-utils'
+import { BackendOfflineBanner } from '@/components/BackendOfflineBanner'
 
 export function RegionalPage() {
   const { t } = useTranslation()
@@ -45,6 +46,8 @@ export function RegionalPage() {
     queryFn: () => getRegionalComparison(companyName!, Number(companyYear)),
     enabled: !!companyName && !!companyYear,
   })
+
+  const backendOffline = isBackendOffline(companiesError) || isBackendOffline(reportError)
 
   const radarData =
     report?.cross_matrix.map((m) => ({
@@ -78,7 +81,9 @@ export function RegionalPage() {
         </div>
       </section>
 
-      {(companiesError || reportError) && (
+      {backendOffline ? (
+        <BackendOfflineBanner />
+      ) : (companiesError || reportError) ? (
         <QueryStateCard
           tone="error"
           title={t('common.error')}
@@ -93,7 +98,7 @@ export function RegionalPage() {
           }}
           className="max-w-2xl"
         />
-      )}
+      ) : null}
 
       <div className="surface-card max-w-xl">
         <Select value={selected} onValueChange={setSelected}>
@@ -113,7 +118,7 @@ export function RegionalPage() {
         </Select>
       </div>
 
-      {companies.length === 0 && !companiesError ? (
+      {companies.length === 0 && !companiesError && !backendOffline ? (
         <QueryStateCard
           tone="empty"
           title={t('common.noData')}
@@ -193,7 +198,7 @@ export function RegionalPage() {
                 <ResponsiveContainer width="100%" height={280}>
                   <RadarChart data={radarData}>
                     <PolarGrid />
-                    <PolarAngleAxis dataKey="dimension" tick={{ fontSize: 11 }} />
+                    <PolarAngleAxis dataKey="dimension" tick={{ fontSize: 9 }} tickFormatter={(v: string) => v.length > 10 ? v.slice(0, 9) + '…' : v} />
                     <Radar name="EU" dataKey="EU" stroke="#b45309" fill="#d97706" fillOpacity={0.16} />
                     <Radar name="CN" dataKey="CN" stroke="#b91c1c" fill="#dc2626" fillOpacity={0.12} />
                     <Radar name="US" dataKey="US" stroke="#4d7c0f" fill="#65a30d" fillOpacity={0.12} />

@@ -10,8 +10,10 @@ import { Trash2, Search, Download, Building2, CalendarRange, FileStack } from 'l
 import type { CompanyESGData } from '@/lib/types'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { localizeErrorMessage } from '@/lib/error-utils'
+import { localizeErrorMessage, isBackendOffline } from '@/lib/error-utils'
 import { formatNumber, formatPercent } from '@/lib/format'
+import { exportCompaniesCSV, exportToJSON } from '@/lib/export'
+import { BackendOfflineBanner } from '@/components/BackendOfflineBanner'
 
 type SortKey = 'company_name' | 'report_year' | 'taxonomy_aligned_revenue_pct'
 
@@ -103,7 +105,9 @@ export function CompaniesPage() {
           </div>
         </div>
       </div>
-      {error ? (
+      {isBackendOffline(error) ? (
+        <BackendOfflineBanner />
+      ) : error ? (
         <QueryStateCard
           tone="error"
           title={t('common.error')}
@@ -164,21 +168,21 @@ export function CompaniesPage() {
             variant="outline"
             size="sm"
             className="rounded-xl"
-            onClick={() => window.open('/api/report/companies/export/csv')}
+            onClick={() => exportCompaniesCSV(filtered)}
             aria-label={t('companies.csvExport')}
           >
-            <Download size={14} className="mr-1" />
+            <Download size={14} className="mr-1 shrink-0" />
             {t('companies.csvExport')}
           </Button>
           <Button
             variant="outline"
             size="sm"
             className="rounded-xl"
-            onClick={() => window.open('/api/report/companies/export/xlsx')}
-            aria-label={t('companies.excelExport')}
+            onClick={() => exportToJSON(filtered, `esg-companies-${new Date().toISOString().slice(0, 10)}.json`)}
+            aria-label={t('companies.jsonExport')}
           >
-            <Download size={14} className="mr-1" />
-            {t('companies.excelExport')}
+            <Download size={14} className="mr-1 shrink-0" />
+            {t('companies.jsonExport')}
           </Button>
         </div>
         </CardContent>

@@ -8,6 +8,8 @@ from techno_economics.sensitivity import run_sensitivity
 
 
 def make_lcoe_input(**overrides: float | int | str) -> LCOEInput:
+    # electricity_price_eur_per_mwh is pinned to 60 so IRR/NPV/payback assertions
+    # remain stable regardless of changes to the schema default (currently 95 EUR/MWh).
     data: dict[str, float | int | str] = {
         "technology": "solar_pv",
         "capex_eur_per_kw": 800,
@@ -15,6 +17,7 @@ def make_lcoe_input(**overrides: float | int | str) -> LCOEInput:
         "capacity_factor": 0.18,
         "lifetime_years": 25,
         "discount_rate": 0.07,
+        "electricity_price_eur_per_mwh": 60.0,
     }
     data.update(overrides)
     return LCOEInput(**data)

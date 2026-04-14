@@ -1,11 +1,12 @@
 import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, Building2, CheckCircle2, Clock3, FileText, Leaf, ShieldCheck, Sparkles, TrendingUp, TriangleAlert } from 'lucide-react'
+import { ArrowLeft, Building2, CheckCircle2, Clock3, Download, FileText, Leaf, ShieldCheck, Sparkles, TrendingUp, TriangleAlert } from 'lucide-react'
 
 import { MetricCard } from '@/components/MetricCard'
 import { QueryStateCard } from '@/components/QueryStateCard'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { getCompanyProfile } from '@/lib/api'
 import type {
@@ -17,6 +18,7 @@ import type {
 } from '@/lib/types'
 import { useTranslation } from 'react-i18next'
 import { localizeErrorMessage } from '@/lib/error-utils'
+import { exportCompanyProfileCSV, exportToJSON } from '@/lib/export'
 
 const CompanyProfileHeavyCharts = lazy(() =>
   import('@/components/company-profile/CompanyProfileHeavyCharts').then((module) => ({
@@ -421,14 +423,43 @@ export function CompanyProfilePage() {
             {profile.latest_period.source_document_type ?? '—'} · {profile.latest_year}
           </p>
         </div>
-        <div className="grid grid-cols-2 gap-3 text-sm md:min-w-80">
-          <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4">
-            <p className="section-kicker">{t('profile.heroStatPeriods')}</p>
-            <p className="mt-2 numeric-mono text-2xl font-semibold text-slate-900">{profile.periods.length}</p>
+        <div className="flex flex-col gap-3">
+          <div className="grid grid-cols-2 gap-3 text-sm md:min-w-80">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4">
+              <p className="section-kicker">{t('profile.heroStatPeriods')}</p>
+              <p className="mt-2 numeric-mono text-2xl font-semibold text-slate-900">{profile.periods.length}</p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4">
+              <p className="section-kicker">{t('profile.heroStatFrameworks')}</p>
+              <p className="mt-2 numeric-mono text-2xl font-semibold text-slate-900">{frameworkScores.length}</p>
+            </div>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4">
-            <p className="section-kicker">{t('profile.heroStatFrameworks')}</p>
-            <p className="mt-2 numeric-mono text-2xl font-semibold text-slate-900">{frameworkScores.length}</p>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-xl"
+              onClick={() => exportCompanyProfileCSV(profile)}
+              aria-label={t('profile.exportCSV')}
+            >
+              <Download size={14} className="mr-1 shrink-0" aria-hidden="true" />
+              {t('profile.exportCSV')}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-xl"
+              onClick={() =>
+                exportToJSON(
+                  profile,
+                  `${profile.company_name.replace(/[^a-z0-9]/gi, '_')}_esg_${profile.latest_year}.json`
+                )
+              }
+              aria-label={t('profile.exportJSON')}
+            >
+              <Download size={14} className="mr-1 shrink-0" aria-hidden="true" />
+              {t('profile.exportJSON')}
+            </Button>
           </div>
         </div>
         </div>

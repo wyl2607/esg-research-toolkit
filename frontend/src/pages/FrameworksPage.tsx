@@ -20,7 +20,8 @@ import {
   Tooltip,
 } from 'recharts'
 import { useTranslation } from 'react-i18next'
-import { localizeErrorMessage } from '@/lib/error-utils'
+import { localizeErrorMessage, isBackendOffline } from '@/lib/error-utils'
+import { BackendOfflineBanner } from '@/components/BackendOfflineBanner'
 
 function GradeBadge({ grade }: { grade: string }) {
   const colors: Record<string, string> = {
@@ -92,7 +93,7 @@ function FrameworkCard({ fw }: { fw: FrameworkScoreResult }) {
         <ResponsiveContainer width="100%" height="100%">
           <RadarChart data={radarData}>
             <PolarGrid />
-            <PolarAngleAxis dataKey="subject" tick={{ fontSize: 10 }} />
+            <PolarAngleAxis dataKey="subject" tick={{ fontSize: 9 }} tickFormatter={(v: string) => v.length > 8 ? v.slice(0, 7) + '…' : v} />
             <Radar dataKey="score" fill={color} fillOpacity={0.25} stroke={color} strokeWidth={2} />
             <Tooltip formatter={(v) => [`${v}%`, '']} />
           </RadarChart>
@@ -179,6 +180,8 @@ export function FrameworksPage() {
     enabled: !!companyName && !!companyYear,
   })
 
+  const backendOffline = isBackendOffline(companiesError) || isBackendOffline(reportError)
+
   return (
     <div className="space-y-8">
       <section className="editorial-panel space-y-3">
@@ -191,18 +194,17 @@ export function FrameworksPage() {
         </div>
       </section>
 
-      {(companiesError || reportError) ? (
+      {backendOffline ? (
+        <BackendOfflineBanner />
+      ) : (companiesError || reportError) ? (
         <QueryStateCard
           tone="error"
           title={t('common.error')}
           body={localizeErrorMessage(t, reportError ?? companiesError, 'common.error')}
           actionLabel={t('errorBoundary.retry')}
           onAction={() => {
-            if (reportError) {
-              void refetchReport()
-            } else {
-              void refetchCompanies()
-            }
+            if (reportError) void refetchReport()
+            else void refetchCompanies()
           }}
           className="max-w-2xl"
         />
@@ -210,7 +212,7 @@ export function FrameworksPage() {
 
       <div className="surface-card max-w-xl">
         <p id="frameworks-company-select-label" className="mb-3 text-xs uppercase tracking-[0.2em] text-stone-500">
-          {t('frameworks.kicker')}
+          {t('common.company')} & {t('common.year')}
         </p>
         <Select value={selected} onValueChange={setSelected}>
           <SelectTrigger
@@ -233,7 +235,7 @@ export function FrameworksPage() {
         </Select>
       </div>
 
-      {companies.length === 0 && !companiesError ? (
+      {companies.length === 0 && !companiesError && !backendOffline ? (
         <QueryStateCard
           tone="empty"
           title={t('common.noData')}

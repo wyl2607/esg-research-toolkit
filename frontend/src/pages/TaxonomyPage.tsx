@@ -15,7 +15,8 @@ import {
 import { Button } from '@/components/ui/button'
 import { CheckCircle, XCircle, Download } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { localizeErrorMessage } from '@/lib/error-utils'
+import { localizeErrorMessage, isBackendOffline } from '@/lib/error-utils'
+import { BackendOfflineBanner } from '@/components/BackendOfflineBanner'
 
 export function TaxonomyPage() {
   const { t } = useTranslation()
@@ -34,6 +35,8 @@ export function TaxonomyPage() {
     queryFn: () => getTaxonomyReport(companyName!, Number(companyYear)),
     enabled: !!companyName && !!companyYear,
   })
+
+  const backendOffline = isBackendOffline(companiesError) || isBackendOffline(reportError)
 
   return (
     <div className="space-y-8">
@@ -70,18 +73,17 @@ export function TaxonomyPage() {
         </div>
       </section>
 
-      {(companiesError || reportError) ? (
+      {backendOffline ? (
+        <BackendOfflineBanner />
+      ) : (companiesError || reportError) ? (
         <QueryStateCard
           tone="error"
           title={t('common.error')}
           body={localizeErrorMessage(t, reportError ?? companiesError, 'common.error')}
           actionLabel={t('errorBoundary.retry')}
           onAction={() => {
-            if (reportError) {
-              void refetchReport()
-            } else {
-              void refetchCompanies()
-            }
+            if (reportError) void refetchReport()
+            else void refetchCompanies()
           }}
           className="max-w-2xl"
         />
@@ -89,7 +91,7 @@ export function TaxonomyPage() {
 
       <div className="surface-card max-w-xl">
         <p className="mb-3 text-xs uppercase tracking-[0.2em] text-stone-500">
-          {t('taxonomy.kicker')}
+          {t('common.company')} & {t('common.year')}
         </p>
         <Select value={selected} onValueChange={setSelected}>
           <SelectTrigger className="w-full border-stone-300 bg-white/90" aria-label={t('common.selectCompany')}>
@@ -108,7 +110,7 @@ export function TaxonomyPage() {
         </Select>
       </div>
 
-      {companies.length === 0 && !companiesError ? (
+      {companies.length === 0 && !companiesError && !backendOffline ? (
         <QueryStateCard
           tone="empty"
           title={t('common.noData')}

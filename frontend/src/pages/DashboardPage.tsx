@@ -7,8 +7,9 @@ import { Badge } from '@/components/ui/badge'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { useTranslation } from 'react-i18next'
-import { ArrowRight, ServerOff } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { localizeErrorMessage, isBackendOffline } from '@/lib/error-utils'
+import { BackendOfflineBanner } from '@/components/BackendOfflineBanner'
 
 const DashboardHeavyCharts = lazy(() =>
   import('@/components/dashboard/DashboardHeavyCharts').then((module) => ({
@@ -126,13 +127,7 @@ export function DashboardPage() {
       </div>
 
       {backendOffline ? (
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 px-5 py-4 flex items-start gap-3">
-          <ServerOff size={18} className="mt-0.5 shrink-0 text-slate-400" />
-          <div>
-            <p className="font-medium text-slate-700 dark:text-slate-200">{t('dashboard.backendOfflineTitle')}</p>
-            <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{t('dashboard.backendOfflineBody')}</p>
-          </div>
-        </div>
+        <BackendOfflineBanner />
       ) : statsError ? (
         <QueryStateCard
           tone="error"
