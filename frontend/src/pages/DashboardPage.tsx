@@ -7,8 +7,8 @@ import { Badge } from '@/components/ui/badge'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { useTranslation } from 'react-i18next'
-import { ArrowRight } from 'lucide-react'
-import { localizeErrorMessage } from '@/lib/error-utils'
+import { ArrowRight, ServerOff } from 'lucide-react'
+import { localizeErrorMessage, isBackendOffline } from '@/lib/error-utils'
 
 const DashboardHeavyCharts = lazy(() =>
   import('@/components/dashboard/DashboardHeavyCharts').then((module) => ({
@@ -78,6 +78,9 @@ export function DashboardPage() {
 
   const recent = [...companies].sort((a, b) => b.report_year - a.report_year).slice(0, 5)
   const coverageRows = Object.entries(stats?.coverage_rates ?? {})
+
+  const backendOffline = isBackendOffline(statsError) || isBackendOffline(companiesError)
+
   const chartFallback = (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
       <div className="editorial-panel h-[320px] animate-pulse bg-stone-100/70" />
@@ -122,7 +125,15 @@ export function DashboardPage() {
         />
       </div>
 
-      {statsError ? (
+      {backendOffline ? (
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 px-5 py-4 flex items-start gap-3">
+          <ServerOff size={18} className="mt-0.5 shrink-0 text-slate-400" />
+          <div>
+            <p className="font-medium text-slate-700 dark:text-slate-200">{t('dashboard.backendOfflineTitle')}</p>
+            <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{t('dashboard.backendOfflineBody')}</p>
+          </div>
+        </div>
+      ) : statsError ? (
         <QueryStateCard
           tone="error"
           title={t('common.error')}
@@ -167,7 +178,7 @@ export function DashboardPage() {
         <h2 id="recent-analyses-title" className="mb-3 text-2xl font-semibold text-stone-900">
           {t('dashboard.recentAnalyses')}
         </h2>
-        {companiesError ? (
+        {companiesError && !backendOffline ? (
           <QueryStateCard
             tone="error"
             title={t('common.error')}

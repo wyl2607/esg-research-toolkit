@@ -58,7 +58,9 @@
     "runTaxonomy": "进行分类法评分 →",
     "uploadReport": "上传报告",
     "chartsEmptyTitle": "暂无数据",
-    "chartsEmptyBody": "上传 ESG 报告后，即可查看年度趋势图表和排放排名。"
+    "chartsEmptyBody": "上传 ESG 报告后，即可查看年度趋势图表和排放排名。",
+    "backendOfflineTitle": "API 服务器未运行",
+    "backendOfflineBody": "请启动后端服务（uvicorn main:app）以加载实时数据。LCOE 计算器等静态页面仍可正常使用。"
   },
   "upload": {
     "kicker": "文档录入",
@@ -123,7 +125,7 @@
       "solarPv": "光伏",
       "windOnshore": "陆上风电",
       "windOffshore": "海上风电",
-      "batteryStorage": "电池储能"
+      "batteryStorage": "🔋 电池储能"
     },
     "calculate": "计算",
     "calculating": "计算中…",
@@ -421,6 +423,7 @@
   "errors": {
     "networkError": "网络错误——请检查网络连接",
     "serverError": "服务器错误（{{status}}）——请稍后重试",
+    "backendOffline": "API 服务器不可用——请启动后端",
     "notFound": "未找到",
     "unauthorized": "API Key 无效或未配置",
     "rateLimited": "请求频率超限——请稍后重试",

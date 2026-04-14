@@ -123,7 +123,7 @@
       "solarPv": "Solar PV",
       "windOnshore": "Wind Onshore",
       "windOffshore": "Wind Offshore",
-      "batteryStorage": "Battery Storage"
+      "batteryStorage": "🔋 Battery Storage"
     },
     "calculate": "Calculate",
     "calculating": "Calculating…",

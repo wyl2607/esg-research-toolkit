@@ -58,7 +58,9 @@
     "runTaxonomy": "Taxonomie-Bewertung starten →",
     "uploadReport": "Bericht hochladen",
     "chartsEmptyTitle": "Noch keine Daten vorhanden",
-    "chartsEmptyBody": "Laden Sie einen ESG-Bericht hoch, um Trend-Diagramme und Emissionsranglisten freizuschalten."
+    "chartsEmptyBody": "Laden Sie einen ESG-Bericht hoch, um Trend-Diagramme und Emissionsranglisten freizuschalten.",
+    "backendOfflineTitle": "API-Server nicht gestartet",
+    "backendOfflineBody": "Bitte starten Sie den Backend-Server (uvicorn main:app), um Live-Daten zu laden. Der LCOE-Rechner und andere statische Seiten sind weiterhin verfügbar."
   },
   "upload": {
     "kicker": "Dokumentenaufnahme",
@@ -123,7 +125,7 @@
       "solarPv": "Solar-Photovoltaik",
       "windOnshore": "Wind Onshore",
       "windOffshore": "Wind Offshore",
-      "batteryStorage": "Batteriespeicher"
+      "batteryStorage": "🔋 Batteriespeicher"
     },
     "calculate": "Berechnen",
     "calculating": "Wird berechnet…",
@@ -421,6 +423,7 @@
   "errors": {
     "networkError": "Netzwerkfehler — bitte Verbindung prüfen",
     "serverError": "Serverfehler ({{status}}) — bitte erneut versuchen",
+    "backendOffline": "API-Server nicht verfügbar — bitte Backend starten",
     "notFound": "Nicht gefunden",
     "unauthorized": "API-Schlüssel ungültig oder nicht konfiguriert",
     "rateLimited": "Anfragelimit überschritten — bitte kurz warten",
