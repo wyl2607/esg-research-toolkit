@@ -184,15 +184,13 @@ export function FrameworksPage() {
 
   return (
     <div className="space-y-8">
-      <section className="editorial-panel space-y-3">
+      <div className="space-y-2">
         <p className="section-kicker">{t('frameworks.kicker')}</p>
-        <div>
-          <h1 className="text-4xl text-slate-900">{t('frameworks.title')}</h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-            {t('frameworks.subtitle')}
-          </p>
-        </div>
-      </section>
+        <h1 className="text-3xl font-semibold text-slate-900">{t('frameworks.title')}</h1>
+        <p className="max-w-3xl text-sm leading-6 text-slate-600">
+          {t('frameworks.subtitle')}
+        </p>
+      </div>
 
       {backendOffline ? (
         <BackendOfflineBanner />

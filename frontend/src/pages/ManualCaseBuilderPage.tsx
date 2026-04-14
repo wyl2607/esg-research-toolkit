@@ -198,7 +198,7 @@ export function ManualCaseBuilderPage() {
           <Badge variant="secondary" className="w-fit bg-amber-100 text-amber-900">
             {t('manual.badge')}
           </Badge>
-          <h1 className="text-4xl tracking-tight text-slate-900">
+          <h1 className="text-3xl font-semibold text-slate-900">
             {t('manual.title')}
           </h1>
           <p className="max-w-3xl text-sm leading-6 text-slate-600">

@@ -91,15 +91,15 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <div className="space-y-3">
+      <div className="space-y-2">
         <p className="section-kicker">{t('dashboard.kicker')}</p>
-        <div className="editorial-panel flex flex-col gap-4 p-5 md:flex-row md:items-end md:justify-between md:p-6">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-2">
-            <h1 className="text-4xl font-semibold leading-tight text-stone-900">{t('dashboard.title')}</h1>
-            <p className="max-w-3xl text-sm leading-6 text-stone-600">{t('dashboard.subtitle')}</p>
+            <h1 className="text-3xl font-semibold text-slate-900">{t('dashboard.title')}</h1>
+            <p className="max-w-3xl text-sm leading-6 text-slate-600">{t('dashboard.subtitle')}</p>
           </div>
           <Button
-            className="shrink-0 self-start rounded-xl bg-amber-700 text-amber-50 hover:bg-amber-800 md:self-end"
+            className="shrink-0 self-start rounded-xl bg-amber-700 text-amber-50 hover:bg-amber-800 lg:self-end"
             onClick={() => navigate('/upload')}
           >
             {t('dashboard.uploadReport')}

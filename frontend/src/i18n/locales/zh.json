@@ -122,9 +122,9 @@
     "resultTitle": "计算结果",
     "technology": "技术类型",
     "technologyOptions": {
-      "solarPv": "光伏",
-      "windOnshore": "陆上风电",
-      "windOffshore": "海上风电",
+      "solarPv": "☀️ 光伏",
+      "windOnshore": "🌬️ 陆上风电",
+      "windOffshore": "🌊 海上风电",
       "batteryStorage": "🔋 电池储能"
     },
     "calculate": "计算",

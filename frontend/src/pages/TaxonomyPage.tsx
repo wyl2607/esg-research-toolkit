@@ -40,16 +40,14 @@ export function TaxonomyPage() {
 
   return (
     <div className="space-y-8">
-      <section className="editorial-panel space-y-4">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="space-y-3">
-            <p className="section-kicker">{t('taxonomy.kicker')}</p>
-            <div className="space-y-2">
-              <h1 className="text-4xl text-slate-900">{t('taxonomy.title')}</h1>
-              <p className="max-w-3xl text-sm leading-6 text-slate-600">
-                {t('taxonomy.subtitle')}
-              </p>
-            </div>
+      <div className="space-y-2">
+        <p className="section-kicker">{t('taxonomy.kicker')}</p>
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-semibold text-slate-900">{t('taxonomy.title')}</h1>
+            <p className="max-w-3xl text-sm leading-6 text-slate-600">
+              {t('taxonomy.subtitle')}
+            </p>
           </div>
           {report && companyName && companyYear && (
             <Button
@@ -71,7 +69,7 @@ export function TaxonomyPage() {
             </Button>
           )}
         </div>
-      </section>
+      </div>
 
       {backendOffline ? (
         <BackendOfflineBanner />

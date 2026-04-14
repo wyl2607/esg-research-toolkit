@@ -122,9 +122,9 @@
     "resultTitle": "Berechnete Ergebnisse",
     "technology": "Technologie",
     "technologyOptions": {
-      "solarPv": "Solar-Photovoltaik",
-      "windOnshore": "Wind Onshore",
-      "windOffshore": "Wind Offshore",
+      "solarPv": "☀️ Solar-Photovoltaik",
+      "windOnshore": "🌬️ Wind Onshore",
+      "windOffshore": "🌊 Wind Offshore",
       "batteryStorage": "🔋 Batteriespeicher"
     },
     "calculate": "Berechnen",

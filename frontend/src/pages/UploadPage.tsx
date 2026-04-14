@@ -118,22 +118,20 @@ export function UploadPage() {
 
   return (
     <div className="space-y-8">
-      <section className="editorial-panel space-y-4">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="space-y-3">
-            <p className="section-kicker">{t('upload.kicker')}</p>
-            <div className="space-y-2">
-              <h1 className="text-4xl text-slate-900">{t('upload.title')}</h1>
-              <p className="max-w-3xl text-sm leading-6 text-slate-600">
-                {t('upload.subtitle')}
-              </p>
-            </div>
+      <div className="space-y-2">
+        <p className="section-kicker">{t('upload.kicker')}</p>
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-semibold text-slate-900">{t('upload.title')}</h1>
+            <p className="max-w-3xl text-sm leading-6 text-slate-600">
+              {t('upload.subtitle')}
+            </p>
           </div>
           <div className="max-w-sm rounded-2xl border border-amber-200 bg-amber-50/90 px-4 py-4 text-sm leading-6 text-amber-900">
             {t('upload.supportedHint')}
           </div>
         </div>
-      </section>
+      </div>
 
       <div
         {...getRootProps()}

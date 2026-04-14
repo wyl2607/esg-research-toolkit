@@ -218,15 +218,13 @@ export function ComparePage() {
 
   return (
     <div className="space-y-8">
-      <section className="editorial-panel space-y-3 p-5 md:p-6">
+      <div className="space-y-2">
         <p className="section-kicker">{t('compare.kicker')}</p>
-        <div>
-          <h1 className="text-4xl text-slate-900 dark:text-slate-100">{t('compare.title')}</h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-300">
-            {t('compare.subtitle')}
-          </p>
-        </div>
-      </section>
+        <h1 className="text-3xl font-semibold text-slate-900 dark:text-slate-100">{t('compare.title')}</h1>
+        <p className="max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-300">
+          {t('compare.subtitle')}
+        </p>
+      </div>
 
       {error ? (
         <QueryStateCard

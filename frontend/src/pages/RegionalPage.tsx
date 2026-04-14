@@ -9,7 +9,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts'
-import { Globe, TrendingUp, AlertTriangle, CheckCircle } from 'lucide-react'
+import { TrendingUp, AlertTriangle, CheckCircle } from 'lucide-react'
 
 import { listCompanies, getRegionalComparison } from '@/lib/api'
 import {
@@ -68,18 +68,13 @@ export function RegionalPage() {
 
   return (
     <div className="space-y-8">
-      <section className="editorial-panel space-y-4">
-        <div className="flex items-center gap-3">
-          <Globe className="text-amber-700" size={28} />
-          <div>
-            <p className="section-kicker">{t('regional.kicker')}</p>
-            <h1 className="text-4xl text-slate-900">{t('regional.title')}</h1>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-              {t('regional.subtitle')}
-            </p>
-          </div>
-        </div>
-      </section>
+      <div className="space-y-2">
+        <p className="section-kicker">{t('regional.kicker')}</p>
+        <h1 className="text-3xl font-semibold text-slate-900">{t('regional.title')}</h1>
+        <p className="max-w-3xl text-sm leading-6 text-slate-600">
+          {t('regional.subtitle')}
+        </p>
+      </div>
 
       {backendOffline ? (
         <BackendOfflineBanner />

@@ -120,9 +120,9 @@
     "resultTitle": "Calculated outputs",
     "technology": "Technology",
     "technologyOptions": {
-      "solarPv": "Solar PV",
-      "windOnshore": "Wind Onshore",
-      "windOffshore": "Wind Offshore",
+      "solarPv": "☀️ Solar PV",
+      "windOnshore": "🌬️ Wind Onshore",
+      "windOffshore": "🌊 Wind Offshore",
       "batteryStorage": "🔋 Battery Storage"
     },
     "calculate": "Calculate",
