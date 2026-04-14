@@ -197,11 +197,15 @@ export function FrameworksPage() {
       )}
 
       <div className="surface-card max-w-xl">
-        <p className="mb-3 text-xs uppercase tracking-[0.2em] text-stone-500">
+        <p id="frameworks-company-select-label" className="mb-3 text-xs uppercase tracking-[0.2em] text-stone-500">
           {t('frameworks.kicker')}
         </p>
         <Select value={selected} onValueChange={setSelected}>
-          <SelectTrigger className="w-full border-stone-300 bg-white/90">
+          <SelectTrigger
+            className="w-full border-stone-300 bg-white/90"
+            aria-label={t('common.selectCompany')}
+            aria-labelledby="frameworks-company-select-label"
+          >
             <SelectValue placeholder={t('common.selectCompany')} />
           </SelectTrigger>
           <SelectContent>

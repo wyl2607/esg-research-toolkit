@@ -11,6 +11,7 @@ type StyleOption = {
   panel: string
   chip: string
   text: string
+  mutedText: string
 }
 
 const STYLE_OPTIONS: StyleOption[] = [
@@ -21,14 +22,16 @@ const STYLE_OPTIONS: StyleOption[] = [
     panel: 'bg-white',
     chip: 'bg-sky-50 text-sky-800 border-sky-200',
     text: 'text-slate-900',
+    mutedText: 'text-slate-500',
   },
   {
     id: 'dense_graphite',
     accent: 'bg-emerald-500',
     surface: 'bg-slate-900',
     panel: 'bg-slate-800',
-    chip: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30',
+    chip: 'bg-emerald-100 text-emerald-900 border-emerald-300',
     text: 'text-white',
+    mutedText: 'text-slate-300',
   },
   {
     id: 'editorial_warm',
@@ -37,6 +40,7 @@ const STYLE_OPTIONS: StyleOption[] = [
     panel: 'bg-white',
     chip: 'bg-amber-50 text-amber-800 border-amber-200',
     text: 'text-stone-900',
+    mutedText: 'text-slate-500',
   },
 ]
 
@@ -98,13 +102,13 @@ export function DesignLabPage() {
                   <div className={`rounded-2xl border border-white/10 p-4 ${style.panel}`}>
                     <div className="flex items-start justify-between gap-4">
                       <div className="space-y-2">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                        <p className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${style.mutedText}`}>
                           {t('designLab.mock.kicker')}
                         </p>
                         <h3 className={`max-w-xs text-xl font-semibold leading-tight ${style.text}`}>
                           {t('designLab.mock.company')}
                         </h3>
-                        <p className="text-xs leading-5 text-slate-500">{t('designLab.mock.subhead')}</p>
+                        <p className={`text-xs leading-5 ${style.mutedText}`}>{t('designLab.mock.subhead')}</p>
                       </div>
                       <div className={`rounded-full px-3 py-1 text-[11px] font-medium ${style.chip}`}>
                         FY2025

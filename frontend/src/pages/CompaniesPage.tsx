@@ -149,6 +149,7 @@ export function CompaniesPage() {
             size="sm"
             className="rounded-xl"
             onClick={() => window.open('/api/report/companies/export/csv')}
+            aria-label={t('companies.csvExport')}
           >
             <Download size={14} className="mr-1" />
             {t('companies.csvExport')}
@@ -158,6 +159,7 @@ export function CompaniesPage() {
             size="sm"
             className="rounded-xl"
             onClick={() => window.open('/api/report/companies/export/xlsx')}
+            aria-label={t('companies.excelExport')}
           >
             <Download size={14} className="mr-1" />
             {t('companies.excelExport')}
@@ -215,8 +217,10 @@ export function CompaniesPage() {
                       e.stopPropagation()
                       handleDelete(c)
                     }}
+                    aria-label={t('companies.deleteConfirm', { name: c.company_name, year: c.report_year })}
+                    title={t('common.delete')}
                   >
-                    <Trash2 size={14} />
+                    <Trash2 size={14} aria-hidden="true" />
                   </Button>
                 </div>
 

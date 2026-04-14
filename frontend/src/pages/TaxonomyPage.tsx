@@ -60,6 +60,7 @@ export function TaxonomyPage() {
                   setPdfLoading(false)
                 }
               }}
+              aria-label={t('taxonomy.downloadPdf')}
             >
               <Download size={16} className="mr-2" />
               {pdfLoading ? t('taxonomy.generating') : t('taxonomy.downloadPdf')}
@@ -79,7 +80,7 @@ export function TaxonomyPage() {
           {t('taxonomy.kicker')}
         </p>
         <Select value={selected} onValueChange={setSelected}>
-          <SelectTrigger className="w-full border-stone-300 bg-white/90">
+          <SelectTrigger className="w-full border-stone-300 bg-white/90" aria-label={t('common.selectCompany')}>
             <SelectValue placeholder={t('common.selectCompany')} />
           </SelectTrigger>
           <SelectContent>

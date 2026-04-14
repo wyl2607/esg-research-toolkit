@@ -143,7 +143,7 @@ export function UploadPage() {
             : 'border-stone-300 hover:border-amber-400 hover:bg-amber-50/60'
         }`}
       >
-        <input {...getInputProps()} />
+        <input {...getInputProps({ 'aria-label': t('upload.dropzoneHint') })} />
         <Upload className="mx-auto mb-4 text-amber-700" size={40} />
         {isDragActive ? (
           <p className="font-medium text-amber-800">{t('upload.dropzone')}</p>
@@ -218,6 +218,18 @@ export function UploadPage() {
               </div>
               <div className="rounded-xl border border-red-200 bg-red-50/70 px-3 py-3 text-red-700">
                 {t('upload.failed')}: {batchStatus.failed_jobs}
+              </div>
+            </div>
+            <div className="space-y-1" role="status" aria-live="polite">
+              <div className="flex justify-between text-xs text-slate-600">
+                <span>{t('upload.processing')}</span>
+                <span>{batchStatus.progress_pct.toFixed(0)}%</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-stone-200" aria-hidden="true">
+                <div
+                  className="h-2 rounded-full bg-amber-600 transition-all"
+                  style={{ width: `${Math.min(batchStatus.progress_pct, 100)}%` }}
+                />
               </div>
             </div>
             <div className="max-h-64 space-y-2 overflow-auto">
