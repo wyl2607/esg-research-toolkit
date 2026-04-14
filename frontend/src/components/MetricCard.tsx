@@ -23,7 +23,7 @@ export function MetricCard({
   }[color]
 
   return (
-    <Card className="surface-card h-full">
+    <Card className="surface-card h-full" role="region" aria-label={label}>
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-3">
           <CardTitle className="text-sm font-medium leading-5 text-slate-600">
@@ -33,7 +33,10 @@ export function MetricCard({
         </div>
       </CardHeader>
       <CardContent>
-        <div className={`numeric-mono text-[1.85rem] font-semibold leading-none ${valueColor}`}>
+        <div
+          className={`numeric-mono text-[1.85rem] font-semibold leading-none ${valueColor}`}
+          aria-label={`${label}: ${value}${unit ? ` ${unit}` : ''}`}
+        >
           {value}
         </div>
         {sub && <p className="mt-2 text-xs leading-5 text-slate-500">{sub}</p>}

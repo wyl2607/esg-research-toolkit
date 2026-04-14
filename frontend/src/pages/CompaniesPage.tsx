@@ -10,6 +10,7 @@ import type { CompanyESGData } from '@/lib/types'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { localizeErrorMessage } from '@/lib/error-utils'
+import { formatNumber, formatPercent } from '@/lib/format'
 
 type SortKey = 'company_name' | 'report_year' | 'taxonomy_aligned_revenue_pct'
 
@@ -223,23 +224,21 @@ export function CompaniesPage() {
                   <div className="rounded-2xl border border-slate-200 bg-slate-50/90 px-3 py-3">
                     <p className="section-kicker">{t('companies.metricScope1Short')}</p>
                     <p className="mt-2 numeric-mono text-base font-semibold text-slate-900">
-                      {c.scope1_co2e_tonnes?.toLocaleString(i18n.resolvedLanguage) ?? '—'}
+                      {formatNumber(c.scope1_co2e_tonnes, { locale: i18n.resolvedLanguage })}
                     </p>
                     <p className="mt-1 text-[11px] text-slate-500">{t('companies.unitTco2e')}</p>
                   </div>
                   <div className="rounded-2xl border border-slate-200 bg-slate-50/90 px-3 py-3">
                     <p className="section-kicker">{t('companies.metricEmployeesShort')}</p>
                     <p className="mt-2 numeric-mono text-base font-semibold text-slate-900">
-                      {c.total_employees?.toLocaleString(i18n.resolvedLanguage) ?? '—'}
+                      {formatNumber(c.total_employees, { locale: i18n.resolvedLanguage })}
                     </p>
                     <p className="mt-1 text-[11px] text-slate-500">{t('companies.unitPeople')}</p>
                   </div>
                   <div className="rounded-2xl border border-slate-200 bg-slate-50/90 px-3 py-3">
                     <p className="section-kicker">{t('companies.metricTaxonomyShort')}</p>
                     <p className="mt-2 numeric-mono text-base font-semibold text-slate-900">
-                      {c.taxonomy_aligned_revenue_pct != null
-                        ? `${c.taxonomy_aligned_revenue_pct.toFixed(1)}`
-                        : '—'}
+                      {formatPercent(c.taxonomy_aligned_revenue_pct, i18n.resolvedLanguage)}
                     </p>
                     <p className="mt-1 text-[11px] text-slate-500">{t('companies.unitPercent')}</p>
                   </div>
