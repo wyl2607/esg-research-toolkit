@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowRight, FileJson, FlaskConical, PencilLine, Save } from 'lucide-react'
+import { ArrowRight, FileJson, PencilLine, Save } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -361,36 +361,6 @@ export function ManualCaseBuilderPage() {
         </div>
 
         <div className="space-y-4">
-          <Card className="rounded-2xl border-amber-200 bg-amber-50/70">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base text-amber-950">
-                <FlaskConical size={16} className="text-amber-700" />
-                {t('manual.heroTitle')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm text-amber-950">
-              <p>{t('manual.heroBody')}</p>
-              <div className="grid gap-3">
-                <div className="rounded-lg border border-white/70 bg-white/80 px-3 py-3">
-                  <p className="text-xs uppercase tracking-wide text-amber-700">
-                    {t('manual.heroPoint1Title')}
-                  </p>
-                  <p className="mt-1 text-xs leading-5 text-slate-700">
-                    {t('manual.heroPoint1Body')}
-                  </p>
-                </div>
-                <div className="rounded-lg border border-white/70 bg-white/80 px-3 py-3">
-                  <p className="text-xs uppercase tracking-wide text-amber-700">
-                    {t('manual.heroPoint2Title')}
-                  </p>
-                  <p className="mt-1 text-xs leading-5 text-slate-700">
-                    {t('manual.heroPoint2Body')}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
           <Card className="surface-card">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">

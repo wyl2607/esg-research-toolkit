@@ -246,7 +246,7 @@
       "renewable": "Anteil erneuerbarer Energien am Gesamtenergieverbrauch (Solar, Wind, Wasserkraft usw.). Höher ist besser.",
       "waterUsage": "Gesamter Wasserentnahme in Kubikmeter. Relevant für wasserintensive Branchen. In der Regel gilt: niedriger ist besser, abhängig vom regionalen Wasserdargebot.",
       "femalePct": "Anteil der weiblichen Beschäftigten an der Gesamtbelegschaft. Ein Diversitätsindikator. Höhere Werte stehen für eine ausgewogenere Geschlechterverteilung.",
-      "intensity": "Emissionsintensität normiert Scope-1-CO₂ auf die Mitarbeiterzahl und ermöglicht einen fairen, größenbereinigten Vergleich zwischen Unternehmen unterschiedlicher Größe."
+      "intensity": "Emissionsintensität normiert Scope 1 CO₂ auf die Mitarbeiterzahl und ermöglicht einen fairen, größenbereinigten Vergleich zwischen Unternehmen unterschiedlicher Größe."
     }
   },
   "frameworks": {
@@ -265,7 +265,7 @@
     "backToCompanies": "Zurück zur Unternehmensliste",
     "heroLabel": "Kernaussage",
     "heroImprovingTitle": "Die Offenlegungsreife bewegt sich in die richtige Richtung",
-    "heroImprovingBody": "Der Anteil erneuerbarer Energien stieg um {{renewableDelta}}, während Scope-1-Emissionen um {{scope1Delta}} zurückgingen. Das ist aktuell das stärkste positive Signal auf dieser Seite.",
+    "heroImprovingBody": "Der Anteil erneuerbarer Energien stieg um {{renewableDelta}}, während Scope 1 Emissionen um {{scope1Delta}} zurückgingen. Das ist aktuell das stärkste positive Signal auf dieser Seite.",
     "heroDivergenceTitle": "Die Bewertung unterscheidet sich je nach Framework noch deutlich",
     "heroDivergenceBody": "Die aktuelle Spreizung zwischen den Frameworks beträgt {{spread}}, was darauf hindeutet, dass das Unternehmen je nach regulatorischer Perspektive unterschiedlich aussieht.",
     "heroCoverageTitle": "Dieses Profil wird bereits zu wiederverwendbarer Analyse-Infrastruktur",
@@ -339,9 +339,9 @@
       "showcase-ready": "Showcase-ready"
     },
     "metricLabels": {
-      "scope1_co2e_tonnes": "Scope-1-Emissionen",
-      "scope2_co2e_tonnes": "Scope-2-Emissionen",
-      "scope3_co2e_tonnes": "Scope-3-Emissionen",
+      "scope1_co2e_tonnes": "Scope 1 Emissionen",
+      "scope2_co2e_tonnes": "Scope 2 Emissionen",
+      "scope3_co2e_tonnes": "Scope 3 Emissionen",
       "energy_consumption_mwh": "Energieverbrauch",
       "renewable_energy_pct": "Anteil erneuerbarer Energie",
       "water_usage_m3": "Wasserverbrauch",
@@ -408,12 +408,6 @@
     "saving": "Wird gespeichert…",
     "saveCase": "Fall speichern",
     "reset": "Zurücksetzen",
-    "heroTitle": "Warum diese Seite wichtig ist",
-    "heroBody": "Sie ist die praktische Brücke zwischen Portfolio-Präsentation und echter Produktentwicklung: Wir können mehrjährige Showcase-Fälle weiterbauen, auch wenn kein Modellkontingent mehr verfügbar ist.",
-    "heroPoint1Title": "Portfolio-Geschwindigkeit",
-    "heroPoint1Body": "Du kannst interviewtaugliche Unternehmensgeschichten schneller vorbereiten, indem du zuerst verlässliche Werte einträgst und die Automatisierung später verfeinerst.",
-    "heroPoint2Title": "Produkt-Kontinuität",
-    "heroPoint2Body": "Derselbe Datensatz fließt in Unternehmensprofile, Framework-Bewertungen und spätere Merge-Logik, statt in verstreuten Notizen zu enden.",
     "recentCompanies": "Letzte Unternehmen",
     "noCompaniesYet": "Noch keine gespeicherten Unternehmen.",
     "jsonTitle": "JSON-Entwurf importieren",

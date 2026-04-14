@@ -8,7 +8,6 @@ import {
   Building2,
   GitCompare,
   Globe,
-  Map,
   FilePenLine,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -33,7 +32,6 @@ export function Sidebar({ id, className, onNavigate }: SidebarProps) {
     { to: '/companies', label: t('nav.companies'), icon: Building2 },
     { to: '/compare', label: t('nav.compare'), icon: GitCompare },
     { to: '/frameworks', label: t('nav.frameworks'), icon: Globe },
-    { to: '/regional', label: t('nav.regional'), icon: Map },
   ]
 
   const handleLinkClick = () => {

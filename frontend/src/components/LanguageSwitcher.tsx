@@ -2,9 +2,9 @@ import { useTranslation } from 'react-i18next'
 import { loadLocale } from '@/i18n/index'
 
 const LANGS = [
-  { code: 'de', flag: '🇩🇪' },
-  { code: 'en', flag: '🇬🇧' },
   { code: 'zh', flag: '🇨🇳' },
+  { code: 'en', flag: '🇬🇧' },
+  { code: 'de', flag: '🇩🇪' },
 ] as const
 
 export function LanguageSwitcher() {
