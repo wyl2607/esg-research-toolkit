@@ -23,6 +23,10 @@ export interface CompanyESGData {
   evidence_summary?: EvidenceAnchor[]
 }
 
+export interface ManualReportInput extends CompanyESGData {
+  source_url?: string | null
+}
+
 export interface EvidenceAnchor {
   metric: string | null
   source: string | null

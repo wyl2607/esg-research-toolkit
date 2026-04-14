@@ -1,12 +1,13 @@
 import json
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, Column, DateTime, Float, Integer, String, Text, text
+from sqlalchemy import Boolean, Column, DateTime, Float, Integer, String, Text, func, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
 from core.database import Base
 from core.schemas import CompanyESGData
+from report_parser.company_identity import canonical_company_name, collapse_company_records, company_name_variants
 
 DEFAULT_REPORTING_PERIOD_TYPE = "annual"
 DEFAULT_SOURCE_DOCUMENT_TYPE = "sustainability_report"
@@ -83,23 +84,29 @@ def save_report(
     evidence_summary: list[dict[str, str | int | float | None]] | None = None,
 ) -> CompanyReport:
     """保存企业报告（含来源追溯字段）。company_name + report_year 已存在则更新。"""
+    canonical_name = canonical_company_name(data.company_name)
+    normalized_data = data.model_copy(update={"company_name": canonical_name})
     period_label, period_type, document_type = _normalized_period_fields(
-        data,
+        normalized_data,
         reporting_period_label=reporting_period_label,
         reporting_period_type=reporting_period_type,
         source_document_type=source_document_type,
     )
+    name_variants = [variant.lower() for variant in company_name_variants(canonical_name)]
 
     record = (
         db.query(CompanyReport)
-        .filter_by(company_name=data.company_name, report_year=data.report_year)
+        .filter(
+            func.lower(CompanyReport.company_name).in_(name_variants),
+            CompanyReport.report_year == normalized_data.report_year,
+        )
         .first()
     )
     now = datetime.now(timezone.utc)
     if record is None:
         record = CompanyReport(
-            company_name=data.company_name,
-            report_year=data.report_year,
+            company_name=canonical_name,
+            report_year=normalized_data.report_year,
             reporting_period_label=period_label,
             reporting_period_type=period_type,
             source_document_type=document_type,
@@ -107,10 +114,13 @@ def save_report(
             source_url=source_url,
             file_hash=file_hash,
             downloaded_at=downloaded_at or now,
-            evidence_summary=json.dumps(evidence_summary if evidence_summary is not None else data.evidence_summary),
+            evidence_summary=json.dumps(
+                evidence_summary if evidence_summary is not None else normalized_data.evidence_summary
+            ),
         )
         db.add(record)
     else:
+        record.company_name = canonical_name
         if pdf_filename:
             record.pdf_filename = pdf_filename
         if source_url:
@@ -132,33 +142,40 @@ def save_report(
     if not record.source_document_type:
         record.source_document_type = document_type
     if evidence_summary is None and not record.evidence_summary:
-        record.evidence_summary = json.dumps(data.evidence_summary)
+        record.evidence_summary = json.dumps(normalized_data.evidence_summary)
 
-    record.scope1_co2e_tonnes = data.scope1_co2e_tonnes
-    record.scope2_co2e_tonnes = data.scope2_co2e_tonnes
-    record.scope3_co2e_tonnes = data.scope3_co2e_tonnes
-    record.energy_consumption_mwh = data.energy_consumption_mwh
-    record.renewable_energy_pct = data.renewable_energy_pct
-    record.water_usage_m3 = data.water_usage_m3
-    record.waste_recycled_pct = data.waste_recycled_pct
-    record.total_revenue_eur = data.total_revenue_eur
-    record.taxonomy_aligned_revenue_pct = data.taxonomy_aligned_revenue_pct
-    record.total_capex_eur = data.total_capex_eur
-    record.taxonomy_aligned_capex_pct = data.taxonomy_aligned_capex_pct
-    record.total_employees = data.total_employees
-    record.female_pct = data.female_pct
-    record.primary_activities = json.dumps(data.primary_activities)
+    record.scope1_co2e_tonnes = normalized_data.scope1_co2e_tonnes
+    record.scope2_co2e_tonnes = normalized_data.scope2_co2e_tonnes
+    record.scope3_co2e_tonnes = normalized_data.scope3_co2e_tonnes
+    record.energy_consumption_mwh = normalized_data.energy_consumption_mwh
+    record.renewable_energy_pct = normalized_data.renewable_energy_pct
+    record.water_usage_m3 = normalized_data.water_usage_m3
+    record.waste_recycled_pct = normalized_data.waste_recycled_pct
+    record.total_revenue_eur = normalized_data.total_revenue_eur
+    record.taxonomy_aligned_revenue_pct = normalized_data.taxonomy_aligned_revenue_pct
+    record.total_capex_eur = normalized_data.total_capex_eur
+    record.taxonomy_aligned_capex_pct = normalized_data.taxonomy_aligned_capex_pct
+    record.total_employees = normalized_data.total_employees
+    record.female_pct = normalized_data.female_pct
+    record.primary_activities = json.dumps(normalized_data.primary_activities)
     db.commit()
     db.refresh(record)
     return record
 
 
 def get_report(db: Session, company_name: str, report_year: int) -> CompanyReport | None:
-    return (
+    variants = [variant.lower() for variant in company_name_variants(company_name)]
+    records = (
         db.query(CompanyReport)
-        .filter_by(company_name=company_name, report_year=report_year)
-        .first()
+        .filter(
+            func.lower(CompanyReport.company_name).in_(variants),
+            CompanyReport.report_year == report_year,
+            CompanyReport.deletion_requested.is_(False),
+        )
+        .all()
     )
+    collapsed = collapse_company_records(records)
+    return collapsed[0] if collapsed else None
 
 
 def list_reports(db: Session, skip: int = 0, limit: int = 50) -> list[CompanyReport]:
@@ -171,48 +188,78 @@ def list_reports_for_company(
     *,
     include_deleted: bool = False,
 ) -> list[CompanyReport]:
-    query = db.query(CompanyReport).filter(CompanyReport.company_name == company_name)
+    variants = [variant.lower() for variant in company_name_variants(company_name)]
+    query = db.query(CompanyReport).filter(func.lower(CompanyReport.company_name).in_(variants))
     if not include_deleted:
         query = query.filter(CompanyReport.deletion_requested.is_(False))
-    return query.order_by(CompanyReport.report_year.asc()).all()
+    records = query.order_by(CompanyReport.report_year.asc()).all()
+    return collapse_company_records(records)
+
+
+def list_reports_grouped(
+    db: Session,
+    *,
+    include_deleted: bool = False,
+) -> list[CompanyReport]:
+    query = db.query(CompanyReport)
+    if not include_deleted:
+        query = query.filter(CompanyReport.deletion_requested.is_(False))
+    return collapse_company_records(query.all())
 
 
 def request_deletion(db: Session, company_name: str, report_year: int) -> CompanyReport | None:
     """标记来源删除请求，同时删除本地 PDF 副本（如存在）。"""
     from pathlib import Path
 
-    record = get_report(db, company_name, report_year)
-    if not record:
+    variants = [variant.lower() for variant in company_name_variants(company_name)]
+    records = (
+        db.query(CompanyReport)
+        .filter(
+            func.lower(CompanyReport.company_name).in_(variants),
+            CompanyReport.report_year == report_year,
+            CompanyReport.deletion_requested.is_(False),
+        )
+        .all()
+    )
+    if not records:
         return None
 
-    # 删除本地 PDF 文件副本
-    if record.pdf_filename:
-        pdf_path = Path("data/reports") / record.pdf_filename
-        if pdf_path.exists():
-            pdf_path.unlink()
-
-    record.deletion_requested = True
-    record.deletion_requested_at = datetime.now(timezone.utc)
-    record.pdf_filename = None  # 清除文件引用
+    for record in records:
+        if record.pdf_filename:
+            pdf_path = Path("data/reports") / record.pdf_filename
+            if pdf_path.exists():
+                pdf_path.unlink()
+        record.deletion_requested = True
+        record.deletion_requested_at = datetime.now(timezone.utc)
+        record.pdf_filename = None
     db.commit()
-    db.refresh(record)
-    return record
+    representative = collapse_company_records(records)[0]
+    db.refresh(representative)
+    return representative
 
 
 def hard_delete_report(db: Session, company_name: str, report_year: int) -> bool:
     """彻底删除记录（含所有提取数据），用于响应正式删除请求。"""
     from pathlib import Path
 
-    record = get_report(db, company_name, report_year)
-    if not record:
+    variants = [variant.lower() for variant in company_name_variants(company_name)]
+    records = (
+        db.query(CompanyReport)
+        .filter(
+            func.lower(CompanyReport.company_name).in_(variants),
+            CompanyReport.report_year == report_year,
+        )
+        .all()
+    )
+    if not records:
         return False
 
-    if record.pdf_filename:
-        pdf_path = Path("data/reports") / record.pdf_filename
-        if pdf_path.exists():
-            pdf_path.unlink()
-
-    db.delete(record)
+    for record in records:
+        if record.pdf_filename:
+            pdf_path = Path("data/reports") / record.pdf_filename
+            if pdf_path.exists():
+                pdf_path.unlink()
+        db.delete(record)
     db.commit()
     return True
 

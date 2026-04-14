@@ -5,16 +5,23 @@ from unittest.mock import patch
 import os
 
 import pytest
+from fastapi import HTTPException
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from core.database import Base
-from core.schemas import CompanyESGData
+from core.schemas import CompanyESGData, ManualReportInput, MergePreviewRequest, MergeSourceInput
 from esg_frameworks.api import _SCORERS
 from esg_frameworks.schemas import DimensionScore, FrameworkScoreResult
 from esg_frameworks.storage import save_framework_result
-from report_parser.api import list_company_reports
-from report_parser.api import get_company_history, get_company_profile, get_dashboard_stats
+from report_parser.api import (
+    list_company_reports,
+    get_company_history,
+    get_company_profile,
+    get_dashboard_stats,
+    preview_merge,
+    save_manual_report,
+)
 from report_parser.analyzer import AIExtractionError, analyze_esg_data
 from report_parser.extractor import extract_text_from_pdf
 from report_parser.storage import CompanyReport, get_report, list_reports, save_report
@@ -266,6 +273,212 @@ def test_list_company_reports_keeps_legacy_and_metric_fields(
     assert row["evidence_summary"] == []
 
 
+def test_save_manual_report_persists_period_and_manual_evidence(
+    db_session: Session,
+) -> None:
+    payload = ManualReportInput(
+        company_name="Manual Demo AG",
+        report_year=2025,
+        reporting_period_label="FY2025 draft",
+        reporting_period_type="annual",
+        source_document_type="manual_case",
+        source_url="https://example.com/manual-demo",
+        scope1_co2e_tonnes=200.0,
+        renewable_energy_pct=51.5,
+        total_employees=980,
+        primary_activities=["battery_manufacturing", "solar_pv"],
+    )
+
+    result = save_manual_report(payload=payload, db=db_session)
+
+    assert result.company_name == "Manual Demo AG"
+    assert result.reporting_period_label == "FY2025 draft"
+    assert result.source_document_type == "manual_case"
+    assert result.scope1_co2e_tonnes == pytest.approx(200.0)
+    assert len(result.evidence_summary) >= 3
+    assert {item["metric"] for item in result.evidence_summary} >= {
+        "scope1_co2e_tonnes",
+        "renewable_energy_pct",
+        "total_employees",
+    }
+
+    profile = get_company_profile(company_name="Manual Demo AG", db=db_session)
+    assert profile["latest_period"]["source_document_type"] == "manual_case"
+    assert profile["evidence_summary"][0]["source_type"] == "manual_entry"
+
+
+def test_alias_names_collapse_into_single_company_profile_and_listing(
+    db_session: Session,
+    make_company_data,
+) -> None:
+    save_report(
+        db_session,
+        make_company_data(
+            company_name="catl",
+            report_year=2024,
+            scope1_co2e_tonnes=110.0,
+            renewable_energy_pct=32.0,
+        ),
+        reporting_period_label="FY2024 quick extract",
+        source_document_type="manual_case",
+        evidence_summary=[{"metric": "scope1_co2e_tonnes", "source": "manual://catl"}],
+    )
+    save_report(
+        db_session,
+        make_company_data(
+            company_name="Contemporary Amperex Technology Co., Limited",
+            report_year=2024,
+            scope1_co2e_tonnes=95.0,
+            renewable_energy_pct=45.0,
+            taxonomy_aligned_revenue_pct=24.0,
+        ),
+        reporting_period_label="FY2024",
+        source_document_type="annual_report",
+        evidence_summary=[
+            {"metric": "scope1_co2e_tonnes", "source": "annual://catl-2024"},
+            {"metric": "renewable_energy_pct", "source": "annual://catl-2024"},
+            {"metric": "taxonomy_aligned_revenue_pct", "source": "annual://catl-2024"},
+        ],
+    )
+    save_report(
+        db_session,
+        make_company_data(
+            company_name="CATL",
+            report_year=2025,
+            scope1_co2e_tonnes=90.0,
+            renewable_energy_pct=48.0,
+        ),
+        reporting_period_label="FY2025",
+        source_document_type="sustainability_report",
+    )
+
+    history = get_company_history(company_name="catl", db=db_session)
+    assert history["company_name"] == "Contemporary Amperex Technology Co., Limited"
+    assert len(history["periods"]) == 2
+    assert history["trend"][0]["scope1"] == pytest.approx(95.0)
+    assert history["trend"][0]["taxonomy_aligned_revenue_pct"] == pytest.approx(24.0)
+
+    profile = get_company_profile(company_name="CATL", db=db_session)
+    assert profile["company_name"] == "Contemporary Amperex Technology Co., Limited"
+    assert profile["years_available"] == [2024, 2025]
+    assert profile["latest_year"] == 2025
+
+    rows = list_company_reports(db=db_session)
+    catl_rows = [row for row in rows if row["company_name"] == "Contemporary Amperex Technology Co., Limited"]
+    assert len(catl_rows) == 2
+    assert {row["report_year"] for row in catl_rows} == {2024, 2025}
+
+
+def test_legacy_alias_duplicates_are_collapsed_for_listing_and_history(
+    db_session: Session,
+) -> None:
+    db_session.add_all(
+        [
+            CompanyReport(
+                company_name="volkswagen",
+                report_year=2024,
+                source_document_type="manual_case",
+                scope1_co2e_tonnes=310.0,
+                renewable_energy_pct=21.0,
+                primary_activities=json.dumps(["automotive"]),
+                evidence_summary=json.dumps([{"metric": "scope1_co2e_tonnes", "source": "manual://vw"}]),
+            ),
+            CompanyReport(
+                company_name="Volkswagen AG",
+                report_year=2024,
+                source_document_type="annual_report",
+                scope1_co2e_tonnes=255.0,
+                renewable_energy_pct=36.0,
+                primary_activities=json.dumps(["automotive"]),
+                evidence_summary=json.dumps(
+                    [
+                        {"metric": "scope1_co2e_tonnes", "source": "annual://vw"},
+                        {"metric": "renewable_energy_pct", "source": "annual://vw"},
+                    ]
+                ),
+            ),
+        ]
+    )
+    db_session.commit()
+
+    rows = list_company_reports(db=db_session)
+    assert len(rows) == 1
+    assert rows[0]["company_name"] == "Volkswagen AG"
+    assert rows[0]["scope1_co2e_tonnes"] == pytest.approx(255.0)
+
+    history = get_company_history(company_name="volkswagen", db=db_session)
+    assert history["company_name"] == "Volkswagen AG"
+    assert len(history["trend"]) == 1
+    assert history["trend"][0]["renewable_pct"] == pytest.approx(36.0)
+
+
+def test_preview_merge_prefers_annual_report_and_marks_conflict() -> None:
+    payload = MergePreviewRequest(
+        documents=[
+            MergeSourceInput(
+                source_id="annual-2024",
+                company_name="Merge Corp",
+                report_year=2024,
+                reporting_period_label="FY2024",
+                reporting_period_type="annual",
+                source_document_type="annual_report",
+                source_url="https://example.com/annual",
+                scope1_co2e_tonnes=100.0,
+                renewable_energy_pct=None,
+                primary_activities=["industrial_automation"],
+            ),
+            MergeSourceInput(
+                source_id="sustainability-2024",
+                company_name="Merge Corp",
+                report_year=2024,
+                reporting_period_label="FY2024 sustainability",
+                reporting_period_type="annual",
+                source_document_type="sustainability_report",
+                source_url="https://example.com/sr",
+                scope1_co2e_tonnes=95.0,
+                renewable_energy_pct=48.0,
+                primary_activities=["industrial_automation", "solar_pv"],
+            ),
+            MergeSourceInput(
+                source_id="filing-2024",
+                company_name="Merge Corp",
+                report_year=2024,
+                reporting_period_label="Q4 filing",
+                reporting_period_type="event",
+                source_document_type="filing",
+                source_url="https://example.com/filing",
+                renewable_energy_pct=52.0,
+            ),
+        ]
+    )
+
+    result = preview_merge(payload)
+
+    assert result.company_name == "Merge Corp"
+    assert result.merged_metrics.scope1_co2e_tonnes == pytest.approx(100.0)
+    assert result.merged_metrics.renewable_energy_pct == pytest.approx(48.0)
+    assert result.merged_metrics.primary_activities == ["industrial_automation", "solar_pv"]
+
+    decisions = {item.metric: item for item in result.decisions}
+    assert decisions["scope1_co2e_tonnes"].merge_reason == "annual_report_baseline"
+    assert decisions["scope1_co2e_tonnes"].conflict_detected is True
+    assert decisions["renewable_energy_pct"].merge_reason == "supplement_filled_gap"
+    assert decisions["primary_activities"].merge_reason == "activity_union"
+    assert "scope1_co2e_tonnes" in result.unresolved_metrics
+
+
+def test_preview_merge_rejects_mixed_company_or_year() -> None:
+    payload = MergePreviewRequest(
+        documents=[
+            MergeSourceInput(company_name="A Corp", report_year=2024, source_document_type="annual_report"),
+            MergeSourceInput(company_name="B Corp", report_year=2024, source_document_type="sustainability_report"),
+        ]
+    )
+
+    with pytest.raises(HTTPException):
+        preview_merge(payload)
+
+
 def test_company_history_and_profile_include_period_and_framework_results(
     db_session: Session,
     make_company_data,
@@ -465,3 +678,35 @@ def test_get_dashboard_stats_returns_aggregates_rankings_and_coverage(
     assert payload["coverage_rates"]["scope3_co2e_tonnes"] == pytest.approx(66.7)
     assert payload["coverage_rates"]["taxonomy_aligned_revenue_pct"] == pytest.approx(66.7)
     assert payload["coverage_rates"]["female_pct"] == pytest.approx(66.7)
+
+
+def test_dashboard_stats_do_not_double_count_alias_duplicates(
+    db_session: Session,
+    make_company_data,
+) -> None:
+    save_report(
+        db_session,
+        make_company_data(
+            company_name="volkswagen",
+            report_year=2024,
+            scope1_co2e_tonnes=300.0,
+            renewable_energy_pct=20.0,
+        ),
+        source_document_type="manual_case",
+    )
+    save_report(
+        db_session,
+        make_company_data(
+            company_name="Volkswagen AG",
+            report_year=2024,
+            scope1_co2e_tonnes=250.0,
+            renewable_energy_pct=35.0,
+        ),
+        source_document_type="annual_report",
+    )
+
+    payload = get_dashboard_stats(db=db_session)
+    assert payload["total_companies"] == 1
+    assert payload["yearly_trend"] == [{"year": 2024, "count": 1}]
+    assert payload["top_emitters"][0]["company"] == "Volkswagen AG"
+    assert payload["top_emitters"][0]["scope1"] == pytest.approx(250.0)

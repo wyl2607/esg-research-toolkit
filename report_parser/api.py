@@ -12,7 +12,14 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from core.database import get_db
-from core.schemas import BatchStatusResponse, CompanyESGData
+from core.schemas import (
+    BatchStatusResponse,
+    CompanyESGData,
+    ManualReportInput,
+    MergePreviewRequest,
+    MergePreviewResponse,
+)
+from report_parser.merge_engine import build_merge_preview
 from report_parser.analyzer import AIExtractionError, analyze_esg_data
 from report_parser.batch_jobs import batch_manager
 from report_parser.extractor import extract_text_from_pdf
@@ -20,6 +27,7 @@ from report_parser.storage import (
     get_report,
     hard_delete_report,
     list_reports,
+    list_reports_grouped,
     list_reports_for_company,
     request_deletion,
     save_report,
@@ -108,6 +116,53 @@ def _period_metadata(record) -> dict[str, str | int | None]:
         "source_document_type": source_document_type,
         "legacy_report_year": report_year,
     }
+
+
+def _manual_evidence_summary(
+    data: CompanyESGData,
+    *,
+    source_url: str | None = None,
+) -> list[dict[str, str | int | float | None]]:
+    metric_keys = [
+        "scope1_co2e_tonnes",
+        "scope2_co2e_tonnes",
+        "scope3_co2e_tonnes",
+        "energy_consumption_mwh",
+        "renewable_energy_pct",
+        "water_usage_m3",
+        "waste_recycled_pct",
+        "taxonomy_aligned_revenue_pct",
+        "taxonomy_aligned_capex_pct",
+        "total_employees",
+        "female_pct",
+    ]
+    source = source_url or f"manual://{data.company_name}/{data.report_year}"
+    evidence: list[dict[str, str | int | float | None]] = []
+    for metric in metric_keys:
+        if getattr(data, metric, None) is None:
+            continue
+        evidence.append(
+            {
+                "metric": metric,
+                "source": source,
+                "snippet": "Saved via manual case builder",
+                "source_type": "manual_entry",
+                "source_url": source_url,
+            }
+        )
+
+    if data.primary_activities:
+        evidence.append(
+            {
+                "metric": "primary_activities",
+                "source": source,
+                "snippet": ", ".join(data.primary_activities),
+                "source_type": "manual_entry",
+                "source_url": source_url,
+            }
+        )
+
+    return evidence
 
 
 def _framework_metadata_item(row) -> dict[str, str | int | None]:
@@ -243,6 +298,37 @@ else:
         raise HTTPException(500, 'File uploads require the "python-multipart" package')
 
 
+@router.post("/manual", response_model=CompanyESGData)
+def save_manual_report(
+    payload: ManualReportInput,
+    db: Session = Depends(get_db),
+):
+    report = CompanyESGData(**payload.model_dump(exclude={"source_url"}))
+    evidence_summary = payload.evidence_summary or _manual_evidence_summary(
+        report,
+        source_url=payload.source_url,
+    )
+    record = save_report(
+        db,
+        report,
+        source_url=payload.source_url,
+        downloaded_at=datetime.now(timezone.utc),
+        reporting_period_label=payload.reporting_period_label or str(payload.report_year),
+        reporting_period_type=payload.reporting_period_type or "annual",
+        source_document_type=payload.source_document_type or "manual_case",
+        evidence_summary=evidence_summary,
+    )
+    return _record_to_company_data(record)
+
+
+@router.post("/merge/preview", response_model=MergePreviewResponse)
+def preview_merge(payload: MergePreviewRequest):
+    try:
+        return build_merge_preview(payload.documents)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
 def _record_to_company_data(record) -> CompanyESGData:
     evidence_summary = _evidence_anchors_for_record(record)
     return CompanyESGData(
@@ -291,6 +377,7 @@ def get_company_history(
     records = list_reports_for_company(db, company_name)
     if not records:
         raise HTTPException(404, f"No reports found for {company_name}")
+    resolved_name = records[0].company_name
 
     trend = []
     periods = []
@@ -300,7 +387,7 @@ def get_company_history(
         period = _period_metadata(record)
         framework_rows = list_framework_results(
             db,
-            company_name=company_name,
+            company_name=resolved_name,
             report_year=record.report_year,
         )
         period_framework_metadata = [_framework_metadata_item(row) for row in framework_rows]
@@ -332,7 +419,7 @@ def get_company_history(
         )
 
     return {
-        "company_name": company_name,
+        "company_name": resolved_name,
         "periods": periods,
         "trend": trend,
         "framework_metadata": framework_metadata,
@@ -350,16 +437,17 @@ def get_company_profile(
     records = list_reports_for_company(db, company_name)
     if not records:
         raise HTTPException(404, f"No reports found for {company_name}")
+    resolved_name = records[0].company_name
 
     latest = records[-1]
-    history = get_company_history(company_name=company_name, db=db)
+    history = get_company_history(company_name=resolved_name, db=db)
     latest_data = _record_to_company_data(latest)
     latest_evidence_anchors = _evidence_anchors_for_record(latest)
     latest_period = _period_metadata(latest)
 
     framework_rows = list_framework_results(
         db,
-        company_name=company_name,
+        company_name=resolved_name,
         report_year=latest.report_year,
     )
     framework_results = []
@@ -375,7 +463,7 @@ def get_company_profile(
     framework_scores = [scorer(latest_data).model_dump() for scorer in _SCORERS.values()]
 
     return {
-        "company_name": company_name,
+        "company_name": resolved_name,
         "years_available": [record.report_year for record in records],
         "latest_year": latest.report_year,
         "latest_period": {
@@ -399,7 +487,7 @@ def get_company_profile(
 
 @router.get("/dashboard/stats")
 def get_dashboard_stats(db: Session = Depends(get_db)):
-    records = list_reports(db, skip=0, limit=10000)
+    records = list_reports_grouped(db)
     if not records:
         return {
             "total_companies": 0,
@@ -465,7 +553,7 @@ def get_dashboard_stats(db: Session = Depends(get_db)):
 
 @router.get("/companies")
 def list_company_reports(skip: int = 0, limit: int = 50, db: Session = Depends(get_db)):
-    records = list_reports(db, skip, limit)
+    records = list_reports_grouped(db)[skip : skip + limit]
     payload = []
     for record in records:
         period = _period_metadata(record)
@@ -552,7 +640,7 @@ def delete_company_report(
 
 @router.get("/companies/export/csv")
 def export_companies_csv(db: Session = Depends(get_db)):
-    records = list_reports(db, skip=0, limit=10000)
+    records = list_reports_grouped(db)
     fieldnames = [
         "company_name",
         "report_year",
@@ -582,7 +670,7 @@ def export_companies_csv(db: Session = Depends(get_db)):
 
 @router.get("/companies/export/xlsx")
 def export_companies_xlsx(db: Session = Depends(get_db)):
-    records = list_reports(db, skip=0, limit=10000)
+    records = list_reports_grouped(db)
 
     wb = openpyxl.Workbook()
     ws = wb.active

@@ -4,10 +4,12 @@ import json
 from datetime import datetime, timezone
 
 from sqlalchemy import Column, DateTime, Float, Integer, String, Text
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from core.database import Base
 from esg_frameworks.schemas import FrameworkScoreResult
+from report_parser.company_identity import canonical_company_name, company_name_variants
 
 
 class FrameworkAnalysisResult(Base):
@@ -33,8 +35,9 @@ def save_framework_result(
     framework_version: str = "v1",
 ) -> FrameworkAnalysisResult:
     payload = result.model_dump()
+    canonical_name = canonical_company_name(result.company_name)
     record = FrameworkAnalysisResult(
-        company_name=result.company_name,
+        company_name=canonical_name,
         report_year=result.report_year,
         framework_id=result.framework_id,
         framework_name=result.framework,
@@ -56,10 +59,11 @@ def list_framework_results(
     company_name: str,
     report_year: int,
 ) -> list[FrameworkAnalysisResult]:
+    variants = [variant.lower() for variant in company_name_variants(company_name)]
     return (
         db.query(FrameworkAnalysisResult)
         .filter(
-            FrameworkAnalysisResult.company_name == company_name,
+            func.lower(FrameworkAnalysisResult.company_name).in_(variants),
             FrameworkAnalysisResult.report_year == report_year,
         )
         .order_by(FrameworkAnalysisResult.created_at.desc())

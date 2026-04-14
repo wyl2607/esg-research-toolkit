@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, Building2, Clock3, Leaf, ShieldCheck, TrendingUp } from 'lucide-react'
+import { ArrowLeft, Building2, Clock3, Leaf, ShieldCheck, Sparkles, TrendingUp } from 'lucide-react'
 import {
   Line,
   LineChart,
@@ -31,6 +31,17 @@ function asPct(v: number | null | undefined) {
 
 function asNum(v: number | null | undefined, locale: string) {
   return v == null ? '—' : v.toLocaleString(locale)
+}
+
+function deltaNumber(current: number | null | undefined, previous: number | null | undefined) {
+  if (current == null || previous == null) return null
+  return current - previous
+}
+
+function deltaPctLabel(value: number | null | undefined) {
+  if (value == null) return '—'
+  const prefix = value > 0 ? '+' : ''
+  return `${prefix}${value.toFixed(1)}`
 }
 
 export function CompanyProfilePage() {
@@ -73,11 +84,81 @@ export function CompanyProfilePage() {
     [frameworkScores]
   )
 
+  const previousTrendPoint = useMemo(() => {
+    if (!profile || profile.trend.length < 2) return null
+    return profile.trend[profile.trend.length - 2]
+  }, [profile])
+
+  const yoySummary = useMemo(() => {
+    if (!profile) return null
+    const latest = profile.latest_metrics
+    const previous = previousTrendPoint
+    const renewableDelta = deltaNumber(latest.renewable_energy_pct, previous?.renewable_pct)
+    const taxonomyDelta = deltaNumber(
+      latest.taxonomy_aligned_revenue_pct,
+      previous?.taxonomy_aligned_revenue_pct
+    )
+    const scope1Delta = deltaNumber(latest.scope1_co2e_tonnes, previous?.scope1)
+
+    return {
+      previousYear: previous?.year ?? null,
+      renewableDelta,
+      taxonomyDelta,
+      scope1Delta,
+      hasAnyDelta:
+        renewableDelta != null || taxonomyDelta != null || scope1Delta != null,
+    }
+  }, [previousTrendPoint, profile])
+
+  const heroInsight = useMemo(() => {
+    if (!profile) return { title: '', body: '', tone: 'indigo' as const }
+
+    const scores = frameworkScores.map((f) => f.total_score)
+    const maxScore = scores.length > 0 ? Math.max(...scores) : null
+    const minScore = scores.length > 0 ? Math.min(...scores) : null
+    const spread = maxScore != null && minScore != null ? maxScore - minScore : null
+
+    if (yoySummary?.renewableDelta != null && yoySummary.renewableDelta > 0 && yoySummary.scope1Delta != null && yoySummary.scope1Delta < 0) {
+      return {
+        title: t('profile.heroImprovingTitle'),
+        body: t('profile.heroImprovingBody', {
+          renewableDelta: deltaPctLabel(yoySummary.renewableDelta),
+          scope1Delta: Math.abs(yoySummary.scope1Delta).toLocaleString(locale),
+        }),
+        tone: 'green' as const,
+      }
+    }
+
+    if (spread != null && spread >= 0.2) {
+      return {
+        title: t('profile.heroDivergenceTitle'),
+        body: t('profile.heroDivergenceBody', {
+          spread: `${Math.round(spread * 100)}%`,
+        }),
+        tone: 'amber' as const,
+      }
+    }
+
+    return {
+      title: t('profile.heroCoverageTitle'),
+      body: t('profile.heroCoverageBody', {
+        periods: profile.periods.length,
+        frameworks: frameworkScores.length,
+      }),
+      tone: 'indigo' as const,
+    }
+  }, [frameworkScores, locale, profile, t, yoySummary])
+
   if (isLoading) return <p className="text-slate-400">{t('common.loading')}</p>
   if (error) return <p className="text-red-500">{localizeErrorMessage(t, error, 'common.error')}</p>
   if (!profile) return <p className="text-red-500">{t('common.error')}</p>
 
   const m = profile.latest_metrics
+  const heroToneClasses = {
+    green: 'border-emerald-200 bg-emerald-50 text-emerald-900',
+    amber: 'border-amber-200 bg-amber-50 text-amber-900',
+    indigo: 'border-indigo-200 bg-indigo-50 text-indigo-900',
+  }[heroInsight.tone]
 
   return (
     <div className="space-y-6">
@@ -102,6 +183,29 @@ export function CompanyProfilePage() {
           </p>
         </div>
       </div>
+
+      <Card className={heroToneClasses}>
+        <CardContent className="flex flex-col gap-3 pt-6 md:flex-row md:items-start md:justify-between">
+          <div className="space-y-2">
+            <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] opacity-80">
+              <Sparkles size={14} />
+              {t('profile.heroLabel')}
+            </p>
+            <h2 className="text-xl font-semibold">{heroInsight.title}</h2>
+            <p className="max-w-3xl text-sm leading-6 opacity-90">{heroInsight.body}</p>
+          </div>
+          <div className="grid grid-cols-2 gap-3 text-sm md:min-w-72">
+            <div className="rounded-lg border border-white/40 bg-white/60 px-3 py-3">
+              <p className="text-xs uppercase tracking-wide opacity-70">{t('profile.heroStatPeriods')}</p>
+              <p className="mt-1 text-lg font-semibold">{profile.periods.length}</p>
+            </div>
+            <div className="rounded-lg border border-white/40 bg-white/60 px-3 py-3">
+              <p className="text-xs uppercase tracking-wide opacity-70">{t('profile.heroStatFrameworks')}</p>
+              <p className="mt-1 text-lg font-semibold">{frameworkScores.length}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 md:grid-cols-4">
         <MetricCard label={t('companies.scope1')} value={asNum(m.scope1_co2e_tonnes, locale)} />
@@ -173,6 +277,61 @@ export function CompanyProfilePage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <TrendingUp size={16} className="text-indigo-600" />
+            {t('profile.yoyTitle')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4 md:grid-cols-3">
+          <div className="rounded-lg border bg-slate-50 px-4 py-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              {t('profile.yoyRenewable')}
+            </p>
+            <p className="mt-2 text-2xl font-semibold text-emerald-600">
+              {yoySummary?.renewableDelta != null ? `${yoySummary.renewableDelta >= 0 ? '+' : ''}${yoySummary.renewableDelta.toFixed(1)}%` : '—'}
+            </p>
+            <p className="mt-1 text-xs text-slate-500">
+              {t('profile.yoyComparedTo', { year: yoySummary?.previousYear ?? '—' })}
+            </p>
+          </div>
+          <div className="rounded-lg border bg-slate-50 px-4 py-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              {t('profile.yoyScope1')}
+            </p>
+            <p className={`mt-2 text-2xl font-semibold ${yoySummary?.scope1Delta != null && yoySummary.scope1Delta <= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+              {yoySummary?.scope1Delta != null ? `${yoySummary.scope1Delta >= 0 ? '+' : ''}${yoySummary.scope1Delta.toLocaleString(locale)}` : '—'}
+            </p>
+            <p className="mt-1 text-xs text-slate-500">
+              {t('profile.yoyScope1Hint')}
+            </p>
+          </div>
+          <div className="rounded-lg border bg-slate-50 px-4 py-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              {t('profile.yoyTaxonomy')}
+            </p>
+            <p className="mt-2 text-2xl font-semibold text-indigo-600">
+              {yoySummary?.taxonomyDelta != null ? `${yoySummary.taxonomyDelta >= 0 ? '+' : ''}${yoySummary.taxonomyDelta.toFixed(1)}%` : '—'}
+            </p>
+            <p className="mt-1 text-xs text-slate-500">
+              {t('profile.yoyTaxonomyHint')}
+            </p>
+          </div>
+          <div className="rounded-lg border bg-white px-4 py-4 md:col-span-3">
+            <p className="text-sm leading-6 text-slate-700">
+              {yoySummary?.hasAnyDelta
+                ? t('profile.yoyNarrativeReady', {
+                    year: yoySummary.previousYear ?? '—',
+                    renewableDelta: yoySummary.renewableDelta != null ? `${yoySummary.renewableDelta >= 0 ? '+' : ''}${yoySummary.renewableDelta.toFixed(1)}%` : '—',
+                    taxonomyDelta: yoySummary.taxonomyDelta != null ? `${yoySummary.taxonomyDelta >= 0 ? '+' : ''}${yoySummary.taxonomyDelta.toFixed(1)}%` : '—',
+                  })
+                : t('profile.yoyNarrativeMissing')}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -294,6 +453,29 @@ export function CompanyProfilePage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="border-slate-200 bg-slate-50/70">
+        <CardHeader>
+          <CardTitle className="text-base">{t('profile.whyTitle')}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm text-slate-700">
+          <p>{t('profile.whyIntro')}</p>
+          <div className="grid gap-3 md:grid-cols-3">
+            <div className="rounded-lg border bg-white px-4 py-4">
+              <p className="font-medium text-slate-900">{t('profile.whyPoint1Title')}</p>
+              <p className="mt-2 text-xs leading-5 text-slate-600">{t('profile.whyPoint1Body')}</p>
+            </div>
+            <div className="rounded-lg border bg-white px-4 py-4">
+              <p className="font-medium text-slate-900">{t('profile.whyPoint2Title')}</p>
+              <p className="mt-2 text-xs leading-5 text-slate-600">{t('profile.whyPoint2Body')}</p>
+            </div>
+            <div className="rounded-lg border bg-white px-4 py-4">
+              <p className="font-medium text-slate-900">{t('profile.whyPoint3Title')}</p>
+              <p className="mt-2 text-xs leading-5 text-slate-600">{t('profile.whyPoint3Body')}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

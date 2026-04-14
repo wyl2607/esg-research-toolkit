@@ -10,6 +10,7 @@ import type {
   SensitivityResult,
   TaxonomyActivity,
   TaxonomyScoreResult,
+  ManualReportInput,
 } from './types'
 
 const BASE = '/api'
@@ -91,6 +92,11 @@ export const getCompany = (
 
 export const getCompanyProfile = (name: string): Promise<CompanyProfile> =>
   req(`/report/companies/${encodeURIComponent(name)}/profile`)
+
+export const createManualReport = (
+  data: ManualReportInput
+): Promise<CompanyESGData> =>
+  req('/report/manual', { method: 'POST', body: JSON.stringify(data) })
 
 export const updateCompany = (
   name: string,

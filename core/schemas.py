@@ -26,6 +26,47 @@ class CompanyESGData(BaseModel):
     evidence_summary: list[dict[str, str | int | float | None]] = []
 
 
+class ManualReportInput(CompanyESGData):
+    source_url: str | None = None
+
+
+class MergeSourceInput(ManualReportInput):
+    source_id: str | None = None
+    downloaded_at: str | None = None
+
+
+class MergePreviewRequest(BaseModel):
+    documents: list[MergeSourceInput]
+
+
+class MergeMetricCandidate(BaseModel):
+    source_id: str
+    source_document_type: str | None = None
+    source_url: str | None = None
+    reporting_period_label: str | None = None
+    priority_rank: int
+    value: str | int | float | list[str] | None = None
+
+
+class MergeMetricDecision(BaseModel):
+    metric: str
+    selected_value: str | int | float | list[str] | None = None
+    selected_source_id: str | None = None
+    selected_source_document_type: str | None = None
+    merge_reason: str
+    candidates: list[MergeMetricCandidate] = []
+    conflict_detected: bool = False
+
+
+class MergePreviewResponse(BaseModel):
+    company_name: str
+    report_year: int
+    merged_metrics: CompanyESGData
+    decisions: list[MergeMetricDecision]
+    document_priority: list[str]
+    unresolved_metrics: list[str] = []
+
+
 class BatchJobItem(BaseModel):
     job_id: str
     filename: str
