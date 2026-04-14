@@ -31,9 +31,13 @@ export function formatNumber(
   }
 
   if (type === 'currency') {
+    // Extract language code from locale (e.g., 'de-DE' → 'de')
+    const langCode = locale.split('-')[0].toLowerCase()
+    const currency = langCode === 'de' ? 'EUR' : langCode === 'zh' ? 'CNY' : 'USD'
+    
     return new Intl.NumberFormat(locale, {
       style: 'currency',
-      currency: locale.includes('de') ? 'EUR' : locale.includes('zh') ? 'CNY' : 'USD',
+      currency,
       maximumFractionDigits: fractionDigits,
     }).format(value)
   }
@@ -102,16 +106,28 @@ export function formatPercent(
  * Get directional indicator for trend values
  * @param current - Current value
  * @param previous - Previous value
+ * @param lowerIsBetter - If true, lower values are improvements (default true for emissions)
  * @param threshold - Minimum change to show indicator (default 1%)
  * @returns Arrow symbol or empty string
+ * 
+ * Examples:
+ * - Emissions (lower is better): getTrendIndicator(-50, -100, true) → '↑' (improvement)
+ * - Revenue (higher is better): getTrendIndicator(100, 90, false) → '↑' (improvement)
  */
 export function getTrendIndicator(
   current: number | null,
   previous: number | null,
+  lowerIsBetter: boolean = true,
   threshold: number = 1
 ): '↑' | '↓' | '' {
   if (current === null || previous === null || previous === 0) return ''
   const change = ((current - previous) / previous) * 100
   if (Math.abs(change) < threshold) return ''
-  return change > 0 ? '↑' : '↓'
+  
+  // For metrics where lower is better (emissions, errors, etc.), invert the direction
+  if (lowerIsBetter) {
+    return change < 0 ? '↑' : '↓'  // Lower value = improvement = ↑
+  } else {
+    return change > 0 ? '↑' : '↓'  // Higher value = improvement = ↑
+  }
 }

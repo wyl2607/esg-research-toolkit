@@ -21,12 +21,18 @@ export function MetricCard({
     red: 'text-red-600',
     blue: 'text-indigo-600',
   }[color]
+  
+  // Generate unique ID for aria-labelledby
+  const titleId = `metric-title-${label.replace(/\s+/g, '-').toLowerCase()}`
 
   return (
-    <Card className="surface-card h-full" role="region" aria-label={label}>
+    <Card className="surface-card h-full" role="region" aria-labelledby={titleId}>
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-3">
-          <CardTitle className="text-sm font-medium leading-5 text-slate-600">
+          <CardTitle 
+            id={titleId}
+            className="text-sm font-medium leading-5 text-slate-600"
+          >
             {label}
           </CardTitle>
           {unit ? <span className="metric-unit shrink-0">{unit}</span> : null}
@@ -35,7 +41,6 @@ export function MetricCard({
       <CardContent>
         <div
           className={`numeric-mono text-[1.85rem] font-semibold leading-none ${valueColor}`}
-          aria-label={`${label}: ${value}${unit ? ` ${unit}` : ''}`}
         >
           {value}
         </div>
