@@ -23,6 +23,7 @@ export function CompaniesPage() {
   const [visibleCount, setVisibleCount] = useState(9)
   const [sortKey, setSortKey] = useState<SortKey>('report_year')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
+  const [deleteFeedback, setDeleteFeedback] = useState<string | null>(null)
   const queryClient = useQueryClient()
   const navigate = useNavigate()
 
@@ -34,7 +35,13 @@ export function CompaniesPage() {
   const deleteMutation = useMutation({
     mutationFn: ({ name, year }: { name: string; year: number }) =>
       deleteCompany(name, year),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['companies'] }),
+    onSuccess: () => {
+      setDeleteFeedback(t('companies.deleteSuccess'))
+      queryClient.invalidateQueries({ queryKey: ['companies'] })
+    },
+    onError: () => {
+      setDeleteFeedback(null)
+    },
   })
 
   const filtered = companies
@@ -61,6 +68,7 @@ export function CompaniesPage() {
   }
 
   const handleDelete = (c: CompanyESGData) => {
+    setDeleteFeedback(null)
     if (
       confirm(
         t('companies.deleteConfirm', { name: c.company_name, year: c.report_year })
@@ -120,6 +128,15 @@ export function CompaniesPage() {
           title={t('companies.deleteError')}
           body={localizeErrorMessage(t, deleteMutation.error, 'companies.deleteError')}
         />
+      ) : null}
+      {deleteFeedback ? (
+        <div
+          className="rounded-2xl border border-emerald-200 bg-emerald-50/90 px-4 py-3 text-sm text-emerald-900"
+          role="status"
+          aria-live="polite"
+        >
+          {deleteFeedback}
+        </div>
       ) : null}
 
       <Card className="surface-card">

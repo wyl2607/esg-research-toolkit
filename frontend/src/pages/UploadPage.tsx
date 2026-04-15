@@ -6,6 +6,7 @@ import { ApiError } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { QueryStateCard } from '@/components/QueryStateCard'
 import { Upload, FileText, CheckCircle, AlertCircle, Clock3 } from 'lucide-react'
 import type { BatchStatusResponse, CompanyESGData } from '@/lib/types'
 import { useNavigate } from 'react-router-dom'
@@ -311,6 +312,26 @@ export function UploadPage() {
           </CardContent>
         </Card>
       )}
+
+      {batchStatusQuery.isLoading && batchId && !batchStatus ? (
+        <QueryStateCard
+          tone="loading"
+          title={t('common.loading')}
+          body={t('upload.batchProgress')}
+          className="max-w-2xl"
+        />
+      ) : null}
+
+      {batchStatusQuery.isError ? (
+        <QueryStateCard
+          tone="error"
+          title={t('common.error')}
+          body={localizeErrorMessage(t, batchStatusQuery.error, 'common.error')}
+          actionLabel={t('errorBoundary.retry')}
+          onAction={() => void batchStatusQuery.refetch()}
+          className="max-w-2xl"
+        />
+      ) : null}
 
       {result && (
         <Card className="surface-card">

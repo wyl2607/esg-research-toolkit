@@ -30,6 +30,7 @@ export function RegionalPage() {
 
   const {
     data: companies = [],
+    isLoading: companiesLoading,
     error: companiesError,
     refetch: refetchCompanies,
   } = useQuery({ queryKey: ['companies'], queryFn: listCompanies })
@@ -95,6 +96,15 @@ export function RegionalPage() {
         />
       ) : null}
 
+      {companiesLoading ? (
+        <QueryStateCard
+          tone="loading"
+          title={t('common.loading')}
+          body={t('regional.subtitle')}
+          className="max-w-2xl"
+        />
+      ) : null}
+
       <div className="surface-card max-w-xl">
         <Select value={selected} onValueChange={setSelected}>
           <SelectTrigger className="w-full border-stone-300 bg-white/90">
@@ -113,7 +123,7 @@ export function RegionalPage() {
         </Select>
       </div>
 
-      {companies.length === 0 && !companiesError && !backendOffline ? (
+      {companies.length === 0 && !companiesLoading && !companiesError && !backendOffline ? (
         <QueryStateCard
           tone="empty"
           title={t('common.noData')}
@@ -283,7 +293,14 @@ export function RegionalPage() {
         </div>
       )}
 
-      {!selected && <p className="py-12 text-center text-slate-400">{t('regional.selectPrompt')}</p>}
+      {!selected && !companiesLoading && companies.length > 0 ? (
+        <QueryStateCard
+          tone="empty"
+          title={t('common.selectCompany')}
+          body={t('regional.selectPrompt')}
+          className="max-w-2xl"
+        />
+      ) : null}
     </div>
   )
 }

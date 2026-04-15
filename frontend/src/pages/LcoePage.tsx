@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { calcLcoe, calcSensitivity, getBenchmarks } from '@/lib/api'
 import { MetricCard } from '@/components/MetricCard'
+import { QueryStateCard } from '@/components/QueryStateCard'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -108,7 +109,12 @@ export function LcoePage() {
   const lcoeMutation = useMutation({ mutationFn: calcLcoe })
   const sensitivityMutation = useMutation({ mutationFn: calcSensitivity })
 
-  const { data: benchmarks } = useQuery({
+  const {
+    data: benchmarks,
+    isLoading: benchmarksLoading,
+    error: benchmarksError,
+    refetch: refetchBenchmarks,
+  } = useQuery({
     queryKey: ['benchmarks'],
     queryFn: getBenchmarks,
   })
@@ -195,6 +201,21 @@ export function LcoePage() {
               {t('lcoe.loadBenchmark')}
             </Button>
           </div>
+          {benchmarksLoading ? (
+            <QueryStateCard
+              tone="loading"
+              title={t('common.loading')}
+              body={t('lcoe.subtitle')}
+            />
+          ) : benchmarksError ? (
+            <QueryStateCard
+              tone="error"
+              title={t('common.error')}
+              body={localizeErrorMessage(t, benchmarksError, 'common.error')}
+              actionLabel={t('errorBoundary.retry')}
+              onAction={() => void refetchBenchmarks()}
+            />
+          ) : null}
 
           {/* Currency + FX section */}
           <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/40 p-4 space-y-3">

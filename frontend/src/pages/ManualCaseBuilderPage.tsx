@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { QueryStateCard } from '@/components/QueryStateCard'
 import {
   Select,
   SelectContent,
@@ -144,7 +145,12 @@ export function ManualCaseBuilderPage() {
   const [draftJson, setDraftJson] = useState('')
   const [jsonError, setJsonError] = useState<string | null>(null)
 
-  const { data: companies = [] } = useQuery({
+  const {
+    data: companies = [],
+    isLoading: companiesLoading,
+    error: companiesError,
+    refetch: refetchCompanies,
+  } = useQuery({
     queryKey: ['companies'],
     queryFn: listCompanies,
   })
@@ -415,25 +421,41 @@ export function ManualCaseBuilderPage() {
                 {t('manual.recentCompanies')}
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-wrap gap-2">
-              {recentCompanies.length === 0 ? (
+            <CardContent className="space-y-3">
+              {companiesLoading ? (
+                <QueryStateCard
+                  tone="loading"
+                  title={t('common.loading')}
+                  body={t('manual.recentCompanies')}
+                />
+              ) : companiesError ? (
+                <QueryStateCard
+                  tone="error"
+                  title={t('common.error')}
+                  body={localizeErrorMessage(t, companiesError, 'common.error')}
+                  actionLabel={t('errorBoundary.retry')}
+                  onAction={() => void refetchCompanies()}
+                />
+              ) : recentCompanies.length === 0 ? (
                 <p className="text-sm text-slate-500">{t('manual.noCompaniesYet')}</p>
               ) : (
-                recentCompanies.map((company) => (
-                  <button
-                    key={company.company_name}
-                    type="button"
-                    onClick={() =>
-                      setForm((current) => ({
-                        ...current,
-                        company_name: company.company_name,
-                      }))
-                    }
-                    className="rounded-full border bg-white px-3 py-1.5 text-left text-sm leading-5 text-slate-700 hover:border-amber-300 hover:text-amber-800"
-                  >
-                    {company.company_name}
-                  </button>
-                ))
+                <div className="flex flex-wrap gap-2">
+                  {recentCompanies.map((company) => (
+                    <button
+                      key={company.company_name}
+                      type="button"
+                      onClick={() =>
+                        setForm((current) => ({
+                          ...current,
+                          company_name: company.company_name,
+                        }))
+                      }
+                      className="rounded-full border bg-white px-3 py-1.5 text-left text-sm leading-5 text-slate-700 hover:border-amber-300 hover:text-amber-800"
+                    >
+                      {company.company_name}
+                    </button>
+                  ))}
+                </div>
               )}
             </CardContent>
           </Card>
