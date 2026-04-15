@@ -38,10 +38,10 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from benchmark.compute import BENCHMARK_METRICS
-from core.schemas import ManualReportInput
-from report_parser.extractor import extract_text_from_pdf
-from scripts.seed_german_demo import MANIFEST_PATH, PDF_CACHE_DIR, SeedCompany, load_manifest
+from benchmark.compute import BENCHMARK_METRICS  # noqa: E402
+from core.schemas import ManualReportInput  # noqa: E402
+from report_parser.extractor import extract_text_from_pdf  # noqa: E402
+from scripts.seed_german_demo import MANIFEST_PATH, PDF_CACHE_DIR, SeedCompany, load_manifest  # noqa: E402
 
 AUDIT_DIR = ROOT / "scripts" / "seed_data" / "audit_reports"
 SUMMARY_PATH = AUDIT_DIR / "SUMMARY.md"
