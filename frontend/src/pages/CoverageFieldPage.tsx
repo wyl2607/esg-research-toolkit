@@ -105,9 +105,8 @@ export function CoverageFieldPage() {
             <p className="section-kicker">数据覆盖率 · 字段详情</p>
             <h1 className="text-3xl font-semibold text-slate-900">{config.label}</h1>
             <p className="mt-1 text-sm text-slate-500">
-              单位：{config.unit}　·　
-              {config.higherIsBetter ? '越高越好' : '越低越好'}
-              {config.target !== null && `　·　目标：${config.format(config.target)}`}
+              单位：{config.unit} · {config.higherIsBetter ? '越高越好' : '越低越好'}
+              {config.target !== null && ` · 目标：${config.format(config.target)}`}
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
