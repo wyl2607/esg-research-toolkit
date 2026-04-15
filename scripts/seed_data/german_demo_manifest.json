@@ -1,0 +1,95 @@
+{
+  "_comment": "VERIFY URLS BEFORE RUNNING. German company sustainability/CSR reports change URLs per fiscal year. If a URL 404s, drop the PDF manually into scripts/seed_data/pdfs/<slug>.pdf and the script will use the local copy.",
+  "companies": [
+    {
+      "slug": "rwe-2024",
+      "company_name": "RWE AG",
+      "report_year": 2024,
+      "industry_code": "D35.11",
+      "industry_sector": "Electricity production",
+      "source_url": "https://www.rwe.com/-/media/RWE/documents/05-investor-relations/finanzkalendar-und-veroeffentlichungen/2024-gj/2025-03-20-rwe-annual-report-2024.pdf",
+      "verify": false
+    },
+    {
+      "slug": "eon-2024",
+      "company_name": "E.ON SE",
+      "report_year": 2024,
+      "industry_code": "D35.13",
+      "industry_sector": "Distribution of electricity",
+      "source_url": "https://annualreport.eon.com/content/dam/eon-annualreport/documents/en/GB24-gesamt-EN_final.pdf",
+      "verify": false
+    },
+    {
+      "slug": "enbw-2024",
+      "company_name": "EnBW Energie Baden-Württemberg AG",
+      "report_year": 2024,
+      "industry_code": "D35.11",
+      "industry_sector": "Electricity production",
+      "source_url": "https://www.enbw.com/media/report/report-2024/downloads/enbw-annual-report-2024.pdf",
+      "verify": false
+    },
+    {
+      "slug": "uniper-2024",
+      "company_name": "Uniper SE",
+      "report_year": 2024,
+      "industry_code": "D35.11",
+      "industry_sector": "Electricity production",
+      "source_url": "https://www.uniper.energy/system/files/2025-03/2025_02_25_FY_2024_Uniper_Annual_Report.pdf",
+      "verify": false
+    },
+    {
+      "slug": "thyssenkrupp-2024",
+      "company_name": "thyssenkrupp AG",
+      "report_year": 2024,
+      "industry_code": "C24.10",
+      "industry_sector": "Basic iron and steel",
+      "source_url": "https://www.thyssenkrupp.com/_binary/UCPthyssenkruppAG/83ec7a5e-b24a-449d-b3c9-9d7f13287a4a/thyssenkrupp-GB_2023-2024_EN_WEB.pdf",
+      "verify": false
+    },
+    {
+      "slug": "salzgitter-2024",
+      "company_name": "Salzgitter AG",
+      "report_year": 2024,
+      "industry_code": "C24.10",
+      "industry_sector": "Basic iron and steel",
+      "source_url": "https://www.salzgitter-ag.com/fileadmin/finanzberichte/2024/gb2024/en/downloads/szag-ar2024-complete.pdf",
+      "verify": false
+    },
+    {
+      "slug": "basf-2024",
+      "company_name": "BASF SE",
+      "report_year": 2024,
+      "industry_code": "C20.14",
+      "industry_sector": "Organic basic chemicals",
+      "source_url": "https://report.basf.com/2024/en/_assets/downloads/entire-full-report-basf-ar24.pdf",
+      "verify": false
+    },
+    {
+      "slug": "linde-2024",
+      "company_name": "Linde plc",
+      "report_year": 2024,
+      "industry_code": "C20.11",
+      "industry_sector": "Industrial gases",
+      "source_url": "https://assets.linde.com/-/media/global/corporate/corporate/documents/sustainable-development/2024-sustainable-development-report.pdf",
+      "verify": false
+    },
+    {
+      "slug": "heidelberg-materials-2024",
+      "company_name": "Heidelberg Materials AG",
+      "report_year": 2024,
+      "industry_code": "C23.51",
+      "industry_sector": "Cement",
+      "source_url": "https://www.heidelbergmaterials.com/sites/default/files/2025-03/HM_ASR24_en.pdf",
+      "verify": false
+    },
+    {
+      "slug": "volkswagen-2024",
+      "company_name": "Volkswagen AG",
+      "report_year": 2024,
+      "industry_code": "C29.10",
+      "industry_sector": "Motor vehicles",
+      "source_url": "https://annualreport2024.volkswagen-group.com/_assets/downloads/esrs-sustainability-report-vw-ar24.pdf",
+      "verify": false
+    }
+  ]
+}

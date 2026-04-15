@@ -7,6 +7,7 @@
     "lcoe": "度电成本",
     "companies": "公司列表",
     "compare": "对比分析",
+    "benchmarks": "行业基准",
     "frameworks": "多框架",
     "appName": "ESG 工具包",
     "regional": "区域对比",
@@ -256,6 +257,51 @@
       "waterUsage": "总取水量（立方米）。对高耗水行业尤为重要。一般越低越好，但需结合水资源紧缺地区的背景综合判断。",
       "femalePct": "女性员工占总员工数的比例，反映性别多样性。数值越高说明性别结构越均衡。",
       "intensity": "排放强度将范围1碳排放量除以员工总数，实现不同规模公司之间的公平对比。"
+    }
+  },
+  "benchmark": {
+    "title": "行业基准",
+    "subtitle": "按 NACE 行业分组的披露分位数",
+    "disclaimer": "分位数基于已标注 NACE 行业的公司计算。结果取决于样本量；n<5 时 p50 仅作参考。",
+    "industryLabel": "行业",
+    "yearLabel": "年份",
+    "yearEmpty": "暂无年份",
+    "refreshButton": "重新计算基准",
+    "refreshingButton": "正在重新计算…",
+    "refreshSuccess": "已更新 {{industries}} 个行业，共 {{rows}} 条指标",
+    "lastComputedAt": "最近计算时间：{{time}}",
+    "loading": "加载中…",
+    "emptyMetrics": "该行业暂无基准数据。请先上传带该行业编码的报告，然后点击“重新计算”。",
+    "emptyPeers": "尚无公司标注为该行业。",
+    "percentilesHeading": "分位数概览 —— {{industry}}",
+    "peersHeading": "贡献公司（{{count}}）",
+    "col": {
+      "metric": "指标",
+      "sample": "样本"
+    }
+  },
+  "peer": {
+    "title": "同业对比",
+    "titleWithIndustry": "同业对比 —— {{industry}}（{{code}}）",
+    "noIndustryCta": "该公司尚未标注 NACE 行业。在下次上传时设置即可启用同业对比。",
+    "loading": "正在加载同业基准…",
+    "empty": "该行业暂无基准数据。请到“行业基准”页面重新计算。",
+    "disclaimer": "位置基于最新可用基准年。样本量 < 5 的分组仅作参考。",
+    "col": {
+      "metric": "指标",
+      "company": "公司",
+      "p50": "行业 p50",
+      "position": "位置",
+      "sample": "样本"
+    },
+    "bucket": {
+      "below_p10": "低于 p10",
+      "p10_p25": "p10–p25",
+      "p25_p50": "p25–p50",
+      "p50_p75": "p50–p75",
+      "p75_p90": "p75–p90",
+      "above_p90": "高于 p90",
+      "unknown": "n/a"
     }
   },
   "frameworks": {

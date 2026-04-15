@@ -21,6 +21,9 @@ const CompaniesPage = lazy(() =>
 const ComparePage = lazy(() =>
   import('@/pages/ComparePage').then((module) => ({ default: module.ComparePage }))
 )
+const BenchmarkPage = lazy(() =>
+  import('@/pages/BenchmarkPage').then((module) => ({ default: module.BenchmarkPage }))
+)
 const FrameworksPage = lazy(() =>
   import('@/pages/FrameworksPage').then((module) => ({ default: module.FrameworksPage }))
 )
@@ -53,6 +56,7 @@ export default function App() {
               <Route path="companies/:companyName" element={<CompanyProfilePage />} />
               <Route path="manual" element={<ManualCaseBuilderPage />} />
               <Route path="compare" element={<ComparePage />} />
+              <Route path="benchmarks" element={<BenchmarkPage />} />
               <Route path="frameworks" element={<FrameworksPage />} />
               <Route path="regional" element={<RegionalPage />} />
               <Route path="frameworks/regional" element={<RegionalPage />} />

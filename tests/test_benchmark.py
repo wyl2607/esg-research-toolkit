@@ -1,4 +1,5 @@
 from collections.abc import Generator
+from types import SimpleNamespace
 
 from fastapi.testclient import TestClient
 import pytest
@@ -113,3 +114,62 @@ def test_get_benchmark_endpoint_returns_rows(benchmark_db_session_factory: sessi
     assert isinstance(payload["metrics"], list)
     assert len(payload["metrics"]) >= 1
 
+
+def test_recompute_skips_rows_with_null_year() -> None:
+    class _RowsQuery:
+        def __init__(self, rows: list[SimpleNamespace]) -> None:
+            self._rows = rows
+
+        def filter(self, *_args, **_kwargs):
+            return self
+
+        def all(self) -> list[SimpleNamespace]:
+            return self._rows
+
+    class _DeleteQuery:
+        def filter(self, *_args, **_kwargs):
+            return self
+
+        def delete(self, *_args, **_kwargs):
+            return None
+
+    class _FakeSession:
+        def __init__(self, rows: list[SimpleNamespace]) -> None:
+            self._rows = rows
+            self.added: list[IndustryBenchmark] = []
+
+        def query(self, model):
+            if model is CompanyReport:
+                return _RowsQuery(self._rows)
+            if model is IndustryBenchmark:
+                return _DeleteQuery()
+            raise AssertionError(f"Unexpected model query: {model}")
+
+        def add_all(self, rows) -> None:
+            self.added = list(rows)
+
+        def commit(self) -> None:
+            return None
+
+    fake_rows = [
+        SimpleNamespace(
+            company_name="NullYear AG",
+            report_year=None,
+            industry_code="D35.11",
+            scope1_co2e_tonnes=123.0,
+        ),
+        SimpleNamespace(
+            company_name="GoodYear AG",
+            report_year=2024,
+            industry_code="D35.11",
+            scope1_co2e_tonnes=500.0,
+        ),
+    ]
+    fake_db = _FakeSession(fake_rows)
+
+    summary = recompute_industry_benchmarks(fake_db)
+
+    assert summary["industries"] == 1
+    assert summary["metric_rows"] == 1
+    assert len(fake_db.added) == 1
+    assert fake_db.added[0].period_year == 2024

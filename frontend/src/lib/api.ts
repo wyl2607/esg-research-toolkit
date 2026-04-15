@@ -1,9 +1,12 @@
 // Typed fetch wrappers for all 15 backend endpoints
 import type {
+  BenchmarkRecomputeResponse,
   BatchStatusResponse,
+  CompaniesByIndustryResponse,
   CompanyProfile,
   CompanyESGData,
   FrameworkScoreResult,
+  IndustryBenchmarksResponse,
   LCOEInput,
   LCOEResult,
   MultiFrameworkReport,
@@ -113,6 +116,20 @@ export const getCompany = (
 
 export const getCompanyProfile = (name: string): Promise<CompanyProfile> =>
   req(`/report/companies/${encodeURIComponent(name)}/profile`)
+
+export const getIndustryBenchmarks = (
+  industryCode: string
+): Promise<IndustryBenchmarksResponse> =>
+  req(`/benchmarks/${encodeURIComponent(industryCode)}`)
+
+export const getCompaniesByIndustry = (
+  industryCode: string
+): Promise<CompaniesByIndustryResponse> =>
+  req(`/report/companies/by-industry/${encodeURIComponent(industryCode)}`)
+
+export const recomputeIndustryBenchmarks =
+  (): Promise<BenchmarkRecomputeResponse> =>
+    req('/benchmarks/recompute', { method: 'POST' })
 
 export const createManualReport = (
   data: ManualReportInput,

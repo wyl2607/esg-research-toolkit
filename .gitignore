@@ -108,3 +108,9 @@ docs/repo-sync-policy.md
 .guard/
 docs/codex-tasks/
 scripts/omx_*
+
+# Seed pipeline runtime artifacts
+scripts/seed_data/pdfs/**/*.pdf
+scripts/seed_data/anomalies_report.md
+scripts/seed_data/audit_reports/*.md
+!scripts/seed_data/audit_reports/.gitkeep

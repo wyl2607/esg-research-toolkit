@@ -301,3 +301,41 @@ export interface CompanyNarrativeSummary {
   disclosure_strength_metrics: string[]
   disclosure_gap_metrics: string[]
 }
+
+// ---- Cross-company benchmark (Task 30D / 30F pipeline) ----
+
+export interface IndustryBenchmarkMetric {
+  metric_name: string
+  period_year: number
+  p10: number | null
+  p25: number | null
+  p50: number | null
+  p75: number | null
+  p90: number | null
+  sample_size: number
+  computed_at: string | null
+}
+
+export interface IndustryBenchmarksResponse {
+  industry_code: string
+  metrics: IndustryBenchmarkMetric[]
+}
+
+export interface CompanyByIndustryEntry {
+  company_name: string
+  report_year: number | null
+  industry_code: string | null
+  industry_sector: string | null
+  metrics: Record<string, number | null>
+}
+
+export interface CompaniesByIndustryResponse {
+  industry_code: string
+  company_count: number
+  companies: CompanyByIndustryEntry[]
+}
+
+export interface BenchmarkRecomputeResponse {
+  industries: number
+  metric_rows: number
+}

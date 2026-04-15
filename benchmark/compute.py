@@ -38,6 +38,8 @@ def recompute_industry_benchmarks(db: Session) -> dict[str, int]:
     for row in rows:
         if not row.industry_code:
             continue
+        if row.report_year is None:
+            continue
         for metric in BENCHMARK_METRICS:
             val = getattr(row, metric, None)
             if val is None:

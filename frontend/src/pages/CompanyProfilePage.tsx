@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft, Building2, CheckCircle2, Clock3, Download, FileText, Leaf, ShieldCheck, Sparkles, TrendingUp, TriangleAlert } from 'lucide-react'
 
 import { MetricCard } from '@/components/MetricCard'
+import { PeerComparisonCard } from '@/components/company-profile/PeerComparisonCard'
 import { QueryStateCard } from '@/components/QueryStateCard'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -665,6 +666,12 @@ export function CompanyProfilePage() {
         <MetricCard label={t('companies.employees')} value={asNum(m.total_employees, locale)} unit={t('companies.unitPeople')} />
         <MetricCard label={t('companies.renewable')} value={asPct(m.renewable_energy_pct)} unit={t('companies.unitPercent')} color="green" />
       </div>
+
+      <PeerComparisonCard
+        industryCode={profile.latest_period?.industry_code ?? null}
+        reportYear={profile.latest_year}
+        metrics={profile.latest_metrics}
+      />
 
       <Card>
         <CardHeader>

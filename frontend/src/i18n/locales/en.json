@@ -7,6 +7,7 @@
     "lcoe": "LCOE",
     "companies": "Companies",
     "compare": "Compare",
+    "benchmarks": "Industry Benchmarks",
     "frameworks": "Frameworks",
     "appName": "ESG Toolkit",
     "regional": "Regional Analysis",
@@ -254,6 +255,51 @@
       "waterUsage": "Total water withdrawal in cubic metres. Relevant for water-intensive industries. Lower is typically better, but context (water-stressed regions) matters.",
       "femalePct": "Percentage of the total workforce that identifies as female. A diversity proxy. Higher values indicate better gender balance.",
       "intensity": "Emissions intensity normalises Scope 1 CO₂ by total headcount, enabling fair size-adjusted comparison across companies of different scales."
+    }
+  },
+  "benchmark": {
+    "title": "Industry Benchmarks",
+    "subtitle": "Cross-company disclosure percentiles by NACE industry",
+    "disclaimer": "Percentiles are computed from companies whose reports carry a NACE industry code. Results depend on sample size; p50 with n<5 is directional only.",
+    "industryLabel": "Industry",
+    "yearLabel": "Year",
+    "yearEmpty": "No year available",
+    "refreshButton": "Recompute benchmarks",
+    "refreshingButton": "Recomputing…",
+    "refreshSuccess": "Updated {{industries}} industries, {{rows}} metric rows",
+    "lastComputedAt": "Last computed: {{time}}",
+    "loading": "Loading…",
+    "emptyMetrics": "No benchmark data for this industry yet. Upload reports with this industry code, then click Recompute.",
+    "emptyPeers": "No companies tagged with this industry yet.",
+    "percentilesHeading": "Percentile summary — {{industry}}",
+    "peersHeading": "Contributing companies ({{count}})",
+    "col": {
+      "metric": "Metric",
+      "sample": "n"
+    }
+  },
+  "peer": {
+    "title": "Peer comparison",
+    "titleWithIndustry": "Peer comparison — {{industry}} ({{code}})",
+    "noIndustryCta": "This company has no NACE industry code yet. Set it on the next upload to enable peer comparison.",
+    "loading": "Loading peer benchmarks…",
+    "empty": "No benchmark data available for this industry yet. Use the Industry Benchmarks page to recompute.",
+    "disclaimer": "Position is computed against the latest available benchmark year. Buckets with sample size < 5 are directional only.",
+    "col": {
+      "metric": "Metric",
+      "company": "Company",
+      "p50": "Industry p50",
+      "position": "Position",
+      "sample": "n"
+    },
+    "bucket": {
+      "below_p10": "< p10",
+      "p10_p25": "p10–p25",
+      "p25_p50": "p25–p50",
+      "p50_p75": "p50–p75",
+      "p75_p90": "p75–p90",
+      "above_p90": "> p90",
+      "unknown": "n/a"
     }
   },
   "frameworks": {

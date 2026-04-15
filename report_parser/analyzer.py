@@ -44,12 +44,79 @@ Return ONLY valid JSON, no markdown, no explanation. If a field is not found, us
 
 
 def _extract_relevant_sections(text: str) -> str:
-    """前 2000 字符（公司/年份识别）+ 后 120000 字符（数据表区域）。"""
+    """前 2000 字符（公司/年份识别）+ ESG 关键词覆盖区域（最多 110000 字符）。
+
+    策略：在全文中定位所有 ESG 关键词，每处建 ±15K 窗口并合并，
+    按关键词密度降序选取，总量不超过 110K。避免长报告（如钢铁/化工年报）
+    中间的 ESG 表格被截断丢失。
+    """
     if not text:
         return ""
+
     head = text[:2000]
-    tail = text[-120000:] if len(text) > 122000 else text[2000:]
-    return head + "\n\n--- [ESG Data Section] ---\n\n" + tail
+
+    # 如果文本较短，直接返回全文
+    if len(text) <= 122000:
+        return head + "\n\n--- [ESG Data Section] ---\n\n" + text[2000:]
+
+    # 定位全文中所有 ESG 关键词
+    esg_keywords = [
+        r"scope\s*1", r"scope\s*2", r"scope\s*3",
+        r"tco2e?", r"co2e", r"co2eq", r"co₂e",
+        r"greenhouse\s*gas", r"ghg\s+emission",
+        r"renewable\s+energy", r"energy\s+consumption",
+        r"sustainability\s+data", r"esg\s+data", r"key\s+performance",
+        r"million\s+tons?\s+co2", r"kt\s+co2", r"tonnes?\s+co2",
+    ]
+    positions = []
+    for pat in esg_keywords:
+        for m in re.finditer(pat, text, re.IGNORECASE):
+            positions.append(m.start())
+
+    if not positions:
+        return head + "\n\n--- [ESG Data Section] ---\n\n" + text[-120000:]
+
+    # 每个关键词位置前后 15K 建窗口，合并重叠区间
+    WIN = 15000
+    intervals = sorted((max(0, p - WIN), min(len(text), p + WIN)) for p in positions)
+    merged: list[list[int]] = []
+    for s, e in intervals:
+        if merged and s <= merged[-1][1]:
+            merged[-1][1] = max(merged[-1][1], e)
+        else:
+            merged.append([s, e])
+
+    # 按关键词密度降序排列（优先高密度区域）
+    def _density(interval: list[int]) -> int:
+        chunk = text[interval[0]:interval[1]]
+        return sum(len(re.findall(pat, chunk, re.IGNORECASE)) for pat in esg_keywords)
+
+    merged.sort(key=_density, reverse=True)
+
+    # 选取密度最高的区域，总量不超过 110K
+    BUDGET = 110000
+    selected: list[tuple[int, int]] = []
+    used = 0
+    for s, e in merged:
+        size = e - s
+        if used + size <= BUDGET:
+            selected.append((s, e))
+            used += size
+        else:
+            remaining = BUDGET - used
+            if remaining > 2000:
+                selected.append((s, s + remaining))
+            break
+
+    # 按原文顺序拼接
+    selected.sort()
+    esg_parts = [text[s:e] for s, e in selected]
+
+    return (
+        head
+        + "\n\n--- [ESG Data Section] ---\n\n"
+        + "\n\n--- [next section] ---\n\n".join(esg_parts)
+    )
 
 
 # ── 正则 fallback：提取基础字段 ────────────────────────────────────────────────
@@ -202,41 +269,35 @@ def _regex_fallback(text: str, filename: str = "") -> CompanyESGData:
     if year_match:
         result["report_year"] = int(year_match.group(1))
 
-    # Scope 1（中英文）
-    scope1 = re.search(
-        r"(?:Scope\s*1|范围一|范围\s*1)[^\d]{0,60}?([\d,]+\.?\d*)\s*(?:tCO2e|tCO₂e|万吨|吨)",
-        text,
-        re.IGNORECASE,
-    )
-    if scope1:
-        val = _parse_number(scope1.group(1))
-        if val and "万吨" in scope1.group(0):
-            val *= 10000
-        result["scope1_co2e_tonnes"] = val
+    # CO2 unit alternatives (tCO2e, kt CO2e, Mt CO2e, Mio. t CO2e, million tons CO2, 万吨, 吨)
+    _CO2_UNIT = r"(?:tCO2e?q?|tCO₂e?|t\s*CO2e?q?|kt\s*CO2e?q?|Mt\s*CO2e?q?|Tt\s*CO2e?q?|Mio\.?\s*t\s*CO2e?q?|million\s+t(?:ons?|onnes?)\s*CO2e?q?|万吨|吨)"
 
-    # Scope 2
-    scope2 = re.search(
-        r"(?:Scope\s*2|范围二|范围\s*2)[^\d]{0,60}?([\d,]+\.?\d*)\s*(?:tCO2e|tCO₂e|万吨|吨)",
-        text,
-        re.IGNORECASE,
-    )
-    if scope2:
-        val = _parse_number(scope2.group(1))
-        if val and "万吨" in scope2.group(0):
+    def _scope_extract(label_pat: str, text: str) -> float | None:
+        # Allow up to 120 chars (including newlines) between label and value
+        m = re.search(
+            rf"(?:{label_pat})[\s\S]{{0,120}}?([\d,.]+)\s*{_CO2_UNIT}",
+            text, re.IGNORECASE,
+        )
+        if not m:
+            return None
+        raw = m.group(1).strip()
+        val = _parse_number(raw)
+        if val is None:
+            return None
+        full = m.group(0).lower()
+        if "万吨" in full:
             val *= 10000
-        result["scope2_co2e_tonnes"] = val
+        elif re.search(r"\bkt\b", full):
+            val *= 1000
+        elif re.search(r"\bmt\b|\bmio\b|\bmillion\b", full):
+            val *= 1e6
+        elif re.search(r"\btt\b", full):
+            val *= 1e12
+        return val
 
-    # Scope 3
-    scope3 = re.search(
-        r"(?:Scope\s*3|范围三|范围\s*3)[^\d]{0,60}?([\d,]+\.?\d*)\s*(?:tCO2e|tCO₂e|万吨|吨)",
-        text,
-        re.IGNORECASE,
-    )
-    if scope3:
-        val = _parse_number(scope3.group(1))
-        if val and "万吨" in scope3.group(0):
-            val *= 10000
-        result["scope3_co2e_tonnes"] = val
+    result["scope1_co2e_tonnes"] = _scope_extract(r"Scope\s*1|范围一|范围\s*1", text)
+    result["scope2_co2e_tonnes"] = _scope_extract(r"Scope\s*2|范围二|范围\s*2", text)
+    result["scope3_co2e_tonnes"] = _scope_extract(r"Scope\s*3|范围三|范围\s*3", text)
 
     result["energy_consumption_mwh"] = _extract_metric(
         text,

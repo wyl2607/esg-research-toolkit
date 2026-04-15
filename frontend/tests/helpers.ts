@@ -22,6 +22,7 @@ export const smokeRoutes: RouteExpectation[] = [
   { path: '/lcoe', heading: 'Stromgestehungskosten-Analyse', name: 'lcoe' },
   { path: '/companies', heading: 'Unternehmen', name: 'companies' },
   { path: '/compare', heading: 'Unternehmensvergleich', name: 'compare' },
+  { path: '/benchmarks', heading: 'Branchenbenchmarks', name: 'benchmarks' },
   { path: '/frameworks', heading: 'Multi-Rahmenwerk ESG', name: 'frameworks' },
   { path: '/regional', heading: 'Drei-Regionen ESG-Vergleich', name: 'regional' },
 ]

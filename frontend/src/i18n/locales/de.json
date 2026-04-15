@@ -7,6 +7,7 @@
     "lcoe": "LCOE",
     "companies": "Unternehmen",
     "compare": "Vergleich",
+    "benchmarks": "Branchenbenchmarks",
     "frameworks": "Rahmenwerke",
     "appName": "ESG Toolkit",
     "regional": "Regionalvergleich",
@@ -256,6 +257,51 @@
       "waterUsage": "Gesamter Wasserentnahme in Kubikmeter. Relevant für wasserintensive Branchen. In der Regel gilt: niedriger ist besser, abhängig vom regionalen Wasserdargebot.",
       "femalePct": "Anteil der weiblichen Beschäftigten an der Gesamtbelegschaft. Ein Diversitätsindikator. Höhere Werte stehen für eine ausgewogenere Geschlechterverteilung.",
       "intensity": "Emissionsintensität normiert Scope 1 CO₂ auf die Mitarbeiterzahl und ermöglicht einen fairen, größenbereinigten Vergleich zwischen Unternehmen unterschiedlicher Größe."
+    }
+  },
+  "benchmark": {
+    "title": "Branchenbenchmarks",
+    "subtitle": "Offenlegungsperzentile nach NACE-Branche",
+    "disclaimer": "Perzentile werden aus Unternehmen mit NACE-Kennzeichnung berechnet. Ergebnisse hängen von der Stichprobengröße ab; p50 bei n<5 nur als Richtwert.",
+    "industryLabel": "Branche",
+    "yearLabel": "Jahr",
+    "yearEmpty": "Kein Jahr verfügbar",
+    "refreshButton": "Benchmarks neu berechnen",
+    "refreshingButton": "Wird neu berechnet…",
+    "refreshSuccess": "{{industries}} Branchen aktualisiert, {{rows}} Metrikzeilen",
+    "lastComputedAt": "Zuletzt berechnet: {{time}}",
+    "loading": "Wird geladen…",
+    "emptyMetrics": "Noch keine Benchmark-Daten für diese Branche. Laden Sie Berichte mit dieser Branche hoch und klicken Sie dann auf Neu berechnen.",
+    "emptyPeers": "Noch keine Unternehmen mit dieser Branche markiert.",
+    "percentilesHeading": "Perzentil-Übersicht — {{industry}}",
+    "peersHeading": "Beteiligte Unternehmen ({{count}})",
+    "col": {
+      "metric": "Metrik",
+      "sample": "n"
+    }
+  },
+  "peer": {
+    "title": "Peer-Vergleich",
+    "titleWithIndustry": "Peer-Vergleich — {{industry}} ({{code}})",
+    "noIndustryCta": "Für dieses Unternehmen ist noch keine NACE-Branche hinterlegt. Beim nächsten Upload festlegen, um den Peer-Vergleich zu aktivieren.",
+    "loading": "Peer-Benchmarks werden geladen…",
+    "empty": "Für diese Branche liegen noch keine Benchmark-Daten vor. Auf der Seite Branchenbenchmarks neu berechnen.",
+    "disclaimer": "Die Position bezieht sich auf das jüngste verfügbare Benchmark-Jahr. Buckets mit Stichprobe < 5 sind nur Richtwerte.",
+    "col": {
+      "metric": "Metrik",
+      "company": "Unternehmen",
+      "p50": "Branche p50",
+      "position": "Position",
+      "sample": "n"
+    },
+    "bucket": {
+      "below_p10": "< p10",
+      "p10_p25": "p10–p25",
+      "p25_p50": "p25–p50",
+      "p50_p75": "p50–p75",
+      "p75_p90": "p75–p90",
+      "above_p90": "> p90",
+      "unknown": "n/a"
     }
   },
   "frameworks": {

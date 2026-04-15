@@ -159,10 +159,11 @@ export function UploadPage() {
       </div>
 
       <div className="surface-card space-y-2">
-        <label className="text-sm font-medium text-stone-700">
+        <label htmlFor="upload-industry-code" className="text-sm font-medium text-stone-700">
           {t('upload.industryLabel')}
         </label>
         <select
+          id="upload-industry-code"
           className="h-10 w-full rounded-xl border border-stone-200 bg-white px-3 text-sm"
           value={industryCode}
           onChange={(e) => setIndustryCode(e.target.value)}

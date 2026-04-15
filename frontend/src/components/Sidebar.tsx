@@ -8,6 +8,7 @@ import {
   Building2,
   GitCompare,
   Globe,
+  BarChart3,
   FilePenLine,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -28,6 +29,7 @@ export function Sidebar({ id, className, onNavigate }: SidebarProps) {
     { to: '/upload', label: t('nav.upload'), icon: Upload },
     { to: '/companies', label: t('nav.companies'), icon: Building2 },
     { to: '/compare', label: t('nav.compare'), icon: GitCompare },
+    { to: '/benchmarks', label: t('nav.benchmarks'), icon: BarChart3 },
     { to: '/frameworks', label: t('nav.frameworks'), icon: Globe },
     { to: '/taxonomy', label: t('nav.taxonomy'), icon: Tag },
   ]
