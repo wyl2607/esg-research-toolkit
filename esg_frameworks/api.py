@@ -113,7 +113,7 @@ def compare_regional_frameworks(
     company_name: str = Query(...),
     report_year: int = Query(...),
     db: Session = Depends(get_db),
-):
+) -> dict[str, object]:
     """三地对比分析：返回 RegionalComparisonReport。"""
     data = _load_company(db, company_name, report_year)
     now = datetime.now(timezone.utc).isoformat()
@@ -142,9 +142,9 @@ def get_saved_results(
     company_name: str = Query(...),
     report_year: int = Query(...),
     db: Session = Depends(get_db),
-):
+) -> list[dict[str, object]]:
     rows = list_framework_results(db, company_name=company_name, report_year=report_year)
-    payload: list[dict] = []
+    payload: list[dict[str, object]] = []
     for row in rows:
         result = json.loads(row.result_payload)
         result["analysis_result_id"] = row.id

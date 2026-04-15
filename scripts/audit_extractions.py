@@ -13,11 +13,12 @@ Usage:
   python scripts/audit_extractions.py --slug rwe-2024
   python scripts/audit_extractions.py --apply
   python scripts/audit_extractions.py --dry-run
-  python scripts/audit_extractions.py --model gpt-4o-mini
+  python scripts/audit_extractions.py --model gpt-5.3-codex
   python scripts/audit_extractions.py --max-chars 80000
 
 Environment:
   OPENAI_API_KEY   required unless --dry-run
+  OPENAI_MODEL     optional default model (fallback gpt-4o)
   API_BASE         default http://localhost:8000
 """
 
@@ -26,6 +27,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -45,7 +47,7 @@ from scripts.seed_german_demo import MANIFEST_PATH, PDF_CACHE_DIR, SeedCompany, 
 
 AUDIT_DIR = ROOT / "scripts" / "seed_data" / "audit_reports"
 SUMMARY_PATH = AUDIT_DIR / "SUMMARY.md"
-DEFAULT_MODEL = "gpt-4o"
+DEFAULT_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4o")
 DEFAULT_MAX_CHARS = 80_000
 DEFAULT_API_BASE = os.environ.get("API_BASE", "http://localhost:8000")
 
@@ -75,6 +77,7 @@ class CompanyAuditResult:
     company_name: str
     report_year: int
     fields: list[FieldAudit]
+    db_company_name: str | None = None
     error: str | None = None
 
     def corrections_to_apply(self) -> dict[str, float | None]:
@@ -93,6 +96,90 @@ class CompanyAuditResult:
 def _company_profile_url(api_base: str, company_name: str) -> str:
     encoded = quote(company_name, safe="")
     return f"{api_base}/report/companies/{encoded}/profile"
+
+
+_CORPORATE_TOKENS = {
+    "ag",
+    "se",
+    "plc",
+    "inc",
+    "ltd",
+    "llc",
+    "corp",
+    "corporation",
+    "co",
+    "company",
+    "group",
+    "holdings",
+    "holding",
+}
+
+
+def _normalize_company_name(name: str) -> str:
+    tokens = re.findall(r"[a-z0-9]+", name.lower())
+    compact = [token for token in tokens if token not in _CORPORATE_TOKENS]
+    return "".join(compact) if compact else "".join(tokens)
+
+
+def _extract_years_from_company_row(entry: dict[str, Any]) -> set[int]:
+    years: set[int] = set()
+    for key in ("report_year", "latest_report_year", "year"):
+        value = entry.get(key)
+        if isinstance(value, int):
+            years.add(value)
+        elif isinstance(value, str):
+            try:
+                years.add(int(value.strip()))
+            except ValueError:
+                continue
+
+    years_available = entry.get("years_available")
+    if isinstance(years_available, list):
+        for value in years_available:
+            if isinstance(value, int):
+                years.add(value)
+            elif isinstance(value, str):
+                try:
+                    years.add(int(value.strip()))
+                except ValueError:
+                    continue
+    return years
+
+
+def resolve_company_name(api_base: str, company_name: str, report_year: int) -> str | None:
+    target = _normalize_company_name(company_name)
+    if not target:
+        return None
+
+    try:
+        with httpx.Client(timeout=30) as client:
+            response = client.get(f"{api_base}/report/companies")
+    except httpx.HTTPError:
+        return None
+
+    if response.status_code != 200:
+        return None
+
+    try:
+        payload = response.json()
+    except ValueError:
+        return None
+    if not isinstance(payload, list):
+        return None
+
+    for entry in payload:
+        if not isinstance(entry, dict):
+            continue
+        candidate_name = entry.get("company_name")
+        if not isinstance(candidate_name, str) or not candidate_name.strip():
+            continue
+        years = _extract_years_from_company_row(entry)
+        if years and report_year not in years:
+            continue
+        if _normalize_company_name(candidate_name) == target:
+            return candidate_name
+
+    return None
 
 
 def build_prompt(
@@ -203,20 +290,48 @@ def parse_audit_response(raw: str, current_record: dict[str, Any]) -> list[Field
     return results
 
 
-def fetch_company_profile(api_base: str, company_name: str) -> dict[str, Any] | None:
+def fetch_company_profile(
+    api_base: str,
+    company_name: str,
+    *,
+    report_year: int | None = None,
+) -> tuple[dict[str, Any] | None, str | None]:
     try:
         with httpx.Client(timeout=30) as client:
             response = client.get(_company_profile_url(api_base, company_name))
     except httpx.HTTPError:
-        return None
+        response = None
+
+    if response is not None and response.status_code == 200:
+        try:
+            payload = response.json()
+        except ValueError:
+            payload = None
+        if isinstance(payload, dict):
+            return payload, company_name
+
+    if report_year is None:
+        return None, None
+
+    resolved_name = resolve_company_name(api_base, company_name, report_year)
+    if not resolved_name or resolved_name == company_name:
+        return None, None
+
+    try:
+        with httpx.Client(timeout=30) as client:
+            response = client.get(_company_profile_url(api_base, resolved_name))
+    except httpx.HTTPError:
+        return None, None
 
     if response.status_code != 200:
-        return None
+        return None, None
     try:
         payload = response.json()
     except ValueError:
-        return None
-    return payload if isinstance(payload, dict) else None
+        return None, None
+    if not isinstance(payload, dict):
+        return None, None
+    return payload, resolved_name
 
 
 def audit_one(
@@ -242,7 +357,12 @@ def audit_one(
 
     current_metrics: dict[str, Any] = {}
     if not dry_run:
-        profile = fetch_company_profile(api_base, company.company_name) or {}
+        profile, resolved_name = fetch_company_profile(
+            api_base,
+            company.company_name,
+            report_year=company.report_year,
+        )
+        profile = profile or {}
         latest_metrics = profile.get("latest_metrics") or {}
         if not isinstance(latest_metrics, dict) or not latest_metrics:
             return CompanyAuditResult(
@@ -252,6 +372,9 @@ def audit_one(
                 fields=[],
                 error="record not found in DB; run seed first",
             )
+        db_company_name = resolved_name or company.company_name
+        if db_company_name != company.company_name:
+            print(f"  profile resolved as DB name: {db_company_name}")
         current_metrics = latest_metrics
 
     source_text = extract_text_from_pdf(pdf_path)
@@ -322,6 +445,7 @@ def audit_one(
         company_name=company.company_name,
         report_year=company.report_year,
         fields=fields,
+        db_company_name=db_company_name if not dry_run else None,
     )
 
 
@@ -424,7 +548,12 @@ def apply_corrections(api_base: str, result: CompanyAuditResult) -> bool:
     if not corrections:
         return False
 
-    profile = fetch_company_profile(api_base, result.company_name)
+    canonical_name = result.db_company_name or result.company_name
+    profile, _ = fetch_company_profile(
+        api_base,
+        canonical_name,
+        report_year=result.report_year,
+    )
     if not profile:
         print("  apply skipped: cannot fetch company profile")
         return False
@@ -436,7 +565,7 @@ def apply_corrections(api_base: str, result: CompanyAuditResult) -> bool:
 
     merged = dict(current_metrics)
     merged.update(corrections)
-    merged["company_name"] = result.company_name
+    merged["company_name"] = canonical_name
     merged["report_year"] = result.report_year
     source_url = _latest_source_url(profile)
     if source_url:

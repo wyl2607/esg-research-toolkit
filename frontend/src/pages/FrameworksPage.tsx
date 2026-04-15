@@ -167,7 +167,12 @@ export function FrameworksPage() {
   const { t } = useTranslation()
   const [selected, setSelected] = useState('')
 
-  const { data: companies = [], error: companiesError, refetch: refetchCompanies } = useQuery({
+  const {
+    data: companies = [],
+    isLoading: companiesLoading,
+    error: companiesError,
+    refetch: refetchCompanies,
+  } = useQuery({
     queryKey: ['companies'],
     queryFn: listCompanies,
   })
@@ -208,6 +213,15 @@ export function FrameworksPage() {
         />
       ) : null}
 
+      {companiesLoading ? (
+        <QueryStateCard
+          tone="loading"
+          title={t('common.loading')}
+          body={t('frameworks.subtitle')}
+          className="max-w-2xl"
+        />
+      ) : null}
+
       <div className="surface-card max-w-xl">
         <p id="frameworks-company-select-label" className="mb-3 text-xs uppercase tracking-[0.2em] text-stone-500">
           {t('common.company')} & {t('common.year')}
@@ -233,7 +247,7 @@ export function FrameworksPage() {
         </Select>
       </div>
 
-      {companies.length === 0 && !companiesError && !backendOffline ? (
+      {companies.length === 0 && !companiesLoading && !companiesError && !backendOffline ? (
         <QueryStateCard
           tone="empty"
           title={t('common.noData')}

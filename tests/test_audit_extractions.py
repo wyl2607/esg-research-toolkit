@@ -7,6 +7,7 @@ from scripts.audit_extractions import (
     CompanyAuditResult,
     FieldAudit,
     build_prompt,
+    fetch_company_profile,
     parse_audit_response,
 )
 
@@ -87,3 +88,51 @@ def test_corrections_to_apply_filters_by_confidence() -> None:
     )
     to_apply = result.corrections_to_apply()
     assert to_apply == {"scope2_co2e_tonnes": 1230000}
+
+
+def test_fetch_company_profile_falls_back_to_normalized_name(monkeypatch) -> None:
+    class DummyResponse:
+        def __init__(self, status_code: int, payload):
+            self.status_code = status_code
+            self._payload = payload
+
+        def json(self):
+            return self._payload
+
+    class DummyClient:
+        def __init__(self, *args, **kwargs) -> None:
+            self.calls: list[str] = []
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb) -> None:
+            return None
+
+        def get(self, url: str) -> DummyResponse:
+            self.calls.append(url)
+            if url.endswith("/report/companies/RWE%20AG/profile"):
+                return DummyResponse(404, {"detail": "not found"})
+            if url.endswith("/report/companies"):
+                return DummyResponse(
+                    200,
+                    [
+                        {"company_name": "RWE", "report_year": 2024},
+                        {"company_name": "BASF SE", "report_year": 2024},
+                    ],
+                )
+            if url.endswith("/report/companies/RWE/profile"):
+                return DummyResponse(
+                    200,
+                    {"latest_metrics": {"scope1_co2e_tonnes": 123.0}},
+                )
+            raise AssertionError(f"unexpected URL: {url}")
+
+    monkeypatch.setattr("scripts.audit_extractions.httpx.Client", DummyClient)
+    profile, resolved_name = fetch_company_profile(
+        "http://localhost:8000",
+        "RWE AG",
+        report_year=2024,
+    )
+    assert resolved_name == "RWE"
+    assert profile and profile["latest_metrics"]["scope1_co2e_tonnes"] == 123.0

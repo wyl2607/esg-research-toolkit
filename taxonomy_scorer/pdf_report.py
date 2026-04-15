@@ -81,10 +81,10 @@ class _ChartFlowable(Flowable):
         super().__init__()
         self.drawing = drawing
 
-    def wrap(self, *_args):  # type: ignore[override]
+    def wrap(self, *_args: object) -> tuple[float, float]:  # type: ignore[override]
         return self.drawing.width, self.drawing.height
 
-    def draw(self):  # type: ignore[override]
+    def draw(self) -> None:  # type: ignore[override]
         renderPDF.draw(self.drawing, self.canv, 0, 0)
 
 

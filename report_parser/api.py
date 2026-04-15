@@ -5,6 +5,7 @@ import io
 import json
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 import openpyxl
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
@@ -427,7 +428,7 @@ if _MULTIPART_AVAILABLE:
         industry_code: str | None = Form(default=None),
         industry_sector: str | None = Form(default=None),
         db: Session = Depends(get_db),
-    ):
+    ) -> CompanyESGData:
         """
         上传企业 PDF 报告，提取 ESG 数据。
         1. 保存 PDF 到 data/reports/{filename}
@@ -488,7 +489,7 @@ if _MULTIPART_AVAILABLE:
         return esg_data
 
     @router.post("/upload/batch", response_model=BatchStatusResponse)
-    async def upload_reports_batch(files: list[UploadFile] = File(...)):
+    async def upload_reports_batch(files: list[UploadFile] = File(...)) -> BatchStatusResponse:
         """
         批量上传 PDF，并异步分析。
         返回 batch_id，前端通过 /report/jobs/{batch_id} 轮询进度。
@@ -515,7 +516,7 @@ if _MULTIPART_AVAILABLE:
         return batch_manager.submit(saved_files)
 
     @router.get("/jobs/{batch_id}", response_model=BatchStatusResponse)
-    def get_batch_status(batch_id: str):
+    def get_batch_status(batch_id: str) -> BatchStatusResponse:
         try:
             return batch_manager.get_batch_status(batch_id)
         except KeyError as exc:
@@ -524,7 +525,7 @@ if _MULTIPART_AVAILABLE:
 else:
 
     @router.post("/upload", response_model=CompanyESGData)
-    async def upload_report(db: Session = Depends(get_db)):
+    async def upload_report(db: Session = Depends(get_db)) -> CompanyESGData:
         raise HTTPException(500, 'File uploads require the "python-multipart" package')
 
 
@@ -532,7 +533,7 @@ else:
 def save_manual_report(
     payload: ManualReportInput,
     db: Session = Depends(get_db),
-):
+) -> CompanyESGData:
     report = CompanyESGData(**payload.model_dump(exclude={"source_url"}))
     evidence_summary = payload.evidence_summary or _manual_evidence_summary(
         report,
@@ -552,7 +553,7 @@ def save_manual_report(
 
 
 @router.post("/merge/preview", response_model=MergePreviewResponse)
-def preview_merge(payload: MergePreviewRequest):
+def preview_merge(payload: MergePreviewRequest) -> MergePreviewResponse:
     try:
         return build_merge_preview(payload.documents)
     except ValueError as exc:
@@ -639,7 +640,7 @@ def get_company_report(
     company_name: str,
     report_year: int,
     db: Session = Depends(get_db),
-):
+) -> CompanyESGData:
     record = get_report(db, company_name, report_year)
     if not record:
         raise HTTPException(404, "Report not found")
@@ -650,7 +651,7 @@ def get_company_report(
 def get_company_history(
     company_name: str,
     db: Session = Depends(get_db),
-):
+) -> dict[str, Any]:
     from esg_frameworks.storage import list_framework_results
 
     records = list_reports_for_company(db, company_name)
@@ -727,7 +728,7 @@ def get_company_history(
 def get_company_profile(
     company_name: str,
     db: Session = Depends(get_db),
-):
+) -> dict[str, Any]:
     from esg_frameworks.storage import list_framework_results
     from esg_frameworks.api import _SCORERS
 
@@ -840,7 +841,7 @@ def get_company_profile(
 
 
 @router.get("/dashboard/stats")
-def get_dashboard_stats(db: Session = Depends(get_db)):
+def get_dashboard_stats(db: Session = Depends(get_db)) -> dict[str, Any]:
     records = list_reports_grouped(db)
     if not records:
         return {
@@ -906,7 +907,11 @@ def get_dashboard_stats(db: Session = Depends(get_db)):
 
 
 @router.get("/companies")
-def list_company_reports(skip: int = 0, limit: int = 50, db: Session = Depends(get_db)):
+def list_company_reports(
+    skip: int = 0,
+    limit: int = 50,
+    db: Session = Depends(get_db),
+) -> list[dict[str, Any]]:
     records = list_reports_grouped(db)[skip : skip + limit]
     payload = []
     for record in records:
@@ -955,7 +960,7 @@ def request_source_deletion(
     company_name: str,
     report_year: int,
     db: Session = Depends(get_db),
-):
+) -> dict[str, str | int | bool]:
     """
     来源删除机制（Requirement 4）：
     接收权利人请求，立即删除本地 PDF 副本，标记记录为 deletion_requested。
@@ -982,7 +987,7 @@ def delete_company_report(
     report_year: int,
     hard: bool = Query(default=False, description="彻底删除所有数据（管理员操作）"),
     db: Session = Depends(get_db),
-):
+) -> dict[str, str | int]:
     """删除公司报告。hard=true 时彻底删除，否则仅软删除（标记 deletion_requested）。"""
     if hard:
         ok = hard_delete_report(db, company_name, report_year)
@@ -995,7 +1000,7 @@ def delete_company_report(
 
 
 @router.get("/companies/export/csv")
-def export_companies_csv(db: Session = Depends(get_db)):
+def export_companies_csv(db: Session = Depends(get_db)) -> StreamingResponse:
     records = list_reports_grouped(db)
     fieldnames = [
         "company_name",
@@ -1025,7 +1030,7 @@ def export_companies_csv(db: Session = Depends(get_db)):
 
 
 @router.get("/companies/export/xlsx")
-def export_companies_xlsx(db: Session = Depends(get_db)):
+def export_companies_xlsx(db: Session = Depends(get_db)) -> StreamingResponse:
     records = list_reports_grouped(db)
 
     wb = openpyxl.Workbook()

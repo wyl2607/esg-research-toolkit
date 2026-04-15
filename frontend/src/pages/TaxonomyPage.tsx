@@ -23,7 +23,12 @@ export function TaxonomyPage() {
   const [selected, setSelected] = useState<string>('')
   const [pdfLoading, setPdfLoading] = useState(false)
 
-  const { data: companies = [], error: companiesError, refetch: refetchCompanies } = useQuery({
+  const {
+    data: companies = [],
+    isLoading: companiesLoading,
+    error: companiesError,
+    refetch: refetchCompanies,
+  } = useQuery({
     queryKey: ['companies'],
     queryFn: listCompanies,
   })
@@ -90,6 +95,15 @@ export function TaxonomyPage() {
         />
       ) : null}
 
+      {companiesLoading ? (
+        <QueryStateCard
+          tone="loading"
+          title={t('common.loading')}
+          body={t('taxonomy.subtitle')}
+          className="max-w-2xl"
+        />
+      ) : null}
+
       <div className="surface-card max-w-xl">
         <p className="mb-3 text-xs uppercase tracking-[0.2em] text-stone-500">
           {t('common.company')} & {t('common.year')}
@@ -111,7 +125,7 @@ export function TaxonomyPage() {
         </Select>
       </div>
 
-      {companies.length === 0 && !companiesError && !backendOffline ? (
+      {companies.length === 0 && !companiesLoading && !companiesError && !backendOffline ? (
         <QueryStateCard
           tone="empty"
           title={t('common.noData')}
