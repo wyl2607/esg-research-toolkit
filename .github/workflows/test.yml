@@ -26,11 +26,13 @@ jobs:
       - name: Run tests
         env:
           OPENAI_API_KEY: test_key_placeholder
+          DATABASE_URL: "sqlite://"
         run: |
           pytest tests/ -v --tb=short
 
       - name: Check import health
         env:
           OPENAI_API_KEY: test_key_placeholder
+          DATABASE_URL: "sqlite://"
         run: |
           python -c "from main import app; print('✓ App imports OK')"

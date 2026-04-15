@@ -105,7 +105,7 @@ SUMMARY.md
 # 本地开发约束/流程资产（不进入 GitHub）
 AGENTS.md
 docs/repo-sync-policy.md
-.guard/
+.guard/ENGINEERING_MEMORY.md
 docs/codex-tasks/
 scripts/omx_*
 

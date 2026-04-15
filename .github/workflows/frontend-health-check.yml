@@ -44,6 +44,7 @@ jobs:
         working-directory: frontend
         env:
           OPENAI_API_KEY: test_key_placeholder
+          DATABASE_URL: "sqlite://"
         run: npm run health:check:ci
 
       - name: Attach summary to job
