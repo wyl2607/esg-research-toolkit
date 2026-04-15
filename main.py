@@ -36,7 +36,7 @@ app.include_router(benchmark_router)
 
 
 @app.get("/")
-def root():
+def root() -> dict[str, str | list[str]]:
     return {
         "name": "ESG Research Toolkit",
         "version": "0.1.0",
@@ -46,5 +46,5 @@ def root():
 
 
 @app.get("/health")
-def health():
+def health() -> dict[str, str]:
     return {"status": "ok"}

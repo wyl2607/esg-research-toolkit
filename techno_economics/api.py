@@ -8,13 +8,17 @@ router = APIRouter(prefix="/techno", tags=["techno_economics"])
 
 
 @router.post("/lcoe", response_model=LCOEResult)
-def lcoe(inp: LCOEInput):
+def lcoe(inp: LCOEInput) -> LCOEResult:
     """计算 LCOE / NPV / IRR。"""
     return calculate_lcoe(inp)
 
 
 @router.post("/sensitivity")
-def sensitivity(inp: LCOEInput, variation_range: float = 0.2, steps: int = 5):
+def sensitivity(
+    inp: LCOEInput,
+    variation_range: float = 0.2,
+    steps: int = 5,
+) -> list[dict[str, str | float | list[float]]]:
     """对 CAPEX 和 OPEX 做敏感性分析，返回 ±variation_range 范围内的 LCOE 变化。"""
     results: list[SensitivityResult] = run_sensitivity(inp, variation_range, steps)
     return [
@@ -30,7 +34,7 @@ def sensitivity(inp: LCOEInput, variation_range: float = 0.2, steps: int = 5):
 
 
 @router.get("/benchmarks")
-def benchmarks():
+def benchmarks() -> dict[str, dict[str, int | str]]:
     """返回典型可再生能源技术的参考 LCOE 范围（2024 年欧洲市场数据）。"""
     return {
         "solar_pv": {

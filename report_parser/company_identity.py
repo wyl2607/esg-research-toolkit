@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from collections import defaultdict
 from collections.abc import Iterable
+from typing import Any
 
 
 _KNOWN_CANONICAL_NAMES: dict[str, str] = {
@@ -59,7 +60,7 @@ def company_names_match(left: str, right: str) -> bool:
     return canonical_company_name(left) == canonical_company_name(right)
 
 
-def report_quality_score(record) -> tuple[int, int, int, str]:
+def report_quality_score(record: Any) -> tuple[int, int, int, str]:
     metric_fields = (
         "scope1_co2e_tonnes",
         "scope2_co2e_tonnes",
@@ -84,13 +85,13 @@ def report_quality_score(record) -> tuple[int, int, int, str]:
     return (priority, filled_metrics, evidence_len, updated_key)
 
 
-def collapse_company_records(records: Iterable) -> list:
-    grouped: dict[tuple[str, int], list] = defaultdict(list)
+def collapse_company_records(records: Iterable[Any]) -> list[Any]:
+    grouped: dict[tuple[str, int], list[Any]] = defaultdict(list)
     for record in records:
         canonical = canonical_company_name(getattr(record, "company_name", ""))
         grouped[(canonical, getattr(record, "report_year", 0))].append(record)
 
-    collapsed: list = []
+    collapsed: list[Any] = []
     for (_, _), candidates in grouped.items():
         best = max(candidates, key=report_quality_score)
         best.company_name = canonical_company_name(best.company_name)
