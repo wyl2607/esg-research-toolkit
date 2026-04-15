@@ -109,6 +109,15 @@ docs/repo-sync-policy.md
 docs/codex-tasks/
 scripts/omx_*
 
+# AI audit/planning artifacts (local only)
+frontend/AUDIT_*.md
+frontend/*_AUDIT.md
+frontend/CONSISTENCY_*.md
+frontend/EXACT_FIXES.md
+frontend/CODEX_*.md
+frontend/README_AUDIT.md
+scripts/codex_loop.sh
+
 # Seed pipeline runtime artifacts
 scripts/seed_data/pdfs/**/*.pdf
 scripts/seed_data/anomalies_report.md

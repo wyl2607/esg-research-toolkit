@@ -20,3 +20,11 @@ scripts/omx_subtask_loop.sh
 scripts/omx_task27_closure_loop.sh
 scripts/omx_task_loop.sh
 scripts/omx_verify_local.sh
+frontend/AUDIT_INDEX.md
+frontend/AUDIT_RECOMMENDATIONS.md
+frontend/CONSISTENCY_SUMMARY.md
+frontend/DESIGN_CONSISTENCY_AUDIT.md
+frontend/EXACT_FIXES.md
+frontend/README_AUDIT.md
+frontend/CODEX_FRONTEND_REVIEW_PROMPT.md
+scripts/codex_loop.sh
