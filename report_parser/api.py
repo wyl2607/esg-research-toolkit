@@ -44,6 +44,30 @@ _MULTIPART_AVAILABLE = any(
     for module_name in ("python_multipart", "multipart")
 )
 
+# ── Upload hardening (P0) ────────────────────────────────────────────────
+MAX_PDF_BYTES = 50 * 1024 * 1024          # 50 MB hard cap
+MIN_PDF_BYTES = 1024                       # < 1 KB cannot be a real PDF
+PDF_MAGIC_BYTES = b"%PDF-"
+
+
+def _validate_pdf_bytes(filename: str | None, content: bytes) -> None:
+    """Strict PDF validation: extension + magic bytes + size bounds.
+
+    Stops obvious attacks: oversized uploads, fake .pdf extensions,
+    EICAR-style content masquerading as a PDF.
+    """
+    if not filename or not filename.lower().endswith(".pdf"):
+        raise HTTPException(400, "Only PDF files are supported")
+    if len(content) < MIN_PDF_BYTES:
+        raise HTTPException(400, f"PDF too small ({len(content)} bytes); minimum {MIN_PDF_BYTES}")
+    if len(content) > MAX_PDF_BYTES:
+        raise HTTPException(
+            413,
+            f"PDF too large ({len(content) // (1024 * 1024)} MB); max {MAX_PDF_BYTES // (1024 * 1024)} MB",
+        )
+    if not content.startswith(PDF_MAGIC_BYTES):
+        raise HTTPException(415, "File does not look like a PDF (missing %PDF- magic bytes)")
+
 
 def _parse_evidence_summary(raw_value: str | None) -> list[dict[str, str | int | float | None]]:
     if not raw_value:
@@ -437,10 +461,8 @@ if _MULTIPART_AVAILABLE:
         4. 存储到 DB
         5. 返回 CompanyESGData
         """
-        if not file.filename or not file.filename.lower().endswith(".pdf"):
-            raise HTTPException(400, "Only PDF files are supported")
-
         content = await file.read()
+        _validate_pdf_bytes(file.filename, content)
 
         # ── 合规：计算文件哈希用于溯源，PDF 不对外公开访问 ──────────────────
         file_hash = hashlib.sha256(content).hexdigest()
@@ -504,12 +526,12 @@ if _MULTIPART_AVAILABLE:
 
         saved_files: list[tuple[Path, str]] = []
         for file in files:
-            if not file.filename or not file.filename.lower().endswith(".pdf"):
-                raise HTTPException(400, f"Only PDF files are supported: {file.filename or '<unknown>'}")
+            content = await file.read()
+            _validate_pdf_bytes(file.filename, content)
+            assert file.filename is not None  # guarded by _validate_pdf_bytes
 
             pdf_path = upload_dir / Path(file.filename).name
             with pdf_path.open("wb") as handle:
-                content = await file.read()
                 handle.write(content)
             saved_files.append((pdf_path, file.filename))
 

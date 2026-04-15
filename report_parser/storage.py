@@ -1,4 +1,5 @@
 import json
+import logging
 from datetime import datetime, timezone
 
 from sqlalchemy import Boolean, Column, DateTime, Float, Integer, String, Text, func, text
@@ -7,12 +8,15 @@ from sqlalchemy.orm import Session
 
 from core.database import Base
 from core.schemas import CompanyESGData
+from core.validation import has_errors, validate_record
 from report_parser.company_identity import (
     canonical_company_name,
     collapse_company_records,
     company_name_variants,
     report_quality_score,
 )
+
+_logger = logging.getLogger(__name__)
 
 DEFAULT_REPORTING_PERIOD_TYPE = "annual"
 DEFAULT_SOURCE_DOCUMENT_TYPE = "sustainability_report"
@@ -198,6 +202,24 @@ def save_report(
     record.total_employees = normalized_data.total_employees
     record.female_pct = normalized_data.female_pct
     record.primary_activities = json.dumps(normalized_data.primary_activities)
+
+    # ── L0 physical-bounds validation (soft fail: log only) ──────────────
+    issues = validate_record(normalized_data.model_dump())
+    if issues:
+        for issue in issues:
+            _logger.warning(
+                "save_report L0 validation %s: %s",
+                issue.severity,
+                issue.message,
+            )
+        if has_errors(issues):
+            _logger.error(
+                "save_report storing record %s/%s with %d L0 errors — review needed",
+                canonical_name,
+                normalized_data.report_year,
+                sum(1 for i in issues if i.severity == "error"),
+            )
+
     db.commit()
     db.refresh(record)
     return record
@@ -359,11 +381,70 @@ def hard_delete_report(db: Session, company_name: str, report_year: int) -> bool
     return True
 
 
+class ExtractionRun(Base):
+    """Append-only audit trail for every extraction / validation pass.
+
+    Each row records one (PDF, model, prompt) triple so that every benchmark
+    number can be traced back to: company_report → extraction_run → raw PDF hash.
+    """
+
+    __tablename__ = "extraction_runs"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    company_report_id = Column(Integer, nullable=True, index=True)
+    file_hash = Column(String, nullable=True, index=True)         # SHA-256 of source PDF
+    run_kind = Column(String, nullable=False, index=True)          # extract | audit | validate | manual
+    model = Column(String, nullable=True)                          # gpt-4o, gpt-4o-mini, manual, ...
+    prompt_hash = Column(String, nullable=True)                    # SHA-1 of the prompt template (for repro)
+    raw_response = Column(Text, nullable=True)                     # JSON blob (truncated at 64KB by writer)
+    verdict = Column(String, nullable=True)                        # ok | warn | error | applied
+    applied = Column(Boolean, default=False, nullable=False)       # did this run write back to canonical?
+    notes = Column(Text, nullable=True)                            # short human/AI summary
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+
+
+def record_extraction_run(
+    db: Session,
+    *,
+    run_kind: str,
+    file_hash: str | None = None,
+    company_report_id: int | None = None,
+    model: str | None = None,
+    prompt_hash: str | None = None,
+    raw_response: str | None = None,
+    verdict: str | None = None,
+    applied: bool = False,
+    notes: str | None = None,
+) -> ExtractionRun:
+    """Persist one extraction/audit/validation event. Append-only — never UPDATE rows."""
+    payload = raw_response
+    if payload is not None and len(payload) > 65536:
+        payload = payload[:65536] + "...[truncated]"
+    row = ExtractionRun(
+        run_kind=run_kind,
+        file_hash=file_hash,
+        company_report_id=company_report_id,
+        model=model,
+        prompt_hash=prompt_hash,
+        raw_response=payload,
+        verdict=verdict,
+        applied=applied,
+        notes=notes,
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
 def ensure_storage_schema(engine: Engine) -> None:
     """
     Lightweight SQLite-safe migration for additive columns on company_reports.
     We keep this minimal so existing deployments can evolve without alembic.
     """
+    # Always create newly declared tables (extraction_runs, etc.) on any backend.
+    Base.metadata.create_all(bind=engine, tables=[ExtractionRun.__table__])
+
     if engine.dialect.name != "sqlite":
         return
 

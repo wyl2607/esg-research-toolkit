@@ -3,7 +3,7 @@ from __future__ import annotations
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from uuid import uuid4
 
@@ -14,19 +14,67 @@ from report_parser.analyzer import analyze_esg_data
 from report_parser.extractor import extract_text_from_pdf
 from report_parser.storage import save_report
 
+# Evict completed/failed jobs older than this many seconds to keep the dict bounded.
+JOB_RETENTION_SECONDS = 24 * 3600
+MAX_JOBS_IN_MEMORY = 5_000
+
 
 def _utc_now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
 class BatchAnalysisManager:
-    """In-process queue for PDF batch analysis."""
+    """In-process queue for PDF batch analysis with bounded memory footprint."""
 
     def __init__(self, max_workers: int = 2) -> None:
         self._executor = ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="esg-batch")
         self._lock = threading.Lock()
         self._jobs: dict[str, dict] = {}
         self._batches: dict[str, list[str]] = {}
+
+    def _evict_stale_locked(self) -> None:
+        """Drop terminal jobs older than JOB_RETENTION_SECONDS.
+
+        Caller must hold ``self._lock``. Also enforces a hard cap so a runaway
+        producer cannot exhaust memory between evictions.
+        """
+        if not self._jobs:
+            return
+        cutoff = datetime.now(timezone.utc) - timedelta(seconds=JOB_RETENTION_SECONDS)
+        cutoff_iso = cutoff.isoformat()
+
+        stale_job_ids: list[str] = []
+        for job_id, job in self._jobs.items():
+            if job["status"] not in ("completed", "failed"):
+                continue
+            finished = job.get("finished_at")
+            if finished and finished < cutoff_iso:
+                stale_job_ids.append(job_id)
+
+        for job_id in stale_job_ids:
+            self._jobs.pop(job_id, None)
+
+        # Hard cap: if still oversized, drop oldest terminal jobs first
+        if len(self._jobs) > MAX_JOBS_IN_MEMORY:
+            terminal = sorted(
+                (
+                    (job["finished_at"] or job["created_at"], job_id)
+                    for job_id, job in self._jobs.items()
+                    if job["status"] in ("completed", "failed")
+                ),
+            )
+            overflow = len(self._jobs) - MAX_JOBS_IN_MEMORY
+            for _ts, job_id in terminal[:overflow]:
+                self._jobs.pop(job_id, None)
+
+        # Drop empty batches
+        empty_batches = [
+            batch_id
+            for batch_id, job_ids in self._batches.items()
+            if not any(jid in self._jobs for jid in job_ids)
+        ]
+        for batch_id in empty_batches:
+            self._batches.pop(batch_id, None)
 
     def submit(self, files: list[tuple[Path, str]]) -> BatchStatusResponse:
         if not files:
@@ -36,6 +84,7 @@ class BatchAnalysisManager:
         now = _utc_now_iso()
 
         with self._lock:
+            self._evict_stale_locked()
             self._batches[batch_id] = []
             for file_path, filename in files:
                 job_id = uuid4().hex

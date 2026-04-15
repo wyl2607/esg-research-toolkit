@@ -41,6 +41,12 @@ data/*.pdf
 data/literature/
 data/questionnaires/
 data/reports/
+data/raw_pdfs/**
+!data/raw_pdfs/.gitkeep
+data/extractions/**
+!data/extractions/.gitkeep
+data/exports/**
+!data/exports/.gitkeep
 reports/
 examples/companies/*.json
 *.db
@@ -123,3 +129,4 @@ scripts/seed_data/pdfs/**/*.pdf
 scripts/seed_data/anomalies_report.md
 scripts/seed_data/audit_reports/*.md
 !scripts/seed_data/audit_reports/.gitkeep
+nightly/
