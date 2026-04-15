@@ -4,6 +4,7 @@ python-multipart~=0.0.9
 uvicorn[standard]~=0.29.0
 pydantic~=2.7.0
 pydantic-settings~=2.2.0
+slowapi>=0.1.9
 
 # Database
 sqlalchemy~=2.0.0

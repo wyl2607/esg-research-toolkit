@@ -1,39 +1,46 @@
-"""
-Rate limit regression test.
-Sends 6 rapid POST requests to /report/upload and asserts at least one 429.
-Uses TestClient with X-Forwarded-For header to simulate same IP.
-"""
-import io
+from pathlib import Path
 
-import pytest
 from fastapi.testclient import TestClient
+import pytest
+
+from core.schemas import CompanyESGData
+from main import app
 
 
-def _fresh_limiter_storage() -> None:
-    """Replace the limiter's storage with a fresh MemoryStorage instance."""
-    from limits.storage import MemoryStorage
-
-    from core.limiter import limiter
-
-    limiter._storage = MemoryStorage()
+def _fake_pdf_bytes() -> bytes:
+    return b"%PDF-1.7\n" + b"0" * 2048
 
 
-def test_upload_rate_limit() -> None:
-    """6 rapid uploads from same IP should trigger 429 on at least the 6th request."""
-    _fresh_limiter_storage()
+def test_upload_rate_limit(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(
+        "report_parser.api.extract_text_from_pdf",
+        lambda _path: "Example Corp sustainability report",
+    )
+    monkeypatch.setattr(
+        "report_parser.api.analyze_esg_data",
+        lambda _text, filename="": CompanyESGData(
+            company_name="Example Corp",
+            report_year=2024,
+            scope1_co2e_tonnes=123.4,
+            scope2_co2e_tonnes=56.7,
+            energy_consumption_mwh=890.1,
+            renewable_energy_pct=42.0,
+            total_employees=250,
+            female_pct=48.5,
+            primary_activities=["solar_pv"],
+        ),
+    )
+    monkeypatch.setattr("report_parser.api.save_report", lambda *args, **kwargs: None)
 
-    from main import app
+    statuses: list[int] = []
+    with TestClient(app) as client:
+        for attempt in range(6):
+            response = client.post(
+                "/report/upload",
+                files={"file": (f"demo-{attempt}.pdf", _fake_pdf_bytes(), "application/pdf")},
+            )
+            statuses.append(response.status_code)
 
-    client = TestClient(app, raise_server_exceptions=False)
-
-    responses = []
-    for _ in range(6):
-        fake_pdf = io.BytesIO(b"%PDF-1.4 fake content" + b"x" * 2048)
-        resp = client.post(
-            "/report/upload",
-            files={"file": ("test.pdf", fake_pdf, "application/pdf")},
-            headers={"X-Forwarded-For": "10.0.0.1"},
-        )
-        responses.append(resp.status_code)
-
-    assert 429 in responses, f"Expected 429 in responses, got: {responses}"
+    assert statuses[:5] == [200, 200, 200, 200, 200]
+    assert 429 in statuses
