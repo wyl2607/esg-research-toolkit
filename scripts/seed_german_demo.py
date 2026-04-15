@@ -28,6 +28,7 @@ Environment:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import sys
@@ -36,6 +37,10 @@ from pathlib import Path
 from urllib.parse import quote
 
 import httpx
+
+from core.config import settings
+from core.database import SessionLocal, engine
+from report_parser.storage import ensure_storage_schema, record_extraction_run
 
 ROOT = Path(__file__).resolve().parent.parent
 MANIFEST_PATH = ROOT / "scripts" / "seed_data" / "german_demo_manifest.json"
@@ -104,6 +109,33 @@ def load_manifest(path: Path = MANIFEST_PATH) -> list[SeedCompany]:
 
 def _is_probably_pdf(content: bytes) -> bool:
     return len(content) > 1024 and content.lstrip().startswith(b"%PDF")
+
+
+def _hash_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(65536), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _record_extract_run(company: SeedCompany, pdf_path: Path, payload: dict) -> None:
+    parsed_name = payload.get("company_name") if isinstance(payload.get("company_name"), str) else company.company_name
+    parsed_year = payload.get("report_year") if isinstance(payload.get("report_year"), int) else company.report_year
+    notes = f"Seed extraction succeeded for {parsed_name} {parsed_year} from {pdf_path.name}."
+
+    try:
+        ensure_storage_schema(engine)
+        with SessionLocal() as db:
+            record_extraction_run(
+                db,
+                run_kind="extract",
+                file_hash=_hash_file(pdf_path),
+                model=settings.openai_model,
+                notes=notes,
+            )
+    except Exception as exc:  # noqa: BLE001 - audit trail must not break existing seed flow
+        print(f"  ⚠️ failed to record extraction run: {exc}")
 
 
 def ensure_pdf(company: SeedCompany, *, dry_run: bool, timeout: float) -> Path | None:
@@ -249,6 +281,7 @@ def phase_a(api_base: str, companies: list[SeedCompany], *, dry_run: bool, timeo
             failed.append((company.slug, "upload failed"))
             continue
 
+        _record_extract_run(company, pdf_path, result)
         succeeded.append(company.slug)
 
     if not dry_run and succeeded:

@@ -1,23 +1,42 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import sys
 import time
 import types
 from pathlib import Path
 
+import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+from core.database import Base
+from report_parser.storage import ExtractionRun
 from scripts.audit_extractions import (
     AUDIT_FIELDS,
     CompanyAuditResult,
     FieldAudit,
     ROOT,
     SUMMARY_PATH,
+    audit_one,
     build_prompt,
     fetch_company_profile,
     main,
     parse_audit_response,
 )
-from scripts.seed_german_demo import SeedCompany
+from scripts.seed_german_demo import SeedCompany, phase_a
+
+
+@pytest.fixture
+def audit_trail_session_factory(tmp_path: Path):
+    engine = create_engine(f"sqlite:///{tmp_path / 'audit-trail.db'}", connect_args={"check_same_thread": False})
+    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    Base.metadata.create_all(bind=engine)
+    try:
+        yield TestingSessionLocal, engine
+    finally:
+        Base.metadata.drop_all(bind=engine)
 
 
 def test_build_prompt_includes_all_fields_and_forces_quote() -> None:
@@ -278,6 +297,122 @@ def test_fetch_company_profile_resolves_kgaa_suffix(monkeypatch) -> None:
     assert profile and profile["latest_metrics"]["scope1_co2e_tonnes"] == 111.0
 
 
+def test_phase_a_records_extract_run_on_success(monkeypatch, tmp_path: Path, audit_trail_session_factory) -> None:
+    testing_session_local, testing_engine = audit_trail_session_factory
+    company = SeedCompany(
+        "demo-2024",
+        "Demo AG",
+        2024,
+        "D35.11",
+        "Power",
+        "https://example.com/demo.pdf",
+        False,
+    )
+    pdf_bytes = b"%PDF-1.7\n" + (b"x" * 2048)
+    pdf_path = tmp_path / "demo-2024.pdf"
+    pdf_path.write_bytes(pdf_bytes)
+
+    monkeypatch.setattr("scripts.seed_german_demo.SessionLocal", testing_session_local)
+    monkeypatch.setattr("scripts.seed_german_demo.engine", testing_engine)
+    monkeypatch.setattr("scripts.seed_german_demo.ensure_pdf", lambda *_args, **_kwargs: pdf_path)
+    monkeypatch.setattr("scripts.seed_german_demo.already_seeded", lambda *_args, **_kwargs: False)
+    monkeypatch.setattr(
+        "scripts.seed_german_demo.upload_company",
+        lambda *_args, **_kwargs: {"company_name": "Demo Parsed AG", "report_year": 2024},
+    )
+    monkeypatch.setattr("scripts.seed_german_demo.trigger_recompute", lambda *_args, **_kwargs: {"ok": True})
+    monkeypatch.setattr("scripts.seed_german_demo.settings.openai_model", "gpt-extract-test")
+
+    summary = phase_a("http://localhost:8000", [company], dry_run=False, timeout=5)
+
+    with testing_session_local() as db:
+        rows = db.query(ExtractionRun).all()
+
+    assert summary["succeeded"] == ["demo-2024"]
+    assert len(rows) == 1
+    assert rows[0].run_kind == "extract"
+    assert rows[0].file_hash == hashlib.sha256(pdf_bytes).hexdigest()
+    assert rows[0].model == "gpt-extract-test"
+    assert rows[0].notes == "Seed extraction succeeded for Demo Parsed AG 2024 from demo-2024.pdf."
+    assert "\n" not in (rows[0].notes or "")
+
+
+def test_audit_one_records_audit_run_on_success(monkeypatch, tmp_path: Path, audit_trail_session_factory) -> None:
+    testing_session_local, testing_engine = audit_trail_session_factory
+    company = SeedCompany(
+        "audit-demo-2024",
+        "Audit Demo AG",
+        2024,
+        "D35.11",
+        "Power",
+        "https://example.com/audit-demo.pdf",
+        False,
+    )
+    pdf_bytes = b"%PDF-1.7\n" + (b"y" * 2048)
+    pdf_path = tmp_path / "audit-demo-2024.pdf"
+    pdf_path.write_bytes(pdf_bytes)
+
+    monkeypatch.setattr("scripts.audit_extractions.SessionLocal", testing_session_local)
+    monkeypatch.setattr("scripts.audit_extractions.engine", testing_engine)
+    monkeypatch.setattr("scripts.audit_extractions.PDF_CACHE_DIR", tmp_path)
+    monkeypatch.setattr(
+        "scripts.audit_extractions.fetch_company_profile",
+        lambda *_args, **_kwargs: ({"latest_metrics": {"scope1_co2e_tonnes": 12.0}}, company.company_name),
+    )
+    monkeypatch.setattr(
+        "scripts.audit_extractions.extract_text_from_pdf",
+        lambda _path: "Scope 1 emissions totalled 12 tonnes CO2e in 2024.",
+    )
+
+    raw_response = json.dumps(
+        {
+            "scope1_co2e_tonnes": {
+                "current_value": 12.0,
+                "verdict": "correct",
+                "corrected_value": None,
+                "source_page_hint": 3,
+                "evidence_quote": "Scope 1 emissions totalled 12 tonnes CO2e in 2024.",
+                "confidence": "high",
+                "reason": "Matches report",
+            }
+        }
+    )
+
+    class _DummyOpenAI:
+        class chat:
+            class completions:
+                @staticmethod
+                def create(**_kwargs):
+                    return types.SimpleNamespace(
+                        choices=[types.SimpleNamespace(message=types.SimpleNamespace(content=raw_response))]
+                    )
+
+    result = audit_one(
+        company,
+        api_base="http://localhost:8000",
+        model="gpt-audit-test",
+        max_chars=5000,
+        openai_client=_DummyOpenAI(),
+        dry_run=False,
+        company_directory=[{"company_name": company.company_name, "report_year": 2024}],
+    )
+
+    with testing_session_local() as db:
+        rows = db.query(ExtractionRun).all()
+
+    assert result.error is None
+    assert len(rows) == 1
+    assert rows[0].run_kind == "audit"
+    assert rows[0].file_hash == hashlib.sha256(pdf_bytes).hexdigest()
+    assert rows[0].model == "gpt-audit-test"
+    assert rows[0].verdict == "ok"
+    assert rows[0].notes == (
+        "Audit completed for Audit Demo AG 2024: "
+        f"1 correct, 0 incorrect, 0 missed, {len(AUDIT_FIELDS) - 1} not_disclosed."
+    )
+    assert "\n" not in (rows[0].notes or "")
+
+
 def test_main_writes_reports_in_manifest_order_with_workers(monkeypatch) -> None:
     companies = [
         SeedCompany("a-2024", "Alpha AG", 2024, "D35.11", "Power", "https://example.com/a.pdf", False),
@@ -380,3 +515,166 @@ def test_main_continues_when_audit_worker_raises(monkeypatch) -> None:
     assert "worker:" in (errors.get("a-2024") or "")
     assert errors.get("b-2024") == "dry-run"
     assert exit_code == 1
+
+
+# ── ExtractionRun audit trail tests ──────────────────────────────────────────
+
+
+def test_extraction_run_written_on_audit(monkeypatch, tmp_path) -> None:
+    """After a successful audit_one call, an ExtractionRun row must be persisted."""
+    import json as _json
+
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    from sqlalchemy.pool import StaticPool
+
+    from core.database import Base
+    from report_parser.storage import ExtractionRun
+    from scripts.audit_extractions import audit_one
+
+    # Build an isolated in-memory DB.
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    Base.metadata.create_all(bind=engine)
+    TestSession = sessionmaker(bind=engine)
+
+    monkeypatch.setattr("scripts.audit_extractions.SessionLocal", TestSession)
+    monkeypatch.setattr("scripts.audit_extractions.engine", engine)
+
+    # Stub the PDF so audit_one can find it and hash it.
+    pdf_path = tmp_path / "rwe-2024.pdf"
+    pdf_path.write_bytes(b"%PDF-1.7\n" + b"x" * 1024)
+    monkeypatch.setattr("scripts.audit_extractions.PDF_CACHE_DIR", tmp_path)
+    monkeypatch.setattr("scripts.audit_extractions.extract_text_from_pdf", lambda _path: "Scope 1 totalled 52.6 Mt.")
+
+    # Stub fetch_company_profile to return a minimal profile.
+    monkeypatch.setattr(
+        "scripts.audit_extractions.fetch_company_profile",
+        lambda *_args, **_kw: ({"latest_metrics": {"scope1_co2e_tonnes": 52600000.0}}, "RWE AG"),
+    )
+
+    # Stub OpenAI completion.
+    raw_json = _json.dumps(
+        {
+            "scope1_co2e_tonnes": {
+                "verdict": "correct",
+                "confidence": "high",
+                "evidence_quote": "Scope 1 totalled 52.6 Mt.",
+            }
+        }
+    )
+
+    class _FakeChoice:
+        message = type("M", (), {"content": raw_json})()
+
+    class _FakeCompletion:
+        choices = [_FakeChoice()]
+
+    class _FakeOpenAI:
+        class chat:
+            class completions:
+                @staticmethod
+                def create(**_kw):
+                    return _FakeCompletion()
+
+    company = SeedCompany(
+        slug="rwe-2024",
+        company_name="RWE AG",
+        report_year=2024,
+        industry_code="D35.11",
+        industry_sector="Electricity",
+        source_url="https://example.com/rwe.pdf",
+        verify=False,
+    )
+
+    result = audit_one(
+        company,
+        api_base="http://localhost:8000",
+        model="gpt-4.1",
+        max_chars=80000,
+        openai_client=_FakeOpenAI(),
+        dry_run=False,
+    )
+
+    assert result.error is None
+    with TestSession() as db:
+        rows = db.query(ExtractionRun).all()
+    assert len(rows) == 1
+    assert rows[0].run_kind == "audit"
+    assert rows[0].model == "gpt-4.1"
+    assert rows[0].verdict == "ok"
+    assert rows[0].file_hash is not None
+
+
+def test_extraction_run_not_fatal_on_db_error(monkeypatch, tmp_path) -> None:
+    """If record_extraction_run raises, audit_one must still return a valid result."""
+    import json as _json
+
+    from scripts.audit_extractions import audit_one
+
+    # Make record_extraction_run blow up.
+    def _boom(*_args, **_kw):
+        raise RuntimeError("simulated DB failure")
+
+    monkeypatch.setattr("scripts.audit_extractions.record_extraction_run", _boom)
+
+    # Stub PDF.
+    pdf_path = tmp_path / "basf-2024.pdf"
+    pdf_path.write_bytes(b"%PDF-1.7\n" + b"y" * 1024)
+    monkeypatch.setattr("scripts.audit_extractions.PDF_CACHE_DIR", tmp_path)
+    monkeypatch.setattr("scripts.audit_extractions.extract_text_from_pdf", lambda _path: "quote")
+
+    # Stub profile.
+    monkeypatch.setattr(
+        "scripts.audit_extractions.fetch_company_profile",
+        lambda *_args, **_kw: ({"latest_metrics": {"scope1_co2e_tonnes": 1.0}}, "BASF SE"),
+    )
+
+    raw_json = _json.dumps(
+        {
+            "scope1_co2e_tonnes": {
+                "verdict": "correct",
+                "confidence": "high",
+                "evidence_quote": "quote",
+            }
+        }
+    )
+
+    class _FakeChoice:
+        message = type("M", (), {"content": raw_json})()
+
+    class _FakeCompletion:
+        choices = [_FakeChoice()]
+
+    class _FakeOpenAI:
+        class chat:
+            class completions:
+                @staticmethod
+                def create(**_kw):
+                    return _FakeCompletion()
+
+    company = SeedCompany(
+        slug="basf-2024",
+        company_name="BASF SE",
+        report_year=2024,
+        industry_code="C20.11",
+        industry_sector="Chemicals",
+        source_url="https://example.com/basf.pdf",
+        verify=False,
+    )
+
+    result = audit_one(
+        company,
+        api_base="http://localhost:8000",
+        model="gpt-4.1",
+        max_chars=80000,
+        openai_client=_FakeOpenAI(),
+        dry_run=False,
+    )
+
+    # Despite the DB failure, audit must complete and return fields.
+    assert result.error is None
+    assert len(result.fields) == len(AUDIT_FIELDS)

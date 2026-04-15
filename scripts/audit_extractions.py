@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import argparse
 from concurrent.futures import ThreadPoolExecutor
+import hashlib
 import json
 import os
 import re
@@ -43,8 +44,10 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from benchmark.compute import BENCHMARK_METRICS  # noqa: E402
+from core.database import SessionLocal, engine  # noqa: E402
 from core.schemas import ManualReportInput  # noqa: E402
 from report_parser.extractor import extract_text_from_pdf  # noqa: E402
+from report_parser.storage import ensure_storage_schema, record_extraction_run  # noqa: E402
 from scripts.seed_german_demo import MANIFEST_PATH, PDF_CACHE_DIR, SeedCompany, load_manifest  # noqa: E402
 
 AUDIT_DIR = ROOT / "scripts" / "seed_data" / "audit_reports"
@@ -268,6 +271,51 @@ def _as_page_hint(value: Any) -> int | None:
         except ValueError:
             return None
     return None
+
+
+def _hash_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(65536), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _record_audit_run(
+    *,
+    pdf_path: Path,
+    company: SeedCompany,
+    model: str,
+    prompt: str,
+    raw_response: str,
+    fields: list[FieldAudit],
+) -> None:
+    correct_count = sum(1 for field_result in fields if field_result.verdict == "correct")
+    incorrect_count = sum(1 for field_result in fields if field_result.verdict == "incorrect")
+    missed_count = sum(1 for field_result in fields if field_result.verdict == "missed")
+    not_disclosed_count = sum(1 for field_result in fields if field_result.verdict == "not_disclosed")
+    verdict = "warn" if incorrect_count or missed_count else "ok"
+    notes = (
+        f"Audit completed for {company.company_name} {company.report_year}: "
+        f"{correct_count} correct, {incorrect_count} incorrect, "
+        f"{missed_count} missed, {not_disclosed_count} not_disclosed."
+    )
+
+    try:
+        ensure_storage_schema(engine)
+        with SessionLocal() as db:
+            record_extraction_run(
+                db,
+                run_kind="audit",
+                file_hash=_hash_file(pdf_path),
+                model=model,
+                prompt_hash=hashlib.sha1(prompt.encode("utf-8")).hexdigest(),
+                raw_response=raw_response,
+                verdict=verdict,
+                notes=notes,
+            )
+    except Exception as exc:  # noqa: BLE001 - audit trail must not break existing audit flow
+        print(f"  ⚠️ failed to record audit run: {exc}")
 
 
 def parse_audit_response(raw: str, current_record: dict[str, Any]) -> list[FieldAudit]:
@@ -517,6 +565,15 @@ def audit_one(
             fields=[],
             error=f"parse: {exc}",
         )
+
+    _record_audit_run(
+        pdf_path=pdf_path,
+        company=company,
+        model=model,
+        prompt=prompt,
+        raw_response=raw,
+        fields=fields,
+    )
 
     correct_count = sum(1 for field_result in fields if field_result.verdict == "correct")
     incorrect_count = sum(1 for field_result in fields if field_result.verdict == "incorrect")
