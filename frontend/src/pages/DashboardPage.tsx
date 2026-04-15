@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getDashboardStats, listCompanies } from '@/lib/api'
-import { MetricCard } from '@/components/MetricCard'
+import { SortableMetricList, type MetricItem } from '@/components/SortableMetricList'
 import { QueryStateCard } from '@/components/QueryStateCard'
 import { Badge } from '@/components/ui/badge'
 import { useNavigate } from 'react-router-dom'
@@ -108,23 +108,30 @@ export function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <MetricCard
-          label={t('dashboard.companiesAnalyzed')}
-          value={statsLoading ? '…' : (stats?.total_companies ?? 0)}
-          color="blue"
-        />
-        <MetricCard
-          label={t('dashboard.avgTaxonomy')}
-          value={statsLoading ? '…' : `${stats?.avg_taxonomy_aligned ?? 0}%`}
-          color="green"
-        />
-        <MetricCard
-          label={t('dashboard.avgRenewable')}
-          value={statsLoading ? '…' : `${stats?.avg_renewable_pct ?? 0}%`}
-          color="green"
-        />
-      </div>
+      <SortableMetricList
+        loading={statsLoading}
+        storageKey="dashboard-metric-order"
+        items={[
+          {
+            id: 'companies',
+            label: t('dashboard.companiesAnalyzed'),
+            value: stats?.total_companies ?? 0,
+            color: 'blue',
+          } satisfies MetricItem,
+          {
+            id: 'taxonomy',
+            label: t('dashboard.avgTaxonomy'),
+            value: `${stats?.avg_taxonomy_aligned ?? 0}%`,
+            color: 'green',
+          } satisfies MetricItem,
+          {
+            id: 'renewable',
+            label: t('dashboard.avgRenewable'),
+            value: `${stats?.avg_renewable_pct ?? 0}%`,
+            color: 'green',
+          } satisfies MetricItem,
+        ]}
+      />
 
       {backendOffline ? (
         <BackendOfflineBanner />
