@@ -13,11 +13,12 @@ interface Props {
   items: MetricItem[]
   loading?: boolean
   storageKey?: string
+  direction?: 'vertical' | 'horizontal'
 }
 
 const DRAG_OVER_CLASS = 'ring-2 ring-amber-400 ring-offset-2 rounded-xl'
 
-export function SortableMetricList({ items, loading, storageKey = 'metric-card-order' }: Props) {
+export function SortableMetricList({ items, loading, storageKey = 'metric-card-order', direction = 'vertical' }: Props) {
   const getInitialOrder = (): string[] => {
     try {
       const saved = localStorage.getItem(storageKey)
@@ -97,7 +98,15 @@ export function SortableMetricList({ items, loading, storageKey = 'metric-card-o
   }
 
   return (
-    <div className="flex flex-col gap-3" role="list" aria-label="Metric cards — drag to reorder">
+    <div
+      className={
+        direction === 'horizontal'
+          ? 'grid grid-cols-1 gap-4 md:grid-cols-3'
+          : 'flex flex-col gap-3'
+      }
+      role="list"
+      aria-label="Metric cards — drag to reorder"
+    >
       {sorted.map((item) => (
         <div
           key={item.id}
@@ -110,24 +119,37 @@ export function SortableMetricList({ items, loading, storageKey = 'metric-card-o
           onKeyDown={handleKeyDown(item.id)}
           tabIndex={0}
           aria-label={`${item.label} — drag or use Alt+Arrow to reorder`}
-          className="group flex cursor-grab items-stretch gap-2 rounded-xl active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600"
+          className={[
+            'group relative cursor-grab rounded-xl active:cursor-grabbing',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600',
+            direction === 'vertical' ? 'flex items-stretch gap-2' : 'flex flex-col',
+          ].join(' ')}
         >
-          {/* grip handle */}
-          <div
-            className="flex shrink-0 items-center justify-center rounded-l-xl border border-r-0 border-stone-200 bg-stone-50 px-1.5 opacity-40 transition-opacity group-hover:opacity-90 group-focus-visible:opacity-90"
-            aria-hidden="true"
-          >
-            <GripVertical size={16} className="text-slate-500" />
-          </div>
-
-          {/* card — full width minus handle */}
-          <div className="min-w-0 flex-1">
-            <MetricCard
-              label={item.label}
-              value={loading ? '…' : item.value}
-              color={item.color}
-            />
-          </div>
+          {direction === 'vertical' ? (
+            /* vertical: grip on left side */
+            <>
+              <div
+                className="flex shrink-0 items-center justify-center rounded-l-xl border border-r-0 border-stone-200 bg-stone-50 px-1.5 opacity-40 transition-opacity group-hover:opacity-90 group-focus-visible:opacity-90"
+                aria-hidden="true"
+              >
+                <GripVertical size={16} className="text-slate-500" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <MetricCard label={item.label} value={loading ? '…' : item.value} color={item.color} />
+              </div>
+            </>
+          ) : (
+            /* horizontal: grip icon floats top-right corner */
+            <>
+              <div
+                className="absolute right-2 top-2 z-10 opacity-0 transition-opacity group-hover:opacity-60 group-focus-visible:opacity-60"
+                aria-hidden="true"
+              >
+                <GripVertical size={14} className="text-slate-400" />
+              </div>
+              <MetricCard label={item.label} value={loading ? '…' : item.value} color={item.color} />
+            </>
+          )}
         </div>
       ))}
     </div>

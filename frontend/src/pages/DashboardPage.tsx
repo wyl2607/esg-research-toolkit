@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getDashboardStats, listCompanies } from '@/lib/api'
 import { SortableMetricList, type MetricItem } from '@/components/SortableMetricList'
@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { useTranslation } from 'react-i18next'
-import { ArrowRight } from 'lucide-react'
+import { ArrowDownUp, ArrowRight, ArrowUpDown } from 'lucide-react'
 import { localizeErrorMessage, isBackendOffline } from '@/lib/error-utils'
 import { BackendOfflineBanner } from '@/components/BackendOfflineBanner'
 
@@ -80,6 +80,25 @@ export function DashboardPage() {
   const recent = [...companies].sort((a, b) => b.report_year - a.report_year).slice(0, 5)
   const coverageRows = Object.entries(stats?.coverage_rates ?? {})
 
+  // coverage sort state: 'default' | 'asc' | 'desc'
+  const [coverageSort, setCoverageSort] = useState<'default' | 'asc' | 'desc'>('default')
+  const cycleCoverageSort = () =>
+    setCoverageSort((s) => (s === 'default' ? 'desc' : s === 'desc' ? 'asc' : 'default'))
+
+  const sortedCoverageRows = useMemo(() => {
+    if (coverageSort === 'default') return coverageRows
+    return [...coverageRows].sort(([, a], [, b]) => coverageSort === 'desc' ? b - a : a - b)
+  }, [coverageRows, coverageSort])
+
+  // progress derived stats
+  const totalFields = coverageRows.length
+  const goodFields = coverageRows.filter(([, pct]) => pct >= 80).length
+  const partialFields = coverageRows.filter(([, pct]) => pct >= 50 && pct < 80).length
+  const weakFields = totalFields - goodFields - partialFields
+  const overallProgress = totalFields > 0
+    ? Math.round(coverageRows.reduce((sum, [, pct]) => sum + pct, 0) / totalFields)
+    : 0
+
   const backendOffline = isBackendOffline(statsError) || isBackendOffline(companiesError)
 
   const chartFallback = (
@@ -111,6 +130,7 @@ export function DashboardPage() {
       <SortableMetricList
         loading={statsLoading}
         storageKey="dashboard-metric-order"
+        direction="horizontal"
         items={[
           {
             id: 'companies',
@@ -159,10 +179,61 @@ export function DashboardPage() {
         </Suspense>
       </DeferredHeavyCharts>
 
-      <section className="editorial-panel space-y-3 p-4 md:p-5" aria-labelledby="coverage-rates-title">
-        <h2 id="coverage-rates-title" className="text-2xl font-semibold text-stone-900">
-          {t('dashboard.coverageRates')}
-        </h2>
+      <section className="editorial-panel space-y-4 p-4 md:p-5" aria-labelledby="coverage-rates-title">
+        {/* header row */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 id="coverage-rates-title" className="text-2xl font-semibold text-stone-900">
+            {t('dashboard.coverageRates')}
+          </h2>
+          {coverageRows.length > 0 && (
+            <button
+              type="button"
+              onClick={cycleCoverageSort}
+              className="flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 shadow-sm transition hover:border-amber-400 hover:text-amber-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600"
+              aria-label="切换排序方式"
+            >
+              {coverageSort === 'default' ? (
+                <><ArrowUpDown size={13} />默认</>
+              ) : coverageSort === 'desc' ? (
+                <><ArrowDownUp size={13} />高→低</>
+              ) : (
+                <><ArrowUpDown size={13} />低→高</>
+              )}
+            </button>
+          )}
+        </div>
+
+        {/* progress summary */}
+        {coverageRows.length > 0 && (
+          <div className="rounded-xl border border-stone-100 bg-stone-50 px-4 py-3">
+            <div className="mb-2 flex items-center justify-between text-xs text-slate-500">
+              <span>数据采集进展</span>
+              <span className="font-semibold text-slate-700">{overallProgress}% 平均覆盖</span>
+            </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-stone-200">
+              <div
+                className="h-2 rounded-full bg-gradient-to-r from-amber-400 to-green-500 transition-all"
+                style={{ width: `${overallProgress}%` }}
+              />
+            </div>
+            <div className="mt-2 flex flex-wrap gap-3 text-xs">
+              <span className="flex items-center gap-1">
+                <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
+                <span className="text-slate-600">良好 (≥80%) <strong>{goodFields}</strong> 个字段</span>
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="inline-block h-2 w-2 rounded-full bg-yellow-400" />
+                <span className="text-slate-600">部分 (50–79%) <strong>{partialFields}</strong> 个字段</span>
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="inline-block h-2 w-2 rounded-full bg-red-400" />
+                <span className="text-slate-600">不足 (<50%) <strong>{weakFields}</strong> 个字段</span>
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* bars */}
         {coverageRows.length === 0 ? (
           <QueryStateCard
             tone="empty"
@@ -170,9 +241,11 @@ export function DashboardPage() {
             body={t('dashboard.noReportsYet')}
           />
         ) : (
-          coverageRows.map(([field, pct]) => (
-            <CoverageBar key={field} label={coverageLabelMap[field] ?? field} pct={pct} />
-          ))
+          <div className="space-y-3">
+            {sortedCoverageRows.map(([field, pct]) => (
+              <CoverageBar key={field} label={coverageLabelMap[field] ?? field} pct={pct} />
+            ))}
+          </div>
         )}
       </section>
 
