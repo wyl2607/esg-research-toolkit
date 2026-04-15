@@ -5,10 +5,10 @@ import pytest
 from scripts.seed_german_demo import SeedCompany, load_manifest, main
 
 
-def test_manifest_parses_and_has_ten_companies() -> None:
+def test_manifest_parses_and_has_twenty_companies() -> None:
     companies = load_manifest()
 
-    assert len(companies) == 10
+    assert len(companies) == 20
     assert all(isinstance(company, SeedCompany) for company in companies)
 
     # Must remain aligned with frontend NACE picker coverage
@@ -26,6 +26,11 @@ def test_manifest_parses_and_has_ten_companies() -> None:
         "C19",
         "H49",
         "H51",
+        "J61",
+        "H53",
+        "Q86",
+        "C21",
+        "C28",
     }
     for company in companies:
         assert company.industry_code.split(".")[0] in valid_prefixes

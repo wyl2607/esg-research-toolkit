@@ -25,13 +25,15 @@ Environment:
 from __future__ import annotations
 
 import argparse
+from concurrent.futures import ThreadPoolExecutor
 import json
 import os
 import re
 import sys
+import threading
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 from urllib.parse import quote
 
 import httpx
@@ -147,10 +149,11 @@ def _extract_years_from_company_row(entry: dict[str, Any]) -> set[int]:
 
 
 def resolve_company_name(api_base: str, company_name: str, report_year: int) -> str | None:
-    target = _normalize_company_name(company_name)
-    if not target:
-        return None
+    company_directory = fetch_company_directory(api_base)
+    return resolve_company_name_from_directory(company_name, report_year, company_directory)
 
+
+def fetch_company_directory(api_base: str) -> list[dict[str, Any]] | None:
     try:
         with httpx.Client(timeout=30) as client:
             response = client.get(f"{api_base}/report/companies")
@@ -166,10 +169,22 @@ def resolve_company_name(api_base: str, company_name: str, report_year: int) -> 
         return None
     if not isinstance(payload, list):
         return None
+    return [entry for entry in payload if isinstance(entry, dict)]
 
-    for entry in payload:
-        if not isinstance(entry, dict):
-            continue
+
+def resolve_company_name_from_directory(
+    company_name: str,
+    report_year: int,
+    company_directory: list[dict[str, Any]] | None,
+) -> str | None:
+    if not company_directory:
+        return None
+
+    target = _normalize_company_name(company_name)
+    if not target:
+        return None
+
+    for entry in company_directory:
         candidate_name = entry.get("company_name")
         if not isinstance(candidate_name, str) or not candidate_name.strip():
             continue
@@ -252,12 +267,7 @@ def _as_page_hint(value: Any) -> int | None:
 
 
 def parse_audit_response(raw: str, current_record: dict[str, Any]) -> list[FieldAudit]:
-    try:
-        payload = json.loads(raw)
-    except json.JSONDecodeError as exc:
-        raise ValueError(f"audit response was not valid JSON: {exc}") from exc
-    if not isinstance(payload, dict):
-        raise ValueError("audit response was not a JSON object")
+    payload = _extract_json_payload(raw)
 
     results: list[FieldAudit] = []
     for field_name in AUDIT_FIELDS:
@@ -290,11 +300,82 @@ def parse_audit_response(raw: str, current_record: dict[str, Any]) -> list[Field
     return results
 
 
+def _iter_json_objects(text: str):
+    start = text.find("{")
+    while start != -1:
+        depth = 0
+        in_string = False
+        escape = False
+        for index in range(start, len(text)):
+            char = text[index]
+            if in_string:
+                if escape:
+                    escape = False
+                elif char == "\\":
+                    escape = True
+                elif char == '"':
+                    in_string = False
+                continue
+
+            if char == '"':
+                in_string = True
+                continue
+            if char == "{":
+                depth += 1
+                continue
+            if char == "}":
+                depth -= 1
+                if depth == 0:
+                    yield text[start : index + 1]
+                    break
+
+        start = text.find("{", start + 1)
+
+
+def _extract_json_payload(raw: str) -> dict[str, Any]:
+    text = raw.strip()
+    if not text:
+        raise ValueError("audit response was empty")
+
+    candidates: list[str] = []
+    fence_pattern = re.compile(r"```(?:json)?\s*(.*?)```", re.IGNORECASE | re.DOTALL)
+    for match in fence_pattern.finditer(text):
+        fenced = match.group(1).strip()
+        candidates.extend(_iter_json_objects(fenced))
+    candidates.extend(_iter_json_objects(text))
+
+    if not candidates:
+        raise ValueError("audit response did not contain a JSON object")
+
+    best_payload: dict[str, Any] | None = None
+    best_score = -1
+    for candidate in candidates:
+        try:
+            payload = json.loads(candidate)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(payload, dict):
+            continue
+        score = sum(1 for field_name in AUDIT_FIELDS if field_name in payload)
+        if score > best_score:
+            best_score = score
+            best_payload = payload
+            if score == len(AUDIT_FIELDS):
+                break
+
+    if best_payload is None:
+        raise ValueError("audit response was not valid JSON object")
+    if best_score <= 0:
+        raise ValueError("audit response JSON missing expected audit fields")
+    return best_payload
+
+
 def fetch_company_profile(
     api_base: str,
     company_name: str,
     *,
     report_year: int | None = None,
+    company_directory: list[dict[str, Any]] | None = None,
 ) -> tuple[dict[str, Any] | None, str | None]:
     try:
         with httpx.Client(timeout=30) as client:
@@ -313,7 +394,9 @@ def fetch_company_profile(
     if report_year is None:
         return None, None
 
-    resolved_name = resolve_company_name(api_base, company_name, report_year)
+    resolved_name = resolve_company_name_from_directory(company_name, report_year, company_directory)
+    if not resolved_name and company_directory is None:
+        resolved_name = resolve_company_name(api_base, company_name, report_year)
     if not resolved_name or resolved_name == company_name:
         return None, None
 
@@ -342,6 +425,7 @@ def audit_one(
     max_chars: int,
     openai_client: Any | None,
     dry_run: bool,
+    company_directory: list[dict[str, Any]] | None = None,
 ) -> CompanyAuditResult:
     print(f"\n-> auditing {company.company_name} ({company.report_year}) [{company.slug}]")
 
@@ -361,6 +445,7 @@ def audit_one(
             api_base,
             company.company_name,
             report_year=company.report_year,
+            company_directory=company_directory,
         )
         profile = profile or {}
         latest_metrics = profile.get("latest_metrics") or {}
@@ -540,7 +625,12 @@ def _latest_source_url(profile: dict[str, Any]) -> str | None:
     return None
 
 
-def apply_corrections(api_base: str, result: CompanyAuditResult) -> bool:
+def apply_corrections(
+    api_base: str,
+    result: CompanyAuditResult,
+    *,
+    company_directory: list[dict[str, Any]] | None = None,
+) -> bool:
     """
     Reuse POST /report/manual to write corrected ManualReportInput data.
     """
@@ -553,6 +643,7 @@ def apply_corrections(api_base: str, result: CompanyAuditResult) -> bool:
         api_base,
         canonical_name,
         report_year=result.report_year,
+        company_directory=company_directory,
     )
     if not profile:
         print("  apply skipped: cannot fetch company profile")
@@ -589,6 +680,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--slug", help="filter by exact manifest slug")
     parser.add_argument("--model", default=DEFAULT_MODEL)
     parser.add_argument("--max-chars", type=int, default=DEFAULT_MAX_CHARS)
+    parser.add_argument("--workers", type=int, default=1, help="number of companies to audit concurrently")
     parser.add_argument("--apply", action="store_true", help="auto-apply high-confidence corrections")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args(argv)
@@ -609,6 +701,8 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     openai_client = None
+    openai_client_factory: Callable[[], Any] | None = None
+    company_directory: list[dict[str, Any]] | None = None
     if not args.dry_run:
         api_key = os.environ.get("OPENAI_API_KEY")
         if not api_key or api_key == "dummy":
@@ -619,25 +713,67 @@ def main(argv: list[str] | None = None) -> int:
         except ImportError:
             print("openai package not installed")
             return 2
-        openai_client = OpenAI(api_key=api_key)
+        openai_client_factory = lambda: OpenAI(api_key=api_key)
+        company_directory = fetch_company_directory(args.api_base)
+
+    workers = max(1, args.workers)
+    workers = min(workers, len(companies))
+    if workers > 1:
+        print(f"running with {workers} workers")
+
+    client_local = threading.local()
+    if workers == 1 and openai_client_factory is not None:
+        openai_client = openai_client_factory()
+
+    def _run_company(company: SeedCompany) -> CompanyAuditResult:
+        try:
+            local_client = openai_client
+            if local_client is None and openai_client_factory is not None:
+                if workers == 1:
+                    local_client = openai_client_factory()
+                else:
+                    local_client = getattr(client_local, "openai_client", None)
+                    if local_client is None:
+                        local_client = openai_client_factory()
+                        client_local.openai_client = local_client
+            return audit_one(
+                company,
+                api_base=args.api_base,
+                model=args.model,
+                max_chars=args.max_chars,
+                openai_client=local_client,
+                dry_run=args.dry_run,
+                company_directory=company_directory,
+            )
+        except Exception as exc:  # noqa: BLE001 - keep batch process resilient
+            return CompanyAuditResult(
+                slug=company.slug,
+                company_name=company.company_name,
+                report_year=company.report_year,
+                fields=[],
+                error=f"worker: {exc}",
+            )
 
     results: list[CompanyAuditResult] = []
     any_applied = False
-    for company in companies:
-        result = audit_one(
-            company,
-            api_base=args.api_base,
-            model=args.model,
-            max_chars=args.max_chars,
-            openai_client=openai_client,
-            dry_run=args.dry_run,
-        )
-        results.append(result)
+    if workers == 1:
+        for company in companies:
+            result = _run_company(company)
+            results.append(result)
+    else:
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            results = list(pool.map(_run_company, companies))
+
+    for result in results:
         report_path = write_company_report(result)
         print(f"  wrote {report_path.relative_to(ROOT)}")
 
         if args.apply and not args.dry_run and not result.error:
-            if apply_corrections(args.api_base, result):
+            if apply_corrections(
+                args.api_base,
+                result,
+                company_directory=company_directory,
+            ):
                 any_applied = True
 
     summary_path = write_summary(results)
