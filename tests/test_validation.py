@@ -32,8 +32,24 @@ def test_below_min_fails() -> None:
 
 
 def test_pct_above_100_fails() -> None:
-    issues = validate_metric("waste_recycled_pct", 250)
+    issues = validate_metric("renewable_energy_pct", 250)
     assert has_errors(issues)
+
+
+def test_taxonomy_pct_allows_negative() -> None:
+    assert validate_metric("taxonomy_aligned_capex_pct", -9) == []
+
+    issues = validate_metric("taxonomy_aligned_capex_pct", -200)
+    assert has_errors(issues)
+    assert any(i.rule == "below_min" for i in issues)
+
+
+def test_taxonomy_pct_allows_positive() -> None:
+    assert validate_metric("taxonomy_aligned_revenue_pct", 9) == []
+
+    issues = validate_metric("taxonomy_aligned_revenue_pct", 250)
+    assert has_errors(issues)
+    assert any(i.rule == "above_max" for i in issues)
 
 
 def test_string_numeric_value_fails() -> None:

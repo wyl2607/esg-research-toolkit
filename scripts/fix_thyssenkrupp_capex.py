@@ -3,16 +3,15 @@
 
 Why this exists:
 - `company_reports.id=35` stores `taxonomy_aligned_capex_pct=-9.0`
-- L0 validation rejects negative percentages, so `scripts/export_verified.py`
-  skips the row
+- prior L0 validation incorrectly rejected signed taxonomy percentages, so the
+  disclosed `-9.0` value was rewritten to `+9.0`
 - the fix must go through `POST /report/manual`, not a direct SQL update
 
 Audit note:
 - `pdfplumber` confirms the 2023 / 2024 annual report describes the KPI as a
   *negative* share of 9% because grants exceeded current-year CapEx additions
-- the toolkit schema/L0 rules only accept percentage magnitudes in `[0, 100]`
-- this one-shot script therefore writes the disclosed 9% magnitude (`9.0`) so
-  the row can participate in the existing export/validation pipeline
+- the toolkit now allows signed taxonomy percentages in `[-100, 100]`
+- this one-shot script therefore restores the disclosed signed value (`-9.0`)
 """
 
 from __future__ import annotations
@@ -44,7 +43,7 @@ TARGET_DOCUMENT_TYPE = "sustainability_report"
 TARGET_PDF = ROOT / "scripts" / "seed_data" / "pdfs" / "thyssenkrupp-2024.pdf"
 TARGET_PDF_FILENAME = "35166c31a14fcc37_thyssenkrupp-2024.pdf"
 EXPECTED_FILE_HASH = "35166c31a14fcc37ed942b31146ec483beafa2c33ef4b78028fa3a4d344fbf79"
-EXPECTED_NORMALIZED_PERCENT = 9.0
+EXPECTED_SIGNED_PERCENT = -9.0
 
 NARRATIVE_PAGE = 123
 SUMMARY_PAGE = 111
@@ -53,7 +52,6 @@ SUMMARY_PAGE = 111
 @dataclass(frozen=True)
 class PdfAuditResult:
     signed_percent: float
-    normalized_percent: float
     narrative_page: int
     narrative_line: str
     summary_page: int
@@ -127,15 +125,13 @@ def audit_pdf(path: Path) -> PdfAuditResult:
         raise RuntimeError("failed to isolate the page 123 narrative line")
 
     signed_percent = -float(narrative_match.group(1))
-    normalized_percent = abs(signed_percent)
-    if normalized_percent != EXPECTED_NORMALIZED_PERCENT:
+    if signed_percent != EXPECTED_SIGNED_PERCENT:
         raise RuntimeError(
-            f"unexpected normalized percentage {normalized_percent}; expected {EXPECTED_NORMALIZED_PERCENT}"
+            f"unexpected signed percentage {signed_percent}; expected {EXPECTED_SIGNED_PERCENT}"
         )
 
     return PdfAuditResult(
         signed_percent=signed_percent,
-        normalized_percent=normalized_percent,
         narrative_page=NARRATIVE_PAGE,
         narrative_line=narrative_line,
         summary_page=SUMMARY_PAGE,
@@ -224,7 +220,7 @@ def apply_fix(payload: dict[str, Any]) -> dict[str, Any]:
             f"/report/manual failed with {response.status_code}: {response.text[:400]}"
         )
     body = response.json()
-    if body.get("taxonomy_aligned_capex_pct") != EXPECTED_NORMALIZED_PERCENT:
+    if body.get("taxonomy_aligned_capex_pct") != EXPECTED_SIGNED_PERCENT:
         raise RuntimeError(f"unexpected endpoint response: {body}")
     return body
 
@@ -248,10 +244,10 @@ def verify_post_state(
 
     changed_ids = sorted(
         [
-        row_id
-        for row_id in after_by_id
-        if before_by_id[row_id]["taxonomy_aligned_capex_pct"]
-        != after_by_id[row_id]["taxonomy_aligned_capex_pct"]
+            row_id
+            for row_id in after_by_id
+            if before_by_id[row_id]["taxonomy_aligned_capex_pct"]
+            != after_by_id[row_id]["taxonomy_aligned_capex_pct"]
         ]
     )
     expected_changed_ids = [target_row_id] if expect_metric_change else []
@@ -259,7 +255,7 @@ def verify_post_state(
         raise RuntimeError(f"unexpected changed row ids: {changed_ids}")
 
     fixed_row = after_by_id[target_row_id]
-    if fixed_row["taxonomy_aligned_capex_pct"] != EXPECTED_NORMALIZED_PERCENT:
+    if fixed_row["taxonomy_aligned_capex_pct"] != EXPECTED_SIGNED_PERCENT:
         raise RuntimeError(f"row {target_row_id} not fixed: {fixed_row}")
 
     return after
@@ -271,8 +267,8 @@ def main(argv: list[str] | None = None) -> int:
     audit = audit_pdf(TARGET_PDF)
     target_row = load_target_row()
     before = snapshot_thyssenkrupp_rows()
-    payload = build_manual_payload(target_row, audit.normalized_percent)
-    needs_update = target_row.taxonomy_aligned_capex_pct != audit.normalized_percent
+    payload = build_manual_payload(target_row, audit.signed_percent)
+    needs_update = target_row.taxonomy_aligned_capex_pct != audit.signed_percent
 
     print(
         json.dumps(
@@ -289,7 +285,7 @@ def main(argv: list[str] | None = None) -> int:
                     "path": str(TARGET_PDF),
                     "file_hash": EXPECTED_FILE_HASH,
                     "signed_percent_disclosed": audit.signed_percent,
-                    "normalized_percent_to_store": audit.normalized_percent,
+                    "signed_percent_to_store": audit.signed_percent,
                     "narrative_page": audit.narrative_page,
                     "narrative_line": audit.narrative_line,
                     "summary_page": audit.summary_page,
@@ -307,17 +303,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if not needs_update:
-        print(
-            json.dumps(
-                {
-                    "status": "already_fixed",
-                    "message": "Target row already stores the normalized 9.0 value; no POST needed.",
-                    "before": before,
-                },
-                indent=2,
-                ensure_ascii=False,
-            )
-        )
+        print("already_fixed")
         return 0
 
     response_body = apply_fix(payload)

@@ -15,6 +15,9 @@ Design rules:
 - Soft-fail by default: returns a list of issues, caller decides whether to raise.
 - Bounds are intentionally loose — we want to catch hallucinations like
   "scope1 = 7,500,000,000,000" not borderline disclosure quality.
+- EU Taxonomy aligned revenue/capex percentages are signed because disclosures
+  can legitimately report negative alignment shares (for example Significant
+  Harm/grant-offset cases), so those two fields allow -100..100.
 """
 from __future__ import annotations
 
@@ -34,11 +37,11 @@ METRIC_BOUNDS: dict[str, tuple[float, float]] = {
     "energy_consumption_mwh": (0.0, 500_000_000.0),
     # m³
     "water_usage_m3": (0.0, 10_000_000_000.0),
-    # percentages 0–100
+    # percentages 0–100 unless the disclosure can be a signed EU Taxonomy share
     "renewable_energy_pct": (0.0, 100.0),
     "waste_recycled_pct": (0.0, 100.0),
-    "taxonomy_aligned_revenue_pct": (0.0, 100.0),
-    "taxonomy_aligned_capex_pct": (0.0, 100.0),
+    "taxonomy_aligned_revenue_pct": (-100.0, 100.0),
+    "taxonomy_aligned_capex_pct": (-100.0, 100.0),
     "female_pct": (0.0, 100.0),
     # EUR — 5T cap covers Saudi Aramco scale
     "total_revenue_eur": (0.0, 5_000_000_000_000.0),
