@@ -37,6 +37,10 @@ const ManualCaseBuilderPage = lazy(() =>
   import('@/pages/ManualCaseBuilderPage').then((module) => ({ default: module.ManualCaseBuilderPage }))
 )
 
+const CoverageFieldPage = lazy(() =>
+  import('@/pages/CoverageFieldPage').then((module) => ({ default: module.CoverageFieldPage }))
+)
+
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
 })
@@ -59,6 +63,7 @@ export default function App() {
               <Route path="benchmarks" element={<BenchmarkPage />} />
               <Route path="frameworks" element={<FrameworksPage />} />
               <Route path="regional" element={<RegionalPage />} />
+              <Route path="coverage/:field" element={<CoverageFieldPage />} />
               <Route path="frameworks/regional" element={<RegionalPage />} />
             </Route>
           </Routes>

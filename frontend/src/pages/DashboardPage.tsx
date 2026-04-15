@@ -4,7 +4,7 @@ import { getDashboardStats, listCompanies } from '@/lib/api'
 import { SortableMetricList, type MetricItem } from '@/components/SortableMetricList'
 import { QueryStateCard } from '@/components/QueryStateCard'
 import { Badge } from '@/components/ui/badge'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { useTranslation } from 'react-i18next'
 import { ArrowDownUp, ArrowRight, ArrowUpDown } from 'lucide-react'
@@ -29,11 +29,21 @@ const coverageLabelMap: Record<string, string> = {
   female_pct: 'Female %',
 }
 
-function CoverageBar({ label, pct }: { label: string; pct: number }) {
+function CoverageBar({ label, pct, href }: { label: string; pct: number; href?: string }) {
   const colorClass = pct >= 80 ? 'bg-green-500' : pct >= 50 ? 'bg-yellow-400' : 'bg-red-400'
+  const labelEl = href ? (
+    <Link
+      to={href}
+      className="w-24 shrink-0 text-slate-600 hover:text-amber-700 hover:underline sm:w-36"
+    >
+      {label}
+    </Link>
+  ) : (
+    <span className="w-24 shrink-0 text-slate-600 sm:w-36">{label}</span>
+  )
   return (
     <div className="flex items-center gap-2 sm:gap-3 text-sm">
-      <span className="w-24 shrink-0 text-slate-600 sm:w-36">{label}</span>
+      {labelEl}
       <div className="h-2 flex-1 rounded-full bg-slate-100">
         <div className={`h-2 rounded-full transition-all ${colorClass}`} style={{ width: `${pct}%` }} />
       </div>
@@ -243,7 +253,12 @@ export function DashboardPage() {
         ) : (
           <div className="space-y-3">
             {sortedCoverageRows.map(([field, pct]) => (
-              <CoverageBar key={field} label={coverageLabelMap[field] ?? field} pct={pct} />
+              <CoverageBar
+                key={field}
+                label={coverageLabelMap[field] ?? field}
+                pct={pct}
+                href={`/coverage/${field}`}
+              />
             ))}
           </div>
         )}
