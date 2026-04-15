@@ -8,11 +8,12 @@ from pathlib import Path
 from typing import Any
 
 import openpyxl
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from core.database import get_db
+from core.limiter import limiter
 from core.schemas import (
     BatchStatusResponse,
     CompanyESGData,
@@ -447,7 +448,9 @@ def _source_metadata_gap_preview(records) -> str | None:
 if _MULTIPART_AVAILABLE:
 
     @router.post("/upload", response_model=CompanyESGData)
+    @limiter.limit("5/minute")
     async def upload_report(
+        request: Request,
         file: UploadFile = File(...),
         industry_code: str | None = Form(default=None),
         industry_sector: str | None = Form(default=None),
@@ -511,7 +514,8 @@ if _MULTIPART_AVAILABLE:
         return esg_data
 
     @router.post("/upload/batch", response_model=BatchStatusResponse)
-    async def upload_reports_batch(files: list[UploadFile] = File(...)) -> BatchStatusResponse:
+    @limiter.limit("5/minute")
+    async def upload_reports_batch(request: Request, files: list[UploadFile] = File(...)) -> BatchStatusResponse:
         """
         批量上传 PDF，并异步分析。
         返回 batch_id，前端通过 /report/jobs/{batch_id} 轮询进度。
