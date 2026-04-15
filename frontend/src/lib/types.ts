@@ -39,6 +39,16 @@ export interface EvidenceAnchor {
   file_hash?: string | null
 }
 
+export interface AuditTrailRow {
+  id: number
+  run_kind: string | null
+  model: string | null
+  verdict: string | null
+  applied: boolean | null
+  notes: string | null
+  created_at: string | null
+}
+
 export interface FrameworkMetadata {
   analysis_result_id: number
   framework_id: string

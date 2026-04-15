@@ -302,6 +302,24 @@
       "p75_p90": "p75–p90",
       "above_p90": "高于 p90",
       "unknown": "n/a"
+    },
+    "sourceTrail": {
+      "title": "来源轨迹（{{count}} 次运行）",
+      "loading": "正在加载来源轨迹…",
+      "empty": "暂无审计轨迹。",
+      "error": "加载来源轨迹失败。",
+      "unavailable": "当前记录暂无可用来源轨迹。",
+      "yes": "是",
+      "no": "否",
+      "fields": {
+        "id": "运行 ID",
+        "runKind": "运行类型",
+        "model": "模型",
+        "verdict": "结论",
+        "applied": "已应用",
+        "notes": "备注",
+        "createdAt": "创建时间"
+      }
     }
   },
   "frameworks": {

@@ -1,5 +1,6 @@
 // Typed fetch wrappers for all 15 backend endpoints
 import type {
+  AuditTrailRow,
   BenchmarkRecomputeResponse,
   BatchStatusResponse,
   CompaniesByIndustryResponse,
@@ -116,6 +117,11 @@ export const getCompany = (
 
 export const getCompanyProfile = (name: string): Promise<CompanyProfile> =>
   req(`/report/companies/${encodeURIComponent(name)}/profile`)
+
+export const getAuditTrail = (
+  companyReportId: number
+): Promise<AuditTrailRow[]> =>
+  req(`/report/${companyReportId}/audit-trail`)
 
 export const getIndustryBenchmarks = (
   industryCode: string

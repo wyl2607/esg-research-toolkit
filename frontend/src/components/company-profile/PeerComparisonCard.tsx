@@ -1,14 +1,15 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { getIndustryBenchmarks } from '@/lib/api'
+import { getAuditTrail, getIndustryBenchmarks } from '@/lib/api'
 import { localizeErrorMessage } from '@/lib/error-utils'
 import { findNaceOption } from '@/lib/nace-codes'
-import type { CompanyESGData, IndustryBenchmarkMetric } from '@/lib/types'
+import type { AuditTrailRow, CompanyESGData, IndustryBenchmarkMetric } from '@/lib/types'
 
 interface PeerComparisonCardProps {
+  companyReportId?: number | null
   industryCode: string | null | undefined
   reportYear: number | null | undefined
   metrics: CompanyESGData
@@ -72,15 +73,39 @@ function formatMetricName(metricName: string): string {
   return metricName.replaceAll('_', ' ')
 }
 
+function formatAuditDate(value: string | null, locale: string): string {
+  if (!value) return '—'
+  const parsed = new Date(value)
+  return Number.isNaN(parsed.getTime())
+    ? value
+    : parsed.toLocaleString(locale, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+}
+
+function auditTrailKey(row: AuditTrailRow): string {
+  return `${row.id}:${row.created_at ?? 'no-date'}`
+}
+
 export function PeerComparisonCard(props: PeerComparisonCardProps) {
-  const { industryCode, reportYear, metrics } = props
+  const { companyReportId, industryCode, reportYear, metrics } = props
   const { t, i18n } = useTranslation()
   const locale = i18n.resolvedLanguage ?? 'en'
+  const [auditTrailOpen, setAuditTrailOpen] = useState(false)
 
   const benchmarksQuery = useQuery({
     queryKey: ['benchmarks', industryCode],
     queryFn: () => getIndustryBenchmarks(industryCode as string),
     enabled: Boolean(industryCode),
+  })
+  const auditTrailQuery = useQuery({
+    queryKey: ['audit-trail', companyReportId],
+    queryFn: () => getAuditTrail(companyReportId as number),
+    enabled: auditTrailOpen && companyReportId != null,
   })
 
   const peerRows = useMemo<PeerRow[]>(() => {
@@ -115,14 +140,128 @@ export function PeerComparisonCard(props: PeerComparisonCardProps) {
     return rows
   }, [benchmarksQuery.data, metrics, reportYear])
 
+  const sourceTrailSection = (
+    <details
+      className="rounded-lg border border-stone-200 bg-stone-50/70 px-4 py-3 dark:border-slate-700 dark:bg-slate-900/30"
+      onToggle={(event) => setAuditTrailOpen(event.currentTarget.open)}
+    >
+      <summary className="cursor-pointer list-none text-sm font-medium text-stone-800 dark:text-slate-100">
+        {t('peer.sourceTrail.title', {
+          count: auditTrailQuery.data?.length ?? 0,
+        })}
+      </summary>
+
+      <div className="mt-3 space-y-3">
+        {!companyReportId ? (
+          <p className="text-sm text-stone-500 dark:text-slate-400">
+            {t('peer.sourceTrail.unavailable')}
+          </p>
+        ) : null}
+
+        {companyReportId && auditTrailQuery.isLoading ? (
+          <p className="text-sm text-stone-500 dark:text-slate-400">
+            {t('peer.sourceTrail.loading')}
+          </p>
+        ) : null}
+
+        {companyReportId && auditTrailQuery.isError ? (
+          <p className="text-sm text-red-600 dark:text-red-300">
+            {t('peer.sourceTrail.error')}
+          </p>
+        ) : null}
+
+        {companyReportId &&
+        auditTrailQuery.isSuccess &&
+        (auditTrailQuery.data?.length ?? 0) === 0 ? (
+          <p className="text-sm text-stone-500 dark:text-slate-400">
+            {t('peer.sourceTrail.empty')}
+          </p>
+        ) : null}
+
+        {companyReportId && (auditTrailQuery.data?.length ?? 0) > 0 ? (
+          <div className="space-y-3">
+            {auditTrailQuery.data?.map((row) => (
+              <div
+                key={auditTrailKey(row)}
+                className="rounded-md border border-stone-200 bg-white px-3 py-3 text-sm dark:border-slate-700 dark:bg-slate-950/40"
+              >
+                <div className="grid gap-2 md:grid-cols-3">
+                  <p>
+                    <span className="font-medium text-stone-600 dark:text-slate-300">
+                      {t('peer.sourceTrail.fields.runKind')}:
+                    </span>{' '}
+                    <span className="text-stone-900 dark:text-slate-100">
+                      {row.run_kind ?? '—'}
+                    </span>
+                  </p>
+                  <p>
+                    <span className="font-medium text-stone-600 dark:text-slate-300">
+                      {t('peer.sourceTrail.fields.model')}:
+                    </span>{' '}
+                    <span className="text-stone-900 dark:text-slate-100">
+                      {row.model ?? '—'}
+                    </span>
+                  </p>
+                  <p>
+                    <span className="font-medium text-stone-600 dark:text-slate-300">
+                      {t('peer.sourceTrail.fields.createdAt')}:
+                    </span>{' '}
+                    <span className="text-stone-900 dark:text-slate-100">
+                      {formatAuditDate(row.created_at, locale)}
+                    </span>
+                  </p>
+                  <p>
+                    <span className="font-medium text-stone-600 dark:text-slate-300">
+                      {t('peer.sourceTrail.fields.verdict')}:
+                    </span>{' '}
+                    <span className="text-stone-900 dark:text-slate-100">
+                      {row.verdict ?? '—'}
+                    </span>
+                  </p>
+                  <p>
+                    <span className="font-medium text-stone-600 dark:text-slate-300">
+                      {t('peer.sourceTrail.fields.applied')}:
+                    </span>{' '}
+                    <span className="text-stone-900 dark:text-slate-100">
+                      {row.applied == null
+                        ? '—'
+                        : row.applied
+                          ? t('peer.sourceTrail.yes')
+                          : t('peer.sourceTrail.no')}
+                    </span>
+                  </p>
+                  <p>
+                    <span className="font-medium text-stone-600 dark:text-slate-300">
+                      {t('peer.sourceTrail.fields.id')}:
+                    </span>{' '}
+                    <span className="text-stone-900 dark:text-slate-100">
+                      {row.id}
+                    </span>
+                  </p>
+                </div>
+                <p className="mt-2 text-sm text-stone-700 dark:text-slate-200">
+                  <span className="font-medium text-stone-600 dark:text-slate-300">
+                    {t('peer.sourceTrail.fields.notes')}:
+                  </span>{' '}
+                  {row.notes ?? '—'}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </div>
+    </details>
+  )
+
   if (!industryCode) {
     return (
       <Card>
         <CardHeader>
           <CardTitle className="text-base">{t('peer.title')}</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-3">
           <p className="text-sm text-stone-600 dark:text-slate-300">{t('peer.noIndustryCta')}</p>
+          {sourceTrailSection}
         </CardContent>
       </Card>
     )
@@ -162,51 +301,55 @@ export function PeerComparisonCard(props: PeerComparisonCardProps) {
         ) : null}
 
         {peerRows.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr className="border-b border-stone-200 text-left text-xs uppercase text-stone-500 dark:border-slate-700 dark:text-slate-400">
-                  <th className="py-2 pr-4">{t('peer.col.metric')}</th>
-                  <th className="py-2 pr-4 text-right">{t('peer.col.company')}</th>
-                  <th className="py-2 pr-4 text-right">{t('peer.col.p50')}</th>
-                  <th className="py-2 pr-4">{t('peer.col.position')}</th>
-                  <th className="py-2 pr-4 text-right">{t('peer.col.sample')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {peerRows.map((row) => (
-                  <tr
-                    key={row.metricName}
-                    className="border-b border-stone-100 dark:border-slate-800"
-                  >
-                    <td className="py-2 pr-4 text-xs font-medium text-stone-700 dark:text-slate-200">
-                      {formatMetricName(row.metricName)}
-                    </td>
-                    <td className="py-2 pr-4 text-right font-medium text-stone-900 dark:text-slate-100">
-                      {formatValue(row.companyValue, locale)}
-                    </td>
-                    <td className="py-2 pr-4 text-right text-stone-600 dark:text-slate-300">
-                      {formatValue(row.benchmark.p50, locale)}
-                    </td>
-                    <td className="py-2 pr-4">
-                      <span
-                        className={`inline-block rounded-md border px-2 py-0.5 text-xs ${bucketTone(row.bucket)}`}
-                      >
-                        {t(`peer.bucket.${row.bucket}`)}
-                      </span>
-                    </td>
-                    <td className="py-2 pr-4 text-right text-xs text-stone-500 dark:text-slate-400">
-                      n={row.benchmark.sample_size}
-                    </td>
+          <>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="border-b border-stone-200 text-left text-xs uppercase text-stone-500 dark:border-slate-700 dark:text-slate-400">
+                    <th className="py-2 pr-4">{t('peer.col.metric')}</th>
+                    <th className="py-2 pr-4 text-right">{t('peer.col.company')}</th>
+                    <th className="py-2 pr-4 text-right">{t('peer.col.p50')}</th>
+                    <th className="py-2 pr-4">{t('peer.col.position')}</th>
+                    <th className="py-2 pr-4 text-right">{t('peer.col.sample')}</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-            <p className="mt-3 text-xs text-stone-500 dark:text-slate-400">
-              {t('peer.disclaimer')}
-            </p>
-          </div>
+                </thead>
+                <tbody>
+                  {peerRows.map((row) => (
+                    <tr
+                      key={row.metricName}
+                      className="border-b border-stone-100 dark:border-slate-800"
+                    >
+                      <td className="py-2 pr-4 text-xs font-medium text-stone-700 dark:text-slate-200">
+                        {formatMetricName(row.metricName)}
+                      </td>
+                      <td className="py-2 pr-4 text-right font-medium text-stone-900 dark:text-slate-100">
+                        {formatValue(row.companyValue, locale)}
+                      </td>
+                      <td className="py-2 pr-4 text-right text-stone-600 dark:text-slate-300">
+                        {formatValue(row.benchmark.p50, locale)}
+                      </td>
+                      <td className="py-2 pr-4">
+                        <span
+                          className={`inline-block rounded-md border px-2 py-0.5 text-xs ${bucketTone(row.bucket)}`}
+                        >
+                          {t(`peer.bucket.${row.bucket}`)}
+                        </span>
+                      </td>
+                      <td className="py-2 pr-4 text-right text-xs text-stone-500 dark:text-slate-400">
+                        n={row.benchmark.sample_size}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p className="mt-3 text-xs text-stone-500 dark:text-slate-400">
+                {t('peer.disclaimer')}
+              </p>
+            </div>
+
+          </>
         ) : null}
+        {sourceTrailSection}
       </CardContent>
     </Card>
   )

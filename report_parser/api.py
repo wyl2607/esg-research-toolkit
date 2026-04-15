@@ -10,11 +10,13 @@ from typing import Any
 import openpyxl
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile
 from fastapi.responses import StreamingResponse
+from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session
 
 from core.database import get_db
 from core.limiter import limiter
 from core.schemas import (
+    AuditTrailRow,
     BatchStatusResponse,
     CompanyESGData,
     ManualReportInput,
@@ -671,6 +673,49 @@ def get_company_report(
     if not record:
         raise HTTPException(404, "Report not found")
     return _record_to_company_data(record)
+
+
+@router.get("/{company_report_id:int}/audit-trail", response_model=list[AuditTrailRow])
+def get_audit_trail(
+    company_report_id: int,
+    db: Session = Depends(get_db),
+) -> list[AuditTrailRow]:
+    report = db.query(CompanyReport).filter(CompanyReport.id == company_report_id).first()
+    if not report:
+        raise HTTPException(404, "Report not found")
+
+    bind = db.get_bind()
+    if bind is None or not inspect(bind).has_table("extraction_runs"):
+        return []
+
+    query = """
+        SELECT id, run_kind, model, verdict, applied, notes, created_at
+        FROM extraction_runs
+        WHERE company_report_id = :company_report_id
+    """
+    params: dict[str, Any] = {"company_report_id": company_report_id}
+
+    if report.file_hash:
+        query += " OR file_hash = :file_hash"
+        params["file_hash"] = report.file_hash
+
+    query += " ORDER BY created_at DESC LIMIT 50"
+
+    rows = db.execute(text(query), params).mappings().all()
+    return [
+        AuditTrailRow(
+            id=row["id"],
+            run_kind=row["run_kind"],
+            model=row["model"],
+            verdict=row["verdict"],
+            applied=row["applied"],
+            notes=row["notes"],
+            created_at=(
+                row["created_at"].isoformat() if hasattr(row["created_at"], "isoformat") else row["created_at"]
+            ),
+        )
+        for row in rows
+    ]
 
 
 @router.get("/companies/{company_name}/history")

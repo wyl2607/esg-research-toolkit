@@ -52,6 +52,16 @@ class MergePreviewRequest(BaseModel):
     documents: list[MergeSourceInput]
 
 
+class AuditTrailRow(BaseModel):
+    id: int
+    run_kind: str | None = None
+    model: str | None = None
+    verdict: str | None = None
+    applied: bool | None = None
+    notes: str | None = None
+    created_at: str | None = None
+
+
 class MergeMetricCandidate(BaseModel):
     source_id: str
     source_document_type: str | None = None

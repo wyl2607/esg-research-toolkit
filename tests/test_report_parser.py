@@ -7,7 +7,7 @@ import os
 import pytest
 from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
@@ -542,6 +542,92 @@ def test_list_companies_by_industry_empty_returns_200_with_empty_payload(
         assert payload["industry_code"] == "Z99.99"
         assert payload["company_count"] == 0
         assert payload["companies"] == []
+    finally:
+        db_session.close()
+        Base.metadata.drop_all(bind=engine)
+
+
+def test_get_audit_trail_returns_matching_file_hash_row(make_company_data) -> None:
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    Base.metadata.create_all(bind=engine)
+    db_session = TestingSessionLocal()
+    app = FastAPI()
+    app.include_router(report_router)
+    app.dependency_overrides[get_db] = lambda: db_session
+
+    try:
+        report = save_report(
+            db_session,
+            make_company_data(company_name="Trail Demo AG", report_year=2024),
+            pdf_filename="trail-demo.pdf",
+            file_hash="hash-trail-demo",
+        )
+        # extraction_runs is now auto-created by ensure_storage_schema; ensure
+        # it exists for in-memory test DBs without colliding with the ORM table.
+        db_session.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS extraction_runs (
+                    id INTEGER PRIMARY KEY,
+                    company_report_id INTEGER,
+                    file_hash TEXT,
+                    run_kind TEXT,
+                    model TEXT,
+                    prompt_hash TEXT,
+                    raw_response TEXT,
+                    verdict TEXT,
+                    applied BOOLEAN,
+                    notes TEXT,
+                    created_at TEXT
+                )
+                """
+            )
+        )
+        db_session.execute(text("DELETE FROM extraction_runs"))
+        db_session.execute(
+            text(
+                """
+                INSERT INTO extraction_runs (
+                    id, company_report_id, file_hash, run_kind, model, verdict, applied, notes, created_at
+                ) VALUES (
+                    :id, :company_report_id, :file_hash, :run_kind, :model, :verdict, :applied, :notes, :created_at
+                )
+                """
+            ),
+            {
+                "id": 1,
+                "company_report_id": None,
+                "file_hash": "hash-trail-demo",
+                "run_kind": "audit",
+                "model": "gpt-4.1-mini",
+                "verdict": "corrected",
+                "applied": True,
+                "notes": "Matched by file hash",
+                "created_at": "2026-04-15T10:30:00+00:00",
+            },
+        )
+        db_session.commit()
+
+        with TestClient(app) as client:
+            response = client.get(f"/report/{report.id}/audit-trail")
+
+        assert response.status_code == 200
+        assert response.json() == [
+            {
+                "id": 1,
+                "run_kind": "audit",
+                "model": "gpt-4.1-mini",
+                "verdict": "corrected",
+                "applied": True,
+                "notes": "Matched by file hash",
+                "created_at": "2026-04-15T10:30:00+00:00",
+            }
+        ]
     finally:
         db_session.close()
         Base.metadata.drop_all(bind=engine)

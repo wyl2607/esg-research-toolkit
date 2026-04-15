@@ -302,6 +302,24 @@
       "p75_p90": "p75–p90",
       "above_p90": "> p90",
       "unknown": "n/a"
+    },
+    "sourceTrail": {
+      "title": "Quellenpfad ({{count}} Läufe)",
+      "loading": "Quellenpfad wird geladen…",
+      "empty": "Noch kein Audit-Trail vorhanden.",
+      "error": "Der Quellenpfad konnte nicht geladen werden.",
+      "unavailable": "Für diesen Datensatz ist kein Quellenpfad verfügbar.",
+      "yes": "Ja",
+      "no": "Nein",
+      "fields": {
+        "id": "Lauf-ID",
+        "runKind": "Laufart",
+        "model": "Modell",
+        "verdict": "Urteil",
+        "applied": "Übernommen",
+        "notes": "Hinweise",
+        "createdAt": "Erstellt"
+      }
     }
   },
   "frameworks": {

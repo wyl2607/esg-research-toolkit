@@ -227,7 +227,7 @@ export function DashboardPage() {
               </span>
               <span className="flex items-center gap-1">
                 <span className="inline-block h-2 w-2 rounded-full bg-red-400" />
-                <span className="text-slate-600">不足 (<50%) <strong>{weakFields}</strong> 个字段</span>
+                <span className="text-slate-600">不足 (&lt;50%) <strong>{weakFields}</strong> 个字段</span>
               </span>
             </div>
           </div>

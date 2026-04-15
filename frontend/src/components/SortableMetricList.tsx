@@ -16,8 +16,6 @@ interface Props {
   direction?: 'vertical' | 'horizontal'
 }
 
-const DRAG_OVER_CLASS = 'ring-2 ring-amber-400 ring-offset-2 rounded-xl'
-
 export function SortableMetricList({ items, loading, storageKey = 'metric-card-order', direction = 'vertical' }: Props) {
   const getInitialOrder = (): string[] => {
     try {

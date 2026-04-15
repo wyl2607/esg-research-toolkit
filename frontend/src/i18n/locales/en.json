@@ -300,6 +300,24 @@
       "p75_p90": "p75–p90",
       "above_p90": "> p90",
       "unknown": "n/a"
+    },
+    "sourceTrail": {
+      "title": "Source trail ({{count}} runs)",
+      "loading": "Loading source trail…",
+      "empty": "No audit trail yet.",
+      "error": "Could not load the source trail.",
+      "unavailable": "Source trail is unavailable for this record.",
+      "yes": "Yes",
+      "no": "No",
+      "fields": {
+        "id": "Run ID",
+        "runKind": "Run kind",
+        "model": "Model",
+        "verdict": "Verdict",
+        "applied": "Applied",
+        "notes": "Notes",
+        "createdAt": "Created"
+      }
     }
   },
   "frameworks": {

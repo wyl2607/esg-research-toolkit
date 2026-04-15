@@ -88,6 +88,12 @@ function sourceOriginLabel(source: CompanySourceDocument | null | undefined) {
   return source.pdf_filename ?? source.file_hash ?? source.source_id
 }
 
+function parseCompanyReportId(sourceId: string | null | undefined): number | null {
+  if (!sourceId?.startsWith('db:')) return null
+  const parsed = Number.parseInt(sourceId.slice(3), 10)
+  return Number.isNaN(parsed) ? null : parsed
+}
+
 function prettifyToken(value: string | null | undefined) {
   if (!value) return '—'
   return value.replace(/_/g, ' ')
@@ -375,6 +381,7 @@ export function CompanyProfilePage() {
       ? latestSources.flatMap((source) => source.evidence_anchors ?? [])
       : (profile.evidence_summary ?? [])
   const latestSourceOrigin = sourceOriginLabel(latestSources[0])
+  const latestCompanyReportId = parseCompanyReportId(latestSources[0]?.source_id)
   const latestMergeCue = (() => {
     const preferredMetrics = [
       'renewable_energy_pct',
@@ -668,6 +675,7 @@ export function CompanyProfilePage() {
       </div>
 
       <PeerComparisonCard
+        companyReportId={latestCompanyReportId}
         industryCode={profile.latest_period?.industry_code ?? null}
         reportYear={profile.latest_year}
         metrics={profile.latest_metrics}
