@@ -90,7 +90,7 @@ function FrameworkCard({ fw }: { fw: FrameworkScoreResult }) {
       </div>
 
       <div className="h-44">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
           <RadarChart data={radarData}>
             <PolarGrid />
             <PolarAngleAxis dataKey="subject" tick={{ fontSize: 9 }} tickFormatter={(v: string) => v.length > 8 ? v.slice(0, 7) + '…' : v} />

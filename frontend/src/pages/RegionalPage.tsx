@@ -200,7 +200,7 @@ export function RegionalPage() {
                 <CardTitle className="text-base">{t('regional.dimensionRadar')}</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={280}>
+                <ResponsiveContainer width="100%" height={280} minWidth={0} minHeight={0}>
                   <RadarChart data={radarData}>
                     <PolarGrid />
                     <PolarAngleAxis dataKey="dimension" tick={{ fontSize: 9 }} tickFormatter={(v: string) => v.length > 10 ? v.slice(0, 9) + '…' : v} />

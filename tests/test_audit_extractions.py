@@ -238,6 +238,46 @@ def test_fetch_company_profile_uses_prefetched_directory(monkeypatch) -> None:
     assert profile and profile["latest_metrics"]["scope1_co2e_tonnes"] == 321.0
 
 
+def test_fetch_company_profile_resolves_kgaa_suffix(monkeypatch) -> None:
+    class DummyResponse:
+        def __init__(self, status_code: int, payload):
+            self.status_code = status_code
+            self._payload = payload
+
+        def json(self):
+            return self._payload
+
+    class DummyClient:
+        def __init__(self, *args, **kwargs) -> None:
+            self.calls: list[str] = []
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb) -> None:
+            return None
+
+        def get(self, url: str) -> DummyResponse:
+            self.calls.append(url)
+            if url.endswith("/report/companies/Fresenius%20SE%20%26%20Co.%20KGaA/profile"):
+                return DummyResponse(404, {"detail": "not found"})
+            if url.endswith("/report/companies/Fresenius/profile"):
+                return DummyResponse(200, {"latest_metrics": {"scope1_co2e_tonnes": 111.0}})
+            if url.endswith("/report/companies"):
+                raise AssertionError("/report/companies should not be fetched when preloaded data is provided")
+            raise AssertionError(f"unexpected URL: {url}")
+
+    monkeypatch.setattr("scripts.audit_extractions.httpx.Client", DummyClient)
+    profile, resolved_name = fetch_company_profile(
+        "http://localhost:8000",
+        "Fresenius SE & Co. KGaA",
+        report_year=2024,
+        company_directory=[{"company_name": "Fresenius", "report_year": 2024}],
+    )
+    assert resolved_name == "Fresenius"
+    assert profile and profile["latest_metrics"]["scope1_co2e_tonnes"] == 111.0
+
+
 def test_main_writes_reports_in_manifest_order_with_workers(monkeypatch) -> None:
     companies = [
         SeedCompany("a-2024", "Alpha AG", 2024, "D35.11", "Power", "https://example.com/a.pdf", False),

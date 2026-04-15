@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import datetime as dt
+from argparse import Namespace
 
 from scripts.run_audit_iterations import (
     IterationResult,
+    build_audit_command,
     evaluate_iteration_result,
     parse_summary_text,
 )
@@ -139,3 +141,20 @@ Total fields audited: 9
     evaluation = evaluate_iteration_result(result)
     assert evaluation.passed is False
     assert any("exited with code 1" in reason for reason in evaluation.reasons)
+
+
+def test_build_audit_command_includes_workers_passthrough() -> None:
+    args = Namespace(
+        model="gpt-5.3-codex",
+        max_chars=30000,
+        workers=4,
+        api_base="http://127.0.0.1:8000",
+        company=None,
+        slug=None,
+        apply=True,
+        dry_run=False,
+    )
+    command = build_audit_command(args)
+    assert "--workers" in command
+    idx = command.index("--workers")
+    assert command[idx + 1] == "4"

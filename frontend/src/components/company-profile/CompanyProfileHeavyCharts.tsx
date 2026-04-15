@@ -66,7 +66,7 @@ export function CompanyProfileHeavyCharts({
             <p className="text-sm text-slate-400">{noFrameworkResultsLabel}</p>
           ) : (
             <>
-              <ResponsiveContainer width="100%" height={260}>
+              <ResponsiveContainer width="100%" height={260} minWidth={0} minHeight={0}>
                 <RadarChart data={frameworkRadarData}>
                   <PolarGrid />
                   <PolarAngleAxis dataKey="framework" tick={{ fontSize: 11 }} />
@@ -95,7 +95,7 @@ export function CompanyProfileHeavyCharts({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <ResponsiveContainer width="100%" height={260}>
+          <ResponsiveContainer width="100%" height={260} minWidth={0} minHeight={0}>
             <LineChart data={trendData}>
               <XAxis dataKey="year" />
               <YAxis />

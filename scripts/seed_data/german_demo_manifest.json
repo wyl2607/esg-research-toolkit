@@ -110,21 +110,21 @@
       "verify": true
     },
     {
-      "slug": "mercedes-benz-group-2024",
-      "company_name": "Mercedes-Benz Group AG",
+      "slug": "porsche-ag-2024",
+      "company_name": "Porsche AG",
       "report_year": 2024,
       "industry_code": "C29.10",
       "industry_sector": "Motor vehicles",
-      "source_url": "https://group.mercedes-benz.com/documents/investors/reports/annual-report/mercedes-benz/mercedes-benz-annual-report-2024-incl-combined-management-report-mbg-ag.pdf",
-      "verify": true
+      "source_url": "https://newsroom.porsche.com/files/Annual_and_Sustainability_Report_2024_Porsche_AG_(Consolidated_Financial_Statements_IFRS).pdf",
+      "verify": false
     },
     {
-      "slug": "allianz-2024",
-      "company_name": "Allianz SE",
+      "slug": "sap-se-2024",
+      "company_name": "SAP SE",
       "report_year": 2024,
-      "industry_code": "K65.12",
-      "industry_sector": "Insurance",
-      "source_url": "https://www.allianz.com/content/dam/onemarketing/azcom/Allianz_com/investor-relations/en/results-reports/annual-report/ar-2024/en-allianz-group-annual-report-2024.pdf",
+      "industry_code": "J62.01",
+      "industry_sector": "Software publishing and enterprise software",
+      "source_url": "https://www.sap.com/docs/download/investors/2024/sap-2024-integrated-report.pdf",
       "verify": false
     },
     {
@@ -155,22 +155,22 @@
       "verify": true
     },
     {
-      "slug": "bayer-2024",
-      "company_name": "Bayer AG",
+      "slug": "henkel-2024",
+      "company_name": "Henkel AG & Co. KGaA",
       "report_year": 2024,
-      "industry_code": "C21.10",
-      "industry_sector": "Pharmaceuticals",
-      "source_url": "https://www.bayer.com/sites/default/files/2025-03/bayer-annual-report-2024.pdf",
+      "industry_code": "C20.41",
+      "industry_sector": "Soap and detergents manufacturing",
+      "source_url": "https://www.henkel.com/resource/blob/2043318/9b8425a944b077ab7165b775398c72a1/data/2024-annual-report.pdf",
       "verify": false
     },
     {
-      "slug": "siemens-2024",
-      "company_name": "Siemens AG",
+      "slug": "puma-2024",
+      "company_name": "PUMA SE",
       "report_year": 2024,
-      "industry_code": "C28.99",
-      "industry_sector": "Industrial machinery",
-      "source_url": "https://www.siemens.com/applications/b09c49eb-3a14-73b3-9f71-e30e3c2dfdbd/assets/pdfs/en/Siemens_Report_FY2024.pdf",
-      "verify": true
+      "industry_code": "C14.19",
+      "industry_sector": "Apparel and footwear manufacturing",
+      "source_url": "https://www.pumagroup.com/sites/default/files/financial-report/2024/puma-annual-report-2024-en-final_0.pdf",
+      "verify": false
     },
     {
       "slug": "merck-kgaa-2024",

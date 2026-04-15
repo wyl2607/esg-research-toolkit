@@ -31,7 +31,7 @@ export function TaxonomyRadarChart({ data }: RadarChartProps) {
   }))
 
   return (
-    <ResponsiveContainer width="100%" height={320}>
+    <ResponsiveContainer width="100%" height={320} minWidth={0} minHeight={0}>
       <ReRadarChart data={chartData}>
         <PolarGrid />
         <PolarAngleAxis dataKey="subject" tick={{ fontSize: 12 }} />

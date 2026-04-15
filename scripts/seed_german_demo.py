@@ -43,6 +43,14 @@ PDF_CACHE_DIR = ROOT / "scripts" / "seed_data" / "pdfs"
 ANOMALIES_REPORT_PATH = ROOT / "scripts" / "seed_data" / "anomalies_report.md"
 DEFAULT_API_BASE = os.environ.get("API_BASE", "http://localhost:8000")
 DEFAULT_TIMEOUT = float(os.environ.get("SEED_TIMEOUT", "300"))
+PDF_DOWNLOAD_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+    ),
+    "Accept": "application/pdf,application/octet-stream;q=0.9,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+}
 
 
 @dataclass(frozen=True)
@@ -113,7 +121,7 @@ def ensure_pdf(company: SeedCompany, *, dry_run: bool, timeout: float) -> Path |
     print(f"  downloading {company.source_url}")
     try:
         with httpx.Client(timeout=timeout, follow_redirects=True) as client:
-            response = client.get(company.source_url)
+            response = client.get(company.source_url, headers=PDF_DOWNLOAD_HEADERS)
     except httpx.HTTPError as exc:
         print(f"  ⚠️ download error: {exc}")
         print(f"  → place manual PDF at {local_path} and retry")

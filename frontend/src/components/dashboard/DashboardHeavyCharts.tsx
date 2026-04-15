@@ -52,7 +52,7 @@ export function DashboardHeavyCharts({
           <ChartEmptyState title={chartsEmptyTitle} body={chartsEmptyBody} />
         ) : (
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <BarChart data={yearlyTrend} role="img" aria-label={yearlyTrendLabel}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="year" />
@@ -73,7 +73,7 @@ export function DashboardHeavyCharts({
           <ChartEmptyState title={chartsEmptyTitle} body={chartsEmptyBody} />
         ) : (
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <BarChart
                 data={topEmitters}
                 layout="vertical"

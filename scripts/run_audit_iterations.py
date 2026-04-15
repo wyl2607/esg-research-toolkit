@@ -131,6 +131,8 @@ def build_audit_command(args: argparse.Namespace) -> list[str]:
         cmd.extend(["--model", args.model])
     if args.max_chars is not None:
         cmd.extend(["--max-chars", str(args.max_chars)])
+    if args.workers is not None:
+        cmd.extend(["--workers", str(args.workers)])
     if args.api_base:
         cmd.extend(["--api-base", args.api_base])
     if args.company:
@@ -258,6 +260,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--iterations", type=int, default=3, help="number of audit iterations to run")
     parser.add_argument("--model", help="passthrough to audit_extractions.py --model")
     parser.add_argument("--max-chars", type=int, help="passthrough to audit_extractions.py --max-chars")
+    parser.add_argument("--workers", type=int, help="passthrough to audit_extractions.py --workers")
     parser.add_argument("--api-base", help="passthrough to audit_extractions.py --api-base")
     parser.add_argument("--company", help="passthrough to audit_extractions.py --company")
     parser.add_argument("--slug", help="passthrough to audit_extractions.py --slug")

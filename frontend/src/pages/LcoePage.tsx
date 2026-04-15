@@ -442,30 +442,30 @@ export function LcoePage() {
             <CardTitle className="text-lg">{t('lcoe.sensitivityAnalysis')}</CardTitle>
           </CardHeader>
           <CardContent>
-          <ResponsiveContainer width="100%" height={280}>
-            <LineChart data={sensitivityChartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="idx" hide />
-              <YAxis
-                label={{
-                  value: t('lcoe.axisEurPerMwh'),
-                  angle: -90,
-                  position: 'insideLeft',
-                }}
-              />
-              <Tooltip />
-              <Legend />
-              {sensitivityMutation.data.map((s, i) => (
-                <Line
-                  key={s.parameter}
-                  type="monotone"
-                  dataKey={s.parameter}
-                  stroke={COLORS[i % COLORS.length]}
-                  dot={false}
+            <ResponsiveContainer width="100%" height={280} minWidth={0} minHeight={0}>
+              <LineChart data={sensitivityChartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="idx" hide />
+                <YAxis
+                  label={{
+                    value: t('lcoe.axisEurPerMwh'),
+                    angle: -90,
+                    position: 'insideLeft',
+                  }}
                 />
-              ))}
-            </LineChart>
-          </ResponsiveContainer>
+                <Tooltip />
+                <Legend />
+                {sensitivityMutation.data.map((s, i) => (
+                  <Line
+                    key={s.parameter}
+                    type="monotone"
+                    dataKey={s.parameter}
+                    stroke={COLORS[i % COLORS.length]}
+                    dot={false}
+                  />
+                ))}
+              </LineChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
       )}
