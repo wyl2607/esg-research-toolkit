@@ -1,0 +1,23 @@
+# 路径前缀：匹配此前缀的文件视为公开可推送
+.github/
+.guard/
+frontend/
+tests/
+docs/
+scripts/
+core/
+report_parser/
+benchmark/
+esg_frameworks/
+taxonomy_scorer/
+main.py
+requirements.txt
+README.md
+README.zh.md
+README.de.md
+Dockerfile
+docker-compose.yml
+pyproject.toml
+.env.example
+PROJECT_PROGRESS.md
+AGENTS.md
