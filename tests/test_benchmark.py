@@ -78,36 +78,37 @@ def test_recompute_industry_benchmarks_end_to_end(benchmark_db_session_factory: 
 
 
 def test_get_benchmark_endpoint_returns_rows(benchmark_db_session_factory: sessionmaker) -> None:
-    with benchmark_db_session_factory() as db:
-        db.add_all(
-            [
-                CompanyReport(
-                    company_name=f"Benchmark Utility {i}",
-                    report_year=2024,
-                    industry_code="D35.11",
-                    scope1_co2e_tonnes=float(value),
-                )
-                for i, value in enumerate([100, 200, 300, 400, 500], start=1)
-            ]
-        )
-        db.commit()
-
     def override_get_db() -> Generator[Session, None, None]:
-        db = benchmark_db_session_factory()
-        try:
+        with benchmark_db_session_factory() as db:
             yield db
-        finally:
-            db.close()
 
     app.dependency_overrides[get_db] = override_get_db
 
-    with TestClient(app) as client:
-        recompute_response = client.post("/benchmarks/recompute")
-        assert recompute_response.status_code == 200
+    try:
+        with benchmark_db_session_factory() as setup_db:
+            setup_db.add_all(
+                [
+                    CompanyReport(
+                        company_name=f"Benchmark Utility {i}",
+                        report_year=2024,
+                        industry_code="D35.11",
+                        scope1_co2e_tonnes=float(value),
+                    )
+                    for i, value in enumerate([100, 200, 300, 400, 500], start=1)
+                ]
+            )
+            setup_db.commit()
 
-        response = client.get("/benchmarks/D35.11")
-        assert response.status_code == 200
-        payload = response.json()
+        with TestClient(app) as client:
+            recompute_response = client.post("/benchmarks/recompute")
+            assert recompute_response.status_code == 200
+
+            response = client.get("/benchmarks/D35.11")
+            assert response.status_code == 200
+            payload = response.json()
+
+    finally:
+        app.dependency_overrides.clear()
 
     assert payload["industry_code"] == "D35.11"
     assert isinstance(payload["metrics"], list)
