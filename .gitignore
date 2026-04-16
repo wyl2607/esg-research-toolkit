@@ -130,3 +130,11 @@ scripts/seed_data/anomalies_report.md
 scripts/seed_data/audit_reports/*.md
 !scripts/seed_data/audit_reports/.gitkeep
 nightly/
+
+# Automation runtime artifacts (screenshots, critique reports, ad-hoc captures)
+scripts/automation/screenshots/
+scripts/automation/ui_reports/
+scripts/automation/*.png
+
+# Local-only phase completion / milestone snapshots
+PHASE_*.md
