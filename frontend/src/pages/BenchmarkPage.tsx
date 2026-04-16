@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   getCompaniesByIndustry,
   getIndustryBenchmarks,
@@ -182,9 +183,9 @@ export function BenchmarkPage() {
         </div>
 
         {benchmarksQuery.isLoading ? (
-          <p className="text-sm text-stone-500 dark:text-slate-400">
-            {t('benchmark.loading')}
-          </p>
+          <div className="space-y-3">
+            <Skeleton count={5} height="h-10" />
+          </div>
         ) : null}
 
         {benchmarksQuery.isError ? (
@@ -248,7 +249,9 @@ export function BenchmarkPage() {
         </h2>
 
         {companiesQuery.isLoading ? (
-          <p className="text-sm text-stone-500 dark:text-slate-400">{t('benchmark.loading')}</p>
+          <div className="space-y-2">
+            <Skeleton count={4} height="h-12" />
+          </div>
         ) : null}
 
         {companiesQuery.isError ? (
