@@ -5,9 +5,9 @@ load from local cache), POST it to /report/upload with the NACE
 industry code, then trigger /benchmarks/recompute once at the end.
 
 Phase B (--validate): for each seeded company, re-fetch the profile
-and ask gpt-4o-mini whether any extracted numbers look hallucinated
-or anomalous given the evidence snippets. Write findings to
-scripts/seed_data/anomalies_report.md.
+and ask the configured validation model whether any extracted
+numbers look hallucinated or anomalous given the evidence snippets.
+Write findings to scripts/seed_data/anomalies_report.md.
 
 Reset (--reset): delete every CompanyReport row covered by the
 manifest (company_name + report_year), then recompute benchmarks.
@@ -38,11 +38,15 @@ from urllib.parse import quote
 
 import httpx
 
+ROOT = Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
 from core.config import settings
+from core.ai_client import get_client
 from core.database import SessionLocal, engine
 from report_parser.storage import ensure_storage_schema, record_extraction_run
 
-ROOT = Path(__file__).resolve().parent.parent
 MANIFEST_PATH = ROOT / "scripts" / "seed_data" / "german_demo_manifest.json"
 PDF_CACHE_DIR = ROOT / "scripts" / "seed_data" / "pdfs"
 ANOMALIES_REPORT_PATH = ROOT / "scripts" / "seed_data" / "anomalies_report.md"
@@ -305,12 +309,12 @@ def phase_b(api_base: str, companies: list[SeedCompany]) -> None:
         return
 
     try:
-        from openai import OpenAI
+        ai_client = get_client()
     except ImportError:
         print("❌ openai package not installed; pip install openai and retry")
         return
 
-    ai_client = OpenAI(api_key=api_key)
+    validation_model = settings.openai_validation_model
     findings: list[dict] = []
 
     print(f"running Phase B sanity checks for {len(companies)} companies...")
@@ -353,7 +357,7 @@ def phase_b(api_base: str, companies: list[SeedCompany]) -> None:
 
             try:
                 completion = ai_client.chat.completions.create(
-                    model="gpt-4o-mini",
+                    model=validation_model,
                     messages=[{"role": "user", "content": prompt}],
                     response_format={"type": "json_object"},
                     temperature=0,

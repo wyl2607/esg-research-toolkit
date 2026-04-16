@@ -23,8 +23,9 @@ type FrameworkRadarDatum = {
 
 type TrendDatum = {
   year: number
-  scope1: number
-  renewable: number
+  scope1: number | null
+  renewable: number | null
+  taxonomy: number | null
 }
 
 interface CompanyProfileHeavyChartsProps {
@@ -94,20 +95,29 @@ export function CompanyProfileHeavyCharts({
             {trendTitle}
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-3" data-testid="company-profile-trend-chart">
           <ResponsiveContainer width="100%" height={260} minWidth={0} minHeight={0}>
             <LineChart data={trendData}>
               <XAxis dataKey="year" />
               <YAxis />
               <Tooltip />
               <Legend />
-              <Line type="monotone" dataKey="scope1" stroke="#ef4444" strokeWidth={2} dot name={scope1Label} />
+              <Line
+                type="monotone"
+                dataKey="scope1"
+                stroke="#ef4444"
+                strokeWidth={2}
+                dot
+                connectNulls={false}
+                name={scope1Label}
+              />
               <Line
                 type="monotone"
                 dataKey="renewable"
                 stroke="#16a34a"
                 strokeWidth={2}
                 dot
+                connectNulls={false}
                 name={renewableLabel}
               />
             </LineChart>

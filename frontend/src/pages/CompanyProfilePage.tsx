@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { getCompanyProfile } from '@/lib/api'
+import type { CompanyTrendPoint } from '@/lib/types'
 import type {
   CompanyDataQualitySummary,
   CompanyIdentityProvenanceSummary,
@@ -94,6 +95,22 @@ function parseCompanyReportId(sourceId: string | null | undefined): number | nul
   return Number.isNaN(parsed) ? null : parsed
 }
 
+type TrendDatum = {
+  year: number
+  scope1: number | null
+  renewable: number | null
+  taxonomy: number | null
+}
+
+function buildCompanyTrendData(trend: CompanyTrendPoint[]): TrendDatum[] {
+  return trend.map((point) => ({
+    year: point.year,
+    scope1: point.scope1,
+    renewable: point.renewable_pct,
+    taxonomy: point.taxonomy_aligned_revenue_pct,
+  }))
+}
+
 function prettifyToken(value: string | null | undefined) {
   if (!value) return '—'
   return value.replace(/_/g, ' ')
@@ -151,13 +168,7 @@ export function CompanyProfilePage() {
   })
 
   const trendData = useMemo(
-    () =>
-      (profile?.trend ?? []).map((d) => ({
-        year: d.year,
-        scope1: d.scope1 ?? 0,
-        renewable: d.renewable_pct ?? 0,
-        taxonomy: d.taxonomy_aligned_revenue_pct ?? 0,
-      })),
+    () => buildCompanyTrendData(profile?.trend ?? []),
     [profile]
   )
 

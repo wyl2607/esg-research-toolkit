@@ -15,6 +15,22 @@ interface PeerComparisonCardProps {
   metrics: CompanyESGData
 }
 
+type PeerComparisonYearSelection =
+  | {
+      status: 'exact'
+      year: number
+      availableYears: number[]
+    }
+  | {
+      status: 'missing-data'
+      availableYears: number[]
+    }
+  | {
+      status: 'mismatch'
+      requestedYear: number | null
+      availableYears: number[]
+    }
+
 type PercentileBucket =
   | 'below_p10'
   | 'p10_p25'
@@ -91,6 +107,31 @@ function auditTrailKey(row: AuditTrailRow): string {
   return `${row.id}:${row.created_at ?? 'no-date'}`
 }
 
+function resolvePeerComparisonYear(
+  reportYear: number | null | undefined,
+  availableYears: number[]
+): PeerComparisonYearSelection {
+  const years = [...new Set(availableYears)].sort((a, b) => b - a)
+
+  if (years.length === 0) {
+    return { status: 'missing-data', availableYears: years }
+  }
+
+  if (reportYear != null && years.includes(reportYear)) {
+    return { status: 'exact', year: reportYear, availableYears: years }
+  }
+
+  return {
+    status: 'mismatch',
+    requestedYear: reportYear ?? null,
+    availableYears: years,
+  }
+}
+
+function formatAvailableYears(years: number[], locale: string) {
+  return years.map((year) => year.toLocaleString(locale)).join(', ')
+}
+
 export function PeerComparisonCard(props: PeerComparisonCardProps) {
   const { companyReportId, industryCode, reportYear, metrics } = props
   const { t, i18n } = useTranslation()
@@ -108,21 +149,24 @@ export function PeerComparisonCard(props: PeerComparisonCardProps) {
     enabled: auditTrailOpen && companyReportId != null,
   })
 
-  const peerRows = useMemo<PeerRow[]>(() => {
+  const availableYears = useMemo(() => {
     if (!benchmarksQuery.data) return []
-    const allRows = benchmarksQuery.data.metrics
-    if (allRows.length === 0) return []
-
-    const yearsAvailable = [...new Set(allRows.map((row) => row.period_year))].sort(
+    return [...new Set(benchmarksQuery.data.metrics.map((row) => row.period_year))].sort(
       (a, b) => b - a
     )
-    const targetYear =
-      reportYear != null && yearsAvailable.includes(reportYear)
-        ? reportYear
-        : yearsAvailable[0]
+  }, [benchmarksQuery.data])
+
+  const yearSelection = useMemo(
+    () => resolvePeerComparisonYear(reportYear, availableYears),
+    [availableYears, reportYear]
+  )
+
+  const peerRows = useMemo<PeerRow[]>(() => {
+    if (!benchmarksQuery.data || yearSelection.status !== 'exact') return []
+    const allRows = benchmarksQuery.data.metrics
 
     const metricsMap = metrics as unknown as Record<string, unknown>
-    const selectedRows = allRows.filter((row) => row.period_year === targetYear)
+    const selectedRows = allRows.filter((row) => row.period_year === yearSelection.year)
     const rows: PeerRow[] = []
 
     for (const benchmark of selectedRows) {
@@ -138,7 +182,16 @@ export function PeerComparisonCard(props: PeerComparisonCardProps) {
     }
 
     return rows
-  }, [benchmarksQuery.data, metrics, reportYear])
+  }, [benchmarksQuery.data, metrics, yearSelection])
+
+  const yearMismatchMessage =
+    yearSelection.status === 'mismatch'
+      ? t('peer.yearMismatch', {
+          companyYear:
+            reportYear == null ? t('benchmark.yearEmpty') : reportYear.toLocaleString(locale),
+          benchmarkYears: formatAvailableYears(yearSelection.availableYears, locale),
+        })
+      : null
 
   const sourceTrailSection = (
     <details
@@ -296,14 +349,25 @@ export function PeerComparisonCard(props: PeerComparisonCardProps) {
           </p>
         ) : null}
 
-        {benchmarksQuery.isSuccess && peerRows.length === 0 ? (
+        {benchmarksQuery.isSuccess && yearSelection.status === 'mismatch' ? (
+          <div
+            className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-700/60 dark:bg-amber-900/20 dark:text-amber-100"
+            data-testid="peer-year-mismatch"
+          >
+            {yearMismatchMessage}
+          </div>
+        ) : null}
+
+        {benchmarksQuery.isSuccess &&
+        yearSelection.status !== 'mismatch' &&
+        peerRows.length === 0 ? (
           <p className="text-sm text-stone-500 dark:text-slate-400">{t('peer.empty')}</p>
         ) : null}
 
         {peerRows.length > 0 ? (
           <>
             <div className="overflow-x-auto">
-              <table className="min-w-full text-sm">
+              <table className="min-w-full text-sm" data-testid="peer-comparison-table">
                 <thead>
                   <tr className="border-b border-stone-200 text-left text-xs uppercase text-stone-500 dark:border-slate-700 dark:text-slate-400">
                     <th className="py-2 pr-4">{t('peer.col.metric')}</th>

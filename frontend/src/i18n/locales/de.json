@@ -286,7 +286,8 @@
     "noIndustryCta": "Für dieses Unternehmen ist noch keine NACE-Branche hinterlegt. Beim nächsten Upload festlegen, um den Peer-Vergleich zu aktivieren.",
     "loading": "Peer-Benchmarks werden geladen…",
     "empty": "Für diese Branche liegen noch keine Benchmark-Daten vor. Auf der Seite Branchenbenchmarks neu berechnen.",
-    "disclaimer": "Die Position bezieht sich auf das jüngste verfügbare Benchmark-Jahr. Buckets mit Stichprobe < 5 sind nur Richtwerte.",
+    "disclaimer": "Die Position wird nur berechnet, wenn Unternehmens- und Benchmark-Jahr exakt übereinstimmen. Buckets mit Stichprobe < 5 sind nur Richtwerte.",
+    "yearMismatch": "Für {{companyYear}} gibt es kein exaktes Benchmark-Jahr. Verfügbare Benchmark-Jahre: {{benchmarkYears}}. Der Vergleich wird erst angezeigt, wenn dasselbe Jahr vorliegt.",
     "col": {
       "metric": "Metrik",
       "company": "Unternehmen",

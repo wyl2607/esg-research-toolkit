@@ -284,7 +284,8 @@
     "noIndustryCta": "This company has no NACE industry code yet. Set it on the next upload to enable peer comparison.",
     "loading": "Loading peer benchmarks…",
     "empty": "No benchmark data available for this industry yet. Use the Industry Benchmarks page to recompute.",
-    "disclaimer": "Position is computed against the latest available benchmark year. Buckets with sample size < 5 are directional only.",
+    "disclaimer": "Position is computed only when the company year and benchmark year match exactly. Buckets with sample size < 5 are directional only.",
+    "yearMismatch": "No exact benchmark year matches {{companyYear}}. Available benchmark years: {{benchmarkYears}}. No comparison is shown until the same year exists.",
     "col": {
       "metric": "Metric",
       "company": "Company",
