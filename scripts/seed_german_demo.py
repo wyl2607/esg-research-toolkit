@@ -14,10 +14,13 @@ manifest (company_name + report_year), then recompute benchmarks.
 
 Usage:
   python scripts/seed_german_demo.py                 # Phase A only
+  python scripts/seed_german_demo.py --only rwe-2024 --only "RWE AG"
   python scripts/seed_german_demo.py --validate      # Phase A + B
   python scripts/seed_german_demo.py --validate-only # Phase B only
   python scripts/seed_german_demo.py --reset         # wipe seed rows
   python scripts/seed_german_demo.py --dry-run       # no network, no DB writes
+  python scripts/seed_german_demo.py --slug rwe-2024 --slug basf-2024
+  python scripts/seed_german_demo.py --company "RWE AG" --company "BASF SE"
 
 Environment:
   API_BASE        default http://localhost:8000
@@ -109,6 +112,44 @@ def load_manifest(path: Path = MANIFEST_PATH) -> list[SeedCompany]:
     if not companies:
         raise ValueError("manifest has zero companies")
     return companies
+
+
+def _normalize_filter_values(values: list[str] | None) -> set[str]:
+    normalized: set[str] = set()
+    for value in values or []:
+        for token in value.split(","):
+            cleaned = token.strip().lower()
+            if cleaned:
+                normalized.add(cleaned)
+    return normalized
+
+
+def filter_companies(
+    companies: list[SeedCompany],
+    *,
+    slugs: list[str] | None = None,
+    company_names: list[str] | None = None,
+    only_filters: list[str] | None = None,
+) -> list[SeedCompany]:
+    selected = companies
+
+    normalized_only = _normalize_filter_values(only_filters)
+    if normalized_only:
+        return [
+            company
+            for company in selected
+            if company.slug.lower() in normalized_only or company.company_name.lower() in normalized_only
+        ]
+
+    normalized_slugs = _normalize_filter_values(slugs)
+    if normalized_slugs:
+        selected = [company for company in selected if company.slug.lower() in normalized_slugs]
+
+    normalized_names = _normalize_filter_values(company_names)
+    if normalized_names:
+        selected = [company for company in selected if company.company_name.lower() in normalized_names]
+
+    return selected
 
 
 def _is_probably_pdf(content: bytes) -> bool:
@@ -368,7 +409,14 @@ def phase_b(api_base: str, companies: list[SeedCompany]) -> None:
                 findings.append({"company": company.company_name, "issue": f"openai: {exc}"})
                 continue
 
-            concerns = payload.get("concerns") or []
+            concerns = []
+            for concern in payload.get("concerns") or []:
+                if not isinstance(concern, dict):
+                    continue
+                reason = concern.get("reason")
+                if isinstance(reason, str) and "no concern" in reason.lower():
+                    continue
+                concerns.append(concern)
             if concerns:
                 findings.append({"company": company.company_name, "concerns": concerns})
                 print(f"  ⚠️ {company.company_name}: {len(concerns)} concern(s)")
@@ -444,16 +492,47 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--reset", action="store_true", help="delete all seed rows")
     parser.add_argument("--dry-run", action="store_true", help="no network and no writes")
     parser.add_argument("--timeout", type=float, default=DEFAULT_TIMEOUT, help="request timeout seconds")
+    parser.add_argument(
+        "--only",
+        action="append",
+        default=[],
+        help="limit run to slugs or company names (repeatable; accepts comma-separated values)",
+    )
+    parser.add_argument(
+        "--slug",
+        action="append",
+        default=[],
+        help="limit the run to one or more manifest slugs (repeatable)",
+    )
+    parser.add_argument(
+        "--company",
+        action="append",
+        default=[],
+        help="limit the run to one or more exact company names from the manifest (repeatable)",
+    )
     args = parser.parse_args(argv)
 
     if args.validate and args.validate_only:
         print("❌ --validate and --validate-only are mutually exclusive")
+        return 2
+    if args.only and (args.slug or args.company):
+        print("❌ --only cannot be combined with --slug/--company")
         return 2
 
     try:
         companies = load_manifest()
     except Exception as exc:  # noqa: BLE001 - CLI error surface
         print(f"❌ failed to load manifest: {exc}")
+        return 2
+
+    companies = filter_companies(
+        companies,
+        slugs=args.slug,
+        company_names=args.company,
+        only_filters=args.only,
+    )
+    if not companies:
+        print("❌ no manifest entries matched the provided filters (--only/--slug/--company)")
         return 2
 
     print(f"loaded {len(companies)} companies from {MANIFEST_PATH.name}")

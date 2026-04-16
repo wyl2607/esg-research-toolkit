@@ -10,7 +10,6 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { getCompanyProfile } from '@/lib/api'
-import type { CompanyTrendPoint } from '@/lib/types'
 import type {
   CompanyDataQualitySummary,
   CompanyIdentityProvenanceSummary,
@@ -18,6 +17,7 @@ import type {
   CompanyNarrativeSummary,
   FrameworkMetadata,
   FrameworkScoreResult,
+  CompanyTrendPoint,
 } from '@/lib/types'
 import { useTranslation } from 'react-i18next'
 import { localizeErrorMessage } from '@/lib/error-utils'

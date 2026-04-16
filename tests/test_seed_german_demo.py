@@ -11,6 +11,7 @@ from scripts.seed_german_demo import (
     PDF_DOWNLOAD_HEADERS,
     SeedCompany,
     ensure_pdf,
+    filter_companies,
     load_manifest,
     main,
     phase_b,
@@ -57,6 +58,63 @@ def test_manifest_entry_rejects_missing_fields() -> None:
         SeedCompany.from_dict({"slug": "only-slug"})
 
 
+def test_filter_companies_supports_slug_and_company_name() -> None:
+    companies = [
+        SeedCompany(
+            slug="rwe-2024",
+            company_name="RWE AG",
+            report_year=2024,
+            industry_code="D35.11",
+            industry_sector="Electricity production",
+            source_url="https://example.com/rwe-2024.pdf",
+            verify=False,
+        ),
+        SeedCompany(
+            slug="basf-2024",
+            company_name="BASF SE",
+            report_year=2024,
+            industry_code="C20.14",
+            industry_sector="Organic basic chemicals",
+            source_url="https://example.com/basf-2024.pdf",
+            verify=False,
+        ),
+        SeedCompany(
+            slug="rwe-2023",
+            company_name="RWE AG",
+            report_year=2023,
+            industry_code="D35.11",
+            industry_sector="Electricity production",
+            source_url="https://example.com/rwe-2023.pdf",
+            verify=False,
+        ),
+    ]
+
+    slug_filtered = filter_companies(companies, slugs=["rwe-2024"])
+    assert [company.slug for company in slug_filtered] == ["rwe-2024"]
+
+    company_filtered = filter_companies(companies, company_names=["rwe ag"])
+    assert [company.slug for company in company_filtered] == ["rwe-2024", "rwe-2023"]
+
+    combined_filtered = filter_companies(
+        companies,
+        slugs=["rwe-2024", "basf-2024"],
+        company_names=["RWE AG"],
+    )
+    assert [company.slug for company in combined_filtered] == ["rwe-2024"]
+
+    only_filtered = filter_companies(
+        companies,
+        only_filters=["rwe-2024", "BASF SE"],
+    )
+    assert [company.slug for company in only_filtered] == ["rwe-2024", "basf-2024"]
+
+    comma_only_filtered = filter_companies(
+        companies,
+        only_filters=["rwe-2024, BASF SE"],
+    )
+    assert [company.slug for company in comma_only_filtered] == ["rwe-2024", "basf-2024"]
+
+
 def test_main_dry_run_does_not_call_network(monkeypatch: pytest.MonkeyPatch) -> None:
     company = SeedCompany(
         slug="demo-2024",
@@ -77,6 +135,88 @@ def test_main_dry_run_does_not_call_network(monkeypatch: pytest.MonkeyPatch) -> 
 
     exit_code = main(["--dry-run"])
     assert exit_code == 0
+
+
+def test_main_rejects_empty_filtered_selection(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+    monkeypatch.setattr(
+        "scripts.seed_german_demo.load_manifest",
+        lambda: [
+            SeedCompany(
+                slug="demo-2024",
+                company_name="Demo AG",
+                report_year=2024,
+                industry_code="D35.11",
+                industry_sector="Electricity production",
+                source_url="https://example.com/demo.pdf",
+                verify=False,
+            )
+        ],
+    )
+
+    exit_code = main(["--dry-run", "--slug", "missing-slug"])
+    captured = capsys.readouterr()
+
+    assert exit_code == 2
+    assert "no manifest entries matched" in captured.out
+
+
+def test_main_only_filter_selects_slug_and_company_name(monkeypatch: pytest.MonkeyPatch) -> None:
+    companies = [
+        SeedCompany(
+            slug="rwe-2024",
+            company_name="RWE AG",
+            report_year=2024,
+            industry_code="D35.11",
+            industry_sector="Electricity production",
+            source_url="https://example.com/rwe-2024.pdf",
+            verify=False,
+        ),
+        SeedCompany(
+            slug="rwe-2023",
+            company_name="RWE AG",
+            report_year=2023,
+            industry_code="D35.11",
+            industry_sector="Electricity production",
+            source_url="https://example.com/rwe-2023.pdf",
+            verify=False,
+        ),
+        SeedCompany(
+            slug="basf-2024",
+            company_name="BASF SE",
+            report_year=2024,
+            industry_code="C20.14",
+            industry_sector="Organic basic chemicals",
+            source_url="https://example.com/basf-2024.pdf",
+            verify=False,
+        ),
+    ]
+    monkeypatch.setattr("scripts.seed_german_demo.load_manifest", lambda: companies)
+
+    selected_slugs: dict[str, list[str]] = {}
+
+    def _fake_phase_a(_api_base, phase_companies, *, dry_run, timeout):
+        assert dry_run is True
+        assert timeout > 0
+        selected_slugs["value"] = [company.slug for company in phase_companies]
+        return {"succeeded": [], "failed": [], "skipped": [], "total": len(phase_companies)}
+
+    monkeypatch.setattr("scripts.seed_german_demo.phase_a", _fake_phase_a)
+
+    exit_code = main(["--dry-run", "--only", "rwe-2024", "--only", "BASF SE"])
+    assert exit_code == 0
+    assert selected_slugs["value"] == ["rwe-2024", "basf-2024"]
+
+
+def test_main_rejects_only_with_legacy_filters(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr("scripts.seed_german_demo.load_manifest", lambda: [])
+
+    exit_code = main(["--dry-run", "--only", "rwe-2024", "--slug", "rwe-2024"])
+    captured = capsys.readouterr()
+
+    assert exit_code == 2
+    assert "--only cannot be combined" in captured.out
 
 
 def test_script_entrypoint_runs_without_manual_pythonpath() -> None:
@@ -214,3 +354,78 @@ def test_phase_b_uses_shared_client_and_validation_model(monkeypatch: pytest.Mon
     assert get_client_calls["count"] == 1
     assert len(captured_calls) == 1
     assert captured_calls[0]["model"] == "relay-validation-model"
+
+
+def test_phase_b_drops_no_concern_entries(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+    monkeypatch.setattr("scripts.seed_german_demo.ANOMALIES_REPORT_PATH", tmp_path / "anomalies_report.md")
+
+    company = SeedCompany(
+        slug="demo-2024",
+        company_name="Demo AG",
+        report_year=2024,
+        industry_code="D35.11",
+        industry_sector="Electricity production",
+        source_url="https://example.com/demo.pdf",
+        verify=False,
+    )
+
+    class _ProfileResponse:
+        status_code = 200
+
+        @staticmethod
+        def json() -> dict:
+            return {
+                "latest_metrics": {"scope1_co2e_tonnes": 123.4},
+                "evidence_summary": [{"metric": "scope1_co2e_tonnes", "snippet": "123.4 tCO2e"}],
+            }
+
+    class _HttpClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb) -> None:
+            return None
+
+        def get(self, url: str):
+            return _ProfileResponse()
+
+    class _ChatCompletions:
+        @staticmethod
+        def create(**kwargs):
+            class _Message:
+                content = json.dumps(
+                    {
+                        "company": "Demo AG",
+                        "concerns": [
+                            {
+                                "metric": "scope1_co2e_tonnes",
+                                "value": 123.4,
+                                "reason": "Evidence shows this is plausible. No concern.",
+                            }
+                        ],
+                    }
+                )
+
+            class _Choice:
+                message = _Message()
+
+            class _Completion:
+                choices = [_Choice()]
+
+            return _Completion()
+
+    class _FakeClient:
+        class chat:
+            completions = _ChatCompletions()
+
+    monkeypatch.setattr("scripts.seed_german_demo.httpx.Client", _HttpClient)
+    monkeypatch.setattr("scripts.seed_german_demo.get_client", lambda: _FakeClient())
+
+    phase_b("http://relay.test", [company])
+
+    report = (tmp_path / "anomalies_report.md").read_text(encoding="utf-8")
+    assert "_No anomalies flagged." in report

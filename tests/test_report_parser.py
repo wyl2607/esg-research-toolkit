@@ -17,6 +17,7 @@ from esg_frameworks.api import _SCORERS
 from esg_frameworks.schemas import DimensionScore, FrameworkScoreResult
 from esg_frameworks.storage import list_framework_results, save_framework_result
 from report_parser.api import (
+    _upload_evidence_summary,
     list_company_reports,
     get_company_history,
     get_company_profile,
@@ -226,6 +227,39 @@ def test_save_and_get_report(
     assert loaded.pdf_filename == "example-report.pdf"
     assert loaded.scope1_co2e_tonnes == pytest.approx(123.4)
     assert loaded.primary_activities == json.dumps(["solar_pv"])
+
+
+def test_upload_evidence_summary_prefers_analyzer_evidence(make_company_data: Callable[..., CompanyESGData]) -> None:
+    data = make_company_data(
+        evidence_summary=[
+            {
+                "metric": "scope1_co2e_tonnes",
+                "source": "sample.pdf",
+                "page": 12,
+                "snippet": "Scope 1 emissions were 123.4 tonnes.",
+            }
+        ]
+    )
+
+    summary = _upload_evidence_summary(data, file_hash="abc123")
+
+    assert summary == data.evidence_summary
+
+
+def test_upload_evidence_summary_falls_back_to_non_null_metrics(make_company_data: Callable[..., CompanyESGData]) -> None:
+    data = make_company_data(
+        scope3_co2e_tonnes=None,
+        water_usage_m3=None,
+        evidence_summary=[],
+    )
+
+    summary = _upload_evidence_summary(data, file_hash="abc123")
+
+    assert {"metric": "scope1_co2e_tonnes", "source_type": "pdf", "file_hash": "abc123"} in summary
+    assert {"metric": "scope2_co2e_tonnes", "source_type": "pdf", "file_hash": "abc123"} in summary
+    assert {"metric": "renewable_energy_pct", "source_type": "pdf", "file_hash": "abc123"} in summary
+    assert all(item["metric"] != "scope3_co2e_tonnes" for item in summary)
+    assert all(item["metric"] != "water_usage_m3" for item in summary)
 
 
 def test_save_framework_result_allows_new_row_when_framework_version_changes(db_session: Session) -> None:
@@ -1167,6 +1201,64 @@ def test_company_history_and_profile_include_period_and_framework_results(
     assert profile["data_quality_summary"]["present_metrics_count"] == 6
     assert profile["data_quality_summary"]["completion_percentage"] == pytest.approx(54.5)
     assert profile["data_quality_summary"]["readiness_label"] == "usable"
+
+
+def test_company_history_three_year_trend_ordering_and_yoy(
+    db_session: Session,
+    make_company_data,
+) -> None:
+    """Regression: ensure 3-year trend preserves chronological ordering and YoY deltas.
+
+    This protects the multi-year demo story (BASF, RWE AG, Deutsche Telekom)
+    where seeded 2022/2023/2024 data must render as an ascending 3-point line.
+    """
+    for year, renewable, scope1 in [
+        (2022, 16.0, 16_456_000.0),
+        (2023, 20.0, 15_562_000.0),
+        (2024, 26.0, 15_552_000.0),
+    ]:
+        save_report(
+            db_session,
+            make_company_data(
+                company_name="Trajectory AG",
+                report_year=year,
+                renewable_energy_pct=renewable,
+                scope1_co2e_tonnes=scope1,
+            ),
+            pdf_filename=f"trajectory-{year}.pdf",
+            reporting_period_label=f"FY{year}",
+            reporting_period_type="annual",
+            source_document_type="sustainability_report",
+        )
+
+    history = get_company_history(company_name="Trajectory AG", db=db_session)
+
+    assert history["company_name"] == "Trajectory AG"
+    assert len(history["periods"]) == 3
+    assert len(history["trend"]) == 3
+
+    # Trend must be chronologically ordered (critical for YoY delta cards)
+    years = [point["year"] for point in history["trend"]]
+    assert years == [2022, 2023, 2024], "trend must be in ascending year order"
+
+    # Each trend point carries normalised metric keys
+    for point in history["trend"]:
+        assert "renewable_pct" in point
+        assert "scope1" in point
+
+    # Values preserved through storage→aggregation
+    assert history["trend"][0]["renewable_pct"] == pytest.approx(16.0)
+    assert history["trend"][2]["renewable_pct"] == pytest.approx(26.0)
+    assert history["trend"][0]["scope1"] == pytest.approx(16_456_000.0)
+    assert history["trend"][2]["scope1"] == pytest.approx(15_552_000.0)
+
+    # Profile exposes multi-year trend so the frontend can render YoY deltas
+    profile = get_company_profile(company_name="Trajectory AG", db=db_session)
+    assert profile["latest_year"] == 2024
+    assert profile["years_available"] == [2022, 2023, 2024]
+    assert len(profile["trend"]) == 3
+    assert profile["trend"][-1]["year"] == 2024
+    assert profile["trend"][-2]["year"] == 2023
 
 
 @pytest.mark.parametrize(

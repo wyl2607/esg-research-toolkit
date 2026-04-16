@@ -197,6 +197,43 @@ def _manual_evidence_summary(
     return evidence
 
 
+def _upload_evidence_summary(
+    data: CompanyESGData,
+    *,
+    file_hash: str,
+) -> list[dict[str, str | int | float | None]]:
+    if data.evidence_summary:
+        return data.evidence_summary
+
+    fallback_metrics = [
+        "scope1_co2e_tonnes",
+        "scope2_co2e_tonnes",
+        "scope3_co2e_tonnes",
+        "energy_consumption_mwh",
+        "renewable_energy_pct",
+        "water_usage_m3",
+        "waste_recycled_pct",
+        "total_revenue_eur",
+        "taxonomy_aligned_revenue_pct",
+        "total_capex_eur",
+        "taxonomy_aligned_capex_pct",
+        "total_employees",
+        "female_pct",
+    ]
+    evidence: list[dict[str, str | int | float | None]] = []
+    for metric in fallback_metrics:
+        if getattr(data, metric, None) is None:
+            continue
+        evidence.append(
+            {
+                "metric": metric,
+                "source_type": "pdf",
+                "file_hash": file_hash,
+            }
+        )
+    return evidence
+
+
 def _framework_metadata_item(row) -> dict[str, str | int | None]:
     return {
         "analysis_result_id": row.id,
@@ -507,11 +544,7 @@ if _MULTIPART_AVAILABLE:
             reporting_period_label=str(esg_data.report_year),
             reporting_period_type="annual",
             source_document_type="sustainability_report",
-            evidence_summary=[
-                {"metric": "scope1_co2e_tonnes", "source_type": "pdf", "file_hash": file_hash},
-                {"metric": "scope2_co2e_tonnes", "source_type": "pdf", "file_hash": file_hash},
-                {"metric": "renewable_energy_pct", "source_type": "pdf", "file_hash": file_hash},
-            ],
+            evidence_summary=_upload_evidence_summary(esg_data, file_hash=file_hash),
         )
         return esg_data
 

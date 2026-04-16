@@ -8,7 +8,7 @@
 >
 > **总耗时**：第一次约 1–2 小时（取决于还剩多少 URL 需要人工校验和补 PDF）。重跑通常 15–30 分钟。
 >
-> **模型说明**：抽取模型跟随后端当前 `OPENAI_MODEL` 配置；只有 `--validate` / `--validate-only` 的 Phase B 校验仍固定使用 `gpt-4o-mini`。
+> **模型说明**：抽取模型跟随后端当前 `OPENAI_MODEL` 配置；`--validate` / `--validate-only` 的 Phase B 校验使用 `OPENAI_VALIDATION_MODEL`（默认 `gpt-5.4-mini`）。
 
 ---
 
@@ -128,6 +128,12 @@ cd /Users/yumei/projects/esg-research-toolkit
 - 末尾 `Phase A summary: {"succeeded": [...], "failed": [], ...}`
 
 **如果这里报错（manifest 解析失败、import 失败），停下修。** 真跑的时候会更脆弱。
+
+如需先做低成本小样本验证，可只跑部分条目（按 `slug` 或 `company_name` 精确匹配）：
+
+```bash
+.venv/bin/python scripts/seed_german_demo.py --dry-run --only rwe-2024 --only "BASF SE"
+```
 
 ### 3.2 真跑 Phase A + Phase B
 
