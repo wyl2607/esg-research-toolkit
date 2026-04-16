@@ -92,15 +92,29 @@ function companyToCSVRow(c: CompanyESGData): Record<string, unknown> {
 export function exportCompaniesCSV(companies: CompanyESGData[], filename?: string): void {
   const rows = companies.map(companyToCSVRow)
   const csv = buildCSV(COMPANY_CSV_HEADERS, rows)
-  const name = filename ?? `esg-companies-${new Date().toISOString().slice(0, 10)}.csv`
+  const defaultName = `esg-companies-${new Date().toISOString().slice(0, 10)}.csv`
+  const name = filename ?? defaultName
   triggerDownload(csv, name, 'text/csv;charset=utf-8;')
 }
 
 /**
  * Export a single company profile (latest metrics + historical trend) as CSV.
  * Generates two sections: a header section with latest metrics, then the trend table.
+ * Now includes metadata section with export date and data version.
  */
 export function exportCompanyProfileCSV(profile: CompanyProfile, filename?: string): void {
+  // Section 0: Metadata
+  const exportDate = new Date().toISOString().slice(0, 19)
+  const metadataCSV = buildCSV(
+    ['Metadata', 'Value'],
+    [
+      { Metadata: 'Company', Value: profile.company_name },
+      { Metadata: 'Latest Year', Value: profile.latest_year },
+      { Metadata: 'Export Date', Value: exportDate },
+      { Metadata: 'Data Years', Value: profile.years_available.join(', ') },
+    ]
+  )
+
   // Section 1: latest metrics as a single flat row
   const latestRows = [companyToCSVRow(profile.latest_metrics)]
   const metricsCSV = buildCSV(COMPANY_CSV_HEADERS, latestRows)
@@ -128,8 +142,9 @@ export function exportCompanyProfileCSV(profile: CompanyProfile, filename?: stri
   }))
   const trendCSV = trendRows.length > 0 ? `\n\nHistorical Trend\n${buildCSV(TREND_HEADERS, trendRows)}` : ''
 
-  const name = filename ?? `${profile.company_name.replace(/[^a-z0-9]/gi, '_')}_esg_${profile.latest_year}.csv`
-  triggerDownload(`${metricsCSV}${trendCSV}`, name, 'text/csv;charset=utf-8;')
+  const defaultName = `${profile.company_name.replace(/[^a-z0-9]/gi, '_')}_esg_${profile.latest_year}_${new Date().toISOString().slice(0, 10)}.csv`
+  const name = filename ?? defaultName
+  triggerDownload(`${metadataCSV}\n\nLatest Metrics (${profile.latest_year})\n${metricsCSV}${trendCSV}`, name, 'text/csv;charset=utf-8;')
 }
 
 /**
