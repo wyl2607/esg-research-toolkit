@@ -1,7 +1,9 @@
-
 import pytest
+from fastapi.testclient import TestClient
+from pydantic import ValidationError
 
 from core.schemas import LCOEInput
+from main import app
 from techno_economics.lcoe import calculate_lcoe
 from techno_economics.npv_irr import calculate_irr, calculate_npv, calculate_payback
 from techno_economics.sensitivity import run_sensitivity
@@ -102,7 +104,28 @@ def test_sensitivity_analysis() -> None:
 
 
 def test_zero_capacity_factor() -> None:
-    inp = make_lcoe_input(capacity_factor=0.0)
+    with pytest.raises(ValidationError):
+        make_lcoe_input(capacity_factor=0.0)
 
-    with pytest.raises(ZeroDivisionError):
-        calculate_lcoe(inp)
+
+def test_sensitivity_endpoint_returns_openapi_aligned_fields() -> None:
+    with TestClient(app) as client:
+        response = client.post("/techno/sensitivity", json=make_lcoe_input().model_dump())
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload[0]["parameter"] == "capex_eur_per_kw"
+    assert payload[0]["values"][2] == pytest.approx(0.0, abs=1e-12)
+    assert "lcoe_results" in payload[0]
+    assert "lcoe_values" not in payload[0]
+
+
+def test_benchmark_presets_return_full_lcoe_inputs() -> None:
+    with TestClient(app) as client:
+        response = client.get("/techno/benchmarks")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["solar_pv"]["technology"] == "solar_pv"
+    assert payload["solar_pv"]["capacity_mw"] == pytest.approx(100.0)
+    assert payload["wind_onshore"]["capacity_factor"] == pytest.approx(0.35)

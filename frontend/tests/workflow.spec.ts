@@ -77,9 +77,10 @@ test.describe('seeded analyst workflow', () => {
         'sustainability fact sheet'
       )
       await expect(page.getByTestId('profile-provenance-merge-summary')).toContainText(/\b2\b/)
-      await expect(page.locator('main')).toContainText(
-        'Renewable electricity share reached 49.1% in FY 2025.'
-      )
+      await page.getByTestId('evidence-badge-renewable_energy_pct').click()
+      await expect(
+        page.getByTestId('evidence-badge-renewable_energy_pct-popover')
+      ).toBeVisible()
       await page.waitForLoadState('networkidle')
 
       await expectNoTrackedBrowserIssues(testInfo, 'seeded-company-profile', issues)

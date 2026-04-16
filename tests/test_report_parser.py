@@ -255,9 +255,26 @@ def test_upload_evidence_summary_falls_back_to_non_null_metrics(make_company_dat
 
     summary = _upload_evidence_summary(data, file_hash="abc123")
 
-    assert {"metric": "scope1_co2e_tonnes", "source_type": "pdf", "file_hash": "abc123"} in summary
-    assert {"metric": "scope2_co2e_tonnes", "source_type": "pdf", "file_hash": "abc123"} in summary
-    assert {"metric": "renewable_energy_pct", "source_type": "pdf", "file_hash": "abc123"} in summary
+    assert any(
+        item["metric"] == "scope1_co2e_tonnes"
+        and item["source_type"] == "pdf"
+        and item["file_hash"] == "abc123"
+        and item["source_doc_id"] == "abc123"
+        and item["extraction_method"] == "pdf_text"
+        for item in summary
+    )
+    assert any(
+        item["metric"] == "scope2_co2e_tonnes"
+        and item["source_type"] == "pdf"
+        and item["file_hash"] == "abc123"
+        for item in summary
+    )
+    assert any(
+        item["metric"] == "renewable_energy_pct"
+        and item["source_type"] == "pdf"
+        and item["file_hash"] == "abc123"
+        for item in summary
+    )
     assert all(item["metric"] != "scope3_co2e_tonnes" for item in summary)
     assert all(item["metric"] != "water_usage_m3" for item in summary)
 
@@ -1194,9 +1211,15 @@ def test_company_history_and_profile_include_period_and_framework_results(
     assert profile["framework_results"][0]["framework_id"] == "eu_taxonomy"
     assert len(profile["framework_scores"]) == len(_SCORERS)
     assert {item["framework_id"] for item in profile["framework_scores"]} == set(_SCORERS.keys())
-    assert profile["evidence_summary"][0]["metric"] == "renewable_energy_pct"
-    assert profile["evidence_summary"][0]["page"] == 12
-    assert profile["evidence_anchors"][0]["page"] == 12
+    renewable_summary = next(
+        item for item in profile["evidence_summary"] if item["metric"] == "renewable_energy_pct"
+    )
+    renewable_anchor = next(
+        item for item in profile["evidence_anchors"] if item["metric"] == "renewable_energy_pct"
+    )
+    assert renewable_summary["page"] == 12
+    assert renewable_anchor["page"] == 12
+    assert profile["scored_metrics"]["renewable_energy_pct"]["evidence"]["page"] == 12
     assert profile["data_quality_summary"]["total_key_metrics_count"] == 11
     assert profile["data_quality_summary"]["present_metrics_count"] == 6
     assert profile["data_quality_summary"]["completion_percentage"] == pytest.approx(54.5)
@@ -1376,8 +1399,9 @@ def test_evidence_anchors_stay_stable_for_empty_and_legacy_records(
     assert history["framework_metadata"] == []
 
     profile = get_company_profile(company_name="Legacy Corp", db=db_session)
-    assert profile["evidence_summary"] == []
-    assert profile["evidence_anchors"] == []
+    assert profile["evidence_summary"]
+    assert profile["evidence_anchors"]
+    assert profile["scored_metrics"]["renewable_energy_pct"]["evidence"] is not None
     assert profile["latest_period"]["framework_metadata"] == []
     assert profile["framework_metadata"] == []
     assert len(profile["framework_scores"]) == len(_SCORERS)

@@ -8,17 +8,21 @@ from pathlib import Path
 from typing import Any
 
 import openpyxl
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, Response, UploadFile
 from fastapi.responses import StreamingResponse
 from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session
 
 from core.database import get_db
+from core.evidence import Evidence, infer_extraction_method, normalize_raw_evidence
 from core.limiter import limiter
+from core.normalization.period import normalize_reporting_period
 from core.schemas import (
     AuditTrailRow,
     BatchStatusResponse,
     CompanyESGData,
+    CompanyProfileMetric,
+    CompanyProfileV1Response,
     ManualReportInput,
     MergePreviewRequest,
     MergePreviewResponse,
@@ -28,8 +32,8 @@ from report_parser.merge_engine import build_merge_preview
 from report_parser.merge_engine import build_merged_result
 from report_parser.analyzer import AIExtractionError, analyze_esg_data
 from report_parser.batch_jobs import batch_manager
-from report_parser.extractor import extract_text_from_pdf
 from report_parser.company_identity import canonical_company_name
+from report_parser.extractor import extract_text_from_pdf
 from report_parser.storage import (
     CompanyReport,
     get_report,
@@ -40,8 +44,10 @@ from report_parser.storage import (
     request_deletion,
     save_report,
 )
+from taxonomy_scorer.scorer import get_metric_framework_mappings
 
 router = APIRouter(prefix="/report", tags=["report_parser"])
+v1_router = APIRouter(prefix="/api/v1", tags=["report_parser_v1"])
 _MULTIPART_AVAILABLE = any(
     importlib.util.find_spec(module_name) is not None
     for module_name in ("python_multipart", "multipart")
@@ -51,6 +57,36 @@ _MULTIPART_AVAILABLE = any(
 MAX_PDF_BYTES = 50 * 1024 * 1024          # 50 MB hard cap
 MIN_PDF_BYTES = 1024                       # < 1 KB cannot be a real PDF
 PDF_MAGIC_BYTES = b"%PDF-"
+
+_PROFILE_METRICS = [
+    "scope1_co2e_tonnes",
+    "scope2_co2e_tonnes",
+    "scope3_co2e_tonnes",
+    "energy_consumption_mwh",
+    "renewable_energy_pct",
+    "water_usage_m3",
+    "waste_recycled_pct",
+    "taxonomy_aligned_revenue_pct",
+    "taxonomy_aligned_capex_pct",
+    "total_employees",
+    "female_pct",
+    "primary_activities",
+]
+
+_PROFILE_METRIC_UNITS = {
+    "scope1_co2e_tonnes": "tCO2e",
+    "scope2_co2e_tonnes": "tCO2e",
+    "scope3_co2e_tonnes": "tCO2e",
+    "energy_consumption_mwh": "MWh",
+    "renewable_energy_pct": "percent",
+    "water_usage_m3": "m3",
+    "waste_recycled_pct": "percent",
+    "taxonomy_aligned_revenue_pct": "percent",
+    "taxonomy_aligned_capex_pct": "percent",
+    "total_employees": "count",
+    "female_pct": "percent",
+    "primary_activities": "activity_ids",
+}
 
 
 def _validate_pdf_bytes(filename: str | None, content: bytes) -> None:
@@ -72,21 +108,21 @@ def _validate_pdf_bytes(filename: str | None, content: bytes) -> None:
         raise HTTPException(415, "File does not look like a PDF (missing %PDF- magic bytes)")
 
 
-def _parse_evidence_summary(raw_value: str | None) -> list[dict[str, str | int | float | None]]:
+def _parse_evidence_summary(raw_value: str | None) -> list[dict[str, Any]]:
     if not raw_value:
         return []
     try:
         parsed = json.loads(raw_value)
     except json.JSONDecodeError:
         return []
-    return parsed if isinstance(parsed, list) else []
+    return [item for item in parsed if isinstance(item, dict)] if isinstance(parsed, list) else []
 
 
 def _normalize_evidence_anchor(
     entry: dict,
     *,
     fallback_source_url: str | None = None,
-) -> dict[str, str | int | float | None]:
+) -> dict[str, Any]:
     source = entry.get("source")
     if not isinstance(source, str) or not source:
         for key in ("source_url", "source_type", "file_hash"):
@@ -109,24 +145,36 @@ def _normalize_evidence_anchor(
                 snippet = value
                 break
 
-    normalized: dict[str, str | int | float | None] = {
+    source_type = entry.get("source_type") if isinstance(entry.get("source_type"), str) else None
+    structured_evidence = normalize_raw_evidence(
+        entry,
+        fallback_source_doc_id=(
+            entry.get("file_hash")
+            if isinstance(entry.get("file_hash"), str) and entry.get("file_hash")
+            else source if isinstance(source, str) and source else fallback_source_url
+        ),
+        fallback_source_type=source_type,
+        fallback_snippet=snippet if isinstance(snippet, str) else None,
+    )
+
+    normalized: dict[str, Any] = {
         "metric": entry.get("metric") if isinstance(entry.get("metric"), str) else None,
         "source": source if isinstance(source, str) else None,
         "page": page if isinstance(page, (str, int, float)) else None,
         "snippet": snippet if isinstance(snippet, str) else None,
-        "source_type": entry.get("source_type") if isinstance(entry.get("source_type"), str) else None,
+        "source_type": source_type,
         "source_url": entry.get("source_url") if isinstance(entry.get("source_url"), str) else None,
         "file_hash": entry.get("file_hash") if isinstance(entry.get("file_hash"), str) else None,
     }
+    if structured_evidence is not None:
+        normalized.update(structured_evidence.model_dump(mode="json"))
     return normalized
 
 
-def _evidence_anchors_for_record(record) -> list[dict[str, str | int | float | None]]:
+def _evidence_anchors_for_record(record) -> list[dict[str, Any]]:
     raw_items = _parse_evidence_summary(record.evidence_summary)
-    anchors: list[dict[str, str | int | float | None]] = []
+    anchors: list[dict[str, Any]] = []
     for item in raw_items:
-        if not isinstance(item, dict):
-            continue
         anchors.append(_normalize_evidence_anchor(item, fallback_source_url=record.source_url))
     return anchors
 
@@ -141,12 +189,30 @@ def _period_metadata(record) -> dict[str, str | int | None]:
     label = record.reporting_period_label or str(report_year)
     period_type = record.reporting_period_type or "annual"
     source_document_type = record.source_document_type or "sustainability_report"
+    normalized_period = normalize_reporting_period(
+        fiscal_year=report_year,
+        reporting_period_label=label,
+        reporting_period_type=period_type,
+        source_document_type=source_document_type,
+    )
     return {
         "period_id": f"{record.company_name}:{report_year}:{period_type}:{label}",
         "label": label,
         "type": period_type,
         "source_document_type": source_document_type,
         "legacy_report_year": report_year,
+        "fiscal_year": normalized_period.fiscal_year,
+        "reporting_standard": normalized_period.reporting_standard,
+        "period_start": (
+            normalized_period.period_start.isoformat()
+            if normalized_period.period_start
+            else None
+        ),
+        "period_end": (
+            normalized_period.period_end.isoformat()
+            if normalized_period.period_end
+            else None
+        ),
     }
 
 
@@ -154,7 +220,7 @@ def _manual_evidence_summary(
     data: CompanyESGData,
     *,
     source_url: str | None = None,
-) -> list[dict[str, str | int | float | None]]:
+) -> list[dict[str, Any]]:
     metric_keys = [
         "scope1_co2e_tonnes",
         "scope2_co2e_tonnes",
@@ -169,7 +235,7 @@ def _manual_evidence_summary(
         "female_pct",
     ]
     source = source_url or f"manual://{data.company_name}/{data.report_year}"
-    evidence: list[dict[str, str | int | float | None]] = []
+    evidence: list[dict[str, Any]] = []
     for metric in metric_keys:
         if getattr(data, metric, None) is None:
             continue
@@ -177,7 +243,12 @@ def _manual_evidence_summary(
             {
                 "metric": metric,
                 "source": source,
+                "source_doc_id": source,
+                "page": None,
+                "char_range": None,
                 "snippet": "Saved via manual case builder",
+                "extraction_method": "manual",
+                "confidence": 1.0,
                 "source_type": "manual_entry",
                 "source_url": source_url,
             }
@@ -188,7 +259,12 @@ def _manual_evidence_summary(
             {
                 "metric": "primary_activities",
                 "source": source,
+                "source_doc_id": source,
+                "page": None,
+                "char_range": None,
                 "snippet": ", ".join(data.primary_activities),
+                "extraction_method": "manual",
+                "confidence": 1.0,
                 "source_type": "manual_entry",
                 "source_url": source_url,
             }
@@ -201,7 +277,7 @@ def _upload_evidence_summary(
     data: CompanyESGData,
     *,
     file_hash: str,
-) -> list[dict[str, str | int | float | None]]:
+) -> list[dict[str, Any]]:
     if data.evidence_summary:
         return data.evidence_summary
 
@@ -220,13 +296,19 @@ def _upload_evidence_summary(
         "total_employees",
         "female_pct",
     ]
-    evidence: list[dict[str, str | int | float | None]] = []
+    evidence: list[dict[str, Any]] = []
     for metric in fallback_metrics:
         if getattr(data, metric, None) is None:
             continue
         evidence.append(
             {
                 "metric": metric,
+                "source_doc_id": file_hash,
+                "page": None,
+                "char_range": None,
+                "snippet": "Extracted from uploaded PDF.",
+                "extraction_method": "pdf_text",
+                "confidence": 0.65,
                 "source_type": "pdf",
                 "file_hash": file_hash,
             }
@@ -243,6 +325,85 @@ def _framework_metadata_item(row) -> dict[str, str | int | None]:
         "report_year": row.report_year,
         "stored_at": row.created_at.isoformat() if row.created_at else None,
     }
+
+
+def _source_doc_id(record) -> str:
+    if getattr(record, "file_hash", None):
+        return record.file_hash
+    if getattr(record, "source_url", None):
+        return record.source_url
+    record_id = getattr(record, "id", None)
+    if record_id is not None:
+        return f"db:{record_id}"
+    if getattr(record, "source_id", None):
+        return record.source_id
+    return f"{record.company_name}:{record.report_year}:{record.source_document_type or 'unknown'}"
+
+
+def _metric_snippet(metric: str, value: str | int | float | list[str] | None) -> str:
+    if isinstance(value, list):
+        rendered_value = ", ".join(str(item) for item in value)
+    else:
+        rendered_value = "undisclosed" if value is None else str(value)
+    return f"{metric} reported as {rendered_value}"
+
+
+def _metric_anchor_from_record(
+    record,
+    metric: str,
+    value: str | int | float | list[str] | None,
+) -> dict[str, Any]:
+    anchors = _evidence_anchors_for_record(record)
+    metric_anchor = next(
+        (
+            anchor
+            for anchor in anchors
+            if anchor.get("metric") == metric
+        ),
+        None,
+    )
+    if metric_anchor is not None:
+        return metric_anchor
+
+    fallback_method = infer_extraction_method(
+        None,
+        fallback_source_type=getattr(record, "source_document_type", None),
+        fallback_source_doc_id=_source_doc_id(record),
+    )
+    evidence = Evidence(
+        source_doc_id=_source_doc_id(record),
+        page=None,
+        char_range=None,
+        snippet=_metric_snippet(metric, value),
+        extraction_method=fallback_method,
+        confidence=1.0 if fallback_method == "manual" else 0.55,
+    )
+    return {
+        "metric": metric,
+        "source": getattr(record, "source_url", None) or evidence.source_doc_id,
+        "source_type": "manual_entry" if fallback_method == "manual" else "pdf",
+        "source_url": getattr(record, "source_url", None),
+        "file_hash": getattr(record, "file_hash", None),
+        **evidence.model_dump(mode="json"),
+    }
+
+
+def _structured_metric_evidence(
+    anchor: dict[str, Any] | None,
+    *,
+    record,
+    metric: str,
+    value: str | int | float | list[str] | None,
+) -> Evidence | None:
+    if value in (None, []):
+        return None
+    candidate_anchor = anchor or _metric_anchor_from_record(record, metric, value)
+    return normalize_raw_evidence(
+        candidate_anchor,
+        fallback_source_doc_id=_source_doc_id(record),
+        fallback_source_type=getattr(record, "source_document_type", None),
+        fallback_snippet=_metric_snippet(metric, value),
+    )
 
 
 def _record_to_merge_source_input(
@@ -649,6 +810,81 @@ def _record_to_company_data(record) -> CompanyESGData:
     )
 
 
+def _build_scored_metrics(
+    *,
+    latest,
+    latest_merged_result,
+    latest_source_records: list[CompanyReport],
+    latest_period: dict[str, Any],
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    source_records_by_id = {f"db:{record.id}": record for record in latest_source_records}
+    scored_metrics: dict[str, Any] = {}
+    evidence_anchors: list[dict[str, Any]] = []
+    seen_evidence_keys: set[tuple[Any, ...]] = set()
+
+    for metric in _PROFILE_METRICS:
+        merged_metric = latest_merged_result.metrics.get(metric)
+        value = (
+            merged_metric.chosen_value
+            if merged_metric
+            else getattr(latest_merged_result.merged_metrics, metric, None)
+        )
+        chosen_record = source_records_by_id.get(merged_metric.chosen_source) if merged_metric else None
+        source_record = chosen_record or latest
+        anchor = _metric_anchor_from_record(source_record, metric, value)
+        structured_evidence = _structured_metric_evidence(
+            anchor,
+            record=source_record,
+            metric=metric,
+            value=value,
+        )
+
+        scored_metric = CompanyProfileMetric(
+            metric=metric,
+            value=value,
+            unit=_PROFILE_METRIC_UNITS.get(metric),
+            period=normalize_reporting_period(
+                fiscal_year=int(latest_period["fiscal_year"]),
+                reporting_period_label=str(latest_period["label"]),
+                reporting_period_type=str(latest_period["type"]),
+                source_document_type=(
+                    latest_period["reporting_standard"]
+                    if isinstance(latest_period["reporting_standard"], str)
+                    else None
+                ),
+            ),
+            source_document_type=(
+                merged_metric.chosen_source_document_type
+                if merged_metric
+                else getattr(source_record, "source_document_type", None)
+            ),
+            evidence=structured_evidence,
+            framework_mappings=get_metric_framework_mappings(metric),
+        )
+        scored_metrics[metric] = scored_metric.model_dump(mode="json")
+
+        if structured_evidence is not None:
+            anchor.setdefault("source_doc_id", structured_evidence.source_doc_id)
+            anchor.setdefault("page", structured_evidence.page)
+            anchor.setdefault("char_range", structured_evidence.char_range)
+            anchor.setdefault("snippet", structured_evidence.snippet)
+            anchor.setdefault("extraction_method", structured_evidence.extraction_method)
+            anchor.setdefault("confidence", structured_evidence.confidence)
+
+            evidence_key = (
+                metric,
+                anchor.get("source_doc_id"),
+                anchor.get("page"),
+                tuple(anchor.get("char_range")) if isinstance(anchor.get("char_range"), list) else anchor.get("char_range"),
+                anchor.get("snippet"),
+            )
+            if evidence_key not in seen_evidence_keys:
+                seen_evidence_keys.add(evidence_key)
+                evidence_anchors.append(anchor)
+
+    return scored_metrics, evidence_anchors
+
+
 @router.get("/companies/by-industry/{industry_code}")
 def list_companies_by_industry(
     industry_code: str,
@@ -828,7 +1064,6 @@ def get_company_history(
     }
 
 
-@router.get("/companies/{company_name}/profile")
 def get_company_profile(
     company_name: str,
     db: Session = Depends(get_db),
@@ -857,20 +1092,25 @@ def get_company_profile(
         resolved_name,
         latest.report_year,
     )
-    latest_merged_result = build_merged_result(
-        [
-            _record_to_merge_source_input(
-                item,
-                canonical_company_name_value=resolved_name,
-            )
-            for item in latest_source_records
-        ]
-    )
+    latest_merge_documents = [
+        _record_to_merge_source_input(
+            item,
+            canonical_company_name_value=resolved_name,
+        )
+        for item in latest_source_records
+    ]
+    latest_merged_result = build_merged_result(latest_merge_documents)
     history = get_company_history(company_name=resolved_name, db=db)
     latest_data = _record_to_company_data(latest)
-    latest_evidence_anchors = _evidence_anchors_for_record(latest)
     latest_period = _period_metadata(latest)
     data_quality_summary = _data_quality_summary(latest_data)
+    scored_metrics, scored_metric_evidence = _build_scored_metrics(
+        latest=latest,
+        latest_merged_result=latest_merged_result,
+        latest_source_records=latest_source_records,
+        latest_period=latest_period,
+    )
+    latest_evidence_anchors = scored_metric_evidence or _evidence_anchors_for_record(latest)
     profile_evidence_summary = latest_data.evidence_summary or latest_evidence_anchors
 
     framework_rows = list_framework_results(
@@ -912,13 +1152,13 @@ def get_company_profile(
         ),
     )
 
-    return {
-        "company_name": resolved_name,
-        "industry_code": latest_data.industry_code,
-        "industry_sector": latest_data.industry_sector,
-        "years_available": years_available,
-        "latest_year": latest.report_year,
-        "latest_period": {
+    response_model = CompanyProfileV1Response(
+        company_name=resolved_name,
+        industry_code=latest_data.industry_code,
+        industry_sector=latest_data.industry_sector,
+        years_available=years_available,
+        latest_year=latest.report_year,
+        latest_period={
             "report_year": latest.report_year,
             "reporting_period_label": latest_period["label"],
             "reporting_period_type": latest_period["type"],
@@ -928,20 +1168,45 @@ def get_company_profile(
             "period": latest_period,
             "framework_metadata": latest_framework_metadata,
         },
-        "latest_metrics": latest_data.model_dump(),
-        "trend": history["trend"],
-        "periods": history["periods"],
-        "framework_metadata": history["framework_metadata"],
-        "framework_scores": framework_scores,
-        "framework_results": framework_results,
-        "evidence_summary": profile_evidence_summary,
-        "evidence_anchors": latest_evidence_anchors,
-        "data_quality_summary": data_quality_summary,
-        "narrative_summary": narrative_summary,
-        "identity_provenance_summary": identity_provenance_summary,
-        "latest_sources": [_source_document_payload(item) for item in latest_source_records],
-        "latest_merged_result": latest_merged_result.model_dump(),
-    }
+        latest_metrics=latest_data,
+        scored_metrics=scored_metrics,
+        trend=history["trend"],
+        periods=history["periods"],
+        framework_metadata=history["framework_metadata"],
+        framework_scores=framework_scores,
+        framework_results=framework_results,
+        evidence_summary=profile_evidence_summary,
+        evidence_anchors=latest_evidence_anchors,
+        data_quality_summary=data_quality_summary,
+        narrative_summary=narrative_summary,
+        identity_provenance_summary=identity_provenance_summary,
+        latest_sources=[_source_document_payload(item) for item in latest_source_records],
+        latest_merged_result=latest_merged_result.model_dump(mode="json"),
+    )
+    return response_model.model_dump(mode="json")
+
+
+@v1_router.get("/companies/{company_name}/profile", response_model=CompanyProfileV1Response)
+def get_company_profile_v1(
+    company_name: str,
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    return get_company_profile(company_name=company_name, db=db)
+
+
+@router.get(
+    "/companies/{company_name}/profile",
+    response_model=CompanyProfileV1Response,
+    responses={200: {"headers": {"Deprecation": {"schema": {"type": "string"}}}}},
+)
+def get_company_profile_legacy(
+    company_name: str,
+    response: Response,
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    response.headers["Deprecation"] = "true"
+    response.headers["Link"] = f'</api/v1/companies/{company_name}/profile>; rel="successor-version"'
+    return get_company_profile(company_name=company_name, db=db)
 
 
 @router.get("/dashboard/stats")

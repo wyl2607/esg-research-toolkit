@@ -9,9 +9,19 @@ const apiProxy = {
   },
 }
 
+const reactIsAlias = path.resolve(
+  __dirname,
+  './node_modules/pretty-format/node_modules/react-is/index.js'
+)
+
 export default defineConfig({
   plugins: [react()],
-  resolve: { alias: { '@': path.resolve(__dirname, './src') } },
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+      'react-is': reactIsAlias,
+    },
+  },
   server: {
     proxy: apiProxy,
   },

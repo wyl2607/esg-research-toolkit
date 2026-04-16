@@ -1,5 +1,86 @@
-from core.schemas import CompanyESGData, TaxonomyScoreResult
+from core.schemas import CompanyESGData, FrameworkMetricMapping, TaxonomyScoreResult
 from taxonomy_scorer.framework import OBJECTIVES, get_activity
+
+
+_METRIC_FRAMEWORK_MAPPINGS: dict[str, list[FrameworkMetricMapping]] = {
+    "scope1_co2e_tonnes": [
+        FrameworkMetricMapping(framework_id="eu_taxonomy", framework_name="EU Taxonomy 2020", dimension="Climate"),
+        FrameworkMetricMapping(framework_id="csrd", framework_name="EU CSRD / ESRS", dimension="E1 Climate Change"),
+        FrameworkMetricMapping(framework_id="sec_climate", framework_name="SEC Climate Disclosure", dimension="GHG Emissions"),
+        FrameworkMetricMapping(framework_id="gri_universal", framework_name="GRI Universal Standards 2021", dimension="GRI 305 Emissions"),
+        FrameworkMetricMapping(framework_id="sasb_standards", framework_name="SASB Industry Standards", dimension="Environment"),
+        FrameworkMetricMapping(framework_id="csrc_2023", framework_name="中国证监会 CSRC 2023", dimension="环境"),
+    ],
+    "scope2_co2e_tonnes": [
+        FrameworkMetricMapping(framework_id="eu_taxonomy", framework_name="EU Taxonomy 2020", dimension="Climate"),
+        FrameworkMetricMapping(framework_id="csrd", framework_name="EU CSRD / ESRS", dimension="E1 Climate Change"),
+        FrameworkMetricMapping(framework_id="sec_climate", framework_name="SEC Climate Disclosure", dimension="GHG Emissions"),
+        FrameworkMetricMapping(framework_id="gri_universal", framework_name="GRI Universal Standards 2021", dimension="GRI 305 Emissions"),
+        FrameworkMetricMapping(framework_id="sasb_standards", framework_name="SASB Industry Standards", dimension="Environment"),
+        FrameworkMetricMapping(framework_id="csrc_2023", framework_name="中国证监会 CSRC 2023", dimension="环境"),
+    ],
+    "scope3_co2e_tonnes": [
+        FrameworkMetricMapping(framework_id="csrd", framework_name="EU CSRD / ESRS", dimension="E1 Climate Change"),
+        FrameworkMetricMapping(framework_id="sec_climate", framework_name="SEC Climate Disclosure", dimension="GHG Emissions"),
+        FrameworkMetricMapping(framework_id="gri_universal", framework_name="GRI Universal Standards 2021", dimension="GRI 305 Emissions"),
+        FrameworkMetricMapping(framework_id="csrc_2023", framework_name="中国证监会 CSRC 2023", dimension="环境"),
+    ],
+    "energy_consumption_mwh": [
+        FrameworkMetricMapping(framework_id="eu_taxonomy", framework_name="EU Taxonomy 2020", dimension="Climate"),
+        FrameworkMetricMapping(framework_id="csrd", framework_name="EU CSRD / ESRS", dimension="E1 Climate Change"),
+        FrameworkMetricMapping(framework_id="gri_universal", framework_name="GRI Universal Standards 2021", dimension="GRI 302 Energy"),
+        FrameworkMetricMapping(framework_id="sasb_standards", framework_name="SASB Industry Standards", dimension="Environment"),
+        FrameworkMetricMapping(framework_id="csrc_2023", framework_name="中国证监会 CSRC 2023", dimension="环境"),
+    ],
+    "renewable_energy_pct": [
+        FrameworkMetricMapping(framework_id="eu_taxonomy", framework_name="EU Taxonomy 2020", dimension="Climate"),
+        FrameworkMetricMapping(framework_id="csrd", framework_name="EU CSRD / ESRS", dimension="E1 Climate Change"),
+        FrameworkMetricMapping(framework_id="gri_universal", framework_name="GRI Universal Standards 2021", dimension="GRI 302 Energy"),
+        FrameworkMetricMapping(framework_id="sasb_standards", framework_name="SASB Industry Standards", dimension="Environment"),
+        FrameworkMetricMapping(framework_id="csrc_2023", framework_name="中国证监会 CSRC 2023", dimension="环境"),
+    ],
+    "water_usage_m3": [
+        FrameworkMetricMapping(framework_id="eu_taxonomy", framework_name="EU Taxonomy 2020", dimension="DNSH Water"),
+        FrameworkMetricMapping(framework_id="csrd", framework_name="EU CSRD / ESRS", dimension="E3 Water and Marine Resources"),
+        FrameworkMetricMapping(framework_id="gri_universal", framework_name="GRI Universal Standards 2021", dimension="GRI 303 Water"),
+        FrameworkMetricMapping(framework_id="csrc_2023", framework_name="中国证监会 CSRC 2023", dimension="环境"),
+    ],
+    "waste_recycled_pct": [
+        FrameworkMetricMapping(framework_id="eu_taxonomy", framework_name="EU Taxonomy 2020", dimension="Circular Economy DNSH"),
+        FrameworkMetricMapping(framework_id="csrd", framework_name="EU CSRD / ESRS", dimension="E5 Resource Use and Circular Economy"),
+        FrameworkMetricMapping(framework_id="gri_universal", framework_name="GRI Universal Standards 2021", dimension="GRI 306 Waste"),
+    ],
+    "taxonomy_aligned_revenue_pct": [
+        FrameworkMetricMapping(framework_id="eu_taxonomy", framework_name="EU Taxonomy 2020", dimension="Turnover KPI"),
+    ],
+    "taxonomy_aligned_capex_pct": [
+        FrameworkMetricMapping(framework_id="eu_taxonomy", framework_name="EU Taxonomy 2020", dimension="CapEx KPI"),
+        FrameworkMetricMapping(framework_id="sec_climate", framework_name="SEC Climate Disclosure", dimension="Climate-related CapEx"),
+        FrameworkMetricMapping(framework_id="sasb_standards", framework_name="SASB Industry Standards", dimension="Sustainable CapEx"),
+    ],
+    "total_employees": [
+        FrameworkMetricMapping(framework_id="csrd", framework_name="EU CSRD / ESRS", dimension="S1 Own Workforce"),
+        FrameworkMetricMapping(framework_id="gri_universal", framework_name="GRI Universal Standards 2021", dimension="GRI 2 / 401"),
+        FrameworkMetricMapping(framework_id="sasb_standards", framework_name="SASB Industry Standards", dimension="Social Capital"),
+        FrameworkMetricMapping(framework_id="csrc_2023", framework_name="中国证监会 CSRC 2023", dimension="社会"),
+    ],
+    "female_pct": [
+        FrameworkMetricMapping(framework_id="csrd", framework_name="EU CSRD / ESRS", dimension="S1 Own Workforce"),
+        FrameworkMetricMapping(framework_id="gri_universal", framework_name="GRI Universal Standards 2021", dimension="GRI 405 Diversity and Equal Opportunity"),
+        FrameworkMetricMapping(framework_id="sasb_standards", framework_name="SASB Industry Standards", dimension="Social Capital"),
+        FrameworkMetricMapping(framework_id="csrc_2023", framework_name="中国证监会 CSRC 2023", dimension="社会"),
+    ],
+    "primary_activities": [
+        FrameworkMetricMapping(framework_id="eu_taxonomy", framework_name="EU Taxonomy 2020", dimension="Eligible Activities"),
+    ],
+}
+
+
+def get_metric_framework_mappings(metric_name: str) -> list[FrameworkMetricMapping]:
+    return [
+        mapping.model_copy(deep=True)
+        for mapping in _METRIC_FRAMEWORK_MAPPINGS.get(metric_name, [])
+    ]
 
 
 def _check_dnsh(data: CompanyESGData, activity_id: str) -> bool:

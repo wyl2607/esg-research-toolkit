@@ -183,7 +183,12 @@ export function LcoePage() {
               <Label>{t('lcoe.technology')}</Label>
               <Select
                 value={form.technology}
-                onValueChange={(v) => setForm((f) => ({ ...f, technology: v }))}
+                onValueChange={(v) =>
+                  setForm((f) => ({
+                    ...f,
+                    technology: v as LCOEInput['technology'],
+                  }))
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -412,7 +417,11 @@ export function LcoePage() {
               />
               <MetricCard
                 label={t('lcoe.payback')}
-                value={`${lcoeMutation.data.payback_years.toFixed(1)} ${t('lcoe.years')}`}
+                value={
+                  lcoeMutation.data.payback_years == null
+                    ? '—'
+                    : `${lcoeMutation.data.payback_years.toFixed(1)} ${t('lcoe.years')}`
+                }
                 sub={t('lcoe.resultHintPayback')}
               />
             </div>

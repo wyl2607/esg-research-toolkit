@@ -1,0 +1,124 @@
+name: API Contracts
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install backend dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci --legacy-peer-deps
+
+      - name: Make helper scripts executable
+        run: chmod +x scripts/gen-types.sh
+
+      - name: Start backend for type generation
+        env:
+          OPENAI_API_KEY: test_key_placeholder
+          DATABASE_URL: sqlite:////tmp/esg-openapi-types.db
+          ESG_OPENAPI_SERVER_URL: http://127.0.0.1:8000
+        run: |
+          rm -f /tmp/esg-openapi-types.db
+          python -m uvicorn main:app --host 127.0.0.1 --port 8000 > /tmp/esg-openapi.log 2>&1 &
+          echo $! > /tmp/esg-openapi.pid
+          for attempt in $(seq 1 20); do
+            if curl -sf http://127.0.0.1:8000/health > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/esg-openapi.log
+          exit 1
+
+      - name: Regenerate frontend types
+        working-directory: frontend
+        env:
+          OPENAPI_URL: http://127.0.0.1:8000/openapi.json
+        run: npm run gen:types
+
+      - name: Fail on generated type drift
+        run: git diff --exit-code -- frontend/src/lib/types.ts
+
+      - name: Stop type-generation backend
+        if: always()
+        run: |
+          if [ -f /tmp/esg-openapi.pid ]; then
+            kill "$(cat /tmp/esg-openapi.pid)" || true
+          fi
+
+      - name: Start contract-test backend
+        env:
+          OPENAI_API_KEY: test_key_placeholder
+          DATABASE_URL: sqlite:////tmp/esg-contract-test.db
+          ESG_CONTRACT_TEST_MODE: "1"
+          ESG_OPENAPI_SERVER_URL: http://127.0.0.1:8001
+        run: |
+          rm -f /tmp/esg-contract-test.db
+          python -m uvicorn main:app --host 127.0.0.1 --port 8001 > /tmp/esg-contract.log 2>&1 &
+          echo $! > /tmp/esg-contract.pid
+          for attempt in $(seq 1 20); do
+            if curl -sf http://127.0.0.1:8001/health > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/esg-contract.log
+          exit 1
+
+      - name: Run Schemathesis contract tests
+        run: |
+          schemathesis run \
+            --experimental openapi-3.1 \
+            --checks all \
+            --contrib-openapi-fill-missing-examples \
+            --generation-codec ascii \
+            --hypothesis-derandomize \
+            --hypothesis-max-examples 100 \
+            --base-url http://127.0.0.1:8001 \
+            http://127.0.0.1:8001/openapi.json
+
+      - name: Upload backend logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: contract-backend-logs
+          path: |
+            /tmp/esg-openapi.log
+            /tmp/esg-contract.log
+          if-no-files-found: ignore
+
+      - name: Stop contract-test backend
+        if: always()
+        run: |
+          if [ -f /tmp/esg-contract.pid ]; then
+            kill "$(cat /tmp/esg-contract.pid)" || true
+          fi

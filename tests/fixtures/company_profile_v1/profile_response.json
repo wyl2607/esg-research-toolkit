@@ -1,0 +1,2288 @@
+{
+  "api_version": "v1",
+  "company_name": "V1 Contract Corp",
+  "data_quality_summary": {
+    "completion_percentage": 100.0,
+    "missing_metrics": [],
+    "present_metrics": [
+      "scope1_co2e_tonnes",
+      "scope2_co2e_tonnes",
+      "scope3_co2e_tonnes",
+      "energy_consumption_mwh",
+      "renewable_energy_pct",
+      "water_usage_m3",
+      "waste_recycled_pct",
+      "taxonomy_aligned_revenue_pct",
+      "taxonomy_aligned_capex_pct",
+      "total_employees",
+      "female_pct"
+    ],
+    "present_metrics_count": 11,
+    "readiness_label": "showcase-ready",
+    "total_key_metrics_count": 11
+  },
+  "evidence_anchors": [
+    {
+      "char_range": [
+        120,
+        138
+      ],
+      "confidence": 0.88,
+      "extraction_method": "llm",
+      "file_hash": "hash-v1-contract-2024",
+      "metric": "scope1_co2e_tonnes",
+      "page": 7,
+      "snippet": "Scope 1 emissions decreased to 120 tCO2e.",
+      "source": "V1 Contract Corp Sustainability Report 2024",
+      "source_doc_id": "hash-v1-contract-2024",
+      "source_type": "pdf",
+      "source_url": "https://example.com/v1-contract-2024.pdf"
+    },
+    {
+      "char_range": null,
+      "confidence": 0.55,
+      "extraction_method": "pdf_text",
+      "file_hash": "hash-v1-contract-2024",
+      "metric": "scope2_co2e_tonnes",
+      "page": null,
+      "snippet": "scope2_co2e_tonnes reported as 74.0",
+      "source": "https://example.com/v1-contract-2024.pdf",
+      "source_doc_id": "hash-v1-contract-2024",
+      "source_type": "pdf",
+      "source_url": "https://example.com/v1-contract-2024.pdf"
+    },
+    {
+      "char_range": null,
+      "confidence": 0.55,
+      "extraction_method": "pdf_text",
+      "file_hash": "hash-v1-contract-2024",
+      "metric": "scope3_co2e_tonnes",
+      "page": null,
+      "snippet": "scope3_co2e_tonnes reported as 980.0",
+      "source": "https://example.com/v1-contract-2024.pdf",
+      "source_doc_id": "hash-v1-contract-2024",
+      "source_type": "pdf",
+      "source_url": "https://example.com/v1-contract-2024.pdf"
+    },
+    {
+      "char_range": null,
+      "confidence": 0.55,
+      "extraction_method": "pdf_text",
+      "file_hash": "hash-v1-contract-2024",
+      "metric": "energy_consumption_mwh",
+      "page": null,
+      "snippet": "energy_consumption_mwh reported as 540.0",
+      "source": "https://example.com/v1-contract-2024.pdf",
+      "source_doc_id": "hash-v1-contract-2024",
+      "source_type": "pdf",
+      "source_url": "https://example.com/v1-contract-2024.pdf"
+    },
+    {
+      "char_range": [
+        420,
+        441
+      ],
+      "confidence": 0.91,
+      "extraction_method": "regex",
+      "file_hash": "hash-v1-contract-2024",
+      "metric": "renewable_energy_pct",
+      "page": 12,
+      "snippet": "Renewable electricity share increased to 45%.",
+      "source": "V1 Contract Corp Sustainability Report 2024",
+      "source_doc_id": "hash-v1-contract-2024",
+      "source_type": "pdf",
+      "source_url": "https://example.com/v1-contract-2024.pdf"
+    },
+    {
+      "char_range": null,
+      "confidence": 0.55,
+      "extraction_method": "pdf_text",
+      "file_hash": "hash-v1-contract-2024",
+      "metric": "water_usage_m3",
+      "page": null,
+      "snippet": "water_usage_m3 reported as 12000.0",
+      "source": "https://example.com/v1-contract-2024.pdf",
+      "source_doc_id": "hash-v1-contract-2024",
+      "source_type": "pdf",
+      "source_url": "https://example.com/v1-contract-2024.pdf"
+    },
+    {
+      "char_range": null,
+      "confidence": 0.55,
+      "extraction_method": "pdf_text",
+      "file_hash": "hash-v1-contract-2024",
+      "metric": "waste_recycled_pct",
+      "page": null,
+      "snippet": "waste_recycled_pct reported as 62.0",
+      "source": "https://example.com/v1-contract-2024.pdf",
+      "source_doc_id": "hash-v1-contract-2024",
+      "source_type": "pdf",
+      "source_url": "https://example.com/v1-contract-2024.pdf"
+    },
+    {
+      "char_range": null,
+      "confidence": 0.55,
+      "extraction_method": "pdf_text",
+      "file_hash": "hash-v1-contract-2024",
+      "metric": "taxonomy_aligned_revenue_pct",
+      "page": null,
+      "snippet": "taxonomy_aligned_revenue_pct reported as 28.0",
+      "source": "https://example.com/v1-contract-2024.pdf",
+      "source_doc_id": "hash-v1-contract-2024",
+      "source_type": "pdf",
+      "source_url": "https://example.com/v1-contract-2024.pdf"
+    },
+    {
+      "char_range": null,
+      "confidence": 0.55,
+      "extraction_method": "pdf_text",
+      "file_hash": "hash-v1-contract-2024",
+      "metric": "taxonomy_aligned_capex_pct",
+      "page": null,
+      "snippet": "taxonomy_aligned_capex_pct reported as 35.0",
+      "source": "https://example.com/v1-contract-2024.pdf",
+      "source_doc_id": "hash-v1-contract-2024",
+      "source_type": "pdf",
+      "source_url": "https://example.com/v1-contract-2024.pdf"
+    },
+    {
+      "char_range": null,
+      "confidence": 0.55,
+      "extraction_method": "pdf_text",
+      "file_hash": "hash-v1-contract-2024",
+      "metric": "total_employees",
+      "page": null,
+      "snippet": "total_employees reported as 1020",
+      "source": "https://example.com/v1-contract-2024.pdf",
+      "source_doc_id": "hash-v1-contract-2024",
+      "source_type": "pdf",
+      "source_url": "https://example.com/v1-contract-2024.pdf"
+    },
+    {
+      "char_range": [
+        88,
+        104
+      ],
+      "confidence": 0.8,
+      "extraction_method": "llm",
+      "file_hash": "hash-v1-contract-2024",
+      "metric": "female_pct",
+      "page": 18,
+      "snippet": "Female representation reached 48%.",
+      "source": "V1 Contract Corp Sustainability Report 2024",
+      "source_doc_id": "hash-v1-contract-2024",
+      "source_type": "pdf",
+      "source_url": "https://example.com/v1-contract-2024.pdf"
+    },
+    {
+      "char_range": null,
+      "confidence": 0.55,
+      "extraction_method": "pdf_text",
+      "file_hash": "hash-v1-contract-2024",
+      "metric": "primary_activities",
+      "page": null,
+      "snippet": "primary_activities reported as solar_pv, battery_storage",
+      "source": "https://example.com/v1-contract-2024.pdf",
+      "source_doc_id": "hash-v1-contract-2024",
+      "source_type": "pdf",
+      "source_url": "https://example.com/v1-contract-2024.pdf"
+    }
+  ],
+  "evidence_summary": [
+    {
+      "char_range": [
+        120,
+        138
+      ],
+      "confidence": 0.88,
+      "extraction_method": "llm",
+      "file_hash": "hash-v1-contract-2024",
+      "metric": "scope1_co2e_tonnes",
+      "page": 7,
+      "snippet": "Scope 1 emissions decreased to 120 tCO2e.",
+      "source": "V1 Contract Corp Sustainability Report 2024",
+      "source_doc_id": "hash-v1-contract-2024",
+      "source_type": "pdf",
+      "source_url": "https://example.com/v1-contract-2024.pdf"
+    },
+    {
+      "char_range": [
+        420,
+        441
+      ],
+      "confidence": 0.91,
+      "extraction_method": "regex",
+      "file_hash": "hash-v1-contract-2024",
+      "metric": "renewable_energy_pct",
+      "page": 12,
+      "snippet": "Renewable electricity share increased to 45%.",
+      "source": "V1 Contract Corp Sustainability Report 2024",
+      "source_doc_id": "hash-v1-contract-2024",
+      "source_type": "pdf",
+      "source_url": "https://example.com/v1-contract-2024.pdf"
+    },
+    {
+      "char_range": [
+        88,
+        104
+      ],
+      "confidence": 0.8,
+      "extraction_method": "llm",
+      "file_hash": "hash-v1-contract-2024",
+      "metric": "female_pct",
+      "page": 18,
+      "snippet": "Female representation reached 48%.",
+      "source": "V1 Contract Corp Sustainability Report 2024",
+      "source_doc_id": "hash-v1-contract-2024",
+      "source_type": "pdf",
+      "source_url": "https://example.com/v1-contract-2024.pdf"
+    }
+  ],
+  "framework_metadata": [
+    {
+      "analysis_result_id": 1,
+      "framework": "EU Taxonomy 2020",
+      "framework_id": "eu_taxonomy",
+      "framework_version": "2020/852",
+      "report_year": 2024,
+      "stored_at": "2025-02-01T11:00:00"
+    }
+  ],
+  "framework_results": [
+    {
+      "analysis_result_id": 1,
+      "analyzed_at": null,
+      "company_name": "V1 Contract Corp",
+      "coverage_pct": 80.0,
+      "dimensions": [
+        {
+          "disclosed": 8,
+          "gaps": [],
+          "name": "Climate",
+          "score": 0.78,
+          "total": 10,
+          "weight": 1.0
+        }
+      ],
+      "framework": "EU Taxonomy 2020",
+      "framework_id": "eu_taxonomy",
+      "framework_region": "Global",
+      "framework_version": "2020/852",
+      "gaps": [],
+      "grade": "B",
+      "recommendations": [
+        "Increase renewable energy share beyond 50%."
+      ],
+      "report_year": 2024,
+      "stored_at": "2025-02-01T11:00:00",
+      "total_score": 0.78
+    }
+  ],
+  "framework_scores": [
+    {
+      "analyzed_at": null,
+      "company_name": "V1 Contract Corp",
+      "coverage_pct": 100.0,
+      "dimensions": [
+        {
+          "disclosed": 1,
+          "gaps": [],
+          "name": "气候减缓 (Climate Mitigation)",
+          "score": 0.5,
+          "total": 1,
+          "weight": 0.16666666666666666
+        },
+        {
+          "disclosed": 1,
+          "gaps": [],
+          "name": "气候适应 (Climate Adaptation)",
+          "score": 0.5,
+          "total": 1,
+          "weight": 0.16666666666666666
+        },
+        {
+          "disclosed": 1,
+          "gaps": [],
+          "name": "水资源 (Water & Marine)",
+          "score": 0.6,
+          "total": 1,
+          "weight": 0.16666666666666666
+        },
+        {
+          "disclosed": 1,
+          "gaps": [],
+          "name": "循环经济 (Circular Economy)",
+          "score": 0.62,
+          "total": 1,
+          "weight": 0.16666666666666666
+        },
+        {
+          "disclosed": 0,
+          "gaps": [],
+          "name": "污染防治 (Pollution Prevention)",
+          "score": 0.0,
+          "total": 1,
+          "weight": 0.16666666666666666
+        },
+        {
+          "disclosed": 0,
+          "gaps": [],
+          "name": "生物多样性 (Biodiversity)",
+          "score": 0.0,
+          "total": 1,
+          "weight": 0.16666666666666666
+        }
+      ],
+      "framework": "EU Taxonomy 2020",
+      "framework_id": "eu_taxonomy",
+      "framework_region": "EU",
+      "framework_version": "2020/852",
+      "gaps": [],
+      "grade": "D",
+      "recommendations": [],
+      "report_year": 2024,
+      "total_score": 0.37
+    },
+    {
+      "analyzed_at": null,
+      "company_name": "V1 Contract Corp",
+      "coverage_pct": 100.0,
+      "dimensions": [
+        {
+          "disclosed": 5,
+          "gaps": [],
+          "name": "环境 (Environment)",
+          "score": 1.0,
+          "total": 5,
+          "weight": 0.4
+        },
+        {
+          "disclosed": 2,
+          "gaps": [
+            "[S] 缺失指标：工伤事故率（每10万人）",
+            "[S] 缺失指标：人均培训时长（小时）"
+          ],
+          "name": "社会 (Social)",
+          "score": 0.5,
+          "total": 4,
+          "weight": 0.35
+        },
+        {
+          "disclosed": 0,
+          "gaps": [
+            "[G] 缺失指标：董事会独立董事比例",
+            "[G] 缺失指标：反腐败政策披露",
+            "[G] 缺失指标：可持续发展委员会设立"
+          ],
+          "name": "治理 (Governance)",
+          "score": 0.0,
+          "total": 3,
+          "weight": 0.25
+        }
+      ],
+      "framework": "中国证监会 CSRC 2023",
+      "framework_id": "csrc_2023",
+      "framework_region": "CN",
+      "framework_version": "2023",
+      "gaps": [
+        "[S] 缺失指标：工伤事故率（每10万人）",
+        "[S] 缺失指标：人均培训时长（小时）",
+        "[G] 缺失指标：董事会独立董事比例",
+        "[G] 缺失指标：反腐败政策披露",
+        "[G] 缺失指标：可持续发展委员会设立"
+      ],
+      "grade": "C",
+      "recommendations": [
+        "补充 工伤事故率（每10万人） 数据（CSRC 2023 B 章节）",
+        "补充 人均培训时长（小时） 数据（CSRC 2023 B 章节）",
+        "建议设立董事会可持续发展委员会并披露反腐败政策（CSRC 2023 C 章节）"
+      ],
+      "report_year": 2024,
+      "total_score": 0.575
+    },
+    {
+      "analyzed_at": null,
+      "company_name": "V1 Contract Corp",
+      "coverage_pct": 64.3,
+      "dimensions": [
+        {
+          "disclosed": 5,
+          "gaps": [],
+          "name": "E1 气候变化 (Climate Change)",
+          "score": 1.0,
+          "total": 5,
+          "weight": 0.2
+        },
+        {
+          "disclosed": 1,
+          "gaps": [],
+          "name": "E2/E5 污染+循环 (Pollution & Circular)",
+          "score": 1.0,
+          "total": 1,
+          "weight": 0.1
+        },
+        {
+          "disclosed": 1,
+          "gaps": [],
+          "name": "E3 水资源 (Water)",
+          "score": 1.0,
+          "total": 1,
+          "weight": 0.1
+        },
+        {
+          "disclosed": 0,
+          "gaps": [],
+          "name": "E4 生物多样性 (Biodiversity)",
+          "score": 0.0,
+          "total": 1,
+          "weight": 0.1
+        },
+        {
+          "disclosed": 2,
+          "gaps": [],
+          "name": "S1 员工 (Own Workforce)",
+          "score": 0.5,
+          "total": 4,
+          "weight": 0.25
+        },
+        {
+          "disclosed": 0,
+          "gaps": [],
+          "name": "G1 治理 (Business Conduct)",
+          "score": 0.0,
+          "total": 3,
+          "weight": 0.25
+        }
+      ],
+      "framework": "EU CSRD / ESRS",
+      "framework_id": "csrd",
+      "framework_region": "EU",
+      "framework_version": "ESRS-2024",
+      "gaps": [
+        "[E4] Biodiversity impact disclosure not yet supported — add site-level data",
+        "[S1] Missing: Work-related injury rate (ESRS S1-9/S1-14)",
+        "[S1] Missing: Training hours per employee (ESRS S1-9/S1-14)",
+        "[G1] Missing: Board independence % (ESRS G1-1)",
+        "[G1] Missing: Anti-corruption policy (ESRS G1-1)",
+        "[G1] Missing: Sustainability governance body (ESRS G1-1)"
+      ],
+      "grade": "C",
+      "recommendations": [
+        "Expand workforce disclosure: safety incidents + training hours (ESRS S1)",
+        "Publish anti-corruption policy and disclose governance body (ESRS G1)"
+      ],
+      "report_year": 2024,
+      "total_score": 0.525
+    },
+    {
+      "analyzed_at": null,
+      "company_name": "V1 Contract Corp",
+      "coverage_pct": 80.0,
+      "dimensions": [
+        {
+          "disclosed": 3,
+          "gaps": [],
+          "name": "Climate Risk Disclosure",
+          "score": 1.0,
+          "total": 3,
+          "weight": 0.4
+        },
+        {
+          "disclosed": 3,
+          "gaps": [],
+          "name": "GHG Reporting",
+          "score": 1.0,
+          "total": 3,
+          "weight": 0.35
+        },
+        {
+          "disclosed": 1,
+          "gaps": [],
+          "name": "Financial Impact",
+          "score": 0.5,
+          "total": 2,
+          "weight": 0.25
+        }
+      ],
+      "framework": "SEC Climate Disclosure",
+      "framework_id": "sec_climate",
+      "framework_region": "US",
+      "framework_version": "SEC-2024",
+      "gaps": [],
+      "grade": "A",
+      "recommendations": [],
+      "report_year": 2024,
+      "total_score": 0.875
+    },
+    {
+      "analyzed_at": null,
+      "company_name": "V1 Contract Corp",
+      "coverage_pct": 80.0,
+      "dimensions": [
+        {
+          "disclosed": 6,
+          "gaps": [],
+          "name": "GRI 300 Environment",
+          "score": 1.0,
+          "total": 6,
+          "weight": 0.3
+        },
+        {
+          "disclosed": 2,
+          "gaps": [],
+          "name": "GRI 400 Social",
+          "score": 1.0,
+          "total": 2,
+          "weight": 0.35
+        },
+        {
+          "disclosed": 1,
+          "gaps": [],
+          "name": "GRI 2 Governance",
+          "score": 1.0,
+          "total": 1,
+          "weight": 0.2
+        },
+        {
+          "disclosed": 0,
+          "gaps": [],
+          "name": "GRI 200 Economic",
+          "score": 0.0,
+          "total": 2,
+          "weight": 0.15
+        }
+      ],
+      "framework": "GRI Universal Standards 2021",
+      "framework_id": "gri_universal",
+      "framework_region": "US",
+      "framework_version": "GRI-2021",
+      "gaps": [],
+      "grade": "B",
+      "recommendations": [],
+      "report_year": 2024,
+      "total_score": 0.85
+    },
+    {
+      "analyzed_at": null,
+      "company_name": "V1 Contract Corp",
+      "coverage_pct": 77.8,
+      "dimensions": [
+        {
+          "disclosed": 4,
+          "gaps": [],
+          "name": "Environmental Footprint",
+          "score": 1.0,
+          "total": 4,
+          "weight": 0.35
+        },
+        {
+          "disclosed": 2,
+          "gaps": [],
+          "name": "Social Capital",
+          "score": 1.0,
+          "total": 2,
+          "weight": 0.4
+        },
+        {
+          "disclosed": 1,
+          "gaps": [],
+          "name": "Business Model Resilience",
+          "score": 0.433,
+          "total": 3,
+          "weight": 0.25
+        }
+      ],
+      "framework": "SASB Industry Standards",
+      "framework_id": "sasb_standards",
+      "framework_region": "US",
+      "framework_version": "SASB-2023",
+      "gaps": [],
+      "grade": "A",
+      "recommendations": [],
+      "report_year": 2024,
+      "total_score": 0.858
+    }
+  ],
+  "identity_provenance_summary": {
+    "canonical_company_name": "V1 Contract Corp",
+    "consolidated_aliases": [],
+    "has_alias_consolidation": false,
+    "latest_source_document_type": "sustainability_report",
+    "merge_priority_preview": null,
+    "requested_company_name": "V1 Contract Corp",
+    "source_priority_preview": null
+  },
+  "industry_code": null,
+  "industry_sector": null,
+  "latest_merged_result": {
+    "company_name": "V1 Contract Corp",
+    "merged_metrics": {
+      "company_name": "V1 Contract Corp",
+      "energy_consumption_mwh": 540.0,
+      "evidence_summary": [],
+      "female_pct": 48.0,
+      "industry_code": null,
+      "industry_sector": null,
+      "primary_activities": [
+        "solar_pv",
+        "battery_storage"
+      ],
+      "renewable_energy_pct": 45.0,
+      "report_year": 2024,
+      "reporting_period_label": "FY2024",
+      "reporting_period_type": "annual",
+      "scope1_co2e_tonnes": 120.0,
+      "scope2_co2e_tonnes": 74.0,
+      "scope3_co2e_tonnes": 980.0,
+      "source_document_type": "merged_preview",
+      "taxonomy_aligned_capex_pct": 35.0,
+      "taxonomy_aligned_revenue_pct": 28.0,
+      "total_capex_eur": null,
+      "total_employees": 1020,
+      "total_revenue_eur": null,
+      "waste_recycled_pct": 62.0,
+      "water_usage_m3": 12000.0
+    },
+    "metrics": {
+      "energy_consumption_mwh": {
+        "candidate_values": [
+          {
+            "priority_rank": 300,
+            "reporting_period_label": "FY2024",
+            "source_document_type": "sustainability_report",
+            "source_id": "db:2",
+            "source_url": "https://example.com/v1-contract-2024.pdf",
+            "value": 540.0
+          }
+        ],
+        "chosen_source": "db:2",
+        "chosen_source_document_type": "sustainability_report",
+        "chosen_value": 540.0,
+        "conflict_detected": false,
+        "merge_reason": "single_source",
+        "metric": "energy_consumption_mwh"
+      },
+      "female_pct": {
+        "candidate_values": [
+          {
+            "priority_rank": 300,
+            "reporting_period_label": "FY2024",
+            "source_document_type": "sustainability_report",
+            "source_id": "db:2",
+            "source_url": "https://example.com/v1-contract-2024.pdf",
+            "value": 48.0
+          }
+        ],
+        "chosen_source": "db:2",
+        "chosen_source_document_type": "sustainability_report",
+        "chosen_value": 48.0,
+        "conflict_detected": false,
+        "merge_reason": "single_source",
+        "metric": "female_pct"
+      },
+      "primary_activities": {
+        "candidate_values": [
+          {
+            "priority_rank": 300,
+            "reporting_period_label": "FY2024",
+            "source_document_type": "sustainability_report",
+            "source_id": "db:2",
+            "source_url": "https://example.com/v1-contract-2024.pdf",
+            "value": [
+              "solar_pv",
+              "battery_storage"
+            ]
+          }
+        ],
+        "chosen_source": "db:2",
+        "chosen_source_document_type": "sustainability_report",
+        "chosen_value": [
+          "solar_pv",
+          "battery_storage"
+        ],
+        "conflict_detected": false,
+        "merge_reason": "single_source",
+        "metric": "primary_activities"
+      },
+      "renewable_energy_pct": {
+        "candidate_values": [
+          {
+            "priority_rank": 300,
+            "reporting_period_label": "FY2024",
+            "source_document_type": "sustainability_report",
+            "source_id": "db:2",
+            "source_url": "https://example.com/v1-contract-2024.pdf",
+            "value": 45.0
+          }
+        ],
+        "chosen_source": "db:2",
+        "chosen_source_document_type": "sustainability_report",
+        "chosen_value": 45.0,
+        "conflict_detected": false,
+        "merge_reason": "single_source",
+        "metric": "renewable_energy_pct"
+      },
+      "scope1_co2e_tonnes": {
+        "candidate_values": [
+          {
+            "priority_rank": 300,
+            "reporting_period_label": "FY2024",
+            "source_document_type": "sustainability_report",
+            "source_id": "db:2",
+            "source_url": "https://example.com/v1-contract-2024.pdf",
+            "value": 120.0
+          }
+        ],
+        "chosen_source": "db:2",
+        "chosen_source_document_type": "sustainability_report",
+        "chosen_value": 120.0,
+        "conflict_detected": false,
+        "merge_reason": "single_source",
+        "metric": "scope1_co2e_tonnes"
+      },
+      "scope2_co2e_tonnes": {
+        "candidate_values": [
+          {
+            "priority_rank": 300,
+            "reporting_period_label": "FY2024",
+            "source_document_type": "sustainability_report",
+            "source_id": "db:2",
+            "source_url": "https://example.com/v1-contract-2024.pdf",
+            "value": 74.0
+          }
+        ],
+        "chosen_source": "db:2",
+        "chosen_source_document_type": "sustainability_report",
+        "chosen_value": 74.0,
+        "conflict_detected": false,
+        "merge_reason": "single_source",
+        "metric": "scope2_co2e_tonnes"
+      },
+      "scope3_co2e_tonnes": {
+        "candidate_values": [
+          {
+            "priority_rank": 300,
+            "reporting_period_label": "FY2024",
+            "source_document_type": "sustainability_report",
+            "source_id": "db:2",
+            "source_url": "https://example.com/v1-contract-2024.pdf",
+            "value": 980.0
+          }
+        ],
+        "chosen_source": "db:2",
+        "chosen_source_document_type": "sustainability_report",
+        "chosen_value": 980.0,
+        "conflict_detected": false,
+        "merge_reason": "single_source",
+        "metric": "scope3_co2e_tonnes"
+      },
+      "taxonomy_aligned_capex_pct": {
+        "candidate_values": [
+          {
+            "priority_rank": 300,
+            "reporting_period_label": "FY2024",
+            "source_document_type": "sustainability_report",
+            "source_id": "db:2",
+            "source_url": "https://example.com/v1-contract-2024.pdf",
+            "value": 35.0
+          }
+        ],
+        "chosen_source": "db:2",
+        "chosen_source_document_type": "sustainability_report",
+        "chosen_value": 35.0,
+        "conflict_detected": false,
+        "merge_reason": "single_source",
+        "metric": "taxonomy_aligned_capex_pct"
+      },
+      "taxonomy_aligned_revenue_pct": {
+        "candidate_values": [
+          {
+            "priority_rank": 300,
+            "reporting_period_label": "FY2024",
+            "source_document_type": "sustainability_report",
+            "source_id": "db:2",
+            "source_url": "https://example.com/v1-contract-2024.pdf",
+            "value": 28.0
+          }
+        ],
+        "chosen_source": "db:2",
+        "chosen_source_document_type": "sustainability_report",
+        "chosen_value": 28.0,
+        "conflict_detected": false,
+        "merge_reason": "single_source",
+        "metric": "taxonomy_aligned_revenue_pct"
+      },
+      "total_employees": {
+        "candidate_values": [
+          {
+            "priority_rank": 300,
+            "reporting_period_label": "FY2024",
+            "source_document_type": "sustainability_report",
+            "source_id": "db:2",
+            "source_url": "https://example.com/v1-contract-2024.pdf",
+            "value": 1020
+          }
+        ],
+        "chosen_source": "db:2",
+        "chosen_source_document_type": "sustainability_report",
+        "chosen_value": 1020,
+        "conflict_detected": false,
+        "merge_reason": "single_source",
+        "metric": "total_employees"
+      },
+      "waste_recycled_pct": {
+        "candidate_values": [
+          {
+            "priority_rank": 300,
+            "reporting_period_label": "FY2024",
+            "source_document_type": "sustainability_report",
+            "source_id": "db:2",
+            "source_url": "https://example.com/v1-contract-2024.pdf",
+            "value": 62.0
+          }
+        ],
+        "chosen_source": "db:2",
+        "chosen_source_document_type": "sustainability_report",
+        "chosen_value": 62.0,
+        "conflict_detected": false,
+        "merge_reason": "single_source",
+        "metric": "waste_recycled_pct"
+      },
+      "water_usage_m3": {
+        "candidate_values": [
+          {
+            "priority_rank": 300,
+            "reporting_period_label": "FY2024",
+            "source_document_type": "sustainability_report",
+            "source_id": "db:2",
+            "source_url": "https://example.com/v1-contract-2024.pdf",
+            "value": 12000.0
+          }
+        ],
+        "chosen_source": "db:2",
+        "chosen_source_document_type": "sustainability_report",
+        "chosen_value": 12000.0,
+        "conflict_detected": false,
+        "merge_reason": "single_source",
+        "metric": "water_usage_m3"
+      }
+    },
+    "report_year": 2024,
+    "source_count": 1
+  },
+  "latest_metrics": {
+    "company_name": "V1 Contract Corp",
+    "energy_consumption_mwh": 540.0,
+    "evidence_summary": [
+      {
+        "char_range": [
+          120,
+          138
+        ],
+        "confidence": 0.88,
+        "extraction_method": "llm",
+        "file_hash": "hash-v1-contract-2024",
+        "metric": "scope1_co2e_tonnes",
+        "page": 7,
+        "snippet": "Scope 1 emissions decreased to 120 tCO2e.",
+        "source": "V1 Contract Corp Sustainability Report 2024",
+        "source_doc_id": "hash-v1-contract-2024",
+        "source_type": "pdf",
+        "source_url": "https://example.com/v1-contract-2024.pdf"
+      },
+      {
+        "char_range": [
+          420,
+          441
+        ],
+        "confidence": 0.91,
+        "extraction_method": "regex",
+        "file_hash": "hash-v1-contract-2024",
+        "metric": "renewable_energy_pct",
+        "page": 12,
+        "snippet": "Renewable electricity share increased to 45%.",
+        "source": "V1 Contract Corp Sustainability Report 2024",
+        "source_doc_id": "hash-v1-contract-2024",
+        "source_type": "pdf",
+        "source_url": "https://example.com/v1-contract-2024.pdf"
+      },
+      {
+        "char_range": [
+          88,
+          104
+        ],
+        "confidence": 0.8,
+        "extraction_method": "llm",
+        "file_hash": "hash-v1-contract-2024",
+        "metric": "female_pct",
+        "page": 18,
+        "snippet": "Female representation reached 48%.",
+        "source": "V1 Contract Corp Sustainability Report 2024",
+        "source_doc_id": "hash-v1-contract-2024",
+        "source_type": "pdf",
+        "source_url": "https://example.com/v1-contract-2024.pdf"
+      }
+    ],
+    "female_pct": 48.0,
+    "industry_code": null,
+    "industry_sector": null,
+    "primary_activities": [
+      "solar_pv",
+      "battery_storage"
+    ],
+    "renewable_energy_pct": 45.0,
+    "report_year": 2024,
+    "reporting_period_label": "FY2024",
+    "reporting_period_type": "annual",
+    "scope1_co2e_tonnes": 120.0,
+    "scope2_co2e_tonnes": 74.0,
+    "scope3_co2e_tonnes": 980.0,
+    "source_document_type": "sustainability_report",
+    "taxonomy_aligned_capex_pct": 35.0,
+    "taxonomy_aligned_revenue_pct": 28.0,
+    "total_capex_eur": null,
+    "total_employees": 1020,
+    "total_revenue_eur": null,
+    "waste_recycled_pct": 62.0,
+    "water_usage_m3": 12000.0
+  },
+  "latest_period": {
+    "framework_metadata": [
+      {
+        "analysis_result_id": 1,
+        "framework": "EU Taxonomy 2020",
+        "framework_id": "eu_taxonomy",
+        "framework_version": "2020/852",
+        "report_year": 2024,
+        "stored_at": "2025-02-01T11:00:00"
+      }
+    ],
+    "industry_code": null,
+    "industry_sector": null,
+    "period": {
+      "fiscal_year": 2024,
+      "label": "FY2024",
+      "legacy_report_year": 2024,
+      "period_end": "2024-12-31",
+      "period_id": "V1 Contract Corp:2024:annual:FY2024",
+      "period_start": "2024-01-01",
+      "reporting_standard": "sustainability_report",
+      "source_document_type": "sustainability_report",
+      "type": "annual"
+    },
+    "report_year": 2024,
+    "reporting_period_label": "FY2024",
+    "reporting_period_type": "annual",
+    "source_document_type": "sustainability_report"
+  },
+  "latest_sources": [
+    {
+      "downloaded_at": "2025-02-01T10:00:00",
+      "evidence_anchors": [
+        {
+          "char_range": [
+            120,
+            138
+          ],
+          "confidence": 0.88,
+          "extraction_method": "llm",
+          "file_hash": "hash-v1-contract-2024",
+          "metric": "scope1_co2e_tonnes",
+          "page": 7,
+          "snippet": "Scope 1 emissions decreased to 120 tCO2e.",
+          "source": "V1 Contract Corp Sustainability Report 2024",
+          "source_doc_id": "hash-v1-contract-2024",
+          "source_type": "pdf",
+          "source_url": "https://example.com/v1-contract-2024.pdf"
+        },
+        {
+          "char_range": [
+            420,
+            441
+          ],
+          "confidence": 0.91,
+          "extraction_method": "regex",
+          "file_hash": "hash-v1-contract-2024",
+          "metric": "renewable_energy_pct",
+          "page": 12,
+          "snippet": "Renewable electricity share increased to 45%.",
+          "source": "V1 Contract Corp Sustainability Report 2024",
+          "source_doc_id": "hash-v1-contract-2024",
+          "source_type": "pdf",
+          "source_url": "https://example.com/v1-contract-2024.pdf"
+        },
+        {
+          "char_range": [
+            88,
+            104
+          ],
+          "confidence": 0.8,
+          "extraction_method": "llm",
+          "file_hash": "hash-v1-contract-2024",
+          "metric": "female_pct",
+          "page": 18,
+          "snippet": "Female representation reached 48%.",
+          "source": "V1 Contract Corp Sustainability Report 2024",
+          "source_doc_id": "hash-v1-contract-2024",
+          "source_type": "pdf",
+          "source_url": "https://example.com/v1-contract-2024.pdf"
+        }
+      ],
+      "file_hash": "hash-v1-contract-2024",
+      "pdf_filename": "v1-contract-2024.pdf",
+      "reporting_period_label": "FY2024",
+      "reporting_period_type": "annual",
+      "source_document_type": "sustainability_report",
+      "source_id": "db:2",
+      "source_url": "https://example.com/v1-contract-2024.pdf"
+    }
+  ],
+  "latest_year": 2024,
+  "narrative_summary": {
+    "disclosure_gap_metrics": [],
+    "disclosure_strength_metrics": [
+      "scope1_co2e_tonnes",
+      "scope2_co2e_tonnes",
+      "scope3_co2e_tonnes",
+      "energy_consumption_mwh",
+      "renewable_energy_pct",
+      "water_usage_m3",
+      "waste_recycled_pct",
+      "taxonomy_aligned_revenue_pct",
+      "taxonomy_aligned_capex_pct",
+      "total_employees",
+      "female_pct"
+    ],
+    "has_previous_period": true,
+    "improved_metrics": [
+      "scope1_co2e_tonnes",
+      "scope2_co2e_tonnes",
+      "renewable_energy_pct",
+      "female_pct"
+    ],
+    "previous_year": 2023,
+    "snapshot": {
+      "framework_count": 1,
+      "latest_year": 2024,
+      "periods_count": 2,
+      "readiness_label": "showcase-ready",
+      "years_count": 2
+    },
+    "stable_metrics": [],
+    "weakened_metrics": []
+  },
+  "periods": [
+    {
+      "downloaded_at": "2024-02-01T10:00:00",
+      "evidence_anchors": [
+        {
+          "char_range": [
+            120,
+            136
+          ],
+          "confidence": 0.9,
+          "extraction_method": "regex",
+          "file_hash": "hash-v1-contract-2023",
+          "metric": "renewable_energy_pct",
+          "page": 9,
+          "snippet": "Renewable electricity share reached 31%.",
+          "source": "V1 Contract Corp Annual Report 2023",
+          "source_doc_id": "hash-v1-contract-2023",
+          "source_type": "pdf",
+          "source_url": "https://example.com/v1-contract-2023.pdf"
+        }
+      ],
+      "framework_metadata": [],
+      "industry_code": null,
+      "industry_sector": null,
+      "merged_result": {
+        "company_name": "V1 Contract Corp",
+        "merged_metrics": {
+          "company_name": "V1 Contract Corp",
+          "energy_consumption_mwh": 610.0,
+          "evidence_summary": [],
+          "female_pct": 44.0,
+          "industry_code": null,
+          "industry_sector": null,
+          "primary_activities": [
+            "solar_pv"
+          ],
+          "renewable_energy_pct": 31.0,
+          "report_year": 2023,
+          "reporting_period_label": "FY2023",
+          "reporting_period_type": "annual",
+          "scope1_co2e_tonnes": 140.0,
+          "scope2_co2e_tonnes": 88.0,
+          "scope3_co2e_tonnes": null,
+          "source_document_type": "merged_preview",
+          "taxonomy_aligned_capex_pct": null,
+          "taxonomy_aligned_revenue_pct": null,
+          "total_capex_eur": null,
+          "total_employees": 980,
+          "total_revenue_eur": null,
+          "waste_recycled_pct": null,
+          "water_usage_m3": null
+        },
+        "metrics": {
+          "energy_consumption_mwh": {
+            "candidate_values": [
+              {
+                "priority_rank": 400,
+                "reporting_period_label": "FY2023",
+                "source_document_type": "annual_report",
+                "source_id": "db:1",
+                "source_url": "https://example.com/v1-contract-2023.pdf",
+                "value": 610.0
+              }
+            ],
+            "chosen_source": "db:1",
+            "chosen_source_document_type": "annual_report",
+            "chosen_value": 610.0,
+            "conflict_detected": false,
+            "merge_reason": "single_source",
+            "metric": "energy_consumption_mwh"
+          },
+          "female_pct": {
+            "candidate_values": [
+              {
+                "priority_rank": 400,
+                "reporting_period_label": "FY2023",
+                "source_document_type": "annual_report",
+                "source_id": "db:1",
+                "source_url": "https://example.com/v1-contract-2023.pdf",
+                "value": 44.0
+              }
+            ],
+            "chosen_source": "db:1",
+            "chosen_source_document_type": "annual_report",
+            "chosen_value": 44.0,
+            "conflict_detected": false,
+            "merge_reason": "single_source",
+            "metric": "female_pct"
+          },
+          "primary_activities": {
+            "candidate_values": [
+              {
+                "priority_rank": 400,
+                "reporting_period_label": "FY2023",
+                "source_document_type": "annual_report",
+                "source_id": "db:1",
+                "source_url": "https://example.com/v1-contract-2023.pdf",
+                "value": [
+                  "solar_pv"
+                ]
+              }
+            ],
+            "chosen_source": "db:1",
+            "chosen_source_document_type": "annual_report",
+            "chosen_value": [
+              "solar_pv"
+            ],
+            "conflict_detected": false,
+            "merge_reason": "single_source",
+            "metric": "primary_activities"
+          },
+          "renewable_energy_pct": {
+            "candidate_values": [
+              {
+                "priority_rank": 400,
+                "reporting_period_label": "FY2023",
+                "source_document_type": "annual_report",
+                "source_id": "db:1",
+                "source_url": "https://example.com/v1-contract-2023.pdf",
+                "value": 31.0
+              }
+            ],
+            "chosen_source": "db:1",
+            "chosen_source_document_type": "annual_report",
+            "chosen_value": 31.0,
+            "conflict_detected": false,
+            "merge_reason": "single_source",
+            "metric": "renewable_energy_pct"
+          },
+          "scope1_co2e_tonnes": {
+            "candidate_values": [
+              {
+                "priority_rank": 400,
+                "reporting_period_label": "FY2023",
+                "source_document_type": "annual_report",
+                "source_id": "db:1",
+                "source_url": "https://example.com/v1-contract-2023.pdf",
+                "value": 140.0
+              }
+            ],
+            "chosen_source": "db:1",
+            "chosen_source_document_type": "annual_report",
+            "chosen_value": 140.0,
+            "conflict_detected": false,
+            "merge_reason": "single_source",
+            "metric": "scope1_co2e_tonnes"
+          },
+          "scope2_co2e_tonnes": {
+            "candidate_values": [
+              {
+                "priority_rank": 400,
+                "reporting_period_label": "FY2023",
+                "source_document_type": "annual_report",
+                "source_id": "db:1",
+                "source_url": "https://example.com/v1-contract-2023.pdf",
+                "value": 88.0
+              }
+            ],
+            "chosen_source": "db:1",
+            "chosen_source_document_type": "annual_report",
+            "chosen_value": 88.0,
+            "conflict_detected": false,
+            "merge_reason": "single_source",
+            "metric": "scope2_co2e_tonnes"
+          },
+          "total_employees": {
+            "candidate_values": [
+              {
+                "priority_rank": 400,
+                "reporting_period_label": "FY2023",
+                "source_document_type": "annual_report",
+                "source_id": "db:1",
+                "source_url": "https://example.com/v1-contract-2023.pdf",
+                "value": 980
+              }
+            ],
+            "chosen_source": "db:1",
+            "chosen_source_document_type": "annual_report",
+            "chosen_value": 980,
+            "conflict_detected": false,
+            "merge_reason": "single_source",
+            "metric": "total_employees"
+          }
+        },
+        "report_year": 2023,
+        "source_count": 1
+      },
+      "period": {
+        "fiscal_year": 2023,
+        "label": "FY2023",
+        "legacy_report_year": 2023,
+        "period_end": "2023-12-31",
+        "period_id": "V1 Contract Corp:2023:annual:FY2023",
+        "period_start": "2023-01-01",
+        "reporting_standard": "annual_report",
+        "source_document_type": "annual_report",
+        "type": "annual"
+      },
+      "report_year": 2023,
+      "reporting_period_label": "FY2023",
+      "reporting_period_type": "annual",
+      "source_document_type": "annual_report",
+      "source_documents": [
+        {
+          "downloaded_at": "2024-02-01T10:00:00",
+          "evidence_anchors": [
+            {
+              "char_range": [
+                120,
+                136
+              ],
+              "confidence": 0.9,
+              "extraction_method": "regex",
+              "file_hash": "hash-v1-contract-2023",
+              "metric": "renewable_energy_pct",
+              "page": 9,
+              "snippet": "Renewable electricity share reached 31%.",
+              "source": "V1 Contract Corp Annual Report 2023",
+              "source_doc_id": "hash-v1-contract-2023",
+              "source_type": "pdf",
+              "source_url": "https://example.com/v1-contract-2023.pdf"
+            }
+          ],
+          "file_hash": "hash-v1-contract-2023",
+          "pdf_filename": "v1-contract-2023.pdf",
+          "reporting_period_label": "FY2023",
+          "reporting_period_type": "annual",
+          "source_document_type": "annual_report",
+          "source_id": "db:1",
+          "source_url": "https://example.com/v1-contract-2023.pdf"
+        }
+      ],
+      "source_url": "https://example.com/v1-contract-2023.pdf"
+    },
+    {
+      "downloaded_at": "2025-02-01T10:00:00",
+      "evidence_anchors": [
+        {
+          "char_range": [
+            120,
+            138
+          ],
+          "confidence": 0.88,
+          "extraction_method": "llm",
+          "file_hash": "hash-v1-contract-2024",
+          "metric": "scope1_co2e_tonnes",
+          "page": 7,
+          "snippet": "Scope 1 emissions decreased to 120 tCO2e.",
+          "source": "V1 Contract Corp Sustainability Report 2024",
+          "source_doc_id": "hash-v1-contract-2024",
+          "source_type": "pdf",
+          "source_url": "https://example.com/v1-contract-2024.pdf"
+        },
+        {
+          "char_range": [
+            420,
+            441
+          ],
+          "confidence": 0.91,
+          "extraction_method": "regex",
+          "file_hash": "hash-v1-contract-2024",
+          "metric": "renewable_energy_pct",
+          "page": 12,
+          "snippet": "Renewable electricity share increased to 45%.",
+          "source": "V1 Contract Corp Sustainability Report 2024",
+          "source_doc_id": "hash-v1-contract-2024",
+          "source_type": "pdf",
+          "source_url": "https://example.com/v1-contract-2024.pdf"
+        },
+        {
+          "char_range": [
+            88,
+            104
+          ],
+          "confidence": 0.8,
+          "extraction_method": "llm",
+          "file_hash": "hash-v1-contract-2024",
+          "metric": "female_pct",
+          "page": 18,
+          "snippet": "Female representation reached 48%.",
+          "source": "V1 Contract Corp Sustainability Report 2024",
+          "source_doc_id": "hash-v1-contract-2024",
+          "source_type": "pdf",
+          "source_url": "https://example.com/v1-contract-2024.pdf"
+        }
+      ],
+      "framework_metadata": [
+        {
+          "analysis_result_id": 1,
+          "framework": "EU Taxonomy 2020",
+          "framework_id": "eu_taxonomy",
+          "framework_version": "2020/852",
+          "report_year": 2024,
+          "stored_at": "2025-02-01T11:00:00"
+        }
+      ],
+      "industry_code": null,
+      "industry_sector": null,
+      "merged_result": {
+        "company_name": "V1 Contract Corp",
+        "merged_metrics": {
+          "company_name": "V1 Contract Corp",
+          "energy_consumption_mwh": 540.0,
+          "evidence_summary": [],
+          "female_pct": 48.0,
+          "industry_code": null,
+          "industry_sector": null,
+          "primary_activities": [
+            "solar_pv",
+            "battery_storage"
+          ],
+          "renewable_energy_pct": 45.0,
+          "report_year": 2024,
+          "reporting_period_label": "FY2024",
+          "reporting_period_type": "annual",
+          "scope1_co2e_tonnes": 120.0,
+          "scope2_co2e_tonnes": 74.0,
+          "scope3_co2e_tonnes": 980.0,
+          "source_document_type": "merged_preview",
+          "taxonomy_aligned_capex_pct": 35.0,
+          "taxonomy_aligned_revenue_pct": 28.0,
+          "total_capex_eur": null,
+          "total_employees": 1020,
+          "total_revenue_eur": null,
+          "waste_recycled_pct": 62.0,
+          "water_usage_m3": 12000.0
+        },
+        "metrics": {
+          "energy_consumption_mwh": {
+            "candidate_values": [
+              {
+                "priority_rank": 300,
+                "reporting_period_label": "FY2024",
+                "source_document_type": "sustainability_report",
+                "source_id": "db:2",
+                "source_url": "https://example.com/v1-contract-2024.pdf",
+                "value": 540.0
+              }
+            ],
+            "chosen_source": "db:2",
+            "chosen_source_document_type": "sustainability_report",
+            "chosen_value": 540.0,
+            "conflict_detected": false,
+            "merge_reason": "single_source",
+            "metric": "energy_consumption_mwh"
+          },
+          "female_pct": {
+            "candidate_values": [
+              {
+                "priority_rank": 300,
+                "reporting_period_label": "FY2024",
+                "source_document_type": "sustainability_report",
+                "source_id": "db:2",
+                "source_url": "https://example.com/v1-contract-2024.pdf",
+                "value": 48.0
+              }
+            ],
+            "chosen_source": "db:2",
+            "chosen_source_document_type": "sustainability_report",
+            "chosen_value": 48.0,
+            "conflict_detected": false,
+            "merge_reason": "single_source",
+            "metric": "female_pct"
+          },
+          "primary_activities": {
+            "candidate_values": [
+              {
+                "priority_rank": 300,
+                "reporting_period_label": "FY2024",
+                "source_document_type": "sustainability_report",
+                "source_id": "db:2",
+                "source_url": "https://example.com/v1-contract-2024.pdf",
+                "value": [
+                  "solar_pv",
+                  "battery_storage"
+                ]
+              }
+            ],
+            "chosen_source": "db:2",
+            "chosen_source_document_type": "sustainability_report",
+            "chosen_value": [
+              "solar_pv",
+              "battery_storage"
+            ],
+            "conflict_detected": false,
+            "merge_reason": "single_source",
+            "metric": "primary_activities"
+          },
+          "renewable_energy_pct": {
+            "candidate_values": [
+              {
+                "priority_rank": 300,
+                "reporting_period_label": "FY2024",
+                "source_document_type": "sustainability_report",
+                "source_id": "db:2",
+                "source_url": "https://example.com/v1-contract-2024.pdf",
+                "value": 45.0
+              }
+            ],
+            "chosen_source": "db:2",
+            "chosen_source_document_type": "sustainability_report",
+            "chosen_value": 45.0,
+            "conflict_detected": false,
+            "merge_reason": "single_source",
+            "metric": "renewable_energy_pct"
+          },
+          "scope1_co2e_tonnes": {
+            "candidate_values": [
+              {
+                "priority_rank": 300,
+                "reporting_period_label": "FY2024",
+                "source_document_type": "sustainability_report",
+                "source_id": "db:2",
+                "source_url": "https://example.com/v1-contract-2024.pdf",
+                "value": 120.0
+              }
+            ],
+            "chosen_source": "db:2",
+            "chosen_source_document_type": "sustainability_report",
+            "chosen_value": 120.0,
+            "conflict_detected": false,
+            "merge_reason": "single_source",
+            "metric": "scope1_co2e_tonnes"
+          },
+          "scope2_co2e_tonnes": {
+            "candidate_values": [
+              {
+                "priority_rank": 300,
+                "reporting_period_label": "FY2024",
+                "source_document_type": "sustainability_report",
+                "source_id": "db:2",
+                "source_url": "https://example.com/v1-contract-2024.pdf",
+                "value": 74.0
+              }
+            ],
+            "chosen_source": "db:2",
+            "chosen_source_document_type": "sustainability_report",
+            "chosen_value": 74.0,
+            "conflict_detected": false,
+            "merge_reason": "single_source",
+            "metric": "scope2_co2e_tonnes"
+          },
+          "scope3_co2e_tonnes": {
+            "candidate_values": [
+              {
+                "priority_rank": 300,
+                "reporting_period_label": "FY2024",
+                "source_document_type": "sustainability_report",
+                "source_id": "db:2",
+                "source_url": "https://example.com/v1-contract-2024.pdf",
+                "value": 980.0
+              }
+            ],
+            "chosen_source": "db:2",
+            "chosen_source_document_type": "sustainability_report",
+            "chosen_value": 980.0,
+            "conflict_detected": false,
+            "merge_reason": "single_source",
+            "metric": "scope3_co2e_tonnes"
+          },
+          "taxonomy_aligned_capex_pct": {
+            "candidate_values": [
+              {
+                "priority_rank": 300,
+                "reporting_period_label": "FY2024",
+                "source_document_type": "sustainability_report",
+                "source_id": "db:2",
+                "source_url": "https://example.com/v1-contract-2024.pdf",
+                "value": 35.0
+              }
+            ],
+            "chosen_source": "db:2",
+            "chosen_source_document_type": "sustainability_report",
+            "chosen_value": 35.0,
+            "conflict_detected": false,
+            "merge_reason": "single_source",
+            "metric": "taxonomy_aligned_capex_pct"
+          },
+          "taxonomy_aligned_revenue_pct": {
+            "candidate_values": [
+              {
+                "priority_rank": 300,
+                "reporting_period_label": "FY2024",
+                "source_document_type": "sustainability_report",
+                "source_id": "db:2",
+                "source_url": "https://example.com/v1-contract-2024.pdf",
+                "value": 28.0
+              }
+            ],
+            "chosen_source": "db:2",
+            "chosen_source_document_type": "sustainability_report",
+            "chosen_value": 28.0,
+            "conflict_detected": false,
+            "merge_reason": "single_source",
+            "metric": "taxonomy_aligned_revenue_pct"
+          },
+          "total_employees": {
+            "candidate_values": [
+              {
+                "priority_rank": 300,
+                "reporting_period_label": "FY2024",
+                "source_document_type": "sustainability_report",
+                "source_id": "db:2",
+                "source_url": "https://example.com/v1-contract-2024.pdf",
+                "value": 1020
+              }
+            ],
+            "chosen_source": "db:2",
+            "chosen_source_document_type": "sustainability_report",
+            "chosen_value": 1020,
+            "conflict_detected": false,
+            "merge_reason": "single_source",
+            "metric": "total_employees"
+          },
+          "waste_recycled_pct": {
+            "candidate_values": [
+              {
+                "priority_rank": 300,
+                "reporting_period_label": "FY2024",
+                "source_document_type": "sustainability_report",
+                "source_id": "db:2",
+                "source_url": "https://example.com/v1-contract-2024.pdf",
+                "value": 62.0
+              }
+            ],
+            "chosen_source": "db:2",
+            "chosen_source_document_type": "sustainability_report",
+            "chosen_value": 62.0,
+            "conflict_detected": false,
+            "merge_reason": "single_source",
+            "metric": "waste_recycled_pct"
+          },
+          "water_usage_m3": {
+            "candidate_values": [
+              {
+                "priority_rank": 300,
+                "reporting_period_label": "FY2024",
+                "source_document_type": "sustainability_report",
+                "source_id": "db:2",
+                "source_url": "https://example.com/v1-contract-2024.pdf",
+                "value": 12000.0
+              }
+            ],
+            "chosen_source": "db:2",
+            "chosen_source_document_type": "sustainability_report",
+            "chosen_value": 12000.0,
+            "conflict_detected": false,
+            "merge_reason": "single_source",
+            "metric": "water_usage_m3"
+          }
+        },
+        "report_year": 2024,
+        "source_count": 1
+      },
+      "period": {
+        "fiscal_year": 2024,
+        "label": "FY2024",
+        "legacy_report_year": 2024,
+        "period_end": "2024-12-31",
+        "period_id": "V1 Contract Corp:2024:annual:FY2024",
+        "period_start": "2024-01-01",
+        "reporting_standard": "sustainability_report",
+        "source_document_type": "sustainability_report",
+        "type": "annual"
+      },
+      "report_year": 2024,
+      "reporting_period_label": "FY2024",
+      "reporting_period_type": "annual",
+      "source_document_type": "sustainability_report",
+      "source_documents": [
+        {
+          "downloaded_at": "2025-02-01T10:00:00",
+          "evidence_anchors": [
+            {
+              "char_range": [
+                120,
+                138
+              ],
+              "confidence": 0.88,
+              "extraction_method": "llm",
+              "file_hash": "hash-v1-contract-2024",
+              "metric": "scope1_co2e_tonnes",
+              "page": 7,
+              "snippet": "Scope 1 emissions decreased to 120 tCO2e.",
+              "source": "V1 Contract Corp Sustainability Report 2024",
+              "source_doc_id": "hash-v1-contract-2024",
+              "source_type": "pdf",
+              "source_url": "https://example.com/v1-contract-2024.pdf"
+            },
+            {
+              "char_range": [
+                420,
+                441
+              ],
+              "confidence": 0.91,
+              "extraction_method": "regex",
+              "file_hash": "hash-v1-contract-2024",
+              "metric": "renewable_energy_pct",
+              "page": 12,
+              "snippet": "Renewable electricity share increased to 45%.",
+              "source": "V1 Contract Corp Sustainability Report 2024",
+              "source_doc_id": "hash-v1-contract-2024",
+              "source_type": "pdf",
+              "source_url": "https://example.com/v1-contract-2024.pdf"
+            },
+            {
+              "char_range": [
+                88,
+                104
+              ],
+              "confidence": 0.8,
+              "extraction_method": "llm",
+              "file_hash": "hash-v1-contract-2024",
+              "metric": "female_pct",
+              "page": 18,
+              "snippet": "Female representation reached 48%.",
+              "source": "V1 Contract Corp Sustainability Report 2024",
+              "source_doc_id": "hash-v1-contract-2024",
+              "source_type": "pdf",
+              "source_url": "https://example.com/v1-contract-2024.pdf"
+            }
+          ],
+          "file_hash": "hash-v1-contract-2024",
+          "pdf_filename": "v1-contract-2024.pdf",
+          "reporting_period_label": "FY2024",
+          "reporting_period_type": "annual",
+          "source_document_type": "sustainability_report",
+          "source_id": "db:2",
+          "source_url": "https://example.com/v1-contract-2024.pdf"
+        }
+      ],
+      "source_url": "https://example.com/v1-contract-2024.pdf"
+    }
+  ],
+  "scored_metrics": {
+    "energy_consumption_mwh": {
+      "evidence": {
+        "char_range": null,
+        "confidence": 0.55,
+        "extraction_method": "pdf_text",
+        "page": null,
+        "snippet": "energy_consumption_mwh reported as 540.0",
+        "source_doc_id": "hash-v1-contract-2024"
+      },
+      "framework_mappings": [
+        {
+          "dimension": "Climate",
+          "framework_id": "eu_taxonomy",
+          "framework_name": "EU Taxonomy 2020",
+          "rationale": null
+        },
+        {
+          "dimension": "E1 Climate Change",
+          "framework_id": "csrd",
+          "framework_name": "EU CSRD / ESRS",
+          "rationale": null
+        },
+        {
+          "dimension": "GRI 302 Energy",
+          "framework_id": "gri_universal",
+          "framework_name": "GRI Universal Standards 2021",
+          "rationale": null
+        },
+        {
+          "dimension": "Environment",
+          "framework_id": "sasb_standards",
+          "framework_name": "SASB Industry Standards",
+          "rationale": null
+        },
+        {
+          "dimension": "环境",
+          "framework_id": "csrc_2023",
+          "framework_name": "中国证监会 CSRC 2023",
+          "rationale": null
+        }
+      ],
+      "metric": "energy_consumption_mwh",
+      "period": {
+        "fiscal_year": 2024,
+        "period_end": "2024-12-31",
+        "period_start": "2024-01-01",
+        "reporting_standard": "sustainability_report"
+      },
+      "source_document_type": "sustainability_report",
+      "unit": "MWh",
+      "value": 540.0
+    },
+    "female_pct": {
+      "evidence": {
+        "char_range": [
+          88,
+          104
+        ],
+        "confidence": 0.8,
+        "extraction_method": "llm",
+        "page": 18,
+        "snippet": "Female representation reached 48%.",
+        "source_doc_id": "hash-v1-contract-2024"
+      },
+      "framework_mappings": [
+        {
+          "dimension": "S1 Own Workforce",
+          "framework_id": "csrd",
+          "framework_name": "EU CSRD / ESRS",
+          "rationale": null
+        },
+        {
+          "dimension": "GRI 405 Diversity and Equal Opportunity",
+          "framework_id": "gri_universal",
+          "framework_name": "GRI Universal Standards 2021",
+          "rationale": null
+        },
+        {
+          "dimension": "Social Capital",
+          "framework_id": "sasb_standards",
+          "framework_name": "SASB Industry Standards",
+          "rationale": null
+        },
+        {
+          "dimension": "社会",
+          "framework_id": "csrc_2023",
+          "framework_name": "中国证监会 CSRC 2023",
+          "rationale": null
+        }
+      ],
+      "metric": "female_pct",
+      "period": {
+        "fiscal_year": 2024,
+        "period_end": "2024-12-31",
+        "period_start": "2024-01-01",
+        "reporting_standard": "sustainability_report"
+      },
+      "source_document_type": "sustainability_report",
+      "unit": "percent",
+      "value": 48.0
+    },
+    "primary_activities": {
+      "evidence": {
+        "char_range": null,
+        "confidence": 0.55,
+        "extraction_method": "pdf_text",
+        "page": null,
+        "snippet": "primary_activities reported as solar_pv, battery_storage",
+        "source_doc_id": "hash-v1-contract-2024"
+      },
+      "framework_mappings": [
+        {
+          "dimension": "Eligible Activities",
+          "framework_id": "eu_taxonomy",
+          "framework_name": "EU Taxonomy 2020",
+          "rationale": null
+        }
+      ],
+      "metric": "primary_activities",
+      "period": {
+        "fiscal_year": 2024,
+        "period_end": "2024-12-31",
+        "period_start": "2024-01-01",
+        "reporting_standard": "sustainability_report"
+      },
+      "source_document_type": "sustainability_report",
+      "unit": "activity_ids",
+      "value": [
+        "solar_pv",
+        "battery_storage"
+      ]
+    },
+    "renewable_energy_pct": {
+      "evidence": {
+        "char_range": [
+          420,
+          441
+        ],
+        "confidence": 0.91,
+        "extraction_method": "regex",
+        "page": 12,
+        "snippet": "Renewable electricity share increased to 45%.",
+        "source_doc_id": "hash-v1-contract-2024"
+      },
+      "framework_mappings": [
+        {
+          "dimension": "Climate",
+          "framework_id": "eu_taxonomy",
+          "framework_name": "EU Taxonomy 2020",
+          "rationale": null
+        },
+        {
+          "dimension": "E1 Climate Change",
+          "framework_id": "csrd",
+          "framework_name": "EU CSRD / ESRS",
+          "rationale": null
+        },
+        {
+          "dimension": "GRI 302 Energy",
+          "framework_id": "gri_universal",
+          "framework_name": "GRI Universal Standards 2021",
+          "rationale": null
+        },
+        {
+          "dimension": "Environment",
+          "framework_id": "sasb_standards",
+          "framework_name": "SASB Industry Standards",
+          "rationale": null
+        },
+        {
+          "dimension": "环境",
+          "framework_id": "csrc_2023",
+          "framework_name": "中国证监会 CSRC 2023",
+          "rationale": null
+        }
+      ],
+      "metric": "renewable_energy_pct",
+      "period": {
+        "fiscal_year": 2024,
+        "period_end": "2024-12-31",
+        "period_start": "2024-01-01",
+        "reporting_standard": "sustainability_report"
+      },
+      "source_document_type": "sustainability_report",
+      "unit": "percent",
+      "value": 45.0
+    },
+    "scope1_co2e_tonnes": {
+      "evidence": {
+        "char_range": [
+          120,
+          138
+        ],
+        "confidence": 0.88,
+        "extraction_method": "llm",
+        "page": 7,
+        "snippet": "Scope 1 emissions decreased to 120 tCO2e.",
+        "source_doc_id": "hash-v1-contract-2024"
+      },
+      "framework_mappings": [
+        {
+          "dimension": "Climate",
+          "framework_id": "eu_taxonomy",
+          "framework_name": "EU Taxonomy 2020",
+          "rationale": null
+        },
+        {
+          "dimension": "E1 Climate Change",
+          "framework_id": "csrd",
+          "framework_name": "EU CSRD / ESRS",
+          "rationale": null
+        },
+        {
+          "dimension": "GHG Emissions",
+          "framework_id": "sec_climate",
+          "framework_name": "SEC Climate Disclosure",
+          "rationale": null
+        },
+        {
+          "dimension": "GRI 305 Emissions",
+          "framework_id": "gri_universal",
+          "framework_name": "GRI Universal Standards 2021",
+          "rationale": null
+        },
+        {
+          "dimension": "Environment",
+          "framework_id": "sasb_standards",
+          "framework_name": "SASB Industry Standards",
+          "rationale": null
+        },
+        {
+          "dimension": "环境",
+          "framework_id": "csrc_2023",
+          "framework_name": "中国证监会 CSRC 2023",
+          "rationale": null
+        }
+      ],
+      "metric": "scope1_co2e_tonnes",
+      "period": {
+        "fiscal_year": 2024,
+        "period_end": "2024-12-31",
+        "period_start": "2024-01-01",
+        "reporting_standard": "sustainability_report"
+      },
+      "source_document_type": "sustainability_report",
+      "unit": "tCO2e",
+      "value": 120.0
+    },
+    "scope2_co2e_tonnes": {
+      "evidence": {
+        "char_range": null,
+        "confidence": 0.55,
+        "extraction_method": "pdf_text",
+        "page": null,
+        "snippet": "scope2_co2e_tonnes reported as 74.0",
+        "source_doc_id": "hash-v1-contract-2024"
+      },
+      "framework_mappings": [
+        {
+          "dimension": "Climate",
+          "framework_id": "eu_taxonomy",
+          "framework_name": "EU Taxonomy 2020",
+          "rationale": null
+        },
+        {
+          "dimension": "E1 Climate Change",
+          "framework_id": "csrd",
+          "framework_name": "EU CSRD / ESRS",
+          "rationale": null
+        },
+        {
+          "dimension": "GHG Emissions",
+          "framework_id": "sec_climate",
+          "framework_name": "SEC Climate Disclosure",
+          "rationale": null
+        },
+        {
+          "dimension": "GRI 305 Emissions",
+          "framework_id": "gri_universal",
+          "framework_name": "GRI Universal Standards 2021",
+          "rationale": null
+        },
+        {
+          "dimension": "Environment",
+          "framework_id": "sasb_standards",
+          "framework_name": "SASB Industry Standards",
+          "rationale": null
+        },
+        {
+          "dimension": "环境",
+          "framework_id": "csrc_2023",
+          "framework_name": "中国证监会 CSRC 2023",
+          "rationale": null
+        }
+      ],
+      "metric": "scope2_co2e_tonnes",
+      "period": {
+        "fiscal_year": 2024,
+        "period_end": "2024-12-31",
+        "period_start": "2024-01-01",
+        "reporting_standard": "sustainability_report"
+      },
+      "source_document_type": "sustainability_report",
+      "unit": "tCO2e",
+      "value": 74.0
+    },
+    "scope3_co2e_tonnes": {
+      "evidence": {
+        "char_range": null,
+        "confidence": 0.55,
+        "extraction_method": "pdf_text",
+        "page": null,
+        "snippet": "scope3_co2e_tonnes reported as 980.0",
+        "source_doc_id": "hash-v1-contract-2024"
+      },
+      "framework_mappings": [
+        {
+          "dimension": "E1 Climate Change",
+          "framework_id": "csrd",
+          "framework_name": "EU CSRD / ESRS",
+          "rationale": null
+        },
+        {
+          "dimension": "GHG Emissions",
+          "framework_id": "sec_climate",
+          "framework_name": "SEC Climate Disclosure",
+          "rationale": null
+        },
+        {
+          "dimension": "GRI 305 Emissions",
+          "framework_id": "gri_universal",
+          "framework_name": "GRI Universal Standards 2021",
+          "rationale": null
+        },
+        {
+          "dimension": "环境",
+          "framework_id": "csrc_2023",
+          "framework_name": "中国证监会 CSRC 2023",
+          "rationale": null
+        }
+      ],
+      "metric": "scope3_co2e_tonnes",
+      "period": {
+        "fiscal_year": 2024,
+        "period_end": "2024-12-31",
+        "period_start": "2024-01-01",
+        "reporting_standard": "sustainability_report"
+      },
+      "source_document_type": "sustainability_report",
+      "unit": "tCO2e",
+      "value": 980.0
+    },
+    "taxonomy_aligned_capex_pct": {
+      "evidence": {
+        "char_range": null,
+        "confidence": 0.55,
+        "extraction_method": "pdf_text",
+        "page": null,
+        "snippet": "taxonomy_aligned_capex_pct reported as 35.0",
+        "source_doc_id": "hash-v1-contract-2024"
+      },
+      "framework_mappings": [
+        {
+          "dimension": "CapEx KPI",
+          "framework_id": "eu_taxonomy",
+          "framework_name": "EU Taxonomy 2020",
+          "rationale": null
+        },
+        {
+          "dimension": "Climate-related CapEx",
+          "framework_id": "sec_climate",
+          "framework_name": "SEC Climate Disclosure",
+          "rationale": null
+        },
+        {
+          "dimension": "Sustainable CapEx",
+          "framework_id": "sasb_standards",
+          "framework_name": "SASB Industry Standards",
+          "rationale": null
+        }
+      ],
+      "metric": "taxonomy_aligned_capex_pct",
+      "period": {
+        "fiscal_year": 2024,
+        "period_end": "2024-12-31",
+        "period_start": "2024-01-01",
+        "reporting_standard": "sustainability_report"
+      },
+      "source_document_type": "sustainability_report",
+      "unit": "percent",
+      "value": 35.0
+    },
+    "taxonomy_aligned_revenue_pct": {
+      "evidence": {
+        "char_range": null,
+        "confidence": 0.55,
+        "extraction_method": "pdf_text",
+        "page": null,
+        "snippet": "taxonomy_aligned_revenue_pct reported as 28.0",
+        "source_doc_id": "hash-v1-contract-2024"
+      },
+      "framework_mappings": [
+        {
+          "dimension": "Turnover KPI",
+          "framework_id": "eu_taxonomy",
+          "framework_name": "EU Taxonomy 2020",
+          "rationale": null
+        }
+      ],
+      "metric": "taxonomy_aligned_revenue_pct",
+      "period": {
+        "fiscal_year": 2024,
+        "period_end": "2024-12-31",
+        "period_start": "2024-01-01",
+        "reporting_standard": "sustainability_report"
+      },
+      "source_document_type": "sustainability_report",
+      "unit": "percent",
+      "value": 28.0
+    },
+    "total_employees": {
+      "evidence": {
+        "char_range": null,
+        "confidence": 0.55,
+        "extraction_method": "pdf_text",
+        "page": null,
+        "snippet": "total_employees reported as 1020",
+        "source_doc_id": "hash-v1-contract-2024"
+      },
+      "framework_mappings": [
+        {
+          "dimension": "S1 Own Workforce",
+          "framework_id": "csrd",
+          "framework_name": "EU CSRD / ESRS",
+          "rationale": null
+        },
+        {
+          "dimension": "GRI 2 / 401",
+          "framework_id": "gri_universal",
+          "framework_name": "GRI Universal Standards 2021",
+          "rationale": null
+        },
+        {
+          "dimension": "Social Capital",
+          "framework_id": "sasb_standards",
+          "framework_name": "SASB Industry Standards",
+          "rationale": null
+        },
+        {
+          "dimension": "社会",
+          "framework_id": "csrc_2023",
+          "framework_name": "中国证监会 CSRC 2023",
+          "rationale": null
+        }
+      ],
+      "metric": "total_employees",
+      "period": {
+        "fiscal_year": 2024,
+        "period_end": "2024-12-31",
+        "period_start": "2024-01-01",
+        "reporting_standard": "sustainability_report"
+      },
+      "source_document_type": "sustainability_report",
+      "unit": "count",
+      "value": 1020
+    },
+    "waste_recycled_pct": {
+      "evidence": {
+        "char_range": null,
+        "confidence": 0.55,
+        "extraction_method": "pdf_text",
+        "page": null,
+        "snippet": "waste_recycled_pct reported as 62.0",
+        "source_doc_id": "hash-v1-contract-2024"
+      },
+      "framework_mappings": [
+        {
+          "dimension": "Circular Economy DNSH",
+          "framework_id": "eu_taxonomy",
+          "framework_name": "EU Taxonomy 2020",
+          "rationale": null
+        },
+        {
+          "dimension": "E5 Resource Use and Circular Economy",
+          "framework_id": "csrd",
+          "framework_name": "EU CSRD / ESRS",
+          "rationale": null
+        },
+        {
+          "dimension": "GRI 306 Waste",
+          "framework_id": "gri_universal",
+          "framework_name": "GRI Universal Standards 2021",
+          "rationale": null
+        }
+      ],
+      "metric": "waste_recycled_pct",
+      "period": {
+        "fiscal_year": 2024,
+        "period_end": "2024-12-31",
+        "period_start": "2024-01-01",
+        "reporting_standard": "sustainability_report"
+      },
+      "source_document_type": "sustainability_report",
+      "unit": "percent",
+      "value": 62.0
+    },
+    "water_usage_m3": {
+      "evidence": {
+        "char_range": null,
+        "confidence": 0.55,
+        "extraction_method": "pdf_text",
+        "page": null,
+        "snippet": "water_usage_m3 reported as 12000.0",
+        "source_doc_id": "hash-v1-contract-2024"
+      },
+      "framework_mappings": [
+        {
+          "dimension": "DNSH Water",
+          "framework_id": "eu_taxonomy",
+          "framework_name": "EU Taxonomy 2020",
+          "rationale": null
+        },
+        {
+          "dimension": "E3 Water and Marine Resources",
+          "framework_id": "csrd",
+          "framework_name": "EU CSRD / ESRS",
+          "rationale": null
+        },
+        {
+          "dimension": "GRI 303 Water",
+          "framework_id": "gri_universal",
+          "framework_name": "GRI Universal Standards 2021",
+          "rationale": null
+        },
+        {
+          "dimension": "环境",
+          "framework_id": "csrc_2023",
+          "framework_name": "中国证监会 CSRC 2023",
+          "rationale": null
+        }
+      ],
+      "metric": "water_usage_m3",
+      "period": {
+        "fiscal_year": 2024,
+        "period_end": "2024-12-31",
+        "period_start": "2024-01-01",
+        "reporting_standard": "sustainability_report"
+      },
+      "source_document_type": "sustainability_report",
+      "unit": "m3",
+      "value": 12000.0
+    }
+  },
+  "trend": [
+    {
+      "female_pct": 44.0,
+      "renewable_pct": 31.0,
+      "scope1": 140.0,
+      "scope2": 88.0,
+      "scope3": null,
+      "taxonomy_aligned_capex_pct": null,
+      "taxonomy_aligned_revenue_pct": null,
+      "year": 2023
+    },
+    {
+      "female_pct": 48.0,
+      "renewable_pct": 45.0,
+      "scope1": 120.0,
+      "scope2": 74.0,
+      "scope3": 980.0,
+      "taxonomy_aligned_capex_pct": 35.0,
+      "taxonomy_aligned_revenue_pct": 28.0,
+      "year": 2024
+    }
+  ],
+  "years_available": [
+    2023,
+    2024
+  ]
+}

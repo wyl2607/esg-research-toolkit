@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft, Building2, CheckCircle2, Clock3, Download, FileText, Leaf, ShieldCheck, Sparkles, TrendingUp, TriangleAlert } from 'lucide-react'
 
+import { EvidenceBadge } from '@/components/EvidenceBadge'
 import { MetricCard } from '@/components/MetricCard'
 import { PeerComparisonCard } from '@/components/company-profile/PeerComparisonCard'
 import { QueryStateCard } from '@/components/QueryStateCard'
@@ -13,6 +14,7 @@ import { getCompanyProfile } from '@/lib/api'
 import type {
   CompanyDataQualitySummary,
   CompanyIdentityProvenanceSummary,
+  EvidenceAnchor,
   CompanySourceDocument,
   CompanyNarrativeSummary,
   FrameworkMetadata,
@@ -87,6 +89,71 @@ function sourceOriginLabel(source: CompanySourceDocument | null | undefined) {
     }
   }
   return source.pdf_filename ?? source.file_hash ?? source.source_id
+}
+
+function mergeEvidenceAnchor(
+  existing: EvidenceAnchor | undefined,
+  incoming: EvidenceAnchor
+): EvidenceAnchor {
+  if (!existing) return incoming
+
+  const merged: EvidenceAnchor = { ...existing }
+  for (const [key, value] of Object.entries(incoming)) {
+    const currentValue = (merged as unknown as Record<string, unknown>)[key]
+    if ((currentValue == null || currentValue === '') && value != null && value !== '') {
+      ;((merged as unknown) as Record<string, unknown>)[key] = value
+    }
+  }
+  return merged
+}
+
+function evidenceRichness(entry: EvidenceAnchor) {
+  return Object.values(entry).reduce((score, value) => {
+    if (typeof value === 'string') {
+      return score + (value.trim() ? 1 + Math.min(value.length / 120, 1) : 0)
+    }
+    if (typeof value === 'number') return score + 1
+    return value != null ? score + 1 : score
+  }, 0)
+}
+
+function normalizeProfileEvidenceAnchor(
+  evidence: EvidenceAnchor,
+  latestSources: CompanySourceDocument[],
+  fallbackPeriodLabel: string | null | undefined,
+  fallbackFramework: string | null | undefined
+): EvidenceAnchor {
+  const matchedSource =
+    latestSources.find(
+      (source) =>
+        (evidence.file_hash && source.file_hash === evidence.file_hash) ||
+        (evidence.source_url && source.source_url === evidence.source_url) ||
+        (evidence.source_type &&
+          source.source_document_type === evidence.source_type)
+    ) ?? latestSources[0]
+
+  return {
+    ...evidence,
+    page: evidence.page ?? evidence.page_number ?? null,
+    source_type:
+      evidence.source_type ?? matchedSource?.source_document_type ?? fallbackFramework ?? null,
+    source_url: evidence.source_url ?? matchedSource?.source_url ?? null,
+    file_hash: evidence.file_hash ?? matchedSource?.file_hash ?? null,
+    document_title:
+      evidence.document_title ??
+      evidence.source ??
+      matchedSource?.pdf_filename ??
+      matchedSource?.source_url ??
+      null,
+    reporting_period_label:
+      evidence.reporting_period_label ?? evidence.period_label ?? fallbackPeriodLabel ?? null,
+    framework:
+      evidence.framework ??
+      evidence.source_type ??
+      matchedSource?.source_document_type ??
+      fallbackFramework ??
+      null,
+  }
 }
 
 function parseCompanyReportId(sourceId: string | null | undefined): number | null {
@@ -330,8 +397,14 @@ export function CompanyProfilePage() {
     }
   }, [dataQualitySummary, frameworkScores.length, profile])
 
-  const missingDisclosureLabels = metricLabelsFromKeys(t, dataQualitySummary?.missing_metrics ?? [])
-  const presentDisclosureLabels = metricLabelsFromKeys(t, dataQualitySummary?.present_metrics ?? [])
+  const missingDisclosureLabels = (dataQualitySummary?.missing_metrics ?? []).map((metricKey) => ({
+    metricKey,
+    label: metricDisclosureLabel(t, metricKey),
+  }))
+  const presentDisclosureLabels = (dataQualitySummary?.present_metrics ?? []).map((metricKey) => ({
+    metricKey,
+    label: metricDisclosureLabel(t, metricKey),
+  }))
   const improvedMetricLabels = metricLabelsFromKeys(t, narrativeSummary?.improved_metrics ?? [])
   const weakenedMetricLabels = metricLabelsFromKeys(t, narrativeSummary?.weakened_metrics ?? [])
   const strengthMetricLabels = metricLabelsFromKeys(t, narrativeSummary?.disclosure_strength_metrics ?? [])
@@ -387,10 +460,39 @@ export function CompanyProfilePage() {
   const latestSourceTypes = compactList(
     latestSources.map((source) => prettifyToken(source.source_document_type))
   )
-  const latestEvidenceSummary =
-    latestSources.flatMap((source) => source.evidence_anchors ?? []).filter(Boolean).length > 0
-      ? latestSources.flatMap((source) => source.evidence_anchors ?? [])
-      : (profile.evidence_summary ?? [])
+  const latestEvidenceSummary = [
+    ...latestSources.flatMap((source) => source.evidence_anchors ?? []),
+    ...(profile.evidence_summary ?? []),
+  ]
+    .map((entry) =>
+      normalizeProfileEvidenceAnchor(
+        entry,
+        latestSources,
+        profile.latest_period.reporting_period_label,
+        profile.latest_period.source_document_type
+      )
+    )
+    .sort((a, b) => evidenceRichness(b) - evidenceRichness(a))
+    .reduce<EvidenceAnchor[]>((acc, normalized) => {
+      const key =
+        normalized.metric ??
+        `${normalized.document_title ?? normalized.source ?? 'evidence'}-${acc.length}`
+      const existingIndex = acc.findIndex((item) => item.metric === key)
+
+      if (existingIndex === -1) {
+        acc.push({ ...normalized, metric: normalized.metric ?? key })
+        return acc
+      }
+
+      acc[existingIndex] = mergeEvidenceAnchor(acc[existingIndex], normalized)
+      return acc
+    }, [])
+  const evidenceByMetric = latestEvidenceSummary.reduce<Map<string, EvidenceAnchor>>((map, entry) => {
+    if (entry.metric) {
+      map.set(entry.metric, entry)
+    }
+    return map
+  }, new Map())
   const latestSourceOrigin = sourceOriginLabel(latestSources[0])
   const latestCompanyReportId = parseCompanyReportId(latestSources[0]?.source_id)
   const latestMergeCue = (() => {
@@ -679,10 +781,63 @@ export function CompanyProfilePage() {
       </Card>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <MetricCard label={t('companies.scope1')} value={asNum(m.scope1_co2e_tonnes, locale)} unit="tCO2e" />
-        <MetricCard label={t('companies.scope2')} value={asNum(m.scope2_co2e_tonnes, locale)} unit="tCO2e" />
-        <MetricCard label={t('companies.employees')} value={asNum(m.total_employees, locale)} unit={t('companies.unitPeople')} />
-        <MetricCard label={t('companies.renewable')} value={asPct(m.renewable_energy_pct)} unit={t('companies.unitPercent')} color="green" />
+        <MetricCard
+          label={t('companies.scope1')}
+          value={asNum(m.scope1_co2e_tonnes, locale)}
+          unit="tCO2e"
+          footer={
+            <EvidenceBadge
+              evidence={evidenceByMetric.get('scope1_co2e_tonnes')}
+              metricLabel={metricDisclosureLabel(t, 'scope1_co2e_tonnes')}
+              fallbackFramework={profile.latest_period.source_document_type}
+              fallbackPeriodLabel={profile.latest_period.reporting_period_label}
+              testId="evidence-badge-scope1_co2e_tonnes"
+            />
+          }
+        />
+        <MetricCard
+          label={t('companies.scope2')}
+          value={asNum(m.scope2_co2e_tonnes, locale)}
+          unit="tCO2e"
+          footer={
+            <EvidenceBadge
+              evidence={evidenceByMetric.get('scope2_co2e_tonnes')}
+              metricLabel={metricDisclosureLabel(t, 'scope2_co2e_tonnes')}
+              fallbackFramework={profile.latest_period.source_document_type}
+              fallbackPeriodLabel={profile.latest_period.reporting_period_label}
+              testId="evidence-badge-scope2_co2e_tonnes"
+            />
+          }
+        />
+        <MetricCard
+          label={t('companies.employees')}
+          value={asNum(m.total_employees, locale)}
+          unit={t('companies.unitPeople')}
+          footer={
+            <EvidenceBadge
+              evidence={evidenceByMetric.get('total_employees')}
+              metricLabel={metricDisclosureLabel(t, 'total_employees')}
+              fallbackFramework={profile.latest_period.source_document_type}
+              fallbackPeriodLabel={profile.latest_period.reporting_period_label}
+              testId="evidence-badge-total_employees"
+            />
+          }
+        />
+        <MetricCard
+          label={t('companies.renewable')}
+          value={asPct(m.renewable_energy_pct)}
+          unit={t('companies.unitPercent')}
+          color="green"
+          footer={
+            <EvidenceBadge
+              evidence={evidenceByMetric.get('renewable_energy_pct')}
+              metricLabel={metricDisclosureLabel(t, 'renewable_energy_pct')}
+              fallbackFramework={profile.latest_period.source_document_type}
+              fallbackPeriodLabel={profile.latest_period.reporting_period_label}
+              testId="evidence-badge-renewable_energy_pct"
+            />
+          }
+        />
       </div>
 
       <PeerComparisonCard
@@ -737,10 +892,20 @@ export function CompanyProfilePage() {
               <p className="text-sm text-slate-500">{t('profile.dataQualityNoPresent')}</p>
             ) : (
               <div className="flex flex-wrap gap-2">
-                {presentDisclosureLabels.map((label) => (
-                  <span key={label} className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs text-emerald-800">
-                    {label}
-                  </span>
+                {presentDisclosureLabels.map(({ metricKey, label }) => (
+                  <div
+                    key={metricKey}
+                    className="flex flex-wrap items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs text-emerald-800"
+                  >
+                    <span>{label}</span>
+                    <EvidenceBadge
+                      evidence={evidenceByMetric.get(metricKey)}
+                      metricLabel={label}
+                      fallbackFramework={profile.latest_period.source_document_type}
+                      fallbackPeriodLabel={profile.latest_period.reporting_period_label}
+                      testId={`evidence-badge-${metricKey}-quality`}
+                    />
+                  </div>
                 ))}
               </div>
             )}
@@ -754,10 +919,20 @@ export function CompanyProfilePage() {
               <p className="text-sm text-emerald-700">{t('profile.dataQualityNoMissing')}</p>
             ) : (
               <div className="flex flex-wrap gap-2">
-                {missingDisclosureLabels.map((label) => (
-                  <span key={label} className="rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-800">
-                    {label}
-                  </span>
+                {missingDisclosureLabels.map(({ metricKey, label }) => (
+                  <div
+                    key={metricKey}
+                    className="flex flex-wrap items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-800"
+                  >
+                    <span>{label}</span>
+                    <EvidenceBadge
+                      evidence={null}
+                      metricLabel={label}
+                      fallbackFramework={profile.latest_period.source_document_type}
+                      fallbackPeriodLabel={profile.latest_period.reporting_period_label}
+                      testId={`evidence-badge-${metricKey}-missing`}
+                    />
+                  </div>
                 ))}
               </div>
             )}
@@ -1008,21 +1183,30 @@ export function CompanyProfilePage() {
               <p className="text-sm text-slate-400">{t('profile.noEvidence')}</p>
             ) : (
               latestEvidenceSummary.map((e, i) => (
-                <div key={i} className="rounded-md border px-3 py-3 text-sm text-slate-700">
-                  <p className="font-medium text-slate-900">
-                    {e.metric ? metricDisclosureLabel(t, e.metric) : t('profile.metricFallback')}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    {[
-                      e.source ?? e.source_type ?? t('profile.sourceFallback'),
-                      e.page != null ? `p. ${e.page}` : null,
-                    ]
-                      .filter(Boolean)
-                      .join(' · ')}
-                  </p>
-                  {e.snippet ? (
-                    <p className="mt-2 text-xs leading-5 text-slate-600">{e.snippet}</p>
-                  ) : null}
+                <div
+                  key={`${e.metric ?? 'metric'}-${i}`}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-md border px-3 py-3 text-sm text-slate-700"
+                >
+                  <div className="min-w-0">
+                    <p className="font-medium text-slate-900">
+                      {e.metric ? metricDisclosureLabel(t, e.metric) : t('profile.metricFallback')}
+                    </p>
+                    <p className="mt-1 truncate text-xs text-slate-500">
+                      {[
+                        e.document_title ?? e.source ?? e.source_type ?? t('profile.sourceFallback'),
+                        e.page != null ? t('profile.evidencePageLabel', { page: e.page }) : null,
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </p>
+                  </div>
+                  <EvidenceBadge
+                    evidence={e}
+                    metricLabel={e.metric ? metricDisclosureLabel(t, e.metric) : t('profile.metricFallback')}
+                    fallbackFramework={profile.latest_period.source_document_type}
+                    fallbackPeriodLabel={profile.latest_period.reporting_period_label}
+                    testId={`evidence-summary-${e.metric ?? i}`}
+                  />
                 </div>
               ))
             )}

@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react'
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 interface MetricCardProps {
@@ -6,6 +8,7 @@ interface MetricCardProps {
   sub?: string
   unit?: string
   color?: 'default' | 'green' | 'red' | 'blue'
+  footer?: ReactNode
 }
 
 export function MetricCard({
@@ -14,6 +17,7 @@ export function MetricCard({
   sub,
   unit,
   color = 'default',
+  footer,
 }: MetricCardProps) {
   const valueColor = {
     default: 'text-slate-900',
@@ -45,6 +49,7 @@ export function MetricCard({
           {value}
         </div>
         {sub && <p className="mt-2 text-xs leading-5 text-slate-500">{sub}</p>}
+        {footer ? <div className="mt-3">{footer}</div> : null}
       </CardContent>
     </Card>
   )

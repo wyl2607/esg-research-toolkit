@@ -260,7 +260,7 @@ export function PeerComparisonCard(props: PeerComparisonCardProps) {
                       {t('peer.sourceTrail.fields.createdAt')}:
                     </span>{' '}
                     <span className="text-stone-900 dark:text-slate-100">
-                      {formatAuditDate(row.created_at, locale)}
+                      {formatAuditDate(row.created_at ?? null, locale)}
                     </span>
                   </p>
                   <p>
