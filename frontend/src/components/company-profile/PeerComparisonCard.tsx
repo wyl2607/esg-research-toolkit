@@ -185,7 +185,7 @@ export function PeerComparisonCard(props: PeerComparisonCardProps) {
                 key={auditTrailKey(row)}
                 className="rounded-md border border-stone-200 bg-white px-3 py-3 text-sm dark:border-slate-700 dark:bg-slate-950/40"
               >
-                <div className="grid gap-2 md:grid-cols-3">
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                   <p>
                     <span className="font-medium text-stone-600 dark:text-slate-300">
                       {t('peer.sourceTrail.fields.runKind')}:
@@ -202,7 +202,7 @@ export function PeerComparisonCard(props: PeerComparisonCardProps) {
                       {row.model ?? '—'}
                     </span>
                   </p>
-                  <p>
+                  <p className="sm:col-span-2 lg:col-span-1">
                     <span className="font-medium text-stone-600 dark:text-slate-300">
                       {t('peer.sourceTrail.fields.createdAt')}:
                     </span>{' '}
@@ -234,7 +234,7 @@ export function PeerComparisonCard(props: PeerComparisonCardProps) {
                     <span className="font-medium text-stone-600 dark:text-slate-300">
                       {t('peer.sourceTrail.fields.id')}:
                     </span>{' '}
-                    <span className="text-stone-900 dark:text-slate-100">
+                    <span className="break-all text-xs text-stone-900 dark:text-slate-100">
                       {row.id}
                     </span>
                   </p>

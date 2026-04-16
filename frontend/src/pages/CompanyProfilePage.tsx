@@ -757,6 +757,17 @@ export function CompanyProfilePage() {
       </Card>
 
       <DeferredHeavyCharts key={decodedName} ready={!isLoading} fallback={chartFallback}>
+        {trendData.length < 2 && (
+          <Card className="border-amber-200 bg-amber-50">
+            <CardContent className="flex items-start gap-3 pt-6">
+              <TriangleAlert size={16} className="mt-0.5 shrink-0 text-amber-600" />
+              <div className="flex-1">
+                <p className="font-medium text-amber-900">{t('profile.trendInsufficientDataTitle')}</p>
+                <p className="mt-1 text-sm text-amber-800">{t('profile.trendInsufficientDataBody')}</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
         <Suspense
           fallback={chartFallback}
         >

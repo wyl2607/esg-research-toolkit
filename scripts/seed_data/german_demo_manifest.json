@@ -11,6 +11,24 @@
       "verify": false
     },
     {
+      "slug": "rwe-2023",
+      "company_name": "RWE AG",
+      "report_year": 2023,
+      "industry_code": "D35.11",
+      "industry_sector": "Electricity production",
+      "source_url": "https://www.rwe.com/-/media/RWE/documents/05-investor-relations/finanzkalendar-und-veroeffentlichungen/2023-Q4/2024-03-14-rwe-annual-report-2023.pdf",
+      "verify": true
+    },
+    {
+      "slug": "rwe-2022",
+      "company_name": "RWE AG",
+      "report_year": 2022,
+      "industry_code": "D35.11",
+      "industry_sector": "Electricity production",
+      "source_url": "https://www.rwe.com/-/media/RWE/documents/05-investor-relations/finanzkalendar-und-veroeffentlichungen/2022-GJ/2023-03-21-rwe-annual-report-2022.pdf",
+      "verify": true
+    },
+    {
       "slug": "eon-2024",
       "company_name": "E.ON SE",
       "report_year": 2024,
@@ -65,6 +83,24 @@
       "verify": false
     },
     {
+      "slug": "basf-2023",
+      "company_name": "BASF SE",
+      "report_year": 2023,
+      "industry_code": "C20.14",
+      "industry_sector": "Organic basic chemicals",
+      "source_url": "https://report.basf.com/2023/en/_assets/downloads/entire-basf-ar23.pdf",
+      "verify": true
+    },
+    {
+      "slug": "basf-2022",
+      "company_name": "BASF SE",
+      "report_year": 2022,
+      "industry_code": "C20.14",
+      "industry_sector": "Organic basic chemicals",
+      "source_url": "https://report.basf.com/2022/en/_assets/downloads/entire-basf-ar22.pdf",
+      "verify": true
+    },
+    {
       "slug": "linde-2024",
       "company_name": "Linde plc",
       "report_year": 2024,
@@ -92,6 +128,24 @@
       "verify": false
     },
     {
+      "slug": "volkswagen-2023",
+      "company_name": "Volkswagen AG",
+      "report_year": 2023,
+      "industry_code": "C29.10",
+      "industry_sector": "Motor vehicles",
+      "source_url": "https://annualreport2023.volkswagen-group.com/_assets/downloads/entire-vw-ar23.pdf",
+      "verify": true
+    },
+    {
+      "slug": "volkswagen-2022",
+      "company_name": "Volkswagen AG",
+      "report_year": 2022,
+      "industry_code": "C29.10",
+      "industry_sector": "Motor vehicles",
+      "source_url": "https://annualreport2022.volkswagenag.com/_assets/downloads/entire-vw-ar22.pdf",
+      "verify": true
+    },
+    {
       "slug": "deutsche-telekom-2024",
       "company_name": "Deutsche Telekom AG",
       "report_year": 2024,
@@ -101,12 +155,48 @@
       "verify": false
     },
     {
+      "slug": "deutsche-telekom-2023",
+      "company_name": "Deutsche Telekom AG",
+      "report_year": 2023,
+      "industry_code": "J61.10",
+      "industry_sector": "Telecommunications",
+      "source_url": "https://report.telekom.com/annual-report-2023/_assets/downloads/entire-dtag-ar23.pdf",
+      "verify": true
+    },
+    {
+      "slug": "deutsche-telekom-2022",
+      "company_name": "Deutsche Telekom AG",
+      "report_year": 2022,
+      "industry_code": "J61.10",
+      "industry_sector": "Telecommunications",
+      "source_url": "https://report.telekom.com/annual-report-2022/_assets/downloads/entire-dtag-ar22.pdf",
+      "verify": true
+    },
+    {
       "slug": "bmw-group-2024",
       "company_name": "BMW AG",
       "report_year": 2024,
       "industry_code": "C29.10",
       "industry_sector": "Motor vehicles",
       "source_url": "https://www.bmwgroup.com/en/report/2024/downloads/BMW-Group-Report-2024-en.pdf",
+      "verify": true
+    },
+    {
+      "slug": "bmw-group-2023",
+      "company_name": "BMW AG",
+      "report_year": 2023,
+      "industry_code": "C29.10",
+      "industry_sector": "Motor vehicles",
+      "source_url": "https://www.bmwgroup.com/en/report/2023/downloads/BMW-Group-Report-2023-en.pdf",
+      "verify": true
+    },
+    {
+      "slug": "bmw-group-2022",
+      "company_name": "BMW AG",
+      "report_year": 2022,
+      "industry_code": "C29.10",
+      "industry_sector": "Motor vehicles",
+      "source_url": "https://www.bmwgroup.com/en/report/2022/downloads/BMW-Group-Report-2022-en.pdf",
       "verify": true
     },
     {
@@ -128,6 +218,24 @@
       "verify": false
     },
     {
+      "slug": "sap-se-2023",
+      "company_name": "SAP SE",
+      "report_year": 2023,
+      "industry_code": "J62.01",
+      "industry_sector": "Software publishing and enterprise software",
+      "source_url": "https://www.sap.com/docs/download/investors/2023/sap-2023-integrated-report.pdf",
+      "verify": true
+    },
+    {
+      "slug": "sap-se-2022",
+      "company_name": "SAP SE",
+      "report_year": 2022,
+      "industry_code": "J62.01",
+      "industry_sector": "Software publishing and enterprise software",
+      "source_url": "https://www.sap.com/docs/download/investors/2022/sap-2022-integrated-report.pdf",
+      "verify": true
+    },
+    {
       "slug": "munich-re-2024",
       "company_name": "Munich Re",
       "report_year": 2024,
@@ -144,6 +252,24 @@
       "industry_sector": "Postal and courier activities",
       "source_url": "https://group.dhl.com/content/dam/deutschepostdhl/en/media-center/investors/documents/annual-reports/DHL-Group-2024-Annual-Report.pdf",
       "verify": false
+    },
+    {
+      "slug": "dhl-group-2023",
+      "company_name": "DHL Group",
+      "report_year": 2023,
+      "industry_code": "H53.20",
+      "industry_sector": "Postal and courier activities",
+      "source_url": "https://group.dhl.com/content/dam/deutschepostdhl/en/media-center/investors/documents/annual-reports/DHL-Group-2023-Annual-Report.pdf",
+      "verify": true
+    },
+    {
+      "slug": "dhl-group-2022",
+      "company_name": "DHL Group",
+      "report_year": 2022,
+      "industry_code": "H53.20",
+      "industry_sector": "Postal and courier activities",
+      "source_url": "https://group.dhl.com/content/dam/deutschepostdhl/en/media-center/investors/documents/annual-reports/DPDHL-2022-Annual-Report.pdf",
+      "verify": true
     },
     {
       "slug": "fresenius-2024",
@@ -179,6 +305,24 @@
       "industry_code": "C21.10",
       "industry_sector": "Life sciences and pharmaceuticals",
       "source_url": "https://www.reports.emdgroup.com/en/annualreport/2024/_assets/downloads/entire-emd-ar24.pdf",
+      "verify": true
+    },
+    {
+      "slug": "siemens-ag-2023",
+      "company_name": "Siemens AG",
+      "report_year": 2023,
+      "industry_code": "C30.30",
+      "industry_sector": "Manufacture of electrical machinery",
+      "source_url": "https://assets.new.siemens.com/siemens/assets/api/uuid:00095b96-4712-4cd1-b045-19d5df704358/sustainability-report-fy2023.pdf",
+      "verify": true
+    },
+    {
+      "slug": "henkel-ag-2023",
+      "company_name": "Henkel AG & Co. KGaA",
+      "report_year": 2023,
+      "industry_code": "C20.41",
+      "industry_sector": "Soap and detergents manufacturing",
+      "source_url": "https://www.henkel.com/resource/blob/213102/aa96f24e5c2aabf065e6a35cfe41d2ec/data/henkel-annual-report-2023.pdf",
       "verify": true
     }
   ]

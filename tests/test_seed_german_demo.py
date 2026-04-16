@@ -8,7 +8,8 @@ from scripts.seed_german_demo import PDF_DOWNLOAD_HEADERS, SeedCompany, ensure_p
 def test_manifest_parses_and_has_twenty_companies() -> None:
     companies = load_manifest()
 
-    assert len(companies) == 20
+    # Manifest expanded to include multi-year data (2022-2024) for core DAX companies
+    assert len(companies) >= 20
     assert all(isinstance(company, SeedCompany) for company in companies)
 
     # Must remain aligned with frontend NACE picker coverage
@@ -18,6 +19,7 @@ def test_manifest_parses_and_has_twenty_companies() -> None:
         "C20",
         "C23",
         "C29",
+        "C30",  # Manufacture of electrical machinery (Siemens)
         "K64",
         "K65",
         "F41",
