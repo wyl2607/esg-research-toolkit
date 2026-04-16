@@ -8,6 +8,50 @@
 - 在本文件追加版本摘要
 - 在 `docs/releases/` 下新增同日详细日报
 
+## [0.2.1] - 2026-04-16
+
+### Added
+
+- 多年趋势 3 年回归测试 `test_company_history_three_year_trend_ordering_and_yoy`，守护 `/companies/{name}/history` 排序与 `years_available` 契约。
+- `scripts/automation/` 自动化工具链（5 脚本 + README）：`run_fullstack.sh` 全栈启停、`auto_fix_smoke.sh` 自愈式 smoke、`interactive_dev.py` 交互菜单、`ui_autopolish.py` 视觉 LLM 自评审、`stress_test.sh` 并发 + 页面可达性探测。
+- `scripts/seed_german_demo.py` 新增 `--only` / `--slug` / `--company` 过滤，便于对单公司做小样本重跑；配套 4 条单测。
+- `_upload_evidence_summary` 回退逻辑：优先使用分析器产出的 evidence，缺失时按非空指标填充 placeholder；2 条单测钉死行为。
+- 新增版本日报 `docs/releases/2026-04-16-v0.2.1.md`。
+
+### Changed
+
+- `OPENAI_VALIDATION_MODEL` 默认值从 `gpt-4o-mini` 升级到 `gpt-5.4-mini`；seed runbook 文案对齐。
+- `phase_b` 在写入 anomalies 报告前丢弃 `"no concern"` 占位 concern，减少噪声。
+
+### Fixed
+
+- `.gitignore` 补齐 `scripts/automation/screenshots/` / `ui_reports/` / `*.png` / `PHASE_*.md`，避免本地运行时产物被意外提交。
+
+### Verified
+
+- `OPENAI_API_KEY=dummy .venv/bin/pytest -q` → `120 passed`
+- `scripts/automation/run_fullstack.sh --detach` → backend 8000 + frontend 5173 均 200
+- `cd frontend && npm run lint && npm run build` → pass
+
+## [0.2.0] - 2026-04-16
+
+### Added
+
+- 多年趋势数据首轮落地：SAP / BASF / Volkswagen / Deutsche Telekom / RWE 五家公司覆盖 2022–2024。
+- Skeleton loader 组件 + BenchmarkPage 渲染体验改进。
+- 数据导出 CSV 新增 metadata / Historical Trends 分区与时间戳文件名。
+- Company Profile 多年趋势 YoY 卡片可视化。
+
+### Changed
+
+- Audit Trail（PeerComparisonCard）改为 mobile-first 响应式栅格（1 → 2 → 3 列）。
+- 数据质量告警组件：趋势数据 < 2 点时显示多语言提示。
+
+### Verified
+
+- `cd frontend && npm run lint && npm run build && npm run test:smoke` → all pass
+- benchmark 校验：72 行 0 violations
+
 ## [0.1.0] - 2026-04-15
 
 ### Added
