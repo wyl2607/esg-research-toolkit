@@ -38,3 +38,57 @@ jobs:
           DATABASE_URL: "sqlite://"
         run: |
           python -c "from main import app; print('✓ App imports OK')"
+
+  fullstack-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install backend dependencies into local .venv
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install --upgrade pip
+          .venv/bin/pip install -r requirements.txt
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci --legacy-peer-deps
+
+      - name: Run fullstack smoke via automation launcher
+        env:
+          OPENAI_API_KEY: test_key_placeholder
+          DATABASE_URL: sqlite:////tmp/esg-fullstack-smoke.db
+        run: |
+          chmod +x scripts/automation/run_fullstack.sh
+          scripts/automation/run_fullstack.sh --detach
+          scripts/automation/run_fullstack.sh --status
+          curl -fsS http://127.0.0.1:8000/health
+          curl -fsS http://127.0.0.1:5173/ > /dev/null
+
+      - name: Stop fullstack services
+        if: always()
+        run: scripts/automation/run_fullstack.sh --stop || true
+
+      - name: Upload fullstack logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fullstack-smoke-logs
+          path: scripts/automation/logs/
+          if-no-files-found: warn

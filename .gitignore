@@ -138,3 +138,8 @@ scripts/automation/*.png
 
 # Local-only phase completion / milestone snapshots
 PHASE_*.md
+
+# Notion / Opus handoff artifacts (local archive only)
+docs/notion-opus-*.md
+docs/notion-opus-*.txt
+*-notion-handoff-*.tar.gz

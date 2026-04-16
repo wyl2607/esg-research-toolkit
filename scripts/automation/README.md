@@ -45,6 +45,26 @@ scripts/automation/stress_test.sh --api-only
 | `ui_autopolish.py` | Playwright 截图 + 视觉 LLM 美学评审 + 生成任务清单 | `screenshots/<ts>/`, `ui_reports/<ts>/critique.md`, `docs/exec-plans/ui_autopolish_tasks.md` |
 | `stress_test.sh` | API 并发 + 前端页面可达性扫描 + 限流探测 | `logs/stress_<ts>.md` |
 
+## 自测矩阵（5 脚本）
+
+> 目的：每次脚本修改后，有一套固定最小验证动作，避免“脚本在作者机器可跑、在 CI/他人机器不可跑”。
+
+| 脚本 | 最小验证命令 | 深度验证命令 | 通过标准 |
+|---|---|---|---|
+| `run_fullstack.sh` | `scripts/automation/run_fullstack.sh --detach && scripts/automation/run_fullstack.sh --status && scripts/automation/run_fullstack.sh --stop` | `scripts/automation/run_fullstack.sh --detach && curl -fsS http://127.0.0.1:8000/health && curl -fsS http://127.0.0.1:5173/ > /dev/null && scripts/automation/run_fullstack.sh --stop` | 后端/前端端口可达；`--status` 显示 RUNNING；日志文件生成 |
+| `auto_fix_smoke.sh` | `scripts/automation/auto_fix_smoke.sh --backend --max-rounds 1` | `scripts/automation/auto_fix_smoke.sh --max-rounds 1` | backend 模式通过；全量模式失败时生成 `logs/autofix_prompt_*.md` |
+| `interactive_dev.py` | `.venv/bin/python scripts/automation/interactive_dev.py --list` | `.venv/bin/python scripts/automation/interactive_dev.py --pick api_health` | `--list` 正常列动作；`--pick` 成功写入 `logs/interactive_log.md` |
+| `ui_autopolish.py` | `.venv/bin/python scripts/automation/ui_autopolish.py --screenshot-only --pages /` | `.venv/bin/python scripts/automation/ui_autopolish.py --pages /,/companies` | 截图目录产生；全量模式生成 `ui_reports/<ts>/critique.md` 与任务建议 |
+| `stress_test.sh` | `scripts/automation/stress_test.sh --quick` | `scripts/automation/stress_test.sh` | 生成 `logs/stress_<ts>.md`；API 压测 + 页面可达性结果完整 |
+
+### CI 对齐
+
+- CI（`.github/workflows/test.yml`）已接入 `run_fullstack.sh` 门控：
+  - 创建本地 `.venv` 并安装后端依赖
+  - `run_fullstack.sh --detach` 启动全栈
+  - 对 `:8000/health` 与 `:5173/` 做硬检查
+  - 失败时上传 `scripts/automation/logs/` 作为定位证据
+
 ## 常见工作流
 
 ### 日常"早上开工"
