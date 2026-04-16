@@ -24,6 +24,7 @@ from scripts.audit_extractions import (
     fetch_company_profile,
     main,
     parse_audit_response,
+    select_prompt_source_text,
 )
 from scripts.seed_german_demo import SeedCompany, phase_a
 
@@ -48,10 +49,46 @@ def test_build_prompt_includes_all_fields_and_forces_quote() -> None:
         source_text="Scope 1 emissions totalled 52.6 Mt CO2e in 2024.",
     )
     assert "VERBATIM" in prompt
+    assert 'Do NOT use "incorrect" to mean "unverified"' in prompt
     assert "RWE AG" in prompt
     for field_name in AUDIT_FIELDS:
         assert field_name in prompt
     assert "52600000" in prompt
+
+
+def test_select_prompt_source_text_prefers_later_relevant_chunk() -> None:
+    source_text = "\n\n".join(
+        [
+            "Table of contents\nIntroduction ........ 3\nMetrics table ........ 42",
+            "Chair letter and governance highlights with generic statements.",
+            "Scope 1 emissions totalled 42 tonnes CO2e in 2024.",
+            "Waste recycling rate was 80 percent in 2024.",
+        ]
+    )
+
+    selected = select_prompt_source_text(
+        source_text,
+        max_chars=210,
+        extracted={"scope1_co2e_tonnes": 42.0},
+    )
+
+    assert "Scope 1 emissions totalled 42 tonnes CO2e" in selected
+    assert "Table of contents" not in selected
+    assert len(selected) <= 210
+
+
+def test_select_prompt_source_text_respects_max_chars_budget() -> None:
+    source_text = "\n\n".join(
+        [f"Scope 1 emissions were {i} tonnes CO2e in 2024. " * 8 for i in range(1, 30)]
+    )
+    selected = select_prompt_source_text(
+        source_text,
+        max_chars=220,
+        extracted={"scope1_co2e_tonnes": 1.0},
+    )
+
+    assert len(selected) <= 220
+    assert "truncated" in selected.lower()
 
 
 def test_parse_audit_response_builds_field_audits() -> None:
@@ -411,6 +448,70 @@ def test_audit_one_records_audit_run_on_success(monkeypatch, tmp_path: Path, aud
         f"1 correct, 0 incorrect, 0 missed, {len(AUDIT_FIELDS) - 1} not_disclosed."
     )
     assert "\n" not in (rows[0].notes or "")
+
+
+def test_audit_one_prompt_uses_later_relevant_snippets(monkeypatch, tmp_path: Path) -> None:
+    company = SeedCompany(
+        "audit-context-2024",
+        "Audit Context AG",
+        2024,
+        "D35.11",
+        "Power",
+        "https://example.com/audit-context.pdf",
+        False,
+    )
+    pdf_path = tmp_path / "audit-context-2024.pdf"
+    pdf_path.write_bytes(b"%PDF-1.7\n" + (b"z" * 2048))
+    monkeypatch.setattr("scripts.audit_extractions.PDF_CACHE_DIR", tmp_path)
+    monkeypatch.setattr(
+        "scripts.audit_extractions.fetch_company_profile",
+        lambda *_args, **_kwargs: ({"latest_metrics": {"scope1_co2e_tonnes": 42.0}}, company.company_name),
+    )
+
+    front_matter = ("Table of contents\nGovernance overview ........ 3\n" * 30).strip()
+    relevant_later = "Scope 1 emissions totalled 42 tonnes CO2e in 2024."
+    source_text = "\n\n".join(
+        [
+            front_matter,
+            "Corporate profile and board composition.",
+            relevant_later,
+            "Water withdrawal was 3.1 million m3.",
+        ]
+    )
+    monkeypatch.setattr("scripts.audit_extractions.extract_text_from_pdf", lambda _path: source_text)
+
+    raw_response = json.dumps(
+        {
+            "scope1_co2e_tonnes": {
+                "verdict": "correct",
+                "confidence": "high",
+                "evidence_quote": relevant_later,
+            }
+        }
+    )
+
+    class _DummyOpenAI:
+        class chat:
+            class completions:
+                @staticmethod
+                def create(**kwargs):
+                    prompt = kwargs["messages"][0]["content"]
+                    assert relevant_later in prompt
+                    return types.SimpleNamespace(
+                        choices=[types.SimpleNamespace(message=types.SimpleNamespace(content=raw_response))]
+                    )
+
+    result = audit_one(
+        company,
+        api_base="http://localhost:8000",
+        model="gpt-audit-test",
+        max_chars=260,
+        openai_client=_DummyOpenAI(),
+        dry_run=False,
+        company_directory=[{"company_name": company.company_name, "report_year": 2024}],
+    )
+
+    assert result.error is None
 
 
 def test_main_writes_reports_in_manifest_order_with_workers(monkeypatch) -> None:

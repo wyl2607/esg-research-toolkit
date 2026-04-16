@@ -55,11 +55,24 @@ SUMMARY_PATH = AUDIT_DIR / "SUMMARY.md"
 DEFAULT_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4o")
 DEFAULT_MAX_CHARS = 80_000
 DEFAULT_API_BASE = os.environ.get("API_BASE", "http://localhost:8000")
+TRUNCATION_NOTICE = "\n\n[truncated]"
+SNIPPET_TRUNCATION_NOTICE = "\n\n[snippets selected from full document; truncated]"
 
 AUDIT_FIELDS: list[str] = list(BENCHMARK_METRICS)
 VALID_VERDICTS = {"correct", "incorrect", "missed", "not_disclosed"}
 VALID_CONFIDENCE = {"high", "medium", "low"}
 MANUAL_INPUT_FIELDS = set(ManualReportInput.model_fields.keys())
+FIELD_KEYWORDS: dict[str, tuple[str, ...]] = {
+    "scope1_co2e_tonnes": ("scope 1", "ghg emissions scope 1", "greenhouse gas emissions scope 1"),
+    "scope2_co2e_tonnes": ("scope 2", "ghg emissions scope 2", "market-based", "location-based"),
+    "scope3_co2e_tonnes": ("scope 3", "ghg emissions scope 3", "upstream", "downstream"),
+    "energy_consumption_mwh": ("energy consumption", "energy mix", "mwh", "electricity consumption"),
+    "renewable_energy_pct": ("renewable electricity", "renewable energy", "share of renewable", "re100"),
+    "water_usage_m3": ("water consumption", "water usage", "water withdrawal", "water recycled", "m3"),
+    "waste_recycled_pct": ("waste recycled", "recycling rate", "waste diverted", "diverted", "landfill"),
+    "taxonomy_aligned_revenue_pct": ("taxonomy-aligned", "taxonomy aligned", "eu taxonomy", "sales"),
+    "female_pct": ("female", "women", "women in management", "gender diversity"),
+}
 
 Verdict = str  # "correct" | "incorrect" | "missed" | "not_disclosed"
 
@@ -229,6 +242,8 @@ Rules:
 - "incorrect": document contains a different value (e.g. unit error, wrong scope); provide corrected_value + quote
 - "missed": current_value is null but the document DOES disclose this metric; provide corrected_value + quote
 - "not_disclosed": current_value is null (or spurious) and the document does NOT disclose this metric; evidence_quote=null
+- Do NOT use "incorrect" to mean "unverified". Only use "incorrect" when the excerpt shows a conflicting number or explicit contradiction.
+- If current_value is present but the excerpts do not actually disclose the metric, use "not_disclosed" rather than "incorrect".
 - confidence="high" ONLY if you can quote the exact sentence. If you are inferring, use "medium" or "low".
 - Watch for common errors: year numbers (e.g. 2024) being confused with metric values; tonnes vs kilotonnes; % vs absolute.
 - All corrected values must be numbers in the canonical unit (tonnes for emissions, MWh for energy, m3 for water, % for percentages).
@@ -241,7 +256,7 @@ INDUSTRY: {industry_sector or "(unknown)"}
 PREVIOUSLY EXTRACTED:
 {json.dumps(extracted_subset, indent=2, ensure_ascii=False)}
 
-SOURCE DOCUMENT (truncated to first chunk):
+SOURCE DOCUMENT (evidence snippets selected across full text):
 ---
 {source_text}
 ---
@@ -249,6 +264,143 @@ SOURCE DOCUMENT (truncated to first chunk):
 Return a JSON object with these exact top-level keys:
 {json.dumps({field_name: "..." for field_name in AUDIT_FIELDS}, indent=2)}
 """
+
+
+def _trim_to_budget(text: str, max_chars: int, notice: str) -> str:
+    if max_chars <= 0:
+        return ""
+    if len(text) <= max_chars:
+        return text
+    if max_chars <= len(notice):
+        return text[:max_chars]
+    return text[: max_chars - len(notice)] + notice
+
+
+def _value_search_terms(field_name: str, value: Any) -> tuple[str, ...]:
+    number = _as_number(value)
+    if number is None:
+        return ()
+
+    magnitude = abs(number)
+    terms: set[str] = set()
+
+    def _add(term: str) -> None:
+        normalized = term.strip().lower()
+        if normalized:
+            terms.add(normalized)
+
+    compact = f"{number:.6f}".rstrip("0").rstrip(".")
+    _add(compact)
+    if float(number).is_integer():
+        integer = int(number)
+        _add(str(integer))
+        _add(f"{integer:,}")
+        _add(f"{integer:,}".replace(",", " "))
+
+    if 0 < magnitude <= 100:
+        pct = f"{magnitude:.2f}".rstrip("0").rstrip(".")
+        _add(pct)
+        _add(f"{pct}%")
+
+    if magnitude >= 1_000:
+        thousands = magnitude / 1_000
+        _add(f"{thousands:.0f}")
+        _add(f"{thousands:.1f}".rstrip("0").rstrip("."))
+        _add(f"{thousands:,.0f}")
+
+    if magnitude >= 1_000_000:
+        millions = magnitude / 1_000_000
+        _add(f"{millions:.1f}".rstrip("0").rstrip("."))
+        _add(f"{millions:.2f}".rstrip("0").rstrip("."))
+
+    if field_name.endswith("_pct"):
+        _add(f"{magnitude:.1f}".rstrip("0").rstrip("."))
+
+    return tuple(sorted(terms, key=len, reverse=True))
+
+
+def _score_chunk_for_field(chunk: str, field_name: str, extracted: dict[str, Any]) -> float:
+    lower_chunk = chunk.lower()
+    score = 0.0
+
+    keyword_hits = 0
+    for keyword in FIELD_KEYWORDS.get(field_name, ()):
+        if keyword in lower_chunk:
+            keyword_hits += 1
+            score += 6.0
+
+    value_hits = 0
+    for term in _value_search_terms(field_name, extracted.get(field_name)):
+        if term in lower_chunk:
+            value_hits += 1
+            score += 8.0
+
+    if keyword_hits == 0 and value_hits == 0:
+        return 0.0
+
+    if "table of contents" in lower_chunk or "contents" == lower_chunk.strip():
+        score -= 6.0
+    if "assurance report" in lower_chunk and "scope 1" in lower_chunk and value_hits == 0:
+        score -= 2.5
+    if any(re.search(r"\.{3,}\s*\d+\s*$", line.strip()) for line in chunk.splitlines()):
+        score -= 3.0
+    if len(chunk) < 120:
+        score -= 1.5
+
+    return score
+
+
+def select_prompt_source_text(source_text: str, *, max_chars: int, extracted: dict[str, Any]) -> str:
+    """Select evidence snippets across the full document within a character budget."""
+    if len(source_text) <= max_chars:
+        return source_text
+
+    chunks = [chunk.strip() for chunk in re.split(r"\n{2,}", source_text) if chunk.strip()]
+    if len(chunks) <= 1:
+        return _trim_to_budget(source_text, max_chars, TRUNCATION_NOTICE)
+
+    selected_indices: list[int] = []
+    selected_set: set[int] = set()
+    scored_by_index: dict[int, float] = {}
+    for field_name in AUDIT_FIELDS:
+        ranked = sorted(
+            (
+                (_score_chunk_for_field(chunk, field_name, extracted), index, chunk)
+                for index, chunk in enumerate(chunks)
+            ),
+            key=lambda item: (item[0], len(item[2])),
+            reverse=True,
+        )
+        added_for_field = 0
+        for score, index, _ in ranked:
+            if score <= 0:
+                continue
+            scored_by_index[index] = max(scored_by_index.get(index, 0.0), score)
+            if index not in selected_set:
+                selected_indices.append(index)
+                selected_set.add(index)
+                added_for_field += 1
+            if added_for_field >= 2 or len(selected_indices) >= 12:
+                break
+
+    if not selected_indices:
+        return _trim_to_budget(source_text, max_chars, TRUNCATION_NOTICE)
+
+    for index in sorted(selected_indices):
+        for neighbor in (index - 1, index + 1):
+            if (
+                0 <= neighbor < len(chunks)
+                and neighbor not in selected_set
+                and len(selected_indices) < 14
+                and scored_by_index.get(index, 0.0) >= 8.0
+            ):
+                selected_indices.append(neighbor)
+                selected_set.add(neighbor)
+
+    ordered_indices = sorted(selected_indices, key=lambda index: (-scored_by_index.get(index, 0.0), index))
+    snippet_blocks = [f"[page {index + 1}]\n{chunks[index]}" for index in ordered_indices]
+    combined = "\n\n".join(snippet_blocks)
+    return _trim_to_budget(combined, max_chars, SNIPPET_TRUNCATION_NOTICE)
 
 
 def _as_number(value: Any) -> float | None:
@@ -514,10 +666,13 @@ def audit_one(
             print(f"  profile resolved as DB name: {db_company_name}")
         current_metrics = latest_metrics
 
-    source_text = extract_text_from_pdf(pdf_path)
-    if len(source_text) > max_chars:
-        source_text = source_text[:max_chars] + "\n\n[truncated]"
-    print(f"  pdf text chars: {len(source_text)}")
+    full_source_text = extract_text_from_pdf(pdf_path)
+    source_text = select_prompt_source_text(
+        full_source_text,
+        max_chars=max_chars,
+        extracted=current_metrics,
+    )
+    print(f"  pdf text chars: {len(full_source_text)} (prompt context: {len(source_text)})")
 
     prompt = build_prompt(
         company_name=company.company_name,
