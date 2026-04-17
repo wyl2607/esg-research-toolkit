@@ -1,15 +1,11 @@
-import csv
 import hashlib
 import importlib.util
-import io
 import json
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-import openpyxl
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, Response, UploadFile
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Response, UploadFile
 from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session
 
@@ -21,13 +17,18 @@ from core.schemas import (
     AuditTrailRow,
     BatchStatusResponse,
     CompanyESGData,
+    CompanyHistoryResponse,
+    CompanyReportListItem,
     CompanyProfileMetric,
     CompanyProfileV1Response,
+    DashboardStatsResponse,
     ManualReportInput,
     MergePreviewRequest,
     MergePreviewResponse,
     MergeSourceInput,
 )
+from report_parser.admin_routes import router as admin_router
+from report_parser.industry_routes import router as industry_router
 from report_parser.merge_engine import build_merge_preview
 from report_parser.merge_engine import build_merged_result
 from report_parser.analyzer import AIExtractionError, analyze_esg_data
@@ -37,17 +38,17 @@ from report_parser.extractor import extract_text_from_pdf
 from report_parser.storage import (
     CompanyReport,
     get_report,
-    hard_delete_report,
     list_reports_grouped,
     list_reports_for_company,
     list_source_reports_for_company_year,
-    request_deletion,
     save_report,
 )
 from taxonomy_scorer.scorer import get_metric_framework_mappings
 
 router = APIRouter(prefix="/report", tags=["report_parser"])
 v1_router = APIRouter(prefix="/api/v1", tags=["report_parser_v1"])
+router.include_router(industry_router)
+router.include_router(admin_router)
 _MULTIPART_AVAILABLE = any(
     importlib.util.find_spec(module_name) is not None
     for module_name in ("python_multipart", "multipart")
@@ -701,17 +702,20 @@ if _MULTIPART_AVAILABLE:
                 }
             )
 
-        saved_record = save_report(
-            db,
-            esg_data,
-            pdf_filename=safe_name,
-            file_hash=file_hash,
-            downloaded_at=datetime.now(timezone.utc),
-            reporting_period_label=str(esg_data.report_year),
-            reporting_period_type="annual",
-            source_document_type="sustainability_report",
-            evidence_summary=_upload_evidence_summary(esg_data, file_hash=file_hash),
-        )
+        try:
+            saved_record = save_report(
+                db,
+                esg_data,
+                pdf_filename=safe_name,
+                file_hash=file_hash,
+                downloaded_at=datetime.now(timezone.utc),
+                reporting_period_label=str(esg_data.report_year),
+                reporting_period_type="annual",
+                source_document_type="sustainability_report",
+                evidence_summary=_upload_evidence_summary(esg_data, file_hash=file_hash),
+            )
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from exc
         return _record_to_company_data(saved_record)
 
     @router.post("/upload/batch", response_model=BatchStatusResponse)
@@ -766,16 +770,19 @@ def save_manual_report(
         report,
         source_url=payload.source_url,
     )
-    record = save_report(
-        db,
-        report,
-        source_url=payload.source_url,
-        downloaded_at=datetime.now(timezone.utc),
-        reporting_period_label=payload.reporting_period_label or str(payload.report_year),
-        reporting_period_type=payload.reporting_period_type or "annual",
-        source_document_type=payload.source_document_type or "manual_case",
-        evidence_summary=evidence_summary,
-    )
+    try:
+        record = save_report(
+            db,
+            report,
+            source_url=payload.source_url,
+            downloaded_at=datetime.now(timezone.utc),
+            reporting_period_label=payload.reporting_period_label or str(payload.report_year),
+            reporting_period_type=payload.reporting_period_type or "annual",
+            source_document_type=payload.source_document_type or "manual_case",
+            evidence_summary=evidence_summary,
+        )
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
     return _record_to_company_data(record)
 
 
@@ -890,53 +897,6 @@ def _build_scored_metrics(
     return scored_metrics, evidence_anchors
 
 
-@router.get("/companies/by-industry/{industry_code}")
-def list_companies_by_industry(
-    industry_code: str,
-    db: Session = Depends(get_db),
-) -> dict:
-    """
-    Return the latest report per company for a given NACE industry code,
-    plus the numeric metric values that feed benchmark aggregation.
-    """
-    from benchmark.compute import BENCHMARK_METRICS
-
-    rows = (
-        db.query(CompanyReport)
-        .filter(CompanyReport.industry_code == industry_code)
-        .order_by(CompanyReport.company_name.asc(), CompanyReport.report_year.desc())
-        .all()
-    )
-
-    latest_per_company: dict[str, CompanyReport] = {}
-    for row in rows:
-        existing = latest_per_company.get(row.company_name)
-        if existing is None or (row.report_year or 0) > (existing.report_year or 0):
-            latest_per_company[row.company_name] = row
-
-    companies: list[dict[str, object]] = []
-    for company_name, row in sorted(latest_per_company.items()):
-        metrics: dict[str, float | None] = {}
-        for metric in BENCHMARK_METRICS:
-            value = getattr(row, metric, None)
-            metrics[metric] = float(value) if value is not None else None
-        companies.append(
-            {
-                "company_name": company_name,
-                "report_year": row.report_year,
-                "industry_code": row.industry_code,
-                "industry_sector": row.industry_sector,
-                "metrics": metrics,
-            }
-        )
-
-    return {
-        "industry_code": industry_code,
-        "company_count": len(companies),
-        "companies": companies,
-    }
-
-
 @router.get("/companies/{company_name}/{report_year:int}", response_model=CompanyESGData)
 def get_company_report(
     company_name: str,
@@ -992,7 +952,7 @@ def get_audit_trail(
     ]
 
 
-@router.get("/companies/{company_name}/history")
+@router.get("/companies/{company_name}/history", response_model=CompanyHistoryResponse)
 def get_company_history(
     company_name: str,
     db: Session = Depends(get_db),
@@ -1214,7 +1174,7 @@ def get_company_profile_legacy(
     return get_company_profile(company_name=company_name, db=db)
 
 
-@router.get("/dashboard/stats")
+@router.get("/dashboard/stats", response_model=DashboardStatsResponse)
 def get_dashboard_stats(db: Session = Depends(get_db)) -> dict[str, Any]:
     records = list_reports_grouped(db)
     if not records:
@@ -1280,7 +1240,7 @@ def get_dashboard_stats(db: Session = Depends(get_db)) -> dict[str, Any]:
     }
 
 
-@router.get("/companies")
+@router.get("/companies", response_model=list[CompanyReportListItem])
 def list_company_reports(
     skip: int = 0,
     limit: int = 50,
@@ -1327,128 +1287,3 @@ def list_company_reports(
             }
         )
     return payload
-
-
-@router.post("/companies/{company_name}/{report_year:int}/request-deletion")
-def request_source_deletion(
-    company_name: str,
-    report_year: int,
-    db: Session = Depends(get_db),
-) -> dict[str, str | int | bool]:
-    """
-    来源删除机制（Requirement 4）：
-    接收权利人请求，立即删除本地 PDF 副本，标记记录为 deletion_requested。
-    提取的指标数据保留 30 天（可配置）后由管理员彻底删除。
-    """
-    record = request_deletion(db, company_name, report_year)
-    if not record:
-        raise HTTPException(404, "Report not found")
-    return {
-        "status": "deletion_requested",
-        "company_name": company_name,
-        "report_year": report_year,
-        "pdf_deleted": True,
-        "message": (
-            "PDF copy has been deleted. Extracted metrics will be purged within 30 days. "
-            "Contact admin@esg-toolkit to expedite full removal."
-        ),
-    }
-
-
-@router.delete("/companies/{company_name}/{report_year:int}")
-def delete_company_report(
-    company_name: str,
-    report_year: int,
-    hard: bool = Query(default=False, description="彻底删除所有数据（管理员操作）"),
-    db: Session = Depends(get_db),
-) -> dict[str, str | int]:
-    """删除公司报告。hard=true 时彻底删除，否则仅软删除（标记 deletion_requested）。"""
-    if hard:
-        ok = hard_delete_report(db, company_name, report_year)
-    else:
-        record = request_deletion(db, company_name, report_year)
-        ok = record is not None
-    if not ok:
-        raise HTTPException(404, "Report not found")
-    return {"status": "deleted", "company_name": company_name, "report_year": report_year}
-
-
-@router.get("/companies/export/csv")
-def export_companies_csv(db: Session = Depends(get_db)) -> StreamingResponse:
-    records = list_reports_grouped(db)
-    fieldnames = [
-        "company_name",
-        "report_year",
-        "scope1_co2e_tonnes",
-        "scope2_co2e_tonnes",
-        "scope3_co2e_tonnes",
-        "energy_consumption_mwh",
-        "renewable_energy_pct",
-        "water_usage_m3",
-        "waste_recycled_pct",
-        "total_employees",
-        "female_pct",
-    ]
-
-    buf = io.StringIO()
-    writer = csv.DictWriter(buf, fieldnames=fieldnames)
-    writer.writeheader()
-    for record in records:
-        writer.writerow({field: getattr(record, field, None) for field in fieldnames})
-
-    return StreamingResponse(
-        iter([buf.getvalue()]),
-        media_type="text/csv",
-        headers={"Content-Disposition": 'attachment; filename="esg_companies.csv"'},
-    )
-
-
-@router.get("/companies/export/xlsx")
-def export_companies_xlsx(db: Session = Depends(get_db)) -> StreamingResponse:
-    records = list_reports_grouped(db)
-
-    wb = openpyxl.Workbook()
-    ws = wb.active
-    ws.title = "ESG Data"
-    ws.append(
-        [
-            "Company",
-            "Year",
-            "Scope1 (tCO2e)",
-            "Scope2 (tCO2e)",
-            "Scope3 (tCO2e)",
-            "Energy (MWh)",
-            "Renewable %",
-            "Water (m³)",
-            "Waste Recycled %",
-            "Employees",
-            "Female %",
-        ]
-    )
-
-    for record in records:
-        ws.append(
-            [
-                record.company_name,
-                record.report_year,
-                record.scope1_co2e_tonnes,
-                record.scope2_co2e_tonnes,
-                record.scope3_co2e_tonnes,
-                record.energy_consumption_mwh,
-                record.renewable_energy_pct,
-                record.water_usage_m3,
-                record.waste_recycled_pct,
-                record.total_employees,
-                record.female_pct,
-            ]
-        )
-
-    buf = io.BytesIO()
-    wb.save(buf)
-    buf.seek(0)
-
-    return StreamingResponse(
-        iter([buf.getvalue()]),
-        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers={"Content-Disposition": 'attachment; filename="esg_companies.xlsx"'},
-    )

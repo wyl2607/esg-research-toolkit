@@ -136,6 +136,25 @@ class BatchStatusResponse(BaseModel):
     jobs: list[BatchJobItem]
 
 
+class HealthResponse(BaseModel):
+    status: str
+
+
+class ModelHealthEntry(BaseModel):
+    model: str
+    max_tokens: int
+    fallback: list[str] = Field(default_factory=list)
+    available: bool | None = None
+    check_source: str | None = None
+    last_checked_at: str | None = None
+    detail: str | None = None
+
+
+class ModelsHealthResponse(BaseModel):
+    status: str
+    models: dict[str, ModelHealthEntry] = Field(default_factory=dict)
+
+
 class TaxonomyScoreResult(BaseModel):
     company_name: str
     report_year: int
@@ -226,6 +245,85 @@ class CompanyProfileV1Response(BaseModel):
     identity_provenance_summary: dict[str, Any]
     latest_sources: list[dict[str, Any]] = Field(default_factory=list)
     latest_merged_result: dict[str, Any]
+
+
+class CompanyByIndustryItem(BaseModel):
+    company_name: str
+    report_year: int
+    industry_code: str | None = None
+    industry_sector: str | None = None
+    metrics: dict[str, float | None] = Field(default_factory=dict)
+
+
+class CompanyByIndustryResponse(BaseModel):
+    industry_code: str
+    company_count: int
+    companies: list[CompanyByIndustryItem] = Field(default_factory=list)
+
+
+class CompanyHistoryResponse(BaseModel):
+    company_name: str
+    periods: list[dict[str, Any]] = Field(default_factory=list)
+    trend: list[dict[str, Any]] = Field(default_factory=list)
+    framework_metadata: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class DashboardStatsResponse(BaseModel):
+    total_companies: int
+    avg_taxonomy_aligned: float
+    avg_renewable_pct: float
+    yearly_trend: list[dict[str, Any]] = Field(default_factory=list)
+    top_emitters: list[dict[str, Any]] = Field(default_factory=list)
+    bottom_emitters: list[dict[str, Any]] = Field(default_factory=list)
+    coverage_rates: dict[str, float] = Field(default_factory=dict)
+
+
+class CompanyReportListItem(BaseModel):
+    company_name: str
+    report_year: int
+    pdf_filename: str | None = None
+    source_url: str | None = None
+    file_hash: str | None = None
+    downloaded_at: str | None = None
+    reporting_period_label: str | None = None
+    reporting_period_type: str | None = None
+    source_document_type: str | None = None
+    industry_code: str | None = None
+    industry_sector: str | None = None
+    period: dict[str, Any]
+    created_at: str | None = None
+    scope1_co2e_tonnes: float | None = None
+    scope2_co2e_tonnes: float | None = None
+    scope3_co2e_tonnes: float | None = None
+    energy_consumption_mwh: float | None = None
+    renewable_energy_pct: float | None = None
+    water_usage_m3: float | None = None
+    waste_recycled_pct: float | None = None
+    total_revenue_eur: float | None = None
+    taxonomy_aligned_revenue_pct: float | None = None
+    total_capex_eur: float | None = None
+    taxonomy_aligned_capex_pct: float | None = None
+    total_employees: int | None = None
+    female_pct: float | None = None
+    primary_activities: list[str] = Field(default_factory=list)
+    evidence_summary: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class DeletionStatusResponse(BaseModel):
+    status: str
+    company_name: str
+    report_year: int
+    pdf_deleted: bool | None = None
+    message: str | None = None
+
+
+class TaxonomyTextReportResponse(BaseModel):
+    report: str
+
+
+class FrameworkCacheClearResponse(BaseModel):
+    status: str
+    entries_removed: int
 
 
 class LCOEInput(BaseModel):

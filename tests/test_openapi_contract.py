@@ -28,6 +28,7 @@ def test_openapi_exposes_typegen_contract_metadata(monkeypatch) -> None:
     assert schema["components"]["schemas"]["LCOEInput"]["properties"]["capacity_mw"]["default"] == 100.0
     assert schema["components"]["schemas"]["SensitivityResult"]["properties"]["values"]["type"] == "array"
     assert schema["paths"]["/frameworks/score"]["get"]["responses"]["400"]["description"] == "Unknown framework identifier."
+    assert "/health/models" in schema["paths"]
     assert (
         schema["paths"]["/report/merge/preview"]["post"]["requestBody"]["content"]["application/json"]["examples"][
             "contractSeed"

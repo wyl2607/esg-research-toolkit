@@ -44,6 +44,7 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(ROOT))
 
 from core.config import settings  # noqa: E402
+from core.models import get as get_model_name  # noqa: E402
 
 DEFAULT_PAGES = [
     "/",
@@ -359,7 +360,7 @@ async def main_async(args: argparse.Namespace) -> int:
         args.model
         or os.environ.get("VISION_MODEL")
         or os.environ.get("OPENAI_MODEL")
-        or settings.openai_model
+        or get_model_name("audit")
     )
     print(f"→ running critique with model: {model}")
 

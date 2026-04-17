@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from typing import Any
 
@@ -17,7 +18,9 @@ from slowapi.middleware import SlowAPIMiddleware
 from benchmark.api import router as benchmark_router
 from core.database import SessionLocal, init_db
 from core.limiter import limiter
-from core.schemas import CompanyESGData
+from core.models import health_payload as model_health_payload
+from core.models import validate_models_startup
+from core.schemas import CompanyESGData, HealthResponse, ModelsHealthResponse
 from esg_frameworks.api import _SCORERS, router as frameworks_router
 from esg_frameworks.storage import list_framework_results, save_framework_result
 from report_parser.api import router as report_router
@@ -163,6 +166,15 @@ REQUEST_BODY_EXAMPLES = {
 }
 
 
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    init_db()
+    validate_models_startup()
+    if CONTRACT_TEST_MODE:
+        _seed_contract_test_data()
+    yield
+
+
 app = FastAPI(
     title="ESG Research Toolkit",
     description=(
@@ -171,6 +183,7 @@ app = FastAPI(
         "(LCOE/NPV/IRR)."
     ),
     version=APP_VERSION,
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -356,13 +369,6 @@ def custom_openapi() -> dict[str, Any]:
 app.openapi = custom_openapi
 
 
-@app.on_event("startup")
-def startup() -> None:
-    init_db()
-    if CONTRACT_TEST_MODE:
-        _seed_contract_test_data()
-
-
 app.include_router(report_router)
 app.include_router(report_v1_router)
 app.include_router(taxonomy_router)
@@ -387,6 +393,11 @@ def root() -> dict[str, str | list[str]]:
     }
 
 
-@app.get("/health")
-def health() -> dict[str, str]:
+@app.get("/health", response_model=HealthResponse)
+def health() -> HealthResponse:
     return {"status": "ok"}
+
+
+@app.get("/health/models", response_model=ModelsHealthResponse)
+def health_models() -> dict[str, object]:
+    return model_health_payload()

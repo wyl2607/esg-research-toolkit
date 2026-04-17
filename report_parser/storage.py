@@ -2,10 +2,11 @@ import json
 import logging
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, Column, DateTime, Float, Integer, String, Text, func, text
+from sqlalchemy import Boolean, Column, DateTime, Float, Integer, String, Text, UniqueConstraint, func, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
+from core.config import settings
 from core.database import Base
 from core.schemas import CompanyESGData
 from core.validation import has_errors, validate_record
@@ -42,6 +43,9 @@ def _normalized_period_fields(
 
 class CompanyReport(Base):
     __tablename__ = "company_reports"
+    __table_args__ = (
+        UniqueConstraint("company_name", "report_year", "source_doc_key", name="uq_company_reports_source_key"),
+    )
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     company_name = Column(String, nullable=False, index=True)
@@ -72,6 +76,7 @@ class CompanyReport(Base):
     pdf_filename = Column(String, nullable=True)
     source_url = Column(String, nullable=True)        # 原始 PDF 来源 URL
     file_hash = Column(String, nullable=True)         # SHA-256 of original PDF
+    source_doc_key = Column(String, nullable=False, default="")
     downloaded_at = Column(DateTime, nullable=True)   # 下载/上传时间
     evidence_summary = Column(Text, nullable=True)    # JSON-encoded metric evidence summaries
     deletion_requested = Column(Boolean, default=False, nullable=False)  # 来源删除请求标记
@@ -104,46 +109,27 @@ def save_report(
         source_document_type=source_document_type,
     )
     name_variants = [variant.lower() for variant in company_name_variants(canonical_name)]
+    source_key = _build_source_doc_key(
+        file_hash=file_hash,
+        source_url=source_url,
+        pdf_filename=pdf_filename,
+        source_document_type=document_type,
+        reporting_period_label=period_label,
+        report_year=normalized_data.report_year,
+    )
 
     candidates = (
         db.query(CompanyReport)
         .filter(
             func.lower(CompanyReport.company_name).in_(name_variants),
             CompanyReport.report_year == normalized_data.report_year,
+            CompanyReport.source_doc_key == source_key,
         )
         .all()
     )
     record: CompanyReport | None = None
-    if file_hash:
-        record = next((item for item in candidates if item.file_hash == file_hash), None)
-    if record is None and source_url:
-        record = next(
-            (
-                item
-                for item in candidates
-                if item.source_url == source_url and item.source_document_type == document_type
-            ),
-            None,
-        )
-    if record is None and pdf_filename:
-        record = next(
-            (
-                item
-                for item in candidates
-                if item.pdf_filename == pdf_filename and item.source_document_type == document_type
-            ),
-            None,
-        )
-    if record is None and not (file_hash or source_url or pdf_filename):
-        record = next(
-            (
-                item
-                for item in candidates
-                if item.source_document_type == document_type
-                and (item.reporting_period_label or str(item.report_year)) == period_label
-            ),
-            None,
-        )
+    if candidates:
+        record = max(candidates, key=report_quality_score)
     now = datetime.now(timezone.utc)
     if record is None:
         record = CompanyReport(
@@ -155,6 +141,7 @@ def save_report(
             pdf_filename=pdf_filename,
             source_url=source_url,
             file_hash=file_hash,
+            source_doc_key=source_key,
             downloaded_at=downloaded_at or now,
             evidence_summary=json.dumps(
                 evidence_summary if evidence_summary is not None else normalized_data.evidence_summary
@@ -169,6 +156,7 @@ def save_report(
             record.source_url = source_url
         if file_hash:
             record.file_hash = file_hash
+        record.source_doc_key = source_key
         if downloaded_at:
             record.downloaded_at = downloaded_at
         record.reporting_period_label = period_label
@@ -183,6 +171,8 @@ def save_report(
         record.reporting_period_type = period_type
     if not record.source_document_type:
         record.source_document_type = document_type
+    if not record.source_doc_key:
+        record.source_doc_key = source_key
     if evidence_summary is None and not record.evidence_summary:
         record.evidence_summary = json.dumps(normalized_data.evidence_summary)
 
@@ -219,6 +209,11 @@ def save_report(
                 normalized_data.report_year,
                 sum(1 for i in issues if i.severity == "error"),
             )
+            if settings.l0_fail_closed and not settings.l0_fail_open_bypass:
+                raise ValueError(
+                    "L0 validation failed (fail-closed). "
+                    "Set L0_FAIL_OPEN_BYPASS=true for emergency bypass."
+                )
 
     db.commit()
     db.refresh(record)
@@ -455,6 +450,7 @@ def ensure_storage_schema(engine: Engine) -> None:
         "industry_code": "TEXT",
         "industry_sector": "TEXT",
         "evidence_summary": "TEXT",
+        "source_doc_key": "TEXT",
     }
 
     with engine.begin() as conn:
@@ -468,7 +464,72 @@ def ensure_storage_schema(engine: Engine) -> None:
             conn.execute(text(f"ALTER TABLE company_reports ADD COLUMN {name} {col_type}"))
         conn.execute(
             text(
+                """
+                UPDATE company_reports
+                SET source_doc_key = CASE
+                    WHEN file_hash IS NOT NULL AND trim(file_hash) != ''
+                        THEN 'file_hash:' || lower(trim(file_hash))
+                    WHEN source_url IS NOT NULL AND trim(source_url) != ''
+                        THEN 'source_url:' || lower(trim(source_url))
+                            || '|type:' || lower(COALESCE(source_document_type, ''))
+                    WHEN pdf_filename IS NOT NULL AND trim(pdf_filename) != ''
+                        THEN 'pdf_filename:' || lower(trim(pdf_filename))
+                            || '|type:' || lower(COALESCE(source_document_type, ''))
+                    ELSE 'period:' || lower(COALESCE(source_document_type, ''))
+                        || '|label:' || lower(COALESCE(reporting_period_label, CAST(report_year AS TEXT)))
+                END
+                WHERE source_doc_key IS NULL OR trim(source_doc_key) = ''
+                """
+            )
+        )
+        conn.execute(
+            text(
+                """
+                DELETE FROM company_reports
+                WHERE id IN (
+                    SELECT id FROM (
+                        SELECT id,
+                               ROW_NUMBER() OVER (
+                                   PARTITION BY company_name, report_year, source_doc_key
+                                   ORDER BY updated_at DESC, created_at DESC, id DESC
+                               ) AS rn
+                        FROM company_reports
+                        WHERE source_doc_key IS NOT NULL AND trim(source_doc_key) != ''
+                    ) dedup
+                    WHERE dedup.rn > 1
+                )
+                """
+            )
+        )
+        conn.execute(
+            text(
                 "CREATE INDEX IF NOT EXISTS ix_company_reports_industry_code "
                 "ON company_reports (industry_code)"
             )
         )
+        conn.execute(
+            text(
+                "CREATE UNIQUE INDEX IF NOT EXISTS uq_company_reports_source_key "
+                "ON company_reports (company_name, report_year, source_doc_key)"
+            )
+        )
+
+
+def _build_source_doc_key(
+    *,
+    file_hash: str | None,
+    source_url: str | None,
+    pdf_filename: str | None,
+    source_document_type: str | None,
+    reporting_period_label: str | None,
+    report_year: int,
+) -> str:
+    doc_type = (source_document_type or "").strip().lower()
+    if file_hash and file_hash.strip():
+        return f"file_hash:{file_hash.strip().lower()}"
+    if source_url and source_url.strip():
+        return f"source_url:{source_url.strip().lower()}|type:{doc_type}"
+    if pdf_filename and pdf_filename.strip():
+        return f"pdf_filename:{pdf_filename.strip().lower()}|type:{doc_type}"
+    label = (reporting_period_label or str(report_year)).strip().lower()
+    return f"period:{doc_type}|label:{label}"

@@ -1,6 +1,6 @@
 from collections.abc import Generator
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import Session, declarative_base, sessionmaker
 
 from core.config import settings
@@ -39,8 +39,25 @@ def get_db() -> Generator[Session, None, None]:
 
 
 def init_db() -> None:
+    if settings.enforce_migration_gate and settings.app_env == "production":
+        inspector = inspect(engine)
+        if "alembic_version" not in inspector.get_table_names():
+            raise RuntimeError(
+                "Migration gate failed: missing alembic_version table in production. "
+                "Run DB migrations before starting the service."
+            )
+        with engine.connect() as conn:
+            version = conn.execute(text("SELECT version_num FROM alembic_version LIMIT 1")).scalar()
+        if not version:
+            raise RuntimeError(
+                "Migration gate failed: alembic_version has no version_num. "
+                "Run DB migrations before starting the service."
+            )
+
     Base.metadata.create_all(bind=engine)
     # Keep SQLite deployments forward-compatible for additive columns.
     from report_parser.storage import ensure_storage_schema
+    from esg_frameworks.storage import ensure_framework_storage_schema
 
     ensure_storage_schema(engine)
+    ensure_framework_storage_schema(engine)

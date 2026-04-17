@@ -2,6 +2,7 @@ import json
 import threading
 from dataclasses import asdict
 from datetime import datetime, timezone
+from typing import Any
 
 from cachetools import TTLCache
 from cachetools.keys import hashkey
@@ -9,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from core.database import get_db
-from core.schemas import CompanyESGData
+from core.schemas import CompanyESGData, FrameworkCacheClearResponse
 from esg_frameworks import csrc_2023, csrd, eu_taxonomy, gri_standards, sasb_standards, sec_climate
 from esg_frameworks.comparison import build_comparison
 from esg_frameworks.schemas import FrameworkScoreResult, MultiFrameworkReport
@@ -108,7 +109,7 @@ def compare_frameworks(
     return report
 
 
-@router.get("/compare/regional")
+@router.get("/compare/regional", response_model=dict[str, Any])
 def compare_regional_frameworks(
     company_name: str = Query(...),
     report_year: int = Query(...),
@@ -137,14 +138,14 @@ def score_from_data(data: CompanyESGData) -> MultiFrameworkReport:
     )
 
 
-@router.get("/results")
+@router.get("/results", response_model=list[dict[str, Any]])
 def get_saved_results(
     company_name: str = Query(...),
     report_year: int = Query(...),
     db: Session = Depends(get_db),
-) -> list[dict[str, object]]:
+) -> list[dict[str, Any]]:
     rows = list_framework_results(db, company_name=company_name, report_year=report_year)
-    payload: list[dict[str, object]] = []
+    payload: list[dict[str, Any]] = []
     for row in rows:
         result = json.loads(row.result_payload)
         result["analysis_result_id"] = row.id
@@ -170,8 +171,8 @@ def get_saved_result_by_id(
     )
 
 
-@router.get("/list")
-def list_frameworks() -> list[dict]:
+@router.get("/list", response_model=list[dict[str, str]])
+def list_frameworks() -> list[dict[str, str]]:
     """列出所有支持的框架及说明。"""
     return [
         {
@@ -225,8 +226,8 @@ def list_frameworks() -> list[dict]:
     ]
 
 
-@router.post("/cache/clear")
-def clear_framework_cache() -> dict[str, int | str]:
+@router.post("/cache/clear", response_model=FrameworkCacheClearResponse)
+def clear_framework_cache() -> FrameworkCacheClearResponse:
     """清除框架对比缓存（管理员用）。"""
     with _cache_lock:
         removed = len(_score_cache)

@@ -45,6 +45,7 @@ if str(ROOT) not in sys.path:
 
 from benchmark.compute import BENCHMARK_METRICS  # noqa: E402
 from core.database import SessionLocal, engine  # noqa: E402
+from core.models import get as get_model_name  # noqa: E402
 from core.schemas import ManualReportInput  # noqa: E402
 from report_parser.extractor import extract_text_from_pdf  # noqa: E402
 from report_parser.storage import ensure_storage_schema, record_extraction_run  # noqa: E402
@@ -52,7 +53,7 @@ from scripts.seed_german_demo import MANIFEST_PATH, PDF_CACHE_DIR, SeedCompany, 
 
 AUDIT_DIR = ROOT / "scripts" / "seed_data" / "audit_reports"
 SUMMARY_PATH = AUDIT_DIR / "SUMMARY.md"
-DEFAULT_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4o")
+DEFAULT_MODEL = os.environ.get("OPENAI_AUDIT_MODEL") or os.environ.get("OPENAI_MODEL") or get_model_name("audit")
 DEFAULT_MAX_CHARS = 80_000
 DEFAULT_API_BASE = os.environ.get("API_BASE", "http://localhost:8000")
 TRUNCATION_NOTICE = "\n\n[truncated]"

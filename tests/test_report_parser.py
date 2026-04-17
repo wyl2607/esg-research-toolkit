@@ -11,6 +11,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from core.config import settings
 from core.database import Base, get_db
 from core.schemas import CompanyESGData, ManualReportInput, MergePreviewRequest, MergeSourceInput
 from esg_frameworks.api import _SCORERS
@@ -1515,3 +1516,35 @@ def test_dashboard_stats_do_not_double_count_alias_duplicates(
     assert payload["yearly_trend"] == [{"year": 2024, "count": 1}]
     assert payload["top_emitters"][0]["company"] == "Volkswagen AG"
     assert payload["top_emitters"][0]["scope1"] == pytest.approx(250.0)
+
+
+def test_save_report_fail_closed_blocks_invalid_values(
+    db_session: Session,
+    make_company_data,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(settings, "l0_fail_closed", True)
+    monkeypatch.setattr(settings, "l0_fail_open_bypass", False)
+
+    with pytest.raises(ValueError, match="L0 validation failed"):
+        save_report(
+            db_session,
+            make_company_data(scope1_co2e_tonnes=9_999_999_999_999.0),
+            pdf_filename="invalid-fail-closed.pdf",
+        )
+
+
+def test_save_report_fail_open_bypass_allows_invalid_values(
+    db_session: Session,
+    make_company_data,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(settings, "l0_fail_closed", True)
+    monkeypatch.setattr(settings, "l0_fail_open_bypass", True)
+
+    saved = save_report(
+        db_session,
+        make_company_data(scope1_co2e_tonnes=9_999_999_999_999.0),
+        pdf_filename="invalid-fail-open.pdf",
+    )
+    assert saved.scope1_co2e_tonnes == pytest.approx(9_999_999_999_999.0)

@@ -45,9 +45,10 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from core.config import settings
 from core.ai_client import get_client
+from core.config import settings
 from core.database import SessionLocal, engine
+from core.models import get as get_model_name
 from report_parser.storage import ensure_storage_schema, record_extraction_run
 
 MANIFEST_PATH = ROOT / "scripts" / "seed_data" / "german_demo_manifest.json"
@@ -176,7 +177,7 @@ def _record_extract_run(company: SeedCompany, pdf_path: Path, payload: dict) -> 
                 db,
                 run_kind="extract",
                 file_hash=_hash_file(pdf_path),
-                model=settings.openai_model,
+                model=get_model_name("extraction"),
                 notes=notes,
             )
     except Exception as exc:  # noqa: BLE001 - audit trail must not break existing seed flow
@@ -361,7 +362,7 @@ def phase_b(api_base: str, companies: list[SeedCompany]) -> None:
         print("❌ openai package not installed; pip install openai and retry")
         return
 
-    validation_model = settings.openai_validation_model
+    validation_model = get_model_name("validation")
     findings: list[dict] = []
 
     print(f"running Phase B sanity checks for {len(companies)} companies...")
