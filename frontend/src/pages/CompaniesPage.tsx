@@ -84,30 +84,30 @@ export function CompaniesPage() {
         <p className="section-kicker">{t('companies.kicker')}</p>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-2">
-            <h1 className="text-3xl font-semibold text-slate-900">{t('companies.title')}</h1>
-            <p className="max-w-3xl text-sm leading-6 text-slate-600">
+            <h1 className="text-4xl font-semibold text-slate-900 md:text-5xl">{t('companies.title')}</h1>
+            <p className="max-w-2xl text-sm leading-6 text-slate-600">
               {t('companies.subtitle')}
             </p>
           </div>
           <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
             <Card className="surface-card border-slate-200/80">
-              <CardContent className="px-4 py-4">
-                <p className="section-kicker">{t('companies.summaryCompanies')}</p>
-                <p className="mt-2 numeric-mono text-2xl font-semibold text-slate-900">{filtered.length}</p>
+              <CardContent className="p-4">
+                <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">{t('companies.summaryCompanies')}</p>
+                <p className="mt-1 numeric-mono text-3xl font-semibold text-slate-900">{filtered.length}</p>
               </CardContent>
             </Card>
             <Card className="surface-card border-slate-200/80">
-              <CardContent className="px-4 py-4">
-                <p className="section-kicker">{t('companies.summaryYears')}</p>
-                <p className="mt-2 numeric-mono text-2xl font-semibold text-slate-900">
+              <CardContent className="p-4">
+                <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">{t('companies.summaryYears')}</p>
+                <p className="mt-1 numeric-mono text-3xl font-semibold text-slate-900">
                   {new Set(filtered.map((company) => company.report_year)).size}
                 </p>
               </CardContent>
             </Card>
             <Card className="surface-card border-slate-200/80 col-span-2 sm:col-span-1">
-              <CardContent className="px-4 py-4">
-                <p className="section-kicker">{t('companies.summaryRows')}</p>
-                <p className="mt-2 numeric-mono text-2xl font-semibold text-slate-900">{companies.length}</p>
+              <CardContent className="p-4">
+                <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">{t('companies.summaryRows')}</p>
+                <p className="mt-1 numeric-mono text-3xl font-semibold text-slate-900">{companies.length}</p>
               </CardContent>
             </Card>
           </div>
@@ -156,51 +156,55 @@ export function CompaniesPage() {
             }}
           />
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="rounded-xl"
-            onClick={() => toggleSort('company_name')}
-          >
-            {t('companies.sortCompany')}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="rounded-xl"
-            onClick={() => toggleSort('report_year')}
-          >
-            {t('companies.sortYear')}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="rounded-xl"
-            onClick={() => toggleSort('taxonomy_aligned_revenue_pct')}
-          >
-            {t('companies.sortTaxonomy')}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="rounded-xl"
-            onClick={() => exportCompaniesCSV(filtered)}
-            aria-label={t('companies.csvExport')}
-          >
-            <Download size={14} className="mr-1 shrink-0" />
-            {t('companies.csvExport')}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="rounded-xl"
-            onClick={() => exportToJSON(filtered, `esg-companies-${new Date().toISOString().slice(0, 10)}.json`)}
-            aria-label={t('companies.jsonExport')}
-          >
-            <Download size={14} className="mr-1 shrink-0" />
-            {t('companies.jsonExport')}
-          </Button>
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-2">
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-10 rounded-xl px-4 text-sm"
+              onClick={() => toggleSort('company_name')}
+            >
+              {t('companies.sortCompany')}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-10 rounded-xl px-4 text-sm"
+              onClick={() => toggleSort('report_year')}
+            >
+              {t('companies.sortYear')}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-10 rounded-xl px-4 text-sm"
+              onClick={() => toggleSort('taxonomy_aligned_revenue_pct')}
+            >
+              {t('companies.sortTaxonomy')}
+            </Button>
+          </div>
+          <div className="flex flex-wrap gap-2 border-t border-slate-200 pt-4 md:mt-0 md:border-t-0 md:pt-0">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-10 rounded-xl px-4 text-sm"
+              onClick={() => exportCompaniesCSV(filtered)}
+              aria-label={t('companies.csvExport')}
+            >
+              <Download size={14} className="mr-1 shrink-0" />
+              {t('companies.csvExport')}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-10 rounded-xl px-4 text-sm"
+              onClick={() => exportToJSON(filtered, `esg-companies-${new Date().toISOString().slice(0, 10)}.json`)}
+              aria-label={t('companies.jsonExport')}
+            >
+              <Download size={14} className="mr-1 shrink-0" />
+              {t('companies.jsonExport')}
+            </Button>
+          </div>
         </div>
         </CardContent>
       </Card>

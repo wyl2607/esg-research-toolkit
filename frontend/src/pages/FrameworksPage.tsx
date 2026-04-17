@@ -189,10 +189,12 @@ export function FrameworksPage() {
 
   return (
     <div className="space-y-8">
-      <div className="space-y-2">
+      <div className="space-y-2 pt-2 pb-2 md:pt-0 md:pb-0">
         <p className="section-kicker">{t('frameworks.kicker')}</p>
-        <h1 className="text-3xl font-semibold text-slate-900">{t('frameworks.title')}</h1>
-        <p className="max-w-3xl text-sm leading-6 text-slate-600">
+        <h1 className="text-4xl leading-tight font-semibold text-slate-900 md:text-5xl">
+          {t('frameworks.title')}
+        </h1>
+        <p className="max-w-[32ch] text-base leading-7 text-slate-600 md:max-w-3xl md:text-sm md:leading-6">
           {t('frameworks.subtitle')}
         </p>
       </div>
@@ -222,13 +224,13 @@ export function FrameworksPage() {
         />
       ) : null}
 
-      <div className="surface-card max-w-xl">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm max-w-3xl">
         <p id="frameworks-company-select-label" className="mb-3 text-xs uppercase tracking-[0.2em] text-stone-500">
           {t('common.company')} & {t('common.year')}
         </p>
         <Select value={selected} onValueChange={setSelected}>
           <SelectTrigger
-            className="w-full border-stone-300 bg-white/90"
+            className="h-14 w-full bg-white text-base border-stone-300 shadow-sm hover:border-stone-400 focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
             aria-label={t('common.selectCompany')}
             aria-labelledby="frameworks-company-select-label"
           >

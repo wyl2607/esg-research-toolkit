@@ -218,10 +218,12 @@ export function ComparePage() {
 
   return (
     <div className="space-y-8">
-      <div className="space-y-2">
+      <div className="space-y-2 pt-4 pb-2 md:pt-0 md:pb-0">
         <p className="section-kicker">{t('compare.kicker')}</p>
-        <h1 className="text-3xl font-semibold text-slate-900 dark:text-slate-100">{t('compare.title')}</h1>
-        <p className="max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-300">
+        <h1 className="text-4xl leading-tight font-semibold text-slate-900 dark:text-slate-100 md:text-5xl">
+          {t('compare.title')}
+        </h1>
+        <p className="max-w-[32ch] text-base leading-7 text-slate-600 dark:text-slate-300 md:max-w-3xl md:text-sm md:leading-6">
           {t('compare.subtitle')}
         </p>
       </div>
@@ -255,7 +257,20 @@ export function ComparePage() {
 
       {/* Company + year selector */}
       <div className="surface-card p-5">
-        <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">{t('compare.selectUp4')}</p>
+        <h3 className="mb-3 flex items-center text-sm font-medium text-slate-700 dark:text-slate-200">
+          {t('compare.selectUp4')}
+          <span
+            className={cn(
+              'ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium',
+              selected.length >= 2
+                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+                : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300',
+            )}
+            aria-live="polite"
+          >
+            {selected.length}/4
+          </span>
+        </h3>
         <div className="flex flex-wrap gap-3">
           {uniqueCompanyNames.map((name) => {
             const isSelected = isCompanySelected(name)
@@ -267,7 +282,11 @@ export function ComparePage() {
                 <Button
                   variant={isSelected ? 'default' : 'outline'}
                   size="sm"
-                  className={cn('h-auto whitespace-normal px-3 py-2 text-left leading-5', disabled && 'opacity-40 cursor-not-allowed')}
+                  className={cn(
+                    'h-auto whitespace-normal px-3 py-2 text-left leading-5 transition-all active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600',
+                    isSelected && 'ring-2 ring-amber-200 dark:ring-amber-900/60',
+                    disabled && 'opacity-40 cursor-not-allowed',
+                  )}
                   onClick={() => !disabled && toggleCompany(name)}
                   aria-pressed={isSelected}
                 >
@@ -296,10 +315,21 @@ export function ComparePage() {
             )
           })}
         </div>
+        <Button
+          type="button"
+          className="mt-6 self-start rounded-xl bg-amber-700 px-5 py-2.5 text-white hover:bg-amber-800 disabled:bg-slate-200 disabled:text-slate-500 dark:bg-amber-800 dark:hover:bg-amber-900"
+          disabled={selectedCompanies.length < 2}
+          onClick={() => {
+            const el = document.getElementById('compare-results')
+            el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }}
+        >
+          {t('compare.startCta', { defaultValue: 'Vergleich starten' })}
+        </Button>
       </div>
 
       {selectedCompanies.length >= 2 ? (
-        <div className="space-y-8">
+        <div id="compare-results" className="space-y-8">
           {/* View mode toggle */}
           <div className="flex items-center gap-3 flex-wrap">
             <span className="text-xs font-semibold uppercase tracking-wide text-stone-500 dark:text-slate-400">

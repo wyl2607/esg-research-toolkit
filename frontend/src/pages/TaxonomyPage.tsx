@@ -44,7 +44,7 @@ export function TaxonomyPage() {
   const backendOffline = isBackendOffline(companiesError) || isBackendOffline(reportError)
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 max-w-5xl mx-auto">
       <div className="space-y-2">
         <p className="section-kicker">{t('taxonomy.kicker')}</p>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
@@ -104,12 +104,15 @@ export function TaxonomyPage() {
         />
       ) : null}
 
-      <div className="surface-card max-w-xl">
+      <div className="surface-card max-w-3xl">
         <p className="mb-3 text-xs uppercase tracking-[0.2em] text-stone-500">
           {t('common.company')} & {t('common.year')}
         </p>
         <Select value={selected} onValueChange={setSelected}>
-          <SelectTrigger className="w-full border-stone-300 bg-white/90" aria-label={t('common.selectCompany')}>
+          <SelectTrigger
+            className="h-14 w-full bg-white text-base border-stone-300 shadow-sm hover:border-stone-400 focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+            aria-label={t('common.selectCompany')}
+          >
             <SelectValue placeholder={t('common.selectCompany')} />
           </SelectTrigger>
           <SelectContent>
