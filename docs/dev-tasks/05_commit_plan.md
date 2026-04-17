@@ -1,36 +1,17 @@
 # Commit Readiness Plan (v0.2.1 → v0.2.2)
 
-**Modified files**: 13
-**Untracked files/dirs**: 7
+**Modified files**: 0
+**Untracked files/dirs**: 1
 **Drift row to clean**: yes
 
 ## 1. Current Git State
 
 ### Modified
 
-- `frontend/src/components/LanguageSwitcher.tsx`
-- `frontend/src/components/dashboard/DashboardHeavyCharts.tsx`
-- `frontend/src/i18n/locales/de.json`
-- `frontend/src/i18n/locales/en.json`
-- `frontend/src/i18n/locales/zh.json`
-- `frontend/src/pages/BenchmarkPage.tsx`
-- `frontend/src/pages/DashboardPage.tsx`
-- `report_parser/api.py`
-- `report_parser/company_identity.py`
-- `scripts/automation/ui_autopolish.py`
-- `scripts/seed_german_demo.py`
-- `tests/test_rate_limit.py`
-- `tests/test_seed_german_demo.py`
 
 ### Untracked
 
 - `data/`
-- `docs/dev-tasks/`
-- `docs/exec-plans/`
-- `scripts/comprehensive_health_check.sh`
-- `scripts/dev_tasks/`
-- `scripts/migrate_canonical_company_names.py`
-- `tests/test_company_identity.py`
 
 ## 2. Proposed Commit Groups (5 commits)
 

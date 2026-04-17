@@ -8,6 +8,41 @@
 - 在本文件追加版本摘要
 - 在 `docs/releases/` 下新增同日详细日报
 
+## [0.2.2] - 2026-04-17
+
+### Added
+
+- 9 个 canonical aliases（BMW Group / Deutsche Telekom / Fresenius / Linde / PUMA / RWE / SAP / Volkswagen Group / thyssenkrupp → 对应 canonical name），从根上阻断同一公司被拆成多条记录。
+- `/report/upload` 新增可选表单字段 `override_company_name`，允许上传方强制 canonical 名字，不再被 AI extractor 的命名波动污染。
+- `scripts/migrate_canonical_company_names.py`：一次性迁移脚本，自动备份 DB → 重写 legacy 行 → 按 `report_quality_score` 去重冲突记录。
+- `scripts/dev_tasks/` 五脚本审计工具链（identity audit / seed gap / UI autopolish / migration plan / commit readiness）+ `scripts/comprehensive_health_check.sh` 全流程健康检测。
+- 新增 3 个测试文件（`tests/test_company_identity.py`、`tests/test_rate_limit.py`，`tests/test_seed_german_demo.py` 扩展），pytest 127 → 131。
+- 新增版本日报 `docs/releases/2026-04-17-v0.2.2.md`。
+
+### Changed
+
+- `scripts/seed_german_demo.py::upload_company()` 现在自动把 manifest 的 `company_name` 作为 `override_company_name` 传给后端，确保 seed 永远落在 canonical 身份。
+- `frontend`：Dashboard / Benchmark / LanguageSwitcher 首轮视觉微调（来自 UI autopolish 的 CRITICAL / HIGH 建议）。
+- `.gitignore` 扩展 `*.db.bak*` / `*.sqlite*.bak*`，避免 migration 备份被意外 commit。
+
+### Fixed
+
+- 清理孤立测试 drift 行 `Slash/Like Name Co / 2026`（无 PDF / 无 hash / 未来年份，来自历史集成测试 fixture）。
+- Migration 去重删除 6 条低质量重复记录（ids 3, 51, 52, 24, 36, 45）。
+
+### Data Impact
+
+- 多年趋势覆盖：**5 家 → 8 家**（BASF / BMW / DHL / Deutsche Telekom / RWE / SAP / Volkswagen 7 家完整 2022-2024，Henkel 2 年）。
+- DB 条目：51 → 36（去重后），每条都对应 manifest 中唯一 (company, year)。
+- manifest ↔ DB 完美对齐：0 missing, 0 drift。
+
+### Verified
+
+- `OPENAI_API_KEY=dummy .venv/bin/pytest -q` → `131 passed`
+- `scripts/dev_tasks/01_company_identity_audit.py` → 0 clusters
+- `scripts/dev_tasks/02_seed_gap_analysis.py` → 0 missing, 0 drift
+- `scripts/dev_tasks/04_identity_migration_plan.py` → 0 renames needed
+
 ## [0.2.1] - 2026-04-16
 
 ### Added

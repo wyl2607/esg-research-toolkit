@@ -50,7 +50,9 @@ data/exports/**
 reports/
 examples/companies/*.json
 *.db
+*.db.bak*
 *.sqlite
+*.sqlite*.bak*
 *.sqlite3
 
 # IDE

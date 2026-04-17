@@ -1,3 +1,3 @@
 # Current Version
 
-`v0.2.1`
+`v0.2.2`

@@ -1,7 +1,7 @@
 # Seed Pipeline Gap Analysis
 
 **Manifest**: `scripts/seed_data/german_demo_manifest.json` (36 entries)
-**DB**: `sqlite:///./data/esg_toolkit.db` (37 (company, year) pairs)
+**DB**: `sqlite:///./data/esg_toolkit.db` (36 (company, year) pairs)
 
 ## 1. Manifest Coverage Matrix
 
@@ -35,11 +35,7 @@ _All manifest entries are loaded._ 🎉
 
 ## 3. In DB but NOT in Manifest (possible drift)
 
-**1 entries:**
-
-- `Slash/Like Name Co` / 2026
-
-**Action**: decide whether these should be added to the manifest or deleted from the DB.
+_All DB rows have a matching manifest entry._ 🎉
 
 ## 4. Companies Missing 2022/2023 (high-impact gaps)
 
