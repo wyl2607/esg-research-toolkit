@@ -50,7 +50,7 @@ export function Sidebar({ id, className, onNavigate }: SidebarProps) {
       <aside
         id={id}
         className={cn(
-          'fixed lg:static left-0 top-0 z-30 h-screen w-64 shrink-0 border-r border-stone-200/80 dark:border-slate-700/50 bg-stone-50/90 dark:bg-slate-900/95 backdrop-blur-sm flex flex-col transition-transform duration-300 lg:translate-x-0',
+          'fixed lg:static left-0 top-0 z-30 h-screen w-[260px] shrink-0 border-r border-stone-200/80 dark:border-slate-700/50 bg-stone-50/90 dark:bg-slate-900/95 backdrop-blur-sm flex flex-col transition-transform duration-300 lg:translate-x-0',
           isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
           className
         )}

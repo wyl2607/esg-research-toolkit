@@ -41,6 +41,10 @@ const CoverageFieldPage = lazy(() =>
   import('@/pages/CoverageFieldPage').then((module) => ({ default: module.CoverageFieldPage }))
 )
 
+const DesignPreviewPage = lazy(() =>
+  import('@/pages/DesignPreviewPage').then((module) => ({ default: module.DesignPreviewPage }))
+)
+
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
 })
@@ -65,6 +69,7 @@ export default function App() {
               <Route path="regional" element={<RegionalPage />} />
               <Route path="coverage/:field" element={<CoverageFieldPage />} />
               <Route path="frameworks/regional" element={<RegionalPage />} />
+              <Route path="design-preview" element={<DesignPreviewPage />} />
             </Route>
           </Routes>
         </Suspense>
