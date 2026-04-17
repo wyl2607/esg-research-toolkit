@@ -146,19 +146,19 @@ export function DashboardPage() {
             id: 'companies',
             label: t('dashboard.companiesAnalyzed'),
             value: stats?.total_companies ?? 0,
-            color: 'blue',
+            color: 'default',
           } satisfies MetricItem,
           {
             id: 'taxonomy',
             label: t('dashboard.avgTaxonomy'),
             value: `${stats?.avg_taxonomy_aligned ?? 0}%`,
-            color: 'green',
+            color: 'blue',
           } satisfies MetricItem,
           {
             id: 'renewable',
             label: t('dashboard.avgRenewable'),
             value: `${stats?.avg_renewable_pct ?? 0}%`,
-            color: 'green',
+            color: 'blue',
           } satisfies MetricItem,
         ]}
       />

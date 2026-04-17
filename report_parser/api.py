@@ -654,6 +654,7 @@ if _MULTIPART_AVAILABLE:
         file: UploadFile = File(...),
         industry_code: str | None = Form(default=None),
         industry_sector: str | None = Form(default=None),
+        override_company_name: str | None = Form(default=None),
         db: Session = Depends(get_db),
     ) -> CompanyESGData:
         """
@@ -688,6 +689,10 @@ if _MULTIPART_AVAILABLE:
             esg_data = analyze_esg_data(text, filename=file.filename or "")
         except AIExtractionError as exc:
             raise HTTPException(422, str(exc.reason)) from exc
+        if override_company_name is not None and override_company_name.strip():
+            esg_data = esg_data.model_copy(
+                update={"company_name": canonical_company_name(override_company_name.strip())}
+            )
         if industry_code is not None or industry_sector is not None:
             esg_data = esg_data.model_copy(
                 update={
@@ -696,7 +701,7 @@ if _MULTIPART_AVAILABLE:
                 }
             )
 
-        save_report(
+        saved_record = save_report(
             db,
             esg_data,
             pdf_filename=safe_name,
@@ -707,7 +712,7 @@ if _MULTIPART_AVAILABLE:
             source_document_type="sustainability_report",
             evidence_summary=_upload_evidence_summary(esg_data, file_hash=file_hash),
         )
-        return esg_data
+        return _record_to_company_data(saved_record)
 
     @router.post("/upload/batch", response_model=BatchStatusResponse)
     @limiter.limit("5/minute")

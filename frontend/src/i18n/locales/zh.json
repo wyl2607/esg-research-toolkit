@@ -275,6 +275,8 @@
     "emptyPeers": "尚无公司标注为该行业。",
     "percentilesHeading": "分位数概览 —— {{industry}}",
     "peersHeading": "贡献公司（{{count}}）",
+    "lowSampleWarningTitle": "样本量偏低——这些分位数只能作为方向性参考",
+    "lowSampleWarningBody": "当前筛选下的最小样本量低至 {{count}}。基准表仍可查看，但在用于决策或对外汇报时应明确标注谨慎解释。",
     "col": {
       "metric": "指标",
       "sample": "样本"

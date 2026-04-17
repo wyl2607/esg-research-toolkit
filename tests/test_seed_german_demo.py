@@ -15,6 +15,7 @@ from scripts.seed_german_demo import (
     load_manifest,
     main,
     phase_b,
+    upload_company,
 )
 
 
@@ -429,3 +430,54 @@ def test_phase_b_drops_no_concern_entries(monkeypatch: pytest.MonkeyPatch, tmp_p
 
     report = (tmp_path / "anomalies_report.md").read_text(encoding="utf-8")
     assert "_No anomalies flagged." in report
+
+
+def test_upload_company_sends_override_company_name(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
+    company = SeedCompany(
+        slug="vw-2024",
+        company_name="Volkswagen AG",
+        report_year=2024,
+        industry_code="C29.10",
+        industry_sector="Manufacture of motor vehicles",
+        source_url="https://example.com/vw.pdf",
+        verify=False,
+    )
+    pdf_path = tmp_path / "vw.pdf"
+    pdf_path.write_bytes(b"%PDF-1.7\n" + b"x" * 2048)
+
+    captured: dict[str, object] = {}
+
+    class _Response:
+        status_code = 200
+
+        @staticmethod
+        def json() -> dict:
+            return {"company_name": "Volkswagen AG", "report_year": 2024}
+
+    class _Client:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb) -> None:
+            return None
+
+        def post(self, url: str, files=None, data=None):
+            captured["url"] = url
+            captured["data"] = data
+            captured["files"] = files
+            return _Response()
+
+    monkeypatch.setattr("scripts.seed_german_demo.httpx.Client", _Client)
+
+    payload = upload_company("http://api.test", company, pdf_path, timeout=10)
+
+    assert payload == {"company_name": "Volkswagen AG", "report_year": 2024}
+    assert captured["url"] == "http://api.test/report/upload"
+    assert captured["data"] == {
+        "industry_code": "C29.10",
+        "industry_sector": "Manufacture of motor vehicles",
+        "override_company_name": "Volkswagen AG",
+    }

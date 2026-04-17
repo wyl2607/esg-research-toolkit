@@ -171,9 +171,11 @@ def _image_to_data_url(path: str) -> str:
 def critique_one(shot: ShotMeta, model: str) -> PageCritique:
     from openai import OpenAI
 
+    request_timeout = float(os.environ.get("OPENAI_TIMEOUT_SECONDS", "60"))
     client = OpenAI(
         api_key=settings.openai_api_key,
         base_url=settings.openai_base_url,
+        timeout=request_timeout,
     )
 
     messages = [
@@ -353,7 +355,12 @@ async def main_async(args: argparse.Namespace) -> int:
         print(f"✅ {len(shots)} screenshots saved to {shots_dir}")
         return 0
 
-    model = args.model or os.environ.get("VISION_MODEL") or settings.openai_model
+    model = (
+        args.model
+        or os.environ.get("VISION_MODEL")
+        or os.environ.get("OPENAI_MODEL")
+        or settings.openai_model
+    )
     print(f"→ running critique with model: {model}")
 
     critiques: list[PageCritique] = []

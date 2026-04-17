@@ -275,6 +275,8 @@
     "emptyPeers": "Noch keine Unternehmen mit dieser Branche markiert.",
     "percentilesHeading": "Perzentil-Übersicht — {{industry}}",
     "peersHeading": "Beteiligte Unternehmen ({{count}})",
+    "lowSampleWarningTitle": "Kleine Stichprobe — diese Perzentile nur als Richtwert nutzen",
+    "lowSampleWarningBody": "Die aktuelle Auswahl enthält Stichprobengrößen bis hinunter zu {{count}}. Die Benchmark-Tabelle bleibt sichtbar, sollte für Entscheidungen oder externes Reporting aber mit Vorsicht interpretiert werden.",
     "col": {
       "metric": "Metrik",
       "sample": "n"

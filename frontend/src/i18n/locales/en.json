@@ -273,6 +273,8 @@
     "emptyPeers": "No companies tagged with this industry yet.",
     "percentilesHeading": "Percentile summary — {{industry}}",
     "peersHeading": "Contributing companies ({{count}})",
+    "lowSampleWarningTitle": "Low sample size — treat these percentiles as directional only",
+    "lowSampleWarningBody": "The current selection includes sample sizes as low as {{count}}. Keep the benchmark table visible, but add caution when using p50/p75 values for decisions or external reporting.",
     "col": {
       "metric": "Metric",
       "sample": "n"

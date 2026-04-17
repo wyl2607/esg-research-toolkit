@@ -80,29 +80,35 @@ export function BenchmarkPage() {
         ? option.sectorDe
         : option.sectorEn
 
+  const minSampleSize = useMemo(() => {
+    if (!visibleMetrics.length) return null
+    return visibleMetrics.reduce((smallest, row) => Math.min(smallest, row.sample_size), Number.POSITIVE_INFINITY)
+  }, [visibleMetrics])
+  const lowSampleSize = minSampleSize != null && Number.isFinite(minSampleSize) && minSampleSize < 5
+
   return (
     <div className="space-y-6">
       <header className="space-y-1">
-        <h1 className="text-3xl font-semibold text-stone-900 dark:text-slate-100">
+        <h1 className="text-3xl font-semibold text-stone-900 md:text-4xl dark:text-slate-100">
           {t('benchmark.title')}
         </h1>
-        <p className="text-sm text-stone-600 dark:text-slate-300">
+        <p className="max-w-3xl text-sm leading-6 text-stone-600 dark:text-slate-300">
           {t('benchmark.subtitle')}
         </p>
       </header>
 
-      <div className="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-700 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-300">
+      <div className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm leading-6 text-stone-700 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-300">
         {t('benchmark.disclaimer')}
       </div>
 
       <section className="surface-card space-y-4 p-5">
-        <div className="grid gap-4 md:grid-cols-[2fr_1fr_auto] md:items-end">
-          <div className="space-y-2">
+        <div className="grid gap-4 md:grid-cols-12 md:items-end">
+          <div className="space-y-2 md:col-span-6">
             <label className="text-sm font-medium text-stone-700 dark:text-slate-300">
               {t('benchmark.industryLabel')}
             </label>
             <select
-              className="h-11 w-full rounded-xl border border-stone-300 bg-white px-3 text-sm text-stone-800 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+              className="h-12 w-full rounded-xl border border-stone-300 bg-white px-3 text-sm text-stone-800 shadow-sm transition hover:border-stone-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
               value={industryCode}
               onChange={(event) => {
                 setIndustryCode(event.target.value)
@@ -118,12 +124,12 @@ export function BenchmarkPage() {
             </select>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 md:col-span-3">
             <label className="text-sm font-medium text-stone-700 dark:text-slate-300">
               {t('benchmark.yearLabel')}
             </label>
             <select
-              className="h-11 w-full rounded-xl border border-stone-300 bg-white px-3 text-sm text-stone-800 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+              className="h-12 w-full rounded-xl border border-stone-300 bg-white px-3 text-sm text-stone-800 shadow-sm transition hover:border-stone-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
               value={effectiveYear ?? ''}
               onChange={(event) => setSelectedYear(Number(event.target.value))}
               disabled={availableYears.length === 0}
@@ -142,7 +148,7 @@ export function BenchmarkPage() {
 
           <button
             type="button"
-            className="h-11 rounded-xl border border-stone-300 bg-stone-100 px-4 text-sm font-medium text-stone-800 transition hover:bg-stone-200 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600"
+            className="h-12 rounded-xl bg-amber-600 px-5 text-sm font-medium text-white shadow-sm transition hover:bg-amber-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:text-stone-600 md:col-span-3 dark:focus-visible:ring-offset-slate-900"
             onClick={() => recomputeMutation.mutate()}
             disabled={recomputeMutation.isPending}
           >
@@ -182,6 +188,33 @@ export function BenchmarkPage() {
           ) : null}
         </div>
 
+        {visibleMetrics.length > 0 ? (
+          <div className="flex flex-wrap gap-2 text-sm">
+            <span className="inline-flex items-center rounded-full bg-stone-100 px-3 py-1 text-stone-700 dark:bg-slate-800 dark:text-slate-200">
+              {industryLabel}
+            </span>
+            {effectiveYear != null ? (
+              <span className="inline-flex items-center rounded-full bg-stone-100 px-3 py-1 text-stone-700 dark:bg-slate-800 dark:text-slate-200">
+                {effectiveYear}
+              </span>
+            ) : null}
+            {minSampleSize != null ? (
+              <span className="inline-flex items-center rounded-full bg-stone-100 px-3 py-1 text-stone-700 dark:bg-slate-800 dark:text-slate-200">
+                {t('benchmark.col.sample')}: {minSampleSize}
+              </span>
+            ) : null}
+          </div>
+        ) : null}
+
+        {lowSampleSize ? (
+          <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-700/60 dark:bg-amber-950/30 dark:text-amber-100">
+            <p className="font-semibold">{t('benchmark.lowSampleWarningTitle')}</p>
+            <p className="mt-1 leading-6">
+              {t('benchmark.lowSampleWarningBody', { count: minSampleSize ?? 0 })}
+            </p>
+          </div>
+        ) : null}
+
         {benchmarksQuery.isLoading ? (
           <div className="space-y-3">
             <Skeleton count={5} height="h-10" />
@@ -201,36 +234,36 @@ export function BenchmarkPage() {
         ) : null}
 
         {visibleMetrics.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="min-w-full border-collapse text-sm">
+          <div className="overflow-x-auto -mx-5 px-5">
+            <table className="min-w-[560px] border-collapse text-sm md:min-w-full">
               <thead>
-                <tr className="border-b border-stone-200 text-left text-xs uppercase text-stone-500 dark:border-slate-700 dark:text-slate-400">
-                  <th className="py-2 pr-4">{t('benchmark.col.metric')}</th>
-                  <th className="py-2 pr-4">p10</th>
-                  <th className="py-2 pr-4">p25</th>
-                  <th className="py-2 pr-4">p50</th>
-                  <th className="py-2 pr-4">p75</th>
-                  <th className="py-2 pr-4">p90</th>
-                  <th className="py-2 pr-4">{t('benchmark.col.sample')}</th>
+                <tr className="border-b border-stone-200 text-left text-[11px] uppercase tracking-wide text-stone-500 dark:border-slate-700 dark:text-slate-400">
+                  <th className="sticky left-0 bg-white py-2.5 pr-4 dark:bg-[#111827]">{t('benchmark.col.metric')}</th>
+                  <th className="bg-white/80 px-3 py-2.5 dark:bg-[#111827]">p10</th>
+                  <th className="bg-white/80 px-3 py-2.5 dark:bg-[#111827]">p25</th>
+                  <th className="bg-amber-50/80 px-3 py-2.5 font-semibold text-stone-900 dark:bg-amber-950/20 dark:text-stone-100">p50</th>
+                  <th className="bg-white/80 px-3 py-2.5 dark:bg-[#111827]">p75</th>
+                  <th className="bg-white/80 px-3 py-2.5 dark:bg-[#111827]">p90</th>
+                  <th className="bg-white/80 px-3 py-2.5 dark:bg-[#111827]">{t('benchmark.col.sample')}</th>
                 </tr>
               </thead>
               <tbody>
                 {visibleMetrics.map((row) => (
                   <tr
                     key={`${row.metric_name}-${row.period_year}`}
-                    className="border-b border-stone-100 dark:border-slate-800"
+                    className="border-b border-stone-100 even:bg-stone-50/50 dark:border-slate-800 dark:even:bg-slate-900/30"
                   >
-                    <td className="py-2 pr-4 text-xs font-medium text-stone-700 dark:text-slate-200">
+                    <td className="sticky left-0 w-40 min-w-40 bg-inherit py-3 pr-4 text-sm font-medium leading-5 text-stone-700 dark:text-slate-200">
                       {formatMetricName(row.metric_name)}
                     </td>
-                    <td className="py-2 pr-4">{formatNumber(row.p10, locale)}</td>
-                    <td className="py-2 pr-4">{formatNumber(row.p25, locale)}</td>
-                    <td className="py-2 pr-4 font-semibold">
+                    <td className="px-3 py-3 tabular-nums">{formatNumber(row.p10, locale)}</td>
+                    <td className="px-3 py-3 tabular-nums">{formatNumber(row.p25, locale)}</td>
+                    <td className="bg-amber-50/60 px-3 py-3 font-semibold tabular-nums dark:bg-amber-950/10">
                       {formatNumber(row.p50, locale)}
                     </td>
-                    <td className="py-2 pr-4">{formatNumber(row.p75, locale)}</td>
-                    <td className="py-2 pr-4">{formatNumber(row.p90, locale)}</td>
-                    <td className="py-2 pr-4 text-stone-600 dark:text-slate-400">
+                    <td className="px-3 py-3 tabular-nums">{formatNumber(row.p75, locale)}</td>
+                    <td className="px-3 py-3 tabular-nums">{formatNumber(row.p90, locale)}</td>
+                    <td className="px-3 py-3 text-stone-600 dark:text-slate-400">
                       {row.sample_size}
                     </td>
                   </tr>

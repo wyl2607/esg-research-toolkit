@@ -257,6 +257,7 @@ def upload_company(api_base: str, company: SeedCompany, pdf_path: Path, *, timeo
                 data={
                     "industry_code": company.industry_code,
                     "industry_sector": company.industry_sector,
+                    "override_company_name": company.company_name,
                 },
             )
 
