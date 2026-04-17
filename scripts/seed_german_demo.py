@@ -227,6 +227,11 @@ def _company_profile_url(api_base: str, company_name: str) -> str:
     return f"{api_base}/report/companies/{encoded}/profile"
 
 
+def _company_history_url(api_base: str, company_name: str) -> str:
+    encoded = quote(company_name, safe="")
+    return f"{api_base}/report/companies/{encoded}/history"
+
+
 def already_seeded(api_base: str, company: SeedCompany) -> bool:
     """Skip upload when same company/year already present."""
     try:
@@ -363,25 +368,42 @@ def phase_b(api_base: str, companies: list[SeedCompany]) -> None:
     with httpx.Client(timeout=60) as client:
         for company in companies:
             try:
-                profile_resp = client.get(_company_profile_url(api_base, company.company_name))
+                history_resp = client.get(_company_history_url(api_base, company.company_name))
             except httpx.HTTPError as exc:
                 findings.append({"company": company.company_name, "issue": f"network: {exc}"})
                 continue
 
-            if profile_resp.status_code != 200:
+            if history_resp.status_code != 200:
                 findings.append(
-                    {"company": company.company_name, "issue": f"profile fetch {profile_resp.status_code}"}
+                    {"company": company.company_name, "issue": f"history fetch {history_resp.status_code}"}
                 )
                 continue
 
             try:
-                profile = profile_resp.json()
+                history = history_resp.json()
             except ValueError:
-                findings.append({"company": company.company_name, "issue": "profile JSON decode error"})
+                findings.append({"company": company.company_name, "issue": "history JSON decode error"})
                 continue
 
-            metrics = profile.get("latest_metrics") or {}
-            evidence = profile.get("evidence_summary") or []
+            # Find the specific year's period. Previously this used /profile which
+            # only exposes latest_metrics — so Phase B was asking "is your 2022
+            # extraction right?" but feeding 2024 data, producing false positives.
+            target_period = next(
+                (
+                    period for period in (history.get("periods") or [])
+                    if period.get("report_year") == company.report_year
+                ),
+                None,
+            )
+            if target_period is None:
+                findings.append(
+                    {"company": company.company_name, "issue": f"no period for year {company.report_year}"}
+                )
+                continue
+
+            merged_result = target_period.get("merged_result") or {}
+            metrics = merged_result.get("merged_metrics") or {}
+            evidence = target_period.get("evidence_anchors") or merged_result.get("evidence_summary") or []
 
             prompt = (
                 "You are reviewing ESG numbers extracted from a corporate sustainability report. "

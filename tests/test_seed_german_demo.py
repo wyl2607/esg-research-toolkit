@@ -295,14 +295,24 @@ def test_phase_b_uses_shared_client_and_validation_model(monkeypatch: pytest.Mon
         verify=False,
     )
 
-    class _ProfileResponse:
+    class _HistoryResponse:
         status_code = 200
 
         @staticmethod
         def json() -> dict:
             return {
-                "latest_metrics": {"scope1_emissions": 123.4},
-                "evidence_summary": [{"metric": "scope1_emissions", "snippet": "123.4 tCO2e"}],
+                "periods": [
+                    {
+                        "report_year": 2024,
+                        "merged_result": {
+                            "merged_metrics": {"scope1_emissions": 123.4},
+                            "evidence_summary": [],
+                        },
+                        "evidence_anchors": [
+                            {"metric": "scope1_emissions", "snippet": "123.4 tCO2e"}
+                        ],
+                    }
+                ]
             }
 
     class _HttpClient:
@@ -317,7 +327,8 @@ def test_phase_b_uses_shared_client_and_validation_model(monkeypatch: pytest.Mon
 
         def get(self, url: str):
             assert "Demo%20AG" in url
-            return _ProfileResponse()
+            assert "/history" in url
+            return _HistoryResponse()
 
     captured_calls: list[dict[str, object]] = []
 
@@ -371,14 +382,24 @@ def test_phase_b_drops_no_concern_entries(monkeypatch: pytest.MonkeyPatch, tmp_p
         verify=False,
     )
 
-    class _ProfileResponse:
+    class _HistoryResponse:
         status_code = 200
 
         @staticmethod
         def json() -> dict:
             return {
-                "latest_metrics": {"scope1_co2e_tonnes": 123.4},
-                "evidence_summary": [{"metric": "scope1_co2e_tonnes", "snippet": "123.4 tCO2e"}],
+                "periods": [
+                    {
+                        "report_year": 2024,
+                        "merged_result": {
+                            "merged_metrics": {"scope1_co2e_tonnes": 123.4},
+                            "evidence_summary": [],
+                        },
+                        "evidence_anchors": [
+                            {"metric": "scope1_co2e_tonnes", "snippet": "123.4 tCO2e"}
+                        ],
+                    }
+                ]
             }
 
     class _HttpClient:
@@ -392,7 +413,7 @@ def test_phase_b_drops_no_concern_entries(monkeypatch: pytest.MonkeyPatch, tmp_p
             return None
 
         def get(self, url: str):
-            return _ProfileResponse()
+            return _HistoryResponse()
 
     class _ChatCompletions:
         @staticmethod
@@ -430,6 +451,100 @@ def test_phase_b_drops_no_concern_entries(monkeypatch: pytest.MonkeyPatch, tmp_p
 
     report = (tmp_path / "anomalies_report.md").read_text(encoding="utf-8")
     assert "_No anomalies flagged." in report
+
+
+def test_phase_b_selects_metrics_for_requested_year(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
+    """Regression: Phase B must validate the manifest year, not the latest year.
+
+    Prior bug: phase_b used /profile which returns latest_metrics (always the
+    newest year), so when asked to review 2022 data it was actually feeding the
+    LLM the 2024 values — producing false-positive anomaly flags for DHL 2022
+    and Henkel 2023.
+    """
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+    monkeypatch.setattr("scripts.seed_german_demo.ANOMALIES_REPORT_PATH", tmp_path / "anomalies_report.md")
+
+    company = SeedCompany(
+        slug="demo-2022",
+        company_name="Demo AG",
+        report_year=2022,
+        industry_code="D35.11",
+        industry_sector="Electricity production",
+        source_url="https://example.com/demo-2022.pdf",
+        verify=False,
+    )
+
+    class _HistoryResponse:
+        status_code = 200
+
+        @staticmethod
+        def json() -> dict:
+            return {
+                "periods": [
+                    {
+                        "report_year": 2022,
+                        "merged_result": {"merged_metrics": {"scope1_co2e_tonnes": 2022.0}},
+                        "evidence_anchors": [{"metric": "scope1_co2e_tonnes", "snippet": "2022 value"}],
+                    },
+                    {
+                        "report_year": 2023,
+                        "merged_result": {"merged_metrics": {"scope1_co2e_tonnes": 2023.0}},
+                        "evidence_anchors": [],
+                    },
+                    {
+                        "report_year": 2024,
+                        "merged_result": {"merged_metrics": {"scope1_co2e_tonnes": 2024.0}},
+                        "evidence_anchors": [],
+                    },
+                ]
+            }
+
+    class _HttpClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb) -> None:
+            return None
+
+        def get(self, url: str):
+            return _HistoryResponse()
+
+    captured_prompts: list[str] = []
+
+    class _ChatCompletions:
+        @staticmethod
+        def create(**kwargs):
+            captured_prompts.append(kwargs["messages"][0]["content"])
+
+            class _Message:
+                content = json.dumps({"company": "Demo AG", "concerns": []})
+
+            class _Choice:
+                message = _Message()
+
+            class _Completion:
+                choices = [_Choice()]
+
+            return _Completion()
+
+    class _FakeClient:
+        class chat:
+            completions = _ChatCompletions()
+
+    monkeypatch.setattr("scripts.seed_german_demo.httpx.Client", _HttpClient)
+    monkeypatch.setattr("scripts.seed_german_demo.get_client", lambda: _FakeClient())
+
+    phase_b("http://relay.test", [company])
+
+    assert len(captured_prompts) == 1
+    prompt = captured_prompts[0]
+    # Must include the 2022 value, must NOT mention the 2024 value as "the" metric.
+    assert "2022.0" in prompt
+    assert '"scope1_co2e_tonnes": 2024.0' not in prompt
+    assert "YEAR: 2022" in prompt
 
 
 def test_upload_company_sends_override_company_name(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
