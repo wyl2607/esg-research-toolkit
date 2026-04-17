@@ -29,7 +29,7 @@ from report_parser.storage import get_report, save_report
 from taxonomy_scorer.api import router as taxonomy_router
 from techno_economics.api import router as techno_router
 
-APP_VERSION = "0.2.1"
+APP_VERSION = "0.2.3-beta.1"
 CONTRACT_TEST_MODE = os.getenv("ESG_CONTRACT_TEST_MODE") == "1"
 DEFAULT_OPENAPI_SERVER_URL = os.getenv(
     "ESG_OPENAPI_SERVER_URL",

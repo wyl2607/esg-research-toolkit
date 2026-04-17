@@ -8,6 +8,33 @@
 - 在本文件追加版本摘要
 - 在 `docs/releases/` 下新增同日详细日报
 
+## [0.2.3-beta.1] - 2026-04-17
+
+### Added
+
+- 新增后端模型注册中心 `core/models.py`，将 extraction / validation / audit 三类模型配置、fallback 和可用性检查集中管理。
+- 新增 `GET /health/models` 运维健康接口，暴露每类模型的当前配置、fallback、availability、检查来源与最近检查时间。
+- 新增 `docs/ops/models.md` 与 `docs/ops/data-integrity.md`，把模型配置和数据完整性控制写成面向团队的操作文档。
+- 新增 `report_parser/admin_routes.py` 与 `report_parser/industry_routes.py`，把管理/导出与行业查询路由从主 API 中拆出。
+- 新增 `tests/test_models_registry.py`，补齐模型健康与 provider/whitelist 回退行为覆盖。
+
+### Changed
+
+- `main.py` 版本号与发布文档正式对齐到 `v0.2.3-beta.1`，避免继续出现运行时版本和 release 元数据不一致。
+- `report_parser/api.py`、`taxonomy_scorer/api.py`、`esg_frameworks/api.py` 补齐更多 `response_model` 契约，降低 OpenAPI 漂移风险。
+- `report_parser/storage.py` 与 `esg_frameworks/storage.py` 强化唯一性与去重逻辑，为生产环境数据完整性收紧约束。
+- `.gitignore` 现忽略 `docs/archive/`，把本地归档材料从 GitHub 发布面移出。
+
+### Fixed
+
+- 修复发布卫生问题：移除会触发安全钩子的本地 archive 产物，恢复远端推送为面向公开仓库的干净状态。
+- 修复模型配置分散在多个入口的问题，统一默认模型解析逻辑，减少脚本与 API 之间的配置漂移。
+
+### Verified
+
+- `OPENAI_API_KEY=dummy .venv/bin/pytest -q tests/test_models_registry.py tests/test_openapi_contract.py tests/test_report_parser.py` → `44 passed`
+- `OPENAI_API_KEY=dummy .venv/bin/pytest -q tests/test_frameworks_comparison.py tests/test_profile_contract.py tests/test_taxonomy_scorer.py` → `15 passed`
+
 ## [0.2.2] - 2026-04-17
 
 ### Added
