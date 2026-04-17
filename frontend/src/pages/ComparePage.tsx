@@ -493,7 +493,28 @@ export function ComparePage() {
           </div>
         </div>
       ) : (
-        <p className="py-12 text-center text-slate-400 dark:text-slate-500">{t('compare.noSelection')}</p>
+        <div className="rounded-2xl border border-slate-200 bg-white/70 p-8 text-center dark:border-slate-700 dark:bg-slate-800/40">
+          <p className="text-base font-semibold text-slate-700 dark:text-slate-200">{t('compare.noSelectionHeadline')}</p>
+          <ul className="mt-4 space-y-2 text-sm text-slate-500 dark:text-slate-400">
+            <li className="flex items-center justify-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" aria-hidden="true" />
+              {t('compare.noSelectionBullet1')}
+            </li>
+            <li className="flex items-center justify-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" aria-hidden="true" />
+              {t('compare.noSelectionBullet2')}
+            </li>
+            <li className="flex items-center justify-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" aria-hidden="true" />
+              {t('compare.noSelectionBullet3')}
+            </li>
+          </ul>
+          <div className="mt-6 grid grid-cols-3 gap-4" aria-hidden="true">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-16 rounded-xl border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800" />
+            ))}
+          </div>
+        </div>
       )}
     </div>
   )

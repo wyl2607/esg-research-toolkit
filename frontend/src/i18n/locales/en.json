@@ -61,7 +61,10 @@
     "runTaxonomy": "Run Taxonomy Disclosure Analysis →",
     "uploadReport": "Upload Report",
     "chartsEmptyTitle": "No data to display yet",
-    "chartsEmptyBody": "Upload an ESG report to unlock trend charts and emission rankings."
+    "chartsEmptyBody": "Upload an ESG report to unlock trend charts and emission rankings.",
+    "coverageSortDefault": "Default",
+    "coverageSortDesc": "High → Low",
+    "coverageSortAsc": "Low → High"
   },
   "upload": {
     "kicker": "Document intake",
@@ -238,6 +241,10 @@
     "waterUsage": "Water Usage (m³)",
     "femalePct": "Female Employees",
     "noSelection": "Select companies above to compare metrics.",
+    "noSelectionHeadline": "Select two or more companies to begin",
+    "noSelectionBullet1": "Side-by-side emissions and taxonomy data",
+    "noSelectionBullet2": "Relative bars to spot the best and worst performer",
+    "noSelectionBullet3": "Switch between absolute values, intensity, and rank views",
     "viewMode": "View mode",
     "modeAbsolute": "Absolute",
     "modeIntensity": "Per employee",

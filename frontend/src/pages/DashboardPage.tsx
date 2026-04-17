@@ -200,14 +200,14 @@ export function DashboardPage() {
               type="button"
               onClick={cycleCoverageSort}
               className="flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 shadow-sm transition hover:border-amber-400 hover:text-amber-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600"
-              aria-label="切换排序方式"
+              aria-label={t('dashboard.coverageSortDefault')}
             >
               {coverageSort === 'default' ? (
-                <><ArrowUpDown size={13} />默认</>
+                <><ArrowUpDown size={13} />{t('dashboard.coverageSortDefault')}</>
               ) : coverageSort === 'desc' ? (
-                <><ArrowDownUp size={13} />高→低</>
+                <><ArrowDownUp size={13} />{t('dashboard.coverageSortDesc')}</>
               ) : (
-                <><ArrowUpDown size={13} />低→高</>
+                <><ArrowUpDown size={13} />{t('dashboard.coverageSortAsc')}</>
               )}
             </button>
           )}
