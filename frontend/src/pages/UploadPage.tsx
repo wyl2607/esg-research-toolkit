@@ -4,9 +4,13 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { getBatchStatus, uploadReport, uploadReportsBatch } from '@/lib/api'
 import { ApiError } from '@/lib/api'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { QueryStateCard } from '@/components/QueryStateCard'
+import { PageContainer } from '@/components/layout/PageContainer'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { Panel, FormCard, StatCard } from '@/components/layout/Panel'
+import { NoticeBanner } from '@/components/NoticeBanner'
+import { FilterBar } from '@/components/FilterBar'
 import { Upload, FileText, CheckCircle, AlertCircle, Clock3 } from 'lucide-react'
 import type { BatchStatusResponse, CompanyESGData } from '@/lib/types'
 import { useNavigate } from 'react-router-dom'
@@ -143,42 +147,30 @@ export function UploadPage() {
   const batchStatus = batchStatusQuery.data
 
   return (
-    <div className="space-y-8">
-      <div className="space-y-2">
-        <p className="section-kicker">{t('upload.kicker')}</p>
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-semibold text-slate-900">{t('upload.title')}</h1>
-            <p className="max-w-3xl text-sm leading-6 text-slate-600">
-              {t('upload.subtitle')}
-            </p>
-          </div>
-          <div className="max-w-sm rounded-2xl border border-amber-200 bg-amber-50/90 px-4 py-4 text-sm leading-6 text-amber-900">
-            {t('upload.supportedHint')}
-          </div>
-        </div>
-      </div>
+    <PageContainer>
+      <PageHeader title={t('upload.title')} subtitle={t('upload.subtitle')} />
 
-      <div className="surface-card space-y-2">
-        <label htmlFor="upload-industry-code" className="text-sm font-medium text-stone-700">
-          {t('upload.industryLabel')}
-        </label>
-        <select
-          id="upload-industry-code"
-          className="h-10 w-full rounded-xl border border-stone-200 bg-white px-3 text-sm"
-          value={industryCode}
-          onChange={(e) => setIndustryCode(e.target.value)}
-        >
-          <option value="">{t('upload.industryNone')}</option>
-          {NACE_OPTIONS.map((option) => (
-            <option key={option.code} value={option.code}>
-              {option.code} —{' '}
-              {i18n.resolvedLanguage?.startsWith('de') ? option.sectorDe : option.sectorEn}
-            </option>
-          ))}
-        </select>
-        <p className="text-xs text-stone-500">{t('upload.industryHint')}</p>
-      </div>
+      <NoticeBanner tone="warning">{t('upload.supportedHint')}</NoticeBanner>
+
+      <FilterBar>
+        <FilterBar.Field label={t('upload.industryLabel')} htmlFor="upload-industry-code">
+          <select
+            id="upload-industry-code"
+            className="h-10 w-full rounded-xl border border-stone-200 bg-white px-3 text-sm"
+            value={industryCode}
+            onChange={(e) => setIndustryCode(e.target.value)}
+          >
+            <option value="">{t('upload.industryNone')}</option>
+            {NACE_OPTIONS.map((option) => (
+              <option key={option.code} value={option.code}>
+                {option.code} —{' '}
+                {i18n.resolvedLanguage?.startsWith('de') ? option.sectorDe : option.sectorEn}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-stone-500">{t('upload.industryHint')}</p>
+        </FilterBar.Field>
+      </FilterBar>
 
       <div
         {...getRootProps()}
@@ -218,52 +210,36 @@ export function UploadPage() {
       </div>
 
       {isUploading && (
-        <Card className="surface-card border-amber-200/70">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3 text-slate-600">
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-amber-600 border-t-transparent" />
-              {singleMutation.isPending ? t('upload.uploading') : t('upload.processing')}
-            </div>
-          </CardContent>
-        </Card>
+        <FormCard className="border-amber-200/70">
+          <div className="flex items-center gap-3 text-slate-600">
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-amber-600 border-t-transparent" />
+            {singleMutation.isPending ? t('upload.uploading') : t('upload.processing')}
+          </div>
+        </FormCard>
       )}
 
       {uploadError && (
-        <Card className="border-red-200">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 text-red-600">
-              <AlertCircle size={16} />
-              {errMsg}
-            </div>
-          </CardContent>
-        </Card>
+        <NoticeBanner tone="warning" title={t('common.error')}>
+          {errMsg}
+        </NoticeBanner>
       )}
 
       {batchStatus && (
-        <Card className="surface-card">
-          <CardContent className="space-y-4 pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="section-kicker">{t('upload.kicker')}</p>
-                <div className="font-semibold text-slate-900">{t('upload.batchProgress')}</div>
-              </div>
-              <Badge variant="secondary" className="bg-amber-100 text-amber-900">
-                {batchStatus.progress_pct.toFixed(0)}%
-              </Badge>
-            </div>
-            <div className="grid gap-3 text-sm md:grid-cols-4">
-              <div className="rounded-xl border border-stone-200 bg-white/70 px-3 py-3">
-                {t('upload.queued')}: {batchStatus.queued_jobs}
-              </div>
-              <div className="rounded-xl border border-stone-200 bg-white/70 px-3 py-3">
-                {t('upload.processing')}: {batchStatus.running_jobs}
-              </div>
-              <div className="rounded-xl border border-green-200 bg-green-50/70 px-3 py-3 text-green-700">
-                {t('upload.completed')}: {batchStatus.completed_jobs}
-              </div>
-              <div className="rounded-xl border border-red-200 bg-red-50/70 px-3 py-3 text-red-700">
-                {t('upload.failed')}: {batchStatus.failed_jobs}
-              </div>
+        <Panel
+          title={t('upload.batchProgress')}
+          description={t('upload.kicker')}
+          actions={
+            <Badge variant="secondary" className="bg-amber-100 text-amber-900">
+              {batchStatus.progress_pct.toFixed(0)}%
+            </Badge>
+          }
+        >
+          <div className="space-y-4">
+            <div className="grid gap-3 md:grid-cols-4">
+              <StatCard label={t('upload.queued')} value={batchStatus.queued_jobs} />
+              <StatCard label={t('upload.processing')} value={batchStatus.running_jobs} />
+              <StatCard label={t('upload.completed')} value={batchStatus.completed_jobs} />
+              <StatCard label={t('upload.failed')} value={batchStatus.failed_jobs} />
             </div>
             <div className="space-y-1" role="status" aria-live="polite">
               <div className="flex justify-between text-xs text-slate-600">
@@ -309,8 +285,8 @@ export function UploadPage() {
                 {t('nav.companies')}
               </Button>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </Panel>
       )}
 
       {batchStatusQuery.isLoading && batchId && !batchStatus ? (
@@ -334,8 +310,8 @@ export function UploadPage() {
       ) : null}
 
       {result && (
-        <Card className="surface-card">
-          <CardContent className="space-y-4 pt-6">
+        <Panel>
+          <div className="space-y-4">
             <div className="flex items-center gap-2">
               <CheckCircle size={18} className="text-green-500" />
               <span className="font-semibold">
@@ -361,9 +337,9 @@ export function UploadPage() {
                 {t('nav.companies')}
               </Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </Panel>
       )}
-    </div>
+    </PageContainer>
   )
 }
