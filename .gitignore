@@ -118,6 +118,7 @@ docs/codex-tasks/
 scripts/omx_*
 
 # AI audit/planning artifacts (local only)
+docs/archive/
 frontend/AUDIT_*.md
 frontend/*_AUDIT.md
 frontend/CONSISTENCY_*.md
