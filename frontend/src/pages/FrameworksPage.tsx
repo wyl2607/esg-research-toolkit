@@ -11,6 +11,11 @@ import {
 } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { QueryStateCard } from '@/components/QueryStateCard'
+import { PageContainer } from '@/components/layout/PageContainer'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { Panel } from '@/components/layout/Panel'
+import { NoticeBanner } from '@/components/NoticeBanner'
+import { FilterBar } from '@/components/FilterBar'
 import {
   RadarChart,
   Radar,
@@ -72,7 +77,7 @@ function FrameworkCard({ fw }: { fw: FrameworkScoreResult }) {
   }))
 
   return (
-    <div className="surface-card space-y-4">
+    <Panel className="space-y-4">
       <div className="flex items-start justify-between">
         <div>
           <div className="mb-1 flex items-center gap-2">
@@ -159,7 +164,7 @@ function FrameworkCard({ fw }: { fw: FrameworkScoreResult }) {
           )}
         </div>
       )}
-    </div>
+    </Panel>
   )
 }
 
@@ -188,16 +193,8 @@ export function FrameworksPage() {
   const backendOffline = isBackendOffline(companiesError) || isBackendOffline(reportError)
 
   return (
-    <div className="space-y-8">
-      <div className="space-y-2 pt-2 pb-2 md:pt-0 md:pb-0">
-        <p className="section-kicker">{t('frameworks.kicker')}</p>
-        <h1 className="text-4xl leading-tight font-semibold text-slate-900 md:text-5xl">
-          {t('frameworks.title')}
-        </h1>
-        <p className="max-w-[32ch] text-base leading-7 text-slate-600 md:max-w-3xl md:text-sm md:leading-6">
-          {t('frameworks.subtitle')}
-        </p>
-      </div>
+    <PageContainer>
+      <PageHeader title={t('frameworks.title')} subtitle={t('frameworks.subtitle')} />
 
       {backendOffline ? (
         <BackendOfflineBanner />
@@ -224,30 +221,32 @@ export function FrameworksPage() {
         />
       ) : null}
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm max-w-3xl">
-        <p id="frameworks-company-select-label" className="mb-3 text-xs uppercase tracking-[0.2em] text-stone-500">
-          {t('common.company')} & {t('common.year')}
-        </p>
-        <Select value={selected} onValueChange={setSelected}>
-          <SelectTrigger
-            className="h-14 w-full bg-white text-base border-stone-300 shadow-sm hover:border-stone-400 focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-            aria-label={t('common.selectCompany')}
-            aria-labelledby="frameworks-company-select-label"
-          >
-            <SelectValue placeholder={t('common.selectCompany')} />
-          </SelectTrigger>
-          <SelectContent>
-            {companies.map((c) => (
-              <SelectItem
-                key={`${c.company_name}|${c.report_year}`}
-                value={`${c.company_name}|${c.report_year}`}
-              >
-                {c.company_name} ({c.report_year})
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <FilterBar>
+        <FilterBar.Field
+          label={`${t('common.company')} & ${t('common.year')}`}
+          htmlFor="frameworks-company-select"
+        >
+          <Select value={selected} onValueChange={setSelected}>
+            <SelectTrigger
+              id="frameworks-company-select"
+              className="h-14 w-full text-base"
+              aria-label={t('common.selectCompany')}
+            >
+              <SelectValue placeholder={t('common.selectCompany')} />
+            </SelectTrigger>
+            <SelectContent>
+              {companies.map((c) => (
+                <SelectItem
+                  key={`${c.company_name}|${c.report_year}`}
+                  value={`${c.company_name}|${c.report_year}`}
+                >
+                  {c.company_name} ({c.report_year})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FilterBar.Field>
+      </FilterBar>
 
       {companies.length === 0 && !companiesLoading && !companiesError && !backendOffline ? (
         <QueryStateCard
@@ -269,9 +268,7 @@ export function FrameworksPage() {
 
       {report && (
         <div className="space-y-4">
-          <div className="rounded-2xl border border-amber-200 bg-amber-50/90 px-5 py-4 text-sm leading-6 text-amber-900">
-            {report.summary}
-          </div>
+          <NoticeBanner tone="warning">{report.summary}</NoticeBanner>
 
           <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
             {report.frameworks.map((fw) => (
@@ -289,6 +286,6 @@ export function FrameworksPage() {
           className="max-w-2xl py-8"
         />
       ) : null}
-    </div>
+    </PageContainer>
   )
 }
