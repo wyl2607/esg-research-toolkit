@@ -309,6 +309,39 @@ class CompanyReportListItem(BaseModel):
     evidence_summary: list[dict[str, Any]] = Field(default_factory=list)
 
 
+PendingDisclosureStatus: TypeAlias = Literal["pending", "approved", "rejected"]
+
+
+class DisclosureFetchRequest(BaseModel):
+    company_name: str = Field(min_length=1, max_length=200)
+    report_year: int = Field(ge=1900, le=2100)
+    source_url: str | None = Field(
+        default=None,
+        min_length=8,
+        max_length=2000,
+        pattern=r"^https?://.+",
+    )
+    source_type: Literal["pdf", "html", "filing"] = "pdf"
+
+
+class PendingDisclosureItem(BaseModel):
+    id: int
+    company_name: str
+    report_year: int
+    source_url: str
+    source_type: str
+    fetched_at: str
+    extracted_payload: dict[str, Any]
+    status: PendingDisclosureStatus
+    review_note: str | None = None
+
+
+class DisclosureFetchResponse(BaseModel):
+    status: Literal["queued"]
+    created: bool
+    pending: PendingDisclosureItem
+
+
 class DeletionStatusResponse(BaseModel):
     status: str
     company_name: str

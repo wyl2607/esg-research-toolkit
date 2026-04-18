@@ -318,6 +318,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/disclosures/fetch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Fetch Disclosure */
+        post: operations["fetch_disclosure_disclosures_fetch_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/disclosures/pending": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Pending Disclosures */
+        get: operations["get_pending_disclosures_disclosures_pending_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/taxonomy/score": {
         parameters: {
             query?: never;
@@ -1175,6 +1209,32 @@ export interface components {
              */
             gaps: string[];
         };
+        /** DisclosureFetchRequest */
+        DisclosureFetchRequest: {
+            /** Company Name */
+            company_name: string;
+            /** Report Year */
+            report_year: number;
+            /** Source Url */
+            source_url?: string | null;
+            /**
+             * Source Type
+             * @default pdf
+             * @enum {string}
+             */
+            source_type: "pdf" | "html" | "filing";
+        };
+        /** DisclosureFetchResponse */
+        DisclosureFetchResponse: {
+            /**
+             * Status
+             * @constant
+             */
+            status: "queued";
+            /** Created */
+            created: boolean;
+            pending: components["schemas"]["PendingDisclosureItem"];
+        };
         /** Evidence */
         Evidence: {
             /** Source Doc Id */
@@ -1537,6 +1597,32 @@ export interface components {
             period_start?: string | null;
             /** Period End */
             period_end?: string | null;
+        };
+        /** PendingDisclosureItem */
+        PendingDisclosureItem: {
+            /** Id */
+            id: number;
+            /** Company Name */
+            company_name: string;
+            /** Report Year */
+            report_year: number;
+            /** Source Url */
+            source_url: string;
+            /** Source Type */
+            source_type: string;
+            /** Fetched At */
+            fetched_at: string;
+            /** Extracted Payload */
+            extracted_payload: {
+                [key: string]: unknown;
+            };
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending" | "approved" | "rejected";
+            /** Review Note */
+            review_note?: string | null;
         };
         /** SensitivityResult */
         SensitivityResult: {
@@ -2122,7 +2208,7 @@ export interface operations {
                     "application/json": components["schemas"]["CompanyProfileV1Response"];
                 };
             };
-            /** @description No reports found for the company. */
+            /** @description No reports found for company. */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -2243,6 +2329,80 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CompanyProfileV1Response"];
+                };
+            };
+            /** @description No reports found for company. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    fetch_disclosure_disclosures_fetch_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DisclosureFetchRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DisclosureFetchResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_pending_disclosures_disclosures_pending_get: {
+        parameters: {
+            query?: {
+                company_name?: string | null;
+                report_year?: number | null;
+                status?: ("pending" | "approved" | "rejected") | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PendingDisclosureItem"][];
                 };
             };
             /** @description Validation Error */

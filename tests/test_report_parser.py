@@ -28,6 +28,7 @@ from report_parser.api import (
     router as report_router,
     save_manual_report,
 )
+from report_parser.disclosures_api import router as disclosures_router
 from report_parser.analyzer import AIExtractionError, analyze_esg_data
 from report_parser.extractor import extract_text_from_pdf
 from report_parser.storage import (
@@ -451,6 +452,128 @@ def test_get_company_report_rejects_out_of_range_report_year(make_company_data) 
 
         with TestClient(app) as client:
             response = client.get("/report/companies/Year%20Bound%20Corp/9223372036854775808")
+
+        assert response.status_code == 422
+    finally:
+        db_session.close()
+        Base.metadata.drop_all(bind=engine)
+
+
+def test_disclosures_fetch_creates_pending_item_and_lists_it() -> None:
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    testing_session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    Base.metadata.create_all(bind=engine)
+    db_session = testing_session_local()
+    app = FastAPI()
+    app.include_router(disclosures_router)
+    app.dependency_overrides[get_db] = lambda: db_session
+
+    try:
+        with TestClient(app) as client:
+            fetch_response = client.post(
+                "/disclosures/fetch",
+                json={
+                    "company_name": "BASF",
+                    "report_year": 2022,
+                },
+            )
+            list_response = client.get(
+                "/disclosures/pending",
+                params={"company_name": "BASF", "report_year": 2022},
+            )
+
+        assert fetch_response.status_code == 202
+        fetch_payload = fetch_response.json()
+        assert fetch_payload["status"] == "queued"
+        assert fetch_payload["pending"]["company_name"] == "BASF SE"
+        assert fetch_payload["pending"]["report_year"] == 2022
+        assert "https://" in fetch_payload["pending"]["source_url"]
+
+        assert list_response.status_code == 200
+        listed = list_response.json()
+        assert len(listed) == 1
+        assert listed[0]["id"] == fetch_payload["pending"]["id"]
+        assert listed[0]["status"] == "pending"
+    finally:
+        db_session.close()
+        Base.metadata.drop_all(bind=engine)
+
+
+def test_disclosures_fetch_upserts_same_source_without_duplication() -> None:
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    testing_session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    Base.metadata.create_all(bind=engine)
+    db_session = testing_session_local()
+    app = FastAPI()
+    app.include_router(disclosures_router)
+    app.dependency_overrides[get_db] = lambda: db_session
+
+    source_url = "https://example.com/basf-2022.pdf"
+    try:
+        with TestClient(app) as client:
+            first = client.post(
+                "/disclosures/fetch",
+                json={
+                    "company_name": "BASF",
+                    "report_year": 2022,
+                    "source_url": source_url,
+                },
+            )
+            second = client.post(
+                "/disclosures/fetch",
+                json={
+                    "company_name": "BASF",
+                    "report_year": 2022,
+                    "source_url": source_url,
+                },
+            )
+            listing = client.get(
+                "/disclosures/pending",
+                params={"company_name": "BASF", "report_year": 2022},
+            )
+
+        assert first.status_code == 202
+        assert second.status_code == 202
+        assert first.json()["created"] is True
+        assert second.json()["created"] is False
+        assert listing.status_code == 200
+        assert len(listing.json()) == 1
+    finally:
+        db_session.close()
+        Base.metadata.drop_all(bind=engine)
+
+
+def test_disclosures_fetch_rejects_non_http_source_url() -> None:
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    testing_session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    Base.metadata.create_all(bind=engine)
+    db_session = testing_session_local()
+    app = FastAPI()
+    app.include_router(disclosures_router)
+    app.dependency_overrides[get_db] = lambda: db_session
+
+    try:
+        with TestClient(app) as client:
+            response = client.post(
+                "/disclosures/fetch",
+                json={
+                    "company_name": "BASF",
+                    "report_year": 2022,
+                    "source_url": "ftp://example.com/basf.pdf",
+                },
+            )
 
         assert response.status_code == 422
     finally:

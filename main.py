@@ -25,6 +25,7 @@ from esg_frameworks.api import _SCORERS, router as frameworks_router
 from esg_frameworks.storage import list_framework_results, save_framework_result
 from report_parser.api import router as report_router
 from report_parser.api import v1_router as report_v1_router
+from report_parser.disclosures_api import router as disclosures_router
 from report_parser.storage import get_report, save_report
 from taxonomy_scorer.api import router as taxonomy_router
 from techno_economics.api import router as techno_router
@@ -371,6 +372,7 @@ app.openapi = custom_openapi
 
 app.include_router(report_router)
 app.include_router(report_v1_router)
+app.include_router(disclosures_router)
 app.include_router(taxonomy_router)
 app.include_router(techno_router)
 app.include_router(frameworks_router)

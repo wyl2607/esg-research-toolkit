@@ -120,6 +120,58 @@ export interface DashboardStats {
 export const getDashboardStats = (): Promise<DashboardStats> =>
   req('/report/dashboard/stats')
 
+export interface DisclosureFetchRequest {
+  company_name: string
+  report_year: number
+  source_url?: string
+  source_type?: 'pdf' | 'html' | 'filing'
+}
+
+export interface PendingDisclosureItem {
+  id: number
+  company_name: string
+  report_year: number
+  source_url: string
+  source_type: string
+  fetched_at: string
+  extracted_payload: Record<string, unknown>
+  status: 'pending' | 'approved' | 'rejected'
+  review_note: string | null
+}
+
+export interface DisclosureFetchResponse {
+  status: 'queued'
+  created: boolean
+  pending: PendingDisclosureItem
+}
+
+export const fetchDisclosure = (
+  payload: DisclosureFetchRequest
+): Promise<DisclosureFetchResponse> =>
+  req('/disclosures/fetch', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+
+export const listPendingDisclosures = ({
+  companyName,
+  reportYear,
+  status = 'pending',
+  limit = 50,
+}: {
+  companyName?: string
+  reportYear?: number
+  status?: 'pending' | 'approved' | 'rejected'
+  limit?: number
+} = {}): Promise<PendingDisclosureItem[]> => {
+  const params = new URLSearchParams()
+  if (companyName) params.set('company_name', companyName)
+  if (reportYear != null) params.set('report_year', String(reportYear))
+  if (status) params.set('status', status)
+  params.set('limit', String(limit))
+  return req(`/disclosures/pending?${params.toString()}`)
+}
+
 export const getCompany = (
   name: string,
   year: number

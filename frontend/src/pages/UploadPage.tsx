@@ -1,7 +1,13 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { getBatchStatus, uploadReport, uploadReportsBatch } from '@/lib/api'
+import {
+  fetchDisclosure,
+  getBatchStatus,
+  listPendingDisclosures,
+  uploadReport,
+  uploadReportsBatch,
+} from '@/lib/api'
 import { ApiError } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -29,7 +35,11 @@ export function UploadPage() {
   // upload is expected to close a specific gap.
   const prefilledCompany = searchParams.get('company')
   const prefilledYear = searchParams.get('year')
+  const prefilledYearNumber = prefilledYear ? Number(prefilledYear) : null
+  const hasPrefilledGapTarget =
+    Boolean(prefilledCompany) && prefilledYearNumber != null && Number.isFinite(prefilledYearNumber)
   const [result, setResult] = useState<CompanyESGData | null>(null)
+  const [autoFetchSourceUrl, setAutoFetchSourceUrl] = useState('')
   // Init batch_id from localStorage so progress survives page refresh
   const [batchId, setBatchId] = useState<string | null>(
     () => localStorage.getItem(BATCH_STORAGE_KEY)
@@ -68,6 +78,34 @@ export function UploadPage() {
       if (!data) return 1500
       const done = data.completed_jobs + data.failed_jobs
       return done >= data.total_jobs ? false : 1500
+    },
+  })
+
+  const pendingDisclosuresQuery = useQuery({
+    queryKey: ['pending-disclosures', prefilledCompany, prefilledYearNumber],
+    queryFn: () =>
+      listPendingDisclosures({
+        companyName: prefilledCompany ?? undefined,
+        reportYear: prefilledYearNumber ?? undefined,
+        status: 'pending',
+        limit: 20,
+      }),
+    enabled: hasPrefilledGapTarget,
+    refetchInterval: 5000,
+  })
+
+  const autoFetchMutation = useMutation({
+    mutationFn: () => {
+      if (!hasPrefilledGapTarget) throw new Error('Missing company/year prefill')
+      return fetchDisclosure({
+        company_name: prefilledCompany!,
+        report_year: prefilledYearNumber!,
+        source_url: autoFetchSourceUrl.trim() || undefined,
+        source_type: 'pdf',
+      })
+    },
+    onSuccess: () => {
+      void pendingDisclosuresQuery.refetch()
     },
   })
 
@@ -160,6 +198,77 @@ export function UploadPage() {
         <NoticeBanner tone="info" title={t('upload.gapBannerTitle')}>
           {t('upload.gapBannerBody', { company: prefilledCompany, year: prefilledYear })}
         </NoticeBanner>
+      ) : null}
+
+      {hasPrefilledGapTarget ? (
+        <Panel
+          title={t('upload.autoFetchTitle')}
+          description={t('upload.autoFetchDescription')}
+          actions={
+            <Button
+              type="button"
+              onClick={() => autoFetchMutation.mutate()}
+              disabled={autoFetchMutation.isPending}
+            >
+              {autoFetchMutation.isPending
+                ? t('upload.autoFetchRunning')
+                : t('upload.autoFetchButton')}
+            </Button>
+          }
+        >
+          <div className="space-y-3">
+            <label className="flex flex-col gap-1 text-sm text-slate-600" htmlFor="auto-fetch-source-url">
+              <span>{t('upload.autoFetchSourceLabel')}</span>
+              <input
+                id="auto-fetch-source-url"
+                className="h-10 rounded-lg border border-stone-300 bg-white px-3 text-sm text-stone-800 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-100"
+                value={autoFetchSourceUrl}
+                onChange={(event) => setAutoFetchSourceUrl(event.target.value)}
+                placeholder={t('upload.autoFetchSourcePlaceholder')}
+              />
+            </label>
+
+            {autoFetchMutation.isError ? (
+              <NoticeBanner tone="warning" title={t('common.error')}>
+                {localizeErrorMessage(t, autoFetchMutation.error, 'upload.error')}
+              </NoticeBanner>
+            ) : null}
+
+            {autoFetchMutation.data ? (
+              <NoticeBanner tone="success" title={t('upload.autoFetchQueuedTitle')}>
+                {t('upload.autoFetchQueuedBody', {
+                  id: autoFetchMutation.data.pending.id,
+                  source: autoFetchMutation.data.pending.source_url,
+                })}
+              </NoticeBanner>
+            ) : null}
+
+            {pendingDisclosuresQuery.data && pendingDisclosuresQuery.data.length > 0 ? (
+              <div className="space-y-2">
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                  {t('upload.pendingQueueTitle')}
+                </p>
+                {pendingDisclosuresQuery.data.map((row) => (
+                  <div
+                    key={row.id}
+                    className="rounded-xl border border-stone-200 bg-white/80 px-3 py-2 text-sm"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-medium text-slate-700">
+                        #{row.id} · {row.source_type.toUpperCase()}
+                      </span>
+                      <Badge variant="secondary">{row.status}</Badge>
+                    </div>
+                    <p className="mt-1 break-all text-xs text-slate-500">{row.source_url}</p>
+                    <p className="mt-1 text-xs text-slate-400">
+                      {new Date(row.fetched_at).toLocaleString(i18n.resolvedLanguage)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        </Panel>
       ) : null}
 
       <NoticeBanner tone="warning">{t('upload.supportedHint')}</NoticeBanner>

@@ -1,6 +1,7 @@
 import json
 import logging
 from datetime import datetime, timezone
+from typing import Any
 
 from sqlalchemy import Boolean, Column, DateTime, Float, Integer, String, Text, UniqueConstraint, func, text
 from sqlalchemy.engine import Engine
@@ -398,6 +399,107 @@ class ExtractionRun(Base):
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
 
+class PendingDisclosure(Base):
+    """Queue for auto-fetched disclosures awaiting approval into company_reports."""
+
+    __tablename__ = "pending_disclosures"
+    __table_args__ = (
+        UniqueConstraint(
+            "company_name",
+            "report_year",
+            "source_url",
+            name="uq_pending_disclosures_source",
+        ),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    company_name = Column(String, nullable=False, index=True)
+    report_year = Column(Integer, nullable=False, index=True)
+    source_url = Column(String, nullable=False)
+    source_type = Column(String, nullable=False, default="pdf")
+    fetched_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    extracted_payload = Column(Text, nullable=False, default="{}")
+    status = Column(String, nullable=False, default="pending", index=True)
+    review_note = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc),
+                        onupdate=lambda: datetime.now(timezone.utc))
+
+
+def upsert_pending_disclosure(
+    db: Session,
+    *,
+    company_name: str,
+    report_year: int,
+    source_url: str,
+    source_type: str,
+    extracted_payload: dict[str, Any],
+    status: str = "pending",
+    review_note: str | None = None,
+) -> tuple[PendingDisclosure, bool]:
+    canonical_name = canonical_company_name(company_name)
+    existing = (
+        db.query(PendingDisclosure)
+        .filter(
+            PendingDisclosure.company_name == canonical_name,
+            PendingDisclosure.report_year == report_year,
+            PendingDisclosure.source_url == source_url,
+        )
+        .first()
+    )
+    now = datetime.now(timezone.utc)
+    payload_json = json.dumps(extracted_payload)
+
+    if existing is None:
+        row = PendingDisclosure(
+            company_name=canonical_name,
+            report_year=report_year,
+            source_url=source_url,
+            source_type=source_type,
+            fetched_at=now,
+            extracted_payload=payload_json,
+            status=status,
+            review_note=review_note,
+        )
+        db.add(row)
+        created = True
+    else:
+        row = existing
+        row.source_type = source_type
+        row.fetched_at = now
+        row.extracted_payload = payload_json
+        row.status = status
+        row.review_note = review_note
+        created = False
+
+    db.commit()
+    db.refresh(row)
+    return row, created
+
+
+def list_pending_disclosures(
+    db: Session,
+    *,
+    company_name: str | None = None,
+    report_year: int | None = None,
+    status: str | None = None,
+    limit: int = 50,
+) -> list[PendingDisclosure]:
+    query = db.query(PendingDisclosure)
+    if company_name:
+        variants = [variant.lower() for variant in company_name_variants(company_name)]
+        query = query.filter(func.lower(PendingDisclosure.company_name).in_(variants))
+    if report_year is not None:
+        query = query.filter(PendingDisclosure.report_year == report_year)
+    if status:
+        query = query.filter(PendingDisclosure.status == status)
+    return (
+        query.order_by(PendingDisclosure.fetched_at.desc(), PendingDisclosure.id.desc())
+        .limit(limit)
+        .all()
+    )
+
+
 def record_extraction_run(
     db: Session,
     *,
@@ -437,8 +539,11 @@ def ensure_storage_schema(engine: Engine) -> None:
     Lightweight SQLite-safe migration for additive columns on company_reports.
     We keep this minimal so existing deployments can evolve without alembic.
     """
-    # Always create newly declared tables (extraction_runs, etc.) on any backend.
-    Base.metadata.create_all(bind=engine, tables=[ExtractionRun.__table__])
+    # Always create newly declared tables (extraction_runs, pending_disclosures, etc.) on any backend.
+    Base.metadata.create_all(
+        bind=engine,
+        tables=[ExtractionRun.__table__, PendingDisclosure.__table__],
+    )
 
     if engine.dialect.name != "sqlite":
         return
@@ -452,6 +557,11 @@ def ensure_storage_schema(engine: Engine) -> None:
         "evidence_summary": "TEXT",
         "source_doc_key": "TEXT",
     }
+    required_pending_columns: dict[str, str] = {
+        "review_note": "TEXT",
+        "status": "TEXT",
+        "source_type": "TEXT",
+    }
 
     with engine.begin() as conn:
         existing_cols = {
@@ -462,6 +572,21 @@ def ensure_storage_schema(engine: Engine) -> None:
             if name in existing_cols:
                 continue
             conn.execute(text(f"ALTER TABLE company_reports ADD COLUMN {name} {col_type}"))
+
+        pending_exists = conn.execute(
+            text(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='pending_disclosures'"
+            )
+        ).scalar()
+        if pending_exists:
+            pending_cols = {
+                row[1]
+                for row in conn.execute(text("PRAGMA table_info(pending_disclosures)")).fetchall()
+            }
+            for name, col_type in required_pending_columns.items():
+                if name in pending_cols:
+                    continue
+                conn.execute(text(f"ALTER TABLE pending_disclosures ADD COLUMN {name} {col_type}"))
         conn.execute(
             text(
                 """
@@ -511,6 +636,12 @@ def ensure_storage_schema(engine: Engine) -> None:
             text(
                 "CREATE UNIQUE INDEX IF NOT EXISTS uq_company_reports_source_key "
                 "ON company_reports (company_name, report_year, source_doc_key)"
+            )
+        )
+        conn.execute(
+            text(
+                "CREATE UNIQUE INDEX IF NOT EXISTS uq_pending_disclosures_source "
+                "ON pending_disclosures (company_name, report_year, source_url)"
             )
         )
 
