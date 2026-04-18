@@ -33,6 +33,11 @@ scripts/automation/auto_fix_smoke.sh --max-rounds 3     # 最多重试 3 轮
 scripts/automation/stress_test.sh             # API + 前端全套
 scripts/automation/stress_test.sh --quick     # 轻量（10 req）
 scripts/automation/stress_test.sh --api-only
+
+# 6) 多 lane 收敛（默认 dry-run，仅做体检）
+scripts/automation/converge_worktrees.sh
+scripts/automation/converge_worktrees.sh --clean-artifacts
+scripts/automation/converge_worktrees.sh --apply --clean-artifacts --remove-worktrees
 ```
 
 ## 脚本清单
@@ -44,6 +49,7 @@ scripts/automation/stress_test.sh --api-only
 | `interactive_dev.py` | 交互式菜单：DB summary、API health、pytest、trend peek 等 | `logs/interactive_log.md` |
 | `ui_autopolish.py` | Playwright 截图 + 视觉 LLM 美学评审 + 生成任务清单 | `screenshots/<ts>/`, `ui_reports/<ts>/critique.md`, `docs/exec-plans/ui_autopolish_tasks.md` |
 | `stress_test.sh` | API 并发 + 前端页面可达性扫描 + 限流探测 | `logs/stress_<ts>.md` |
+| `converge_worktrees.sh` | lane worktree 体检、产物清理、worktree 回收、分支收敛（默认 dry-run） | 终端收敛报告（ahead/behind、dirty、唯一提交） |
 
 ## 自测矩阵（5 脚本）
 
@@ -56,6 +62,7 @@ scripts/automation/stress_test.sh --api-only
 | `interactive_dev.py` | `.venv/bin/python scripts/automation/interactive_dev.py --list` | `.venv/bin/python scripts/automation/interactive_dev.py --pick api_health` | `--list` 正常列动作；`--pick` 成功写入 `logs/interactive_log.md` |
 | `ui_autopolish.py` | `.venv/bin/python scripts/automation/ui_autopolish.py --screenshot-only --pages /` | `.venv/bin/python scripts/automation/ui_autopolish.py --pages /,/companies` | 截图目录产生；全量模式生成 `ui_reports/<ts>/critique.md` 与任务建议 |
 | `stress_test.sh` | `scripts/automation/stress_test.sh --quick` | `scripts/automation/stress_test.sh` | 生成 `logs/stress_<ts>.md`；API 压测 + 页面可达性结果完整 |
+| `converge_worktrees.sh` | `scripts/automation/converge_worktrees.sh` | `scripts/automation/converge_worktrees.sh --apply --clean-artifacts --remove-worktrees` | 默认仅体检；`--apply` 才执行清理/回收，且会打印每个 lane 的 ahead/behind + dirty |
 
 ### CI 对齐
 
