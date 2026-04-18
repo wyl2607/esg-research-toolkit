@@ -82,6 +82,8 @@
     "autoFetchQueuedTitle": "Fetch queued",
     "autoFetchQueuedBody": "Pending #{{id}} created from {{source}}",
     "pendingQueueTitle": "Pending auto-fetch items",
+    "approveButton": "Approve",
+    "rejectButton": "Reject",
     "dropzone": "Drop the PDF file(s) here…",
     "dropzoneHint": "or click to select files",
     "singleUpload": "Single Upload",

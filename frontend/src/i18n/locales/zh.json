@@ -84,6 +84,8 @@
     "autoFetchQueuedTitle": "抓取任务已排队",
     "autoFetchQueuedBody": "已创建待审记录 #{{id}}，来源 {{source}}",
     "pendingQueueTitle": "待审核自动抓取记录",
+    "approveButton": "通过并入库",
+    "rejectButton": "驳回",
     "dropzone": "将 PDF 文件拖拽至此…",
     "dropzoneHint": "或点击选择文件",
     "singleUpload": "单文件上传",

@@ -581,6 +581,150 @@ def test_disclosures_fetch_rejects_non_http_source_url() -> None:
         Base.metadata.drop_all(bind=engine)
 
 
+def test_disclosures_approve_merges_pending_report() -> None:
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    testing_session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    Base.metadata.create_all(bind=engine)
+    db_session = testing_session_local()
+    app = FastAPI()
+    app.include_router(disclosures_router)
+    app.dependency_overrides[get_db] = lambda: db_session
+
+    try:
+        with patch.dict(os.environ, {"ESG_CONTRACT_TEST_MODE": "1"}):
+            with TestClient(app) as client:
+                queued = client.post(
+                    "/disclosures/fetch",
+                    json={
+                        "company_name": "BASF",
+                        "report_year": 2022,
+                        "source_url": "https://example.com/basf-2022.pdf",
+                    },
+                )
+                pending_id = queued.json()["pending"]["id"]
+                approved = client.post(
+                    f"/disclosures/{pending_id}/approve",
+                    json={"review_note": "reviewed-by-test"},
+                )
+
+        assert queued.status_code == 202
+        assert approved.status_code == 200
+        body = approved.json()
+        assert body["status"] == "approved"
+        assert body["pending"]["status"] == "approved"
+        assert body["pending"]["review_note"] == "reviewed-by-test"
+        assert body["merged_report"]["company_name"] == "BASF SE"
+        assert body["merged_report"]["report_year"] == 2022
+
+        merged = get_report(db_session, company_name="BASF SE", report_year=2022)
+        assert merged is not None
+        assert merged.source_url == "https://example.com/basf-2022.pdf"
+    finally:
+        db_session.close()
+        Base.metadata.drop_all(bind=engine)
+
+
+def test_disclosures_reject_marks_pending_without_merge() -> None:
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    testing_session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    Base.metadata.create_all(bind=engine)
+    db_session = testing_session_local()
+    app = FastAPI()
+    app.include_router(disclosures_router)
+    app.dependency_overrides[get_db] = lambda: db_session
+
+    try:
+        with patch.dict(os.environ, {"ESG_CONTRACT_TEST_MODE": "1"}):
+            with TestClient(app) as client:
+                queued = client.post(
+                    "/disclosures/fetch",
+                    json={
+                        "company_name": "BASF",
+                        "report_year": 2023,
+                        "source_url": "https://example.com/basf-2023.pdf",
+                    },
+                )
+                pending_id = queued.json()["pending"]["id"]
+                rejected = client.post(
+                    f"/disclosures/{pending_id}/reject",
+                    json={"review_note": "not-relevant"},
+                )
+
+        assert queued.status_code == 202
+        assert rejected.status_code == 200
+        body = rejected.json()
+        assert body["status"] == "rejected"
+        assert body["pending"]["status"] == "rejected"
+        assert body["pending"]["review_note"] == "not-relevant"
+        assert body["merged_report"] is None
+
+        merged = get_report(db_session, company_name="BASF SE", report_year=2023)
+        assert merged is None
+    finally:
+        db_session.close()
+        Base.metadata.drop_all(bind=engine)
+
+
+def test_disclosures_review_endpoints_enforce_final_status_conflicts() -> None:
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    testing_session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    Base.metadata.create_all(bind=engine)
+    db_session = testing_session_local()
+    app = FastAPI()
+    app.include_router(disclosures_router)
+    app.dependency_overrides[get_db] = lambda: db_session
+
+    try:
+        with patch.dict(os.environ, {"ESG_CONTRACT_TEST_MODE": "1"}):
+            with TestClient(app) as client:
+                approved_seed = client.post(
+                    "/disclosures/fetch",
+                    json={
+                        "company_name": "BASF",
+                        "report_year": 2024,
+                        "source_url": "https://example.com/basf-2024.pdf",
+                    },
+                )
+                approved_id = approved_seed.json()["pending"]["id"]
+                approve_res = client.post(f"/disclosures/{approved_id}/approve", json={})
+                reject_after_approve = client.post(f"/disclosures/{approved_id}/reject", json={})
+
+                rejected_seed = client.post(
+                    "/disclosures/fetch",
+                    json={
+                        "company_name": "BASF",
+                        "report_year": 2025,
+                        "source_url": "https://example.com/basf-2025.pdf",
+                    },
+                )
+                rejected_id = rejected_seed.json()["pending"]["id"]
+                reject_res = client.post(f"/disclosures/{rejected_id}/reject", json={})
+                approve_after_reject = client.post(f"/disclosures/{rejected_id}/approve", json={})
+
+        assert approve_res.status_code == 200
+        assert reject_after_approve.status_code == 409
+        assert reject_after_approve.json()["detail"] == "Approved disclosure cannot be rejected"
+
+        assert reject_res.status_code == 200
+        assert approve_after_reject.status_code == 409
+        assert approve_after_reject.json()["detail"] == "Rejected disclosure cannot be approved"
+    finally:
+        db_session.close()
+        Base.metadata.drop_all(bind=engine)
+
+
 def test_save_manual_report_persists_period_and_manual_evidence(
     db_session: Session,
 ) -> None:

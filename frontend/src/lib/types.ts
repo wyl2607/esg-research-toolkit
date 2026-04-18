@@ -352,6 +352,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/disclosures/{pending_id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approve Pending Disclosure */
+        post: operations["approve_pending_disclosure_disclosures__pending_id__approve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/disclosures/{pending_id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reject Pending Disclosure */
+        post: operations["reject_pending_disclosure_disclosures__pending_id__reject_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/taxonomy/score": {
         parameters: {
             query?: never;
@@ -1234,6 +1268,21 @@ export interface components {
             /** Created */
             created: boolean;
             pending: components["schemas"]["PendingDisclosureItem"];
+        };
+        /** DisclosureReviewRequest */
+        DisclosureReviewRequest: {
+            /** Review Note */
+            review_note?: string | null;
+        };
+        /** DisclosureReviewResponse */
+        DisclosureReviewResponse: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending" | "approved" | "rejected";
+            pending: components["schemas"]["PendingDisclosureItem"];
+            merged_report?: components["schemas"]["CompanyESGData"] | null;
         };
         /** Evidence */
         Evidence: {
@@ -2403,6 +2452,76 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PendingDisclosureItem"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    approve_pending_disclosure_disclosures__pending_id__approve_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pending_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DisclosureReviewRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DisclosureReviewResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reject_pending_disclosure_disclosures__pending_id__reject_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pending_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DisclosureReviewRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DisclosureReviewResponse"];
                 };
             };
             /** @description Validation Error */

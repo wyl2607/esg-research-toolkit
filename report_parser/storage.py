@@ -500,6 +500,47 @@ def list_pending_disclosures(
     )
 
 
+def get_pending_disclosure(db: Session, pending_id: int) -> PendingDisclosure | None:
+    return db.query(PendingDisclosure).filter(PendingDisclosure.id == pending_id).first()
+
+
+def update_pending_disclosure_payload(
+    db: Session,
+    *,
+    pending_id: int,
+    extracted_payload: dict[str, Any],
+    review_note: str | None = None,
+) -> PendingDisclosure | None:
+    row = get_pending_disclosure(db, pending_id)
+    if row is None:
+        return None
+    row.extracted_payload = json.dumps(extracted_payload)
+    if review_note is not None:
+        row.review_note = review_note
+    row.fetched_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def review_pending_disclosure(
+    db: Session,
+    *,
+    pending_id: int,
+    status: str,
+    review_note: str | None = None,
+) -> PendingDisclosure | None:
+    row = get_pending_disclosure(db, pending_id)
+    if row is None:
+        return None
+    row.status = status
+    row.review_note = review_note
+    row.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
 def record_extraction_run(
     db: Session,
     *,

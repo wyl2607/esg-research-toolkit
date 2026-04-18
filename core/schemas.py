@@ -342,6 +342,16 @@ class DisclosureFetchResponse(BaseModel):
     pending: PendingDisclosureItem
 
 
+class DisclosureReviewRequest(BaseModel):
+    review_note: str | None = Field(default=None, max_length=2000)
+
+
+class DisclosureReviewResponse(BaseModel):
+    status: PendingDisclosureStatus
+    pending: PendingDisclosureItem
+    merged_report: CompanyESGData | None = None
+
+
 class DeletionStatusResponse(BaseModel):
     status: str
     company_name: str

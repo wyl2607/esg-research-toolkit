@@ -145,6 +145,16 @@ export interface DisclosureFetchResponse {
   pending: PendingDisclosureItem
 }
 
+export interface DisclosureReviewRequest {
+  review_note?: string
+}
+
+export interface DisclosureReviewResponse {
+  status: 'pending' | 'approved' | 'rejected'
+  pending: PendingDisclosureItem
+  merged_report: CompanyESGData | null
+}
+
 export const fetchDisclosure = (
   payload: DisclosureFetchRequest
 ): Promise<DisclosureFetchResponse> =>
@@ -171,6 +181,24 @@ export const listPendingDisclosures = ({
   params.set('limit', String(limit))
   return req(`/disclosures/pending?${params.toString()}`)
 }
+
+export const approvePendingDisclosure = (
+  pendingId: number,
+  payload: DisclosureReviewRequest = {}
+): Promise<DisclosureReviewResponse> =>
+  req(`/disclosures/${pendingId}/approve`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+
+export const rejectPendingDisclosure = (
+  pendingId: number,
+  payload: DisclosureReviewRequest = {}
+): Promise<DisclosureReviewResponse> =>
+  req(`/disclosures/${pendingId}/reject`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
 
 export const getCompany = (
   name: string,

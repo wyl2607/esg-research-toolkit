@@ -84,6 +84,8 @@
     "autoFetchQueuedTitle": "Abruf eingereiht",
     "autoFetchQueuedBody": "Pending-Eintrag #{{id}} aus Quelle {{source}} erstellt",
     "pendingQueueTitle": "Ausstehende Auto-Fetch-Einträge",
+    "approveButton": "Freigeben",
+    "rejectButton": "Ablehnen",
     "dropzone": "PDF-Dateien hier ablegen…",
     "dropzoneHint": "oder klicken Sie zur Dateiauswahl",
     "singleUpload": "Einzelupload",

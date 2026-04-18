@@ -2,9 +2,11 @@ import { useState, useCallback, useEffect } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import {
+  approvePendingDisclosure,
   fetchDisclosure,
   getBatchStatus,
   listPendingDisclosures,
+  rejectPendingDisclosure,
   uploadReport,
   uploadReportsBatch,
 } from '@/lib/api'
@@ -104,6 +106,21 @@ export function UploadPage() {
         source_type: 'pdf',
       })
     },
+    onSuccess: () => {
+      void pendingDisclosuresQuery.refetch()
+    },
+  })
+
+  const approvePendingMutation = useMutation({
+    mutationFn: (pendingId: number) => approvePendingDisclosure(pendingId),
+    onSuccess: () => {
+      void pendingDisclosuresQuery.refetch()
+    },
+  })
+
+  const rejectPendingMutation = useMutation({
+    mutationFn: (pendingId: number) =>
+      rejectPendingDisclosure(pendingId, { review_note: 'Rejected from upload panel' }),
     onSuccess: () => {
       void pendingDisclosuresQuery.refetch()
     },
@@ -234,6 +251,17 @@ export function UploadPage() {
               </NoticeBanner>
             ) : null}
 
+            {approvePendingMutation.isError || rejectPendingMutation.isError ? (
+              <NoticeBanner tone="warning" title={t('common.error')}>
+                {localizeErrorMessage(
+                  t,
+                  (approvePendingMutation.error as Error | null) ??
+                    (rejectPendingMutation.error as Error | null),
+                  'upload.error'
+                )}
+              </NoticeBanner>
+            ) : null}
+
             {autoFetchMutation.data ? (
               <NoticeBanner tone="success" title={t('upload.autoFetchQueuedTitle')}>
                 {t('upload.autoFetchQueuedBody', {
@@ -263,6 +291,30 @@ export function UploadPage() {
                     <p className="mt-1 text-xs text-slate-400">
                       {new Date(row.fetched_at).toLocaleString(i18n.resolvedLanguage)}
                     </p>
+                    {row.review_note ? (
+                      <p className="mt-1 text-xs text-slate-500">{row.review_note}</p>
+                    ) : null}
+                    {row.status === 'pending' ? (
+                      <div className="mt-2 flex gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => approvePendingMutation.mutate(row.id)}
+                          disabled={approvePendingMutation.isPending || rejectPendingMutation.isPending}
+                        >
+                          {t('upload.approveButton')}
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => rejectPendingMutation.mutate(row.id)}
+                          disabled={approvePendingMutation.isPending || rejectPendingMutation.isPending}
+                        >
+                          {t('upload.rejectButton')}
+                        </Button>
+                      </div>
+                    ) : null}
                   </div>
                 ))}
               </div>
