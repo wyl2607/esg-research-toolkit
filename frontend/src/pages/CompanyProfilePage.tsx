@@ -5,11 +5,14 @@ import { ArrowLeft, Building2, CheckCircle2, Clock3, Download, FileText, Leaf, S
 
 import { EvidenceBadge } from '@/components/EvidenceBadge'
 import { MetricCard } from '@/components/MetricCard'
+import { NoticeBanner } from '@/components/NoticeBanner'
 import { PeerComparisonCard } from '@/components/company-profile/PeerComparisonCard'
+import { PageContainer } from '@/components/layout/PageContainer'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { Panel } from '@/components/layout/Panel'
 import { QueryStateCard } from '@/components/QueryStateCard'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { getCompanyProfile } from '@/lib/api'
 import type {
   CompanyDataQualitySummary,
@@ -516,10 +519,10 @@ export function CompanyProfilePage() {
 
     return null
   })()
-  const heroToneClasses = {
-    green: 'border-emerald-200 bg-emerald-50 text-emerald-900',
-    amber: 'border-amber-200 bg-amber-50 text-amber-900',
-    indigo: 'border-indigo-200 bg-indigo-50 text-indigo-900',
+  const heroInsightTone = {
+    green: 'success' as const,
+    amber: 'warning' as const,
+    indigo: 'info' as const,
   }[heroInsight.tone]
   const chartFallback = (
     <div className="grid gap-4 lg:grid-cols-2">
@@ -529,94 +532,83 @@ export function CompanyProfilePage() {
   )
 
   return (
-    <div className="space-y-6">
-      <div className="surface-card overflow-hidden">
-        <div className="flex flex-col gap-4 p-5 md:flex-row md:items-start md:justify-between md:p-6">
-        <div className="space-y-3 min-w-0">
-          <Link
-            to="/companies"
-            className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900"
-          >
-            <ArrowLeft size={14} />
-            {t('profile.backToCompanies')}
-          </Link>
-          <div className="flex flex-wrap items-start gap-2">
-            <Building2 size={20} className="text-indigo-600" />
-            <h1 className="max-w-4xl text-3xl font-semibold leading-tight text-slate-900 break-words">
-              {profile.company_name}
-            </h1>
+    <PageContainer>
+      <Link
+        to="/companies"
+        className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900"
+      >
+        <ArrowLeft size={14} />
+        {t('profile.backToCompanies')}
+      </Link>
+
+      <PageHeader
+        title={profile.company_name}
+        subtitle={`${profile.latest_period.source_document_type ?? '—'} · ${profile.latest_year}`}
+        actions={(
+          <div className="flex flex-col items-start gap-3">
             <Badge variant="secondary" className="rounded-full">
               {profile.latest_period.reporting_period_label}
             </Badge>
-          </div>
-          <p className="max-w-3xl text-sm leading-6 text-slate-500">
-            {profile.latest_period.source_document_type ?? '—'} · {profile.latest_year}
-          </p>
-        </div>
-        <div className="flex flex-col gap-3">
-          <div className="grid grid-cols-2 gap-3 text-sm md:min-w-80">
-            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4">
-              <p className="section-kicker">{t('profile.heroStatPeriods')}</p>
-              <p className="mt-2 numeric-mono text-2xl font-semibold text-slate-900">{profile.periods.length}</p>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => exportCompanyProfileCSV(profile)}
+                aria-label={t('profile.exportCSV')}
+              >
+                <Download size={14} className="mr-1 shrink-0" aria-hidden="true" />
+                {t('profile.exportCSV')}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  exportToJSON(
+                    profile,
+                    `${profile.company_name.replace(/[^a-z0-9]/gi, '_')}_esg_${profile.latest_year}.json`
+                  )
+                }
+                aria-label={t('profile.exportJSON')}
+              >
+                <Download size={14} className="mr-1 shrink-0" aria-hidden="true" />
+                {t('profile.exportJSON')}
+              </Button>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4">
-              <p className="section-kicker">{t('profile.heroStatFrameworks')}</p>
-              <p className="mt-2 numeric-mono text-2xl font-semibold text-slate-900">{frameworkScores.length}</p>
-            </div>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="rounded-xl"
-              onClick={() => exportCompanyProfileCSV(profile)}
-              aria-label={t('profile.exportCSV')}
-            >
-              <Download size={14} className="mr-1 shrink-0" aria-hidden="true" />
-              {t('profile.exportCSV')}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="rounded-xl"
-              onClick={() =>
-                exportToJSON(
-                  profile,
-                  `${profile.company_name.replace(/[^a-z0-9]/gi, '_')}_esg_${profile.latest_year}.json`
-                )
-              }
-              aria-label={t('profile.exportJSON')}
-            >
-              <Download size={14} className="mr-1 shrink-0" aria-hidden="true" />
-              {t('profile.exportJSON')}
-            </Button>
-          </div>
-        </div>
-        </div>
-      </div>
+        )}
+        kpis={[
+          {
+            label: t('profile.heroStatPeriods'),
+            value: profile.periods.length,
+          },
+          {
+            label: t('profile.heroStatFrameworks'),
+            value: frameworkScores.length,
+          },
+        ]}
+      />
 
-      <Card className={heroToneClasses}>
-        <CardContent className="flex flex-col gap-3 pt-6 md:flex-row md:items-start md:justify-between">
-          <div className="space-y-2">
-            <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] opacity-80">
-              <Sparkles size={14} />
-              {t('profile.heroLabel')}
-            </p>
-            <h2 className="text-xl font-semibold">{heroInsight.title}</h2>
-            <p className="max-w-3xl text-sm leading-6 opacity-90">{heroInsight.body}</p>
-          </div>
-          <div className="hidden md:block md:min-w-48" />
-        </CardContent>
-      </Card>
+      <NoticeBanner
+        tone={heroInsightTone}
+        title={(
+          <span className="inline-flex items-center gap-2">
+            <Sparkles size={14} />
+            {t('profile.heroLabel')} · {heroInsight.title}
+          </span>
+        )}
+      >
+        <p>{heroInsight.body}</p>
+      </NoticeBanner>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
+      <Panel
+        title={(
+          <span className="flex items-center gap-2 text-base">
             <Building2 size={16} className="text-indigo-600" />
             {t('profile.identityTitle')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2">
+          </span>
+        )}
+      >
+        <div className="grid gap-4 md:grid-cols-2">
           <div className="rounded-lg border bg-slate-50 px-4 py-3">
             <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
               {t('profile.canonicalNameLabel')}
@@ -667,17 +659,18 @@ export function CompanyProfilePage() {
               <p className="mt-1 text-xs text-amber-700">{identitySummary.source_priority_preview}</p>
             ) : null}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </Panel>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
+      <Panel
+        title={(
+          <span className="flex items-center gap-2 text-base">
             <FileText size={16} className="text-indigo-600" />
             {t('profile.provenanceTitle')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          </span>
+        )}
+      >
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-lg border bg-slate-50 px-4 py-3">
             <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
               {t('profile.provenancePeriodLabel')}
@@ -777,8 +770,8 @@ export function CompanyProfilePage() {
               </div>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </Panel>
 
       <div className="grid gap-4 md:grid-cols-4">
         <MetricCard
@@ -847,14 +840,15 @@ export function CompanyProfilePage() {
         metrics={profile.latest_metrics}
       />
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
+      <Panel
+        title={(
+          <span className="flex items-center gap-2 text-base">
             <ShieldCheck size={16} className="text-indigo-600" />
             {t('profile.dataQualityTitle')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+          </span>
+        )}
+      >
+        <div className="space-y-4">
           <div className="flex flex-col gap-3 rounded-lg border bg-slate-50 px-4 py-4 md:flex-row md:items-center md:justify-between">
             <div>
               <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
@@ -939,20 +933,14 @@ export function CompanyProfilePage() {
           </div>
 
           <p className="text-xs text-slate-500">{t('profile.dataQualityMissingHint')}</p>
-        </CardContent>
-      </Card>
+        </div>
+      </Panel>
 
       <DeferredHeavyCharts key={decodedName} ready={!isLoading} fallback={chartFallback}>
         {trendData.length < 2 && (
-          <Card className="border-amber-200 bg-amber-50">
-            <CardContent className="flex items-start gap-3 pt-6">
-              <TriangleAlert size={16} className="mt-0.5 shrink-0 text-amber-600" />
-              <div className="flex-1">
-                <p className="font-medium text-amber-900">{t('profile.trendInsufficientDataTitle')}</p>
-                <p className="mt-1 text-sm text-amber-800">{t('profile.trendInsufficientDataBody')}</p>
-              </div>
-            </CardContent>
-          </Card>
+          <NoticeBanner tone="warning" title={t('profile.trendInsufficientDataTitle')}>
+            <p>{t('profile.trendInsufficientDataBody')}</p>
+          </NoticeBanner>
         )}
         <Suspense
           fallback={chartFallback}
@@ -972,14 +960,15 @@ export function CompanyProfilePage() {
         </Suspense>
       </DeferredHeavyCharts>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
+      <Panel
+        title={(
+          <span className="flex items-center gap-2 text-base">
             <TrendingUp size={16} className="text-indigo-600" />
             {t('profile.yoyTitle')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-3">
+          </span>
+        )}
+      >
+        <div className="grid gap-4 md:grid-cols-3">
           <div className="rounded-lg border bg-slate-50 px-4 py-4">
             <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
               {t('profile.yoyRenewable')}
@@ -1024,17 +1013,18 @@ export function CompanyProfilePage() {
                 : t('profile.yoyNarrativeMissing')}
             </p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </Panel>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
+      <Panel
+        title={(
+          <span className="flex items-center gap-2 text-base">
             <ShieldCheck size={16} className="text-indigo-600" />
             {t('profile.detailTitle')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
+          </span>
+        )}
+      >
+        <div className="space-y-3">
           {frameworkScores.length === 0 ? (
             <p className="text-sm text-slate-400">{t('profile.noFrameworkResults')}</p>
           ) : (
@@ -1127,18 +1117,19 @@ export function CompanyProfilePage() {
               })()
             ))
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </Panel>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
+        <Panel
+          title={(
+            <span className="flex items-center gap-2 text-base">
               <Clock3 size={16} className="text-indigo-600" />
               {t('profile.periodTitle')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
+            </span>
+          )}
+        >
+          <div className="space-y-2">
             {profile.periods.map((p) => (
               <div
                 key={`${p.report_year}-${p.reporting_period_label}`}
@@ -1168,17 +1159,18 @@ export function CompanyProfilePage() {
                 </div>
               </div>
             ))}
-          </CardContent>
-        </Card>
+          </div>
+        </Panel>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
+        <Panel
+          title={(
+            <span className="flex items-center gap-2 text-base">
               <Leaf size={16} className="text-indigo-600" />
               {t('profile.evidenceTitle')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
+            </span>
+          )}
+        >
+          <div className="space-y-2">
             {latestEvidenceSummary.length === 0 ? (
               <p className="text-sm text-slate-400">{t('profile.noEvidence')}</p>
             ) : (
@@ -1210,18 +1202,19 @@ export function CompanyProfilePage() {
                 </div>
               ))
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </Panel>
       </div>
 
-      <Card className="border-slate-200 bg-slate-50/70">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
+      <Panel
+        title={(
+          <span className="flex items-center gap-2 text-base">
             <FileText size={16} className="text-indigo-600" />
             {t('profile.narrativeTitle')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-5 text-sm text-slate-700">
+          </span>
+        )}
+      >
+        <div className="space-y-5 text-sm text-slate-700">
           <section className="space-y-2">
             <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{t('profile.narrativeSnapshotTitle')}</p>
             <p className="rounded-lg border bg-white px-4 py-3 leading-6">
@@ -1314,8 +1307,8 @@ export function CompanyProfilePage() {
               })}
             </p>
           </section>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </Panel>
+    </PageContainer>
   )
 }
