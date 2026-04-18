@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Response, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, Response, UploadFile
 from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session
 
@@ -1292,7 +1292,7 @@ def list_company_reports(
 @router.get("/companies/v2")
 def list_companies_with_year_coverage(
     db: Session = Depends(get_db),
-    suggested_span: int = 5,
+    suggested_span: int = Query(default=5, ge=1, le=10),
 ) -> list[dict[str, Any]]:
     """Return one row per canonical company with imported_years + suggested_years.
 

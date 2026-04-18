@@ -383,7 +383,7 @@ def test_list_companies_v2_returns_imported_and_suggested_years(
         pdf_filename="single-2023.pdf",
     )
 
-    rows = list_companies_with_year_coverage(db=db_session)
+    rows = list_companies_with_year_coverage(db=db_session, suggested_span=5)
     by_name = {r["company_name"]: r for r in rows}
 
     assert by_name["Multi Year Corp"]["imported_years"] == [2024, 2022]
@@ -396,6 +396,37 @@ def test_list_companies_v2_returns_imported_and_suggested_years(
         suggested = by_name[name]["suggested_years"]
         assert suggested == sorted(set(suggested), reverse=True)
         assert set(by_name[name]["imported_years"]).issubset(set(suggested))
+
+
+def test_list_companies_v2_rejects_unbounded_suggested_span(
+    make_company_data,
+) -> None:
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    Base.metadata.create_all(bind=engine)
+    db_session = TestingSessionLocal()
+    app = FastAPI()
+    app.include_router(report_router)
+    app.dependency_overrides[get_db] = lambda: db_session
+
+    try:
+        save_report(
+            db_session,
+            make_company_data(company_name="Bounded Span AG", report_year=2024),
+            pdf_filename="bounded-span.pdf",
+        )
+
+        with TestClient(app) as client:
+            response = client.get("/report/companies/v2?suggested_span=1000000")
+
+        assert response.status_code == 422
+    finally:
+        db_session.close()
+        Base.metadata.drop_all(bind=engine)
 
 
 def test_save_manual_report_persists_period_and_manual_evidence(
