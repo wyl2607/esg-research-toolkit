@@ -551,6 +551,48 @@ def test_disclosures_fetch_upserts_same_source_without_duplication() -> None:
         Base.metadata.drop_all(bind=engine)
 
 
+@pytest.mark.parametrize(
+    ("source_type", "expected_fragment"),
+    [
+        ("html", "/sustainability/2022"),
+        ("filing", "sec.gov/cgi-bin/browse-edgar"),
+    ],
+)
+def test_disclosures_fetch_uses_source_type_aware_default_source_url(
+    source_type: str, expected_fragment: str
+) -> None:
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    testing_session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    Base.metadata.create_all(bind=engine)
+    db_session = testing_session_local()
+    app = FastAPI()
+    app.include_router(disclosures_router)
+    app.dependency_overrides[get_db] = lambda: db_session
+
+    try:
+        with TestClient(app) as client:
+            response = client.post(
+                "/disclosures/fetch",
+                json={
+                    "company_name": "BASF",
+                    "report_year": 2022,
+                    "source_type": source_type,
+                },
+            )
+
+        assert response.status_code == 202
+        payload = response.json()
+        assert payload["pending"]["source_type"] == source_type
+        assert expected_fragment in payload["pending"]["source_url"]
+    finally:
+        db_session.close()
+        Base.metadata.drop_all(bind=engine)
+
+
 def test_disclosures_fetch_rejects_non_http_source_url() -> None:
     engine = create_engine(
         "sqlite://",

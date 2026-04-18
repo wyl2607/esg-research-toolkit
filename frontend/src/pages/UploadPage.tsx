@@ -42,6 +42,7 @@ export function UploadPage() {
     Boolean(prefilledCompany) && prefilledYearNumber != null && Number.isFinite(prefilledYearNumber)
   const [result, setResult] = useState<CompanyESGData | null>(null)
   const [autoFetchSourceUrl, setAutoFetchSourceUrl] = useState('')
+  const [autoFetchSourceType, setAutoFetchSourceType] = useState<'pdf' | 'html' | 'filing'>('pdf')
   // Init batch_id from localStorage so progress survives page refresh
   const [batchId, setBatchId] = useState<string | null>(
     () => localStorage.getItem(BATCH_STORAGE_KEY)
@@ -103,7 +104,7 @@ export function UploadPage() {
         company_name: prefilledCompany!,
         report_year: prefilledYearNumber!,
         source_url: autoFetchSourceUrl.trim() || undefined,
-        source_type: 'pdf',
+        source_type: autoFetchSourceType,
       })
     },
     onSuccess: () => {
@@ -234,6 +235,22 @@ export function UploadPage() {
           }
         >
           <div className="space-y-3">
+            <label className="flex flex-col gap-1 text-sm text-slate-600" htmlFor="auto-fetch-source-type">
+              <span>{t('upload.autoFetchSourceTypeLabel')}</span>
+              <select
+                id="auto-fetch-source-type"
+                className="h-10 rounded-lg border border-stone-300 bg-white px-3 text-sm text-stone-800 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-100"
+                value={autoFetchSourceType}
+                onChange={(event) =>
+                  setAutoFetchSourceType(event.target.value as 'pdf' | 'html' | 'filing')
+                }
+              >
+                <option value="pdf">{t('upload.autoFetchSourceTypePdf')}</option>
+                <option value="html">{t('upload.autoFetchSourceTypeHtml')}</option>
+                <option value="filing">{t('upload.autoFetchSourceTypeFiling')}</option>
+              </select>
+            </label>
+
             <label className="flex flex-col gap-1 text-sm text-slate-600" htmlFor="auto-fetch-source-url">
               <span>{t('upload.autoFetchSourceLabel')}</span>
               <input

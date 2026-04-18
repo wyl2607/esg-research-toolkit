@@ -15,18 +15,22 @@
 - 新增 `report_parser/disclosures_api.py`：`POST /disclosures/fetch` 与 `GET /disclosures/pending`，用于 F2 auto-fetch 队列骨架。
 - 新增 `pending_disclosures` 存储模型与 upsert/list 辅助函数，写入 `report_parser/storage.py` 并接入 SQLite schema 自愈。
 - Upload 页面新增 Auto Fetch 面板：支持 company/year 预填触发抓取、查看 pending 队列。
+- Upload Auto Fetch 面板补充 `source_type` 选择（`pdf` / `html` / `filing`）及三语文案，避免前端请求被硬编码为 PDF。
 
 ### Changed
 
 - Benchmark 页接入 `CompanyYearPicker`，支持从公司+年份上下文快速跳转缺失年份补录路径（D1=b）。
 - `core/schemas.py` 新增 disclosure 请求/响应契约，`main.py` 注册 disclosures router。
 - 前端 i18n（en/zh/de）补齐 auto-fetch 文案与 backendOffline 英文缺失项。
+- `disclosures` 抓取后端改为 source-type aware：默认 `source_url` 与候选 URL 列表按 `source_type` 分支，不再对非 PDF 类型直接短路跳过。
+- `tests/test_report_parser.py` 新增参数化回归，锁定 html/filing 默认 URL 生成行为。
 
 ### Verified
 
-- `OPENAI_API_KEY=dummy .venv/bin/pytest -q` → `148 passed`
+- `OPENAI_API_KEY=dummy .venv/bin/pytest -q` → `154 passed`
 - `.venv/bin/ruff check core report_parser taxonomy_scorer esg_frameworks techno_economics benchmark tests main.py --ignore E501` → pass
 - `cd frontend && npm run gen:types && npm run lint && npm run build` → pass
+- `cd frontend && npm run test:playwright -- tests/workflow.spec.ts` → `6 passed`
 
 ## [0.2.3-beta.1] - 2026-04-17
 

@@ -48,6 +48,7 @@ HTTP_HEADERS = {
     "User-Agent": "esg-research-toolkit/0.2 (+contact: docs/esg-research-toolkit)",
     "Accept": "application/pdf,text/html;q=0.9,*/*;q=0.8",
 }
+SOURCE_HINTS = {"company_site", "sec_edgar", "hkex", "csrc"}
 
 
 def _slugify_company(name: str) -> str:
@@ -55,8 +56,33 @@ def _slugify_company(name: str) -> str:
     return normalized or "company"
 
 
-def _default_source_url(company_name: str, report_year: int) -> str:
+def _default_source_url(
+    company_name: str,
+    report_year: int,
+    source_type: str,
+    source_hint: str = "company_site",
+) -> str:
     slug = _slugify_company(company_name)
+    if source_hint == "sec_edgar":
+        return (
+            "https://www.sec.gov/edgar/search/#/"
+            f"q={slug}%20{report_year}%20sustainability%20report"
+            f"&dateRange=custom&startdt={report_year}-01-01&enddt={report_year}-12-31"
+        )
+    if source_hint == "hkex":
+        return (
+            "https://www1.hkexnews.hk/search/titlesearch.xhtml"
+            f"?lang=en&query={slug}%20{report_year}%20sustainability"
+        )
+    if source_hint == "csrc":
+        return (
+            "https://www.cninfo.com.cn/new/fulltextSearch"
+            f"?notautosubmit=&keyWord={slug}%20{report_year}%20可持续发展报告"
+        )
+    if source_type == "html":
+        return f"https://www.{slug}.com/sustainability/{report_year}"
+    if source_type == "filing":
+        return f"https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&company={slug}"
     return f"https://www.{slug}.com/sustainability/{report_year}/report.pdf"
 
 
@@ -101,11 +127,49 @@ def _is_private_or_local_hostname(hostname: str | None) -> bool:
     return ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved
 
 
-def _candidate_source_urls(company_name: str, report_year: int, explicit_source_url: str | None) -> list[str]:
+def _candidate_source_urls(
+    company_name: str,
+    report_year: int,
+    explicit_source_url: str | None,
+    source_type: str,
+    source_hint: str = "company_site",
+) -> list[str]:
     if explicit_source_url:
         return [explicit_source_url]
 
     slug = _slugify_company(company_name)
+    if source_hint == "sec_edgar":
+        return [
+            _default_source_url(company_name, report_year, source_type=source_type, source_hint="sec_edgar"),
+            f"https://www.sec.gov/cgi-bin/browse-edgar?company={slug}&owner=exclude&action=getcompany",
+            f"https://www.{slug}.com/investor-relations/{report_year}/annual-report.pdf",
+        ]
+    if source_hint == "hkex":
+        return [
+            _default_source_url(company_name, report_year, source_type=source_type, source_hint="hkex"),
+            f"https://www1.hkexnews.hk/search/prefixsearch.xhtml?lang=en&query={slug}",
+            f"https://www.{slug}.com/investor-relations/{report_year}/annual-report.pdf",
+        ]
+    if source_hint == "csrc":
+        return [
+            _default_source_url(company_name, report_year, source_type=source_type, source_hint="csrc"),
+            f"https://www.cninfo.com.cn/new/fulltextSearch?notautosubmit=&keyWord={slug}%20{report_year}",
+            f"https://www.{slug}.com/sustainability/{report_year}/report.pdf",
+        ]
+    if source_type == "html":
+        return [
+            f"https://www.{slug}.com/sustainability/{report_year}",
+            f"https://www.{slug}.com/sustainability",
+            f"https://www.{slug}.com/esg",
+            f"https://www.{slug}.com/investor-relations/{report_year}",
+        ]
+    if source_type == "filing":
+        return [
+            f"https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&company={slug}",
+            f"https://www.{slug}.com/investor-relations/{report_year}/annual-report.pdf",
+            f"https://www.{slug}.com/investor-relations/{report_year}",
+            f"https://www.{slug}.com/sustainability/{report_year}/report.pdf",
+        ]
     return [
         f"https://www.{slug}.com/sustainability/{report_year}/report.pdf",
         f"https://www.{slug}.com/investor-relations/{report_year}/annual-report.pdf",
@@ -161,6 +225,7 @@ def _build_pending_payload(
     report_year: int,
     source_url: str,
     source_type: str,
+    source_hint: str,
     snippet: str,
 ) -> CompanyESGData:
     return CompanyESGData(
@@ -173,6 +238,7 @@ def _build_pending_payload(
                 "source": source_url,
                 "source_url": source_url,
                 "source_type": source_type,
+                "source_hint": source_hint,
                 "snippet": snippet,
                 "fetched_at": datetime.now(timezone.utc).isoformat(),
             }
@@ -186,31 +252,9 @@ def _run_fetch_pipeline(
     company_name: str,
     report_year: int,
     source_type: str,
+    source_hint: str,
     source_url: str,
 ) -> None:
-    if source_type != "pdf":
-        db = SessionLocal()
-        try:
-            row = get_pending_disclosure(db, pending_id)
-            if row is None:
-                return
-            fallback = _build_pending_payload(
-                company_name=company_name,
-                report_year=report_year,
-                source_url=source_url,
-                source_type=source_type,
-                snippet="Fetch skipped: only PDF source_type is supported in v0.1.",
-            )
-            update_pending_disclosure_payload(
-                db,
-                pending_id=pending_id,
-                extracted_payload=fallback.model_dump(mode="json"),
-                review_note="fetch_skipped_non_pdf",
-            )
-        finally:
-            db.close()
-        return
-
     if _is_contract_test_mode():
         db = SessionLocal()
         try:
@@ -219,6 +263,7 @@ def _run_fetch_pipeline(
                 report_year=report_year,
                 source_url=source_url,
                 source_type=source_type,
+                source_hint=source_hint,
                 snippet="Contract test mode: fetch skipped.",
             )
             update_pending_disclosure_payload(
@@ -231,7 +276,13 @@ def _run_fetch_pipeline(
             db.close()
         return
 
-    candidates = _candidate_source_urls(company_name, report_year, source_url)
+    candidates = _candidate_source_urls(
+        company_name,
+        report_year,
+        source_url,
+        source_type,
+        source_hint=source_hint,
+    )
     client = httpx.Client(follow_redirects=True)
     downloaded: tuple[bytes, str] | None = None
 
@@ -260,6 +311,7 @@ def _run_fetch_pipeline(
                 report_year=report_year,
                 source_url=source_url,
                 source_type=source_type,
+                source_hint=source_hint,
                 snippet="No reachable public PDF was found. Upload manually or provide a direct PDF URL.",
             )
             update_pending_disclosure_payload(
@@ -295,6 +347,7 @@ def _run_fetch_pipeline(
                 "source": resolved_source_url,
                 "source_url": resolved_source_url,
                 "source_type": source_type,
+                "source_hint": source_hint,
                 "snippet": "Auto fetch succeeded and extracted draft metrics.",
                 "fetched_at": datetime.now(timezone.utc).isoformat(),
             }
@@ -313,6 +366,7 @@ def _run_fetch_pipeline(
             report_year=report_year,
             source_url=source_url,
             source_type=source_type,
+            source_hint=source_hint,
             snippet="Fetch attempted but extraction failed. Review source and upload manually if needed.",
         )
         update_pending_disclosure_payload(
@@ -369,9 +423,11 @@ def fetch_disclosure(
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
 ) -> DisclosureFetchResponse:
-    source_url = payload.source_url.strip() if payload.source_url else _default_source_url(
-        payload.company_name,
-        payload.report_year,
+    source_hint = payload.source_hint if payload.source_hint in SOURCE_HINTS else "company_site"
+    source_url = (
+        payload.source_url.strip()
+        if payload.source_url
+        else _default_source_url(payload.company_name, payload.report_year, payload.source_type, source_hint)
     )
 
     canonical_name = canonical_company_name(payload.company_name)
@@ -380,6 +436,7 @@ def fetch_disclosure(
         report_year=payload.report_year,
         source_url=source_url,
         source_type=payload.source_type,
+        source_hint=source_hint,
         snippet="Auto-fetch queued. Awaiting extraction + review before merge.",
     )
 
@@ -401,6 +458,7 @@ def fetch_disclosure(
             company_name=canonical_name,
             report_year=payload.report_year,
             source_type=payload.source_type,
+            source_hint=source_hint,
             source_url=source_url,
         )
 
