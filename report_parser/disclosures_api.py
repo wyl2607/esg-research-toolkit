@@ -12,6 +12,7 @@ from urllib.parse import urljoin, urlparse
 
 import httpx
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
+from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
 from core.database import SessionLocal, get_db
@@ -470,14 +471,21 @@ def approve_pending_disclosure(
             }
         )
 
-    merged_input = CompanyESGData.model_validate(extracted_payload)
-    merged_record = save_report(
-        db,
-        merged_input,
-        source_url=row.source_url,
-        source_document_type=merged_input.source_document_type,
-        evidence_summary=merged_input.evidence_summary,
-    )
+    try:
+        merged_input = CompanyESGData.model_validate(extracted_payload)
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail="Pending disclosure payload validation failed") from exc
+
+    try:
+        merged_record = save_report(
+            db,
+            merged_input,
+            source_url=row.source_url,
+            source_document_type=merged_input.source_document_type,
+            evidence_summary=merged_input.evidence_summary,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
     reviewed = review_pending_disclosure(
         db,

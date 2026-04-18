@@ -725,6 +725,41 @@ def test_disclosures_review_endpoints_enforce_final_status_conflicts() -> None:
         Base.metadata.drop_all(bind=engine)
 
 
+def test_disclosures_approve_returns_422_for_fail_closed_validation() -> None:
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    testing_session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    Base.metadata.create_all(bind=engine)
+    db_session = testing_session_local()
+    app = FastAPI()
+    app.include_router(disclosures_router)
+    app.dependency_overrides[get_db] = lambda: db_session
+
+    try:
+        with patch.dict(os.environ, {"ESG_CONTRACT_TEST_MODE": "1"}):
+            with TestClient(app) as client:
+                queued = client.post(
+                    "/disclosures/fetch",
+                    json={
+                        "company_name": "Contract Demo AG",
+                        "report_year": 1900,
+                        "source_url": "https://example.com/contract-demo-1900.pdf",
+                    },
+                )
+                pending_id = queued.json()["pending"]["id"]
+                approved = client.post(f"/disclosures/{pending_id}/approve", json={})
+
+        assert queued.status_code == 202
+        assert approved.status_code == 422
+        assert "L0 validation failed" in approved.json()["detail"]
+    finally:
+        db_session.close()
+        Base.metadata.drop_all(bind=engine)
+
+
 def test_save_manual_report_persists_period_and_manual_evidence(
     db_session: Session,
 ) -> None:
