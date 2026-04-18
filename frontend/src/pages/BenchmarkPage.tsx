@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 
+import { CompanyYearPicker, type CompanyYearSelection } from '@/components/CompanyYearPicker'
 import { FilterBar } from '@/components/FilterBar'
 import { NoticeBanner } from '@/components/NoticeBanner'
 import { PageContainer } from '@/components/layout/PageContainer'
@@ -11,9 +12,10 @@ import { Skeleton } from '@/components/ui/skeleton'
 import {
   getCompaniesByIndustry,
   getIndustryBenchmarks,
+  listCompaniesWithYearCoverage,
   recomputeIndustryBenchmarks,
 } from '@/lib/api'
-import { localizeErrorMessage } from '@/lib/error-utils'
+import { isBackendOffline, localizeErrorMessage } from '@/lib/error-utils'
 import { findNaceOption, NACE_OPTIONS } from '@/lib/nace-codes'
 import type { IndustryBenchmarkMetric } from '@/lib/types'
 
@@ -23,6 +25,26 @@ export function BenchmarkPage() {
   const locale = i18n.resolvedLanguage ?? 'en'
   const [industryCode, setIndustryCode] = useState<string>(NACE_OPTIONS[0]?.code ?? '')
   const [selectedYear, setSelectedYear] = useState<number | null>(null)
+  const [companySelection, setCompanySelection] = useState<CompanyYearSelection>({
+    company: null,
+    year: null,
+  })
+
+  const companiesCoverageQuery = useQuery({
+    queryKey: ['companies-v2'],
+    queryFn: listCompaniesWithYearCoverage,
+  })
+
+  const coverageByName = useMemo(
+    () =>
+      new Map(
+        (companiesCoverageQuery.data ?? []).map((row) => [
+          row.company_name,
+          row,
+        ])
+      ),
+    [companiesCoverageQuery.data]
+  )
 
   const benchmarksQuery = useQuery({
     queryKey: ['benchmarks', industryCode],
@@ -90,6 +112,10 @@ export function BenchmarkPage() {
     return visibleMetrics.reduce((smallest, row) => Math.min(smallest, row.sample_size), Number.POSITIVE_INFINITY)
   }, [visibleMetrics])
   const lowSampleSize = minSampleSize != null && Number.isFinite(minSampleSize) && minSampleSize < 5
+  const backendOffline =
+    isBackendOffline(companiesCoverageQuery.error) ||
+    isBackendOffline(benchmarksQuery.error) ||
+    isBackendOffline(companiesQuery.error)
 
   return (
     <PageContainer>
@@ -102,7 +128,38 @@ export function BenchmarkPage() {
         {t('benchmark.disclaimer')}
       </NoticeBanner>
 
+      {backendOffline ? (
+        <NoticeBanner tone="warning">{t('errors.backendOffline')}</NoticeBanner>
+      ) : null}
+
+      {companiesCoverageQuery.isError ? (
+        <NoticeBanner tone="warning">
+          {localizeErrorMessage(t, companiesCoverageQuery.error)}
+        </NoticeBanner>
+      ) : null}
+
       <FilterBar>
+        <FilterBar.Field
+          label={`${t('common.company')} & ${t('common.year')}`}
+          htmlFor="benchmark-company-year-picker-company"
+        >
+          <CompanyYearPicker
+            idPrefix="benchmark-company-year-picker"
+            companies={companiesCoverageQuery.data ?? []}
+            value={companySelection}
+            onChange={(next) => {
+              setCompanySelection(next)
+              const coverage = next.company ? coverageByName.get(next.company) : null
+              if (coverage?.industry_code) {
+                setIndustryCode(coverage.industry_code)
+              }
+              if (next.year != null) {
+                setSelectedYear(next.year)
+              }
+            }}
+          />
+        </FilterBar.Field>
+
         <FilterBar.Field label={t('benchmark.industryLabel')} htmlFor="benchmark-industry">
           <select
             id="benchmark-industry"
