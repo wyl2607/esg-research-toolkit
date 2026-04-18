@@ -5,10 +5,13 @@ import { ArrowRight, FileJson, PencilLine, Save } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { QueryStateCard } from '@/components/QueryStateCard'
+import { NoticeBanner } from '@/components/NoticeBanner'
+import { PageContainer } from '@/components/layout/PageContainer'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { Panel } from '@/components/layout/Panel'
 import {
   Select,
   SelectContent,
@@ -218,38 +221,41 @@ export function ManualCaseBuilderPage() {
   const canSave = form.company_name.trim().length > 0 && form.report_year.trim().length > 0
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-900">
+    <PageContainer>
+      <NoticeBanner tone="mode">
         {t('projectAnalysis.modeBanner')}
-      </div>
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-        <div className="space-y-2">
-          <p className="section-kicker">{t('manual.kicker')}</p>
-          <Badge variant="secondary" className="w-fit bg-amber-100 text-amber-900">
-            {t('manual.badge')}
-          </Badge>
-          <h1 className="text-3xl font-semibold text-slate-900">
-            {t('manual.title')}
-          </h1>
-          <p className="max-w-3xl text-sm leading-6 text-slate-600">
-            {t('manual.subtitle')}
-          </p>
-        </div>
-        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 lg:max-w-sm">
+      </NoticeBanner>
+      <PageHeader
+        title={t('manual.title')}
+        subtitle={t('manual.subtitle')}
+        actions={(
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">
+              {t('manual.kicker')}
+            </span>
+            <Badge variant="secondary" className="w-fit bg-amber-100 text-amber-900">
+              {t('manual.badge')}
+            </Badge>
+          </div>
+        )}
+      />
+      <NoticeBanner tone="warning">
+        <div className="text-sm">
           {t('manual.storageHint')}
         </div>
-      </div>
+      </NoticeBanner>
 
       <div className="grid gap-4 lg:grid-cols-[1.45fr_0.95fr]">
         <div className="space-y-4">
-          <Card className="surface-card">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
+          <Panel
+            title={(
+              <span className="flex items-center gap-2 text-base">
                 <PencilLine size={16} className="text-amber-700" />
                 {t('manual.formTitle')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
+              </span>
+            )}
+          >
+            <div className="space-y-6">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="company_name">{t('common.company')}</Label>
@@ -384,9 +390,9 @@ export function ManualCaseBuilderPage() {
                 </div>
               </div>
 
-              <div className="rounded-xl border border-dashed border-stone-300 bg-stone-50 px-4 py-4 text-xs leading-5 text-slate-600">
+              <NoticeBanner tone="warning">
                 {t('manual.overwriteHint')}
-              </div>
+              </NoticeBanner>
 
               <div className="flex flex-wrap gap-3">
                 <Button onClick={handleSave} disabled={!canSave || saveMutation.isPending}>
@@ -409,19 +415,20 @@ export function ManualCaseBuilderPage() {
                   </p>
                 )}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </Panel>
         </div>
 
         <div className="space-y-4">
-          <Card className="surface-card">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
+          <Panel
+            title={(
+              <span className="flex items-center gap-2 text-base">
                 <ArrowRight size={16} className="text-amber-700" />
                 {t('manual.recentCompanies')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
+              </span>
+            )}
+          >
+            <div className="space-y-3">
               {companiesLoading ? (
                 <QueryStateCard
                   tone="loading"
@@ -457,17 +464,18 @@ export function ManualCaseBuilderPage() {
                   ))}
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </Panel>
 
-          <Card className="surface-card">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
+          <Panel
+            title={(
+              <span className="flex items-center gap-2 text-base">
                 <FileJson size={16} className="text-amber-700" />
                 {t('manual.jsonTitle')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
+              </span>
+            )}
+          >
+            <div className="space-y-3">
               <textarea
                 value={draftJson}
                 onChange={(e) => setDraftJson(e.target.value)}
@@ -480,14 +488,11 @@ export function ManualCaseBuilderPage() {
                 </Button>
                 {jsonError && <p className="self-center text-sm text-red-600">{jsonError}</p>}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </Panel>
 
-          <Card className="surface-card">
-            <CardHeader>
-              <CardTitle className="text-base">{t('manual.previewTitle')}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
+          <Panel title={t('manual.previewTitle')}>
+            <div className="space-y-3">
               <pre className="max-h-80 overflow-auto rounded-lg bg-slate-950 p-4 text-xs leading-5 text-slate-100">
                 {JSON.stringify(previewPayload, null, 2)}
               </pre>
@@ -496,10 +501,10 @@ export function ManualCaseBuilderPage() {
                   <Link to="/companies">{t('manual.viewCompanies')}</Link>
                 </Button>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </Panel>
         </div>
       </div>
-    </div>
+    </PageContainer>
   )
 }
