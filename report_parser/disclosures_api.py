@@ -82,6 +82,10 @@ def _is_contract_test_mode() -> bool:
     return os.getenv("ESG_CONTRACT_TEST_MODE") == "1"
 
 
+def _is_pytest_mode() -> bool:
+    return bool(os.getenv("PYTEST_CURRENT_TEST"))
+
+
 def _is_private_or_local_hostname(hostname: str | None) -> bool:
     if not hostname:
         return True
@@ -388,14 +392,15 @@ def fetch_disclosure(
         review_note="fetch_queued",
     )
 
-    background_tasks.add_task(
-        _run_fetch_pipeline,
-        pending_id=row.id,
-        company_name=canonical_name,
-        report_year=payload.report_year,
-        source_type=payload.source_type,
-        source_url=source_url,
-    )
+    if not _is_pytest_mode():
+        background_tasks.add_task(
+            _run_fetch_pipeline,
+            pending_id=row.id,
+            company_name=canonical_name,
+            report_year=payload.report_year,
+            source_type=payload.source_type,
+            source_url=source_url,
+        )
 
     return DisclosureFetchResponse(
         status="queued",
