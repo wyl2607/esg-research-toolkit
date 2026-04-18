@@ -725,7 +725,7 @@ def test_disclosures_review_endpoints_enforce_final_status_conflicts() -> None:
         Base.metadata.drop_all(bind=engine)
 
 
-def test_disclosures_approve_returns_422_for_fail_closed_validation() -> None:
+def test_disclosures_approve_returns_400_for_fail_closed_validation() -> None:
     engine = create_engine(
         "sqlite://",
         connect_args={"check_same_thread": False},
@@ -753,7 +753,7 @@ def test_disclosures_approve_returns_422_for_fail_closed_validation() -> None:
                 approved = client.post(f"/disclosures/{pending_id}/approve", json={})
 
         assert queued.status_code == 202
-        assert approved.status_code == 422
+        assert approved.status_code == 400
         assert "L0 validation failed" in approved.json()["detail"]
     finally:
         db_session.close()

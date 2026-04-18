@@ -2489,6 +2489,13 @@ export interface operations {
                     "application/json": components["schemas"]["DisclosureReviewResponse"];
                 };
             };
+            /** @description Pending disclosure payload is invalid for approval */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Pending disclosure not found */
             404: {
                 headers: {
@@ -2537,6 +2544,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["DisclosureReviewResponse"];
                 };
+            };
+            /** @description Pending disclosure request is invalid */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Pending disclosure not found */
             404: {

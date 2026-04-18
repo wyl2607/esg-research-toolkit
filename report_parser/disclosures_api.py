@@ -11,7 +11,7 @@ from typing import Any
 from urllib.parse import urljoin, urlparse
 
 import httpx
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Body, Depends, HTTPException, Path as FastAPIPath, Query, status
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
@@ -41,6 +41,7 @@ from report_parser.storage import (
 router = APIRouter(prefix="/disclosures", tags=["disclosures"])
 MIN_REPORT_YEAR = 1900
 MAX_REPORT_YEAR = 2100
+MAX_PENDING_DISCLOSURE_ID = 9_223_372_036_854_775_807
 MIN_PDF_BYTES = 1024
 HTTP_TIMEOUT_SECONDS = 4.0
 HTTP_HEADERS = {
@@ -432,13 +433,14 @@ def get_pending_disclosures(
     "/{pending_id}/approve",
     response_model=DisclosureReviewResponse,
     responses={
+        400: {"description": "Pending disclosure payload is invalid for approval"},
         404: {"description": "Pending disclosure not found"},
         409: {"description": "Pending disclosure is in a conflicting final status"},
     },
 )
 def approve_pending_disclosure(
-    pending_id: int,
-    payload: DisclosureReviewRequest,
+    pending_id: int = FastAPIPath(..., ge=1, le=MAX_PENDING_DISCLOSURE_ID),
+    payload: DisclosureReviewRequest = Body(...),
     db: Session = Depends(get_db),
 ) -> DisclosureReviewResponse:
     row = get_pending_disclosure(db, pending_id)
@@ -452,7 +454,7 @@ def approve_pending_disclosure(
     try:
         extracted_payload = json.loads(row.extracted_payload)
     except json.JSONDecodeError as exc:
-        raise HTTPException(status_code=422, detail="Pending disclosure payload is invalid JSON") from exc
+        raise HTTPException(status_code=400, detail="Pending disclosure payload is invalid JSON") from exc
 
     extracted_payload["company_name"] = row.company_name
     extracted_payload["report_year"] = row.report_year
@@ -474,7 +476,7 @@ def approve_pending_disclosure(
     try:
         merged_input = CompanyESGData.model_validate(extracted_payload)
     except ValidationError as exc:
-        raise HTTPException(status_code=422, detail="Pending disclosure payload validation failed") from exc
+        raise HTTPException(status_code=400, detail="Pending disclosure payload validation failed") from exc
 
     try:
         merged_record = save_report(
@@ -485,7 +487,7 @@ def approve_pending_disclosure(
             evidence_summary=merged_input.evidence_summary,
         )
     except ValueError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     reviewed = review_pending_disclosure(
         db,
@@ -506,13 +508,14 @@ def approve_pending_disclosure(
     "/{pending_id}/reject",
     response_model=DisclosureReviewResponse,
     responses={
+        400: {"description": "Pending disclosure request is invalid"},
         404: {"description": "Pending disclosure not found"},
         409: {"description": "Pending disclosure is in a conflicting final status"},
     },
 )
 def reject_pending_disclosure(
-    pending_id: int,
-    payload: DisclosureReviewRequest,
+    pending_id: int = FastAPIPath(..., ge=1, le=MAX_PENDING_DISCLOSURE_ID),
+    payload: DisclosureReviewRequest = Body(...),
     db: Session = Depends(get_db),
 ) -> DisclosureReviewResponse:
     row = get_pending_disclosure(db, pending_id)
