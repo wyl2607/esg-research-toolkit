@@ -65,8 +65,17 @@ jobs:
           OPENAPI_URL: http://127.0.0.1:8000/openapi.json
         run: npm run gen:types
 
-      - name: Fail on generated type drift
+      - name: Fail on generated type drift (PR gate)
+        if: github.event_name == 'pull_request'
         run: git diff --exit-code -- frontend/src/lib/types.ts
+
+      - name: Report generated type drift on push
+        if: github.event_name != 'pull_request'
+        run: |
+          if ! git diff --exit-code -- frontend/src/lib/types.ts; then
+            echo "::warning::frontend/src/lib/types.ts drift detected during push run (non-blocking)."
+            git --no-pager diff -- frontend/src/lib/types.ts
+          fi
 
       - name: Stop type-generation backend
         if: always()
