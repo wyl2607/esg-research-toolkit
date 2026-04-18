@@ -1257,6 +1257,12 @@ export interface components {
              * @enum {string}
              */
             source_type: "pdf" | "html" | "filing";
+            /**
+             * Source Hint
+             * @default company_site
+             * @enum {string}
+             */
+            source_hint: "company_site" | "sec_edgar" | "hkex" | "csrc";
         };
         /** DisclosureFetchResponse */
         DisclosureFetchResponse: {
@@ -1273,6 +1279,8 @@ export interface components {
         DisclosureReviewRequest: {
             /** Review Note */
             review_note?: string | null;
+            /** Include Metrics */
+            include_metrics?: ("scope1_co2e_tonnes" | "scope2_co2e_tonnes" | "scope3_co2e_tonnes" | "energy_consumption_mwh" | "renewable_energy_pct" | "water_usage_m3" | "waste_recycled_pct" | "total_revenue_eur" | "taxonomy_aligned_revenue_pct" | "total_capex_eur" | "taxonomy_aligned_capex_pct" | "total_employees" | "female_pct" | "primary_activities")[] | null;
         };
         /** DisclosureReviewResponse */
         DisclosureReviewResponse: {

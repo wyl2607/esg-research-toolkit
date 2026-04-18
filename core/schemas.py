@@ -310,6 +310,22 @@ class CompanyReportListItem(BaseModel):
 
 
 PendingDisclosureStatus: TypeAlias = Literal["pending", "approved", "rejected"]
+DisclosureMergeMetric: TypeAlias = Literal[
+    "scope1_co2e_tonnes",
+    "scope2_co2e_tonnes",
+    "scope3_co2e_tonnes",
+    "energy_consumption_mwh",
+    "renewable_energy_pct",
+    "water_usage_m3",
+    "waste_recycled_pct",
+    "total_revenue_eur",
+    "taxonomy_aligned_revenue_pct",
+    "total_capex_eur",
+    "taxonomy_aligned_capex_pct",
+    "total_employees",
+    "female_pct",
+    "primary_activities",
+]
 
 
 class DisclosureFetchRequest(BaseModel):
@@ -345,6 +361,11 @@ class DisclosureFetchResponse(BaseModel):
 
 class DisclosureReviewRequest(BaseModel):
     review_note: str | None = Field(default=None, max_length=2000)
+    include_metrics: list[DisclosureMergeMetric] | None = Field(
+        default=None,
+        min_length=1,
+        max_length=20,
+    )
 
 
 class DisclosureReviewResponse(BaseModel):

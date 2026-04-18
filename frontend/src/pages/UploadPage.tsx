@@ -5,12 +5,14 @@ import {
   approvePendingDisclosure,
   fetchDisclosure,
   getBatchStatus,
+  getCompany,
+  listCompaniesWithYearCoverage,
   listPendingDisclosures,
   rejectPendingDisclosure,
   uploadReport,
   uploadReportsBatch,
 } from '@/lib/api'
-import { ApiError } from '@/lib/api'
+import { ApiError, type DisclosureMergeMetric } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { QueryStateCard } from '@/components/QueryStateCard'
@@ -27,6 +29,67 @@ import { localizeErrorMessage } from '@/lib/error-utils'
 import { findNaceOption, NACE_OPTIONS } from '@/lib/nace-codes'
 
 const BATCH_STORAGE_KEY = 'esg_last_batch_id'
+
+const DISCLOSURE_REVIEW_METRICS: Array<{
+  key: DisclosureMergeMetric
+  labelKey: string
+  valueKind: 'number' | 'percent' | 'integer' | 'activities'
+}> = [
+  { key: 'scope1_co2e_tonnes', labelKey: 'companies.scope1', valueKind: 'number' },
+  { key: 'scope2_co2e_tonnes', labelKey: 'companies.scope2', valueKind: 'number' },
+  { key: 'scope3_co2e_tonnes', labelKey: 'companies.scope3', valueKind: 'number' },
+  { key: 'energy_consumption_mwh', labelKey: 'upload.reviewMetricEnergy', valueKind: 'number' },
+  { key: 'renewable_energy_pct', labelKey: 'upload.renewableEnergy', valueKind: 'percent' },
+  { key: 'water_usage_m3', labelKey: 'upload.reviewMetricWater', valueKind: 'number' },
+  { key: 'waste_recycled_pct', labelKey: 'upload.reviewMetricWaste', valueKind: 'percent' },
+  { key: 'total_revenue_eur', labelKey: 'upload.reviewMetricRevenue', valueKind: 'number' },
+  { key: 'taxonomy_aligned_revenue_pct', labelKey: 'upload.taxonomyAligned', valueKind: 'percent' },
+  { key: 'total_capex_eur', labelKey: 'upload.reviewMetricCapex', valueKind: 'number' },
+  { key: 'taxonomy_aligned_capex_pct', labelKey: 'upload.reviewMetricTaxonomyCapex', valueKind: 'percent' },
+  { key: 'total_employees', labelKey: 'companies.employees', valueKind: 'integer' },
+  { key: 'female_pct', labelKey: 'upload.reviewMetricFemale', valueKind: 'percent' },
+  { key: 'primary_activities', labelKey: 'upload.reviewMetricActivities', valueKind: 'activities' },
+]
+
+function normalizeReviewValue(
+  value: unknown,
+  kind: 'number' | 'percent' | 'integer' | 'activities'
+): unknown {
+  if (value == null) return null
+  if (kind === 'activities') {
+    if (!Array.isArray(value)) return []
+    return value.map((item) => String(item))
+  }
+  return value
+}
+
+function areReviewValuesEqual(
+  current: unknown,
+  next: unknown,
+  kind: 'number' | 'percent' | 'integer' | 'activities'
+): boolean {
+  const a = normalizeReviewValue(current, kind)
+  const b = normalizeReviewValue(next, kind)
+  if (a == null && b == null) return true
+  if (Array.isArray(a) || Array.isArray(b)) return JSON.stringify(a ?? []) === JSON.stringify(b ?? [])
+  return a === b
+}
+
+function formatReviewMetricValue(
+  value: unknown,
+  kind: 'number' | 'percent' | 'integer' | 'activities',
+  locale: string
+): string {
+  if (value == null) return '—'
+  if (kind === 'activities') {
+    if (!Array.isArray(value)) return '—'
+    return value.length ? value.join(', ') : '—'
+  }
+  if (typeof value !== 'number' || Number.isNaN(value)) return String(value)
+  if (kind === 'percent') return `${value.toFixed(1)}%`
+  if (kind === 'integer') return value.toLocaleString(locale)
+  return value.toLocaleString(locale, { maximumFractionDigits: 2 })
+}
 
 export function UploadPage() {
   const { t, i18n } = useTranslation()
@@ -46,6 +109,8 @@ export function UploadPage() {
   const [autoFetchSourceHint, setAutoFetchSourceHint] = useState<
     'company_site' | 'sec_edgar' | 'hkex' | 'csrc'
   >('company_site')
+  const [reviewingPendingId, setReviewingPendingId] = useState<number | null>(null)
+  const [selectedMergeMetrics, setSelectedMergeMetrics] = useState<DisclosureMergeMetric[]>([])
   // Init batch_id from localStorage so progress survives page refresh
   const [batchId, setBatchId] = useState<string | null>(
     () => localStorage.getItem(BATCH_STORAGE_KEY)
@@ -100,6 +165,37 @@ export function UploadPage() {
     refetchInterval: 5000,
   })
 
+  const companyCoverageQuery = useQuery({
+    queryKey: ['company-year-coverage'],
+    queryFn: listCompaniesWithYearCoverage,
+    enabled: hasPrefilledGapTarget,
+    staleTime: 60_000,
+  })
+
+  const hasImportedPrefilledYear =
+    hasPrefilledGapTarget &&
+    (companyCoverageQuery.data ?? []).some(
+      (item) =>
+        item.company_name.toLowerCase() === prefilledCompany!.toLowerCase() &&
+        item.imported_years.includes(prefilledYearNumber!)
+    )
+
+  const existingReportQuery = useQuery({
+    queryKey: ['company-report', prefilledCompany, prefilledYearNumber],
+    enabled: hasImportedPrefilledYear,
+    retry: false,
+    queryFn: async () => {
+      try {
+        return await getCompany(prefilledCompany!, prefilledYearNumber!)
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 404) {
+          return null
+        }
+        throw error
+      }
+    },
+  })
+
   const autoFetchMutation = useMutation({
     mutationFn: () => {
       if (!hasPrefilledGapTarget) throw new Error('Missing company/year prefill')
@@ -117,8 +213,16 @@ export function UploadPage() {
   })
 
   const approvePendingMutation = useMutation({
-    mutationFn: (pendingId: number) => approvePendingDisclosure(pendingId),
+    mutationFn: ({
+      pendingId,
+      payload,
+    }: {
+      pendingId: number
+      payload?: { review_note?: string; include_metrics?: DisclosureMergeMetric[] }
+    }) => approvePendingDisclosure(pendingId, payload ?? {}),
     onSuccess: () => {
+      setReviewingPendingId(null)
+      setSelectedMergeMetrics([])
       void pendingDisclosuresQuery.refetch()
     },
   })
@@ -127,9 +231,14 @@ export function UploadPage() {
     mutationFn: (pendingId: number) =>
       rejectPendingDisclosure(pendingId, { review_note: 'Rejected from upload panel' }),
     onSuccess: () => {
+      setReviewingPendingId(null)
+      setSelectedMergeMetrics([])
       void pendingDisclosuresQuery.refetch()
     },
   })
+
+  const pendingRows = pendingDisclosuresQuery.data ?? []
+  const reviewingPending = pendingRows.find((row) => row.id === reviewingPendingId) ?? null
 
   // Clear stored batch_id once batch fully completes
   useEffect(() => {
@@ -141,6 +250,38 @@ export function UploadPage() {
       localStorage.removeItem(BATCH_STORAGE_KEY)
     }
   }, [batchId, batchStatusQuery.data])
+
+  const openPendingReview = (pendingId: number) => {
+    const row = pendingRows.find((item) => item.id === pendingId)
+    if (!row) return
+
+    const extracted = row.extracted_payload as Record<string, unknown>
+    const current = existingReportQuery.data as Record<string, unknown> | null
+    let defaults = DISCLOSURE_REVIEW_METRICS.filter((metric) => {
+      const nextValue = extracted[metric.key]
+      if (nextValue == null) return false
+      return !areReviewValuesEqual(current?.[metric.key], nextValue, metric.valueKind)
+    }).map((metric) => metric.key)
+
+    if (defaults.length === 0) {
+      defaults = DISCLOSURE_REVIEW_METRICS.filter((metric) => extracted[metric.key] != null).map(
+        (metric) => metric.key
+      )
+    }
+
+    setReviewingPendingId(pendingId)
+    setSelectedMergeMetrics(defaults)
+  }
+
+  const toggleMergeMetric = (metric: DisclosureMergeMetric, checked: boolean) => {
+    setSelectedMergeMetrics((prev) => {
+      if (checked) {
+        if (prev.includes(metric)) return prev
+        return [...prev, metric]
+      }
+      return prev.filter((item) => item !== metric)
+    })
+  }
 
   const onDrop = useCallback(
     (files: File[]) => {
@@ -313,12 +454,12 @@ export function UploadPage() {
               </NoticeBanner>
             ) : null}
 
-            {pendingDisclosuresQuery.data && pendingDisclosuresQuery.data.length > 0 ? (
+            {pendingRows.length > 0 ? (
               <div className="space-y-2">
                 <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
                   {t('upload.pendingQueueTitle')}
                 </p>
-                {pendingDisclosuresQuery.data.map((row) => (
+                {pendingRows.map((row) => (
                   <div
                     key={row.id}
                     data-testid="pending-disclosure-item"
@@ -342,8 +483,23 @@ export function UploadPage() {
                         <Button
                           type="button"
                           size="sm"
+                          variant="outline"
+                          onClick={() => openPendingReview(row.id)}
+                          data-testid={`pending-review-${row.id}`}
+                          disabled={approvePendingMutation.isPending || rejectPendingMutation.isPending}
+                        >
+                          {t('upload.reviewFieldsButton')}
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
                           data-testid={`pending-approve-${row.id}`}
-                          onClick={() => approvePendingMutation.mutate(row.id)}
+                          onClick={() =>
+                            approvePendingMutation.mutate({
+                              pendingId: row.id,
+                              payload: { review_note: 'approved_from_upload_panel' },
+                            })
+                          }
                           disabled={approvePendingMutation.isPending || rejectPendingMutation.isPending}
                         >
                           {t('upload.approveButton')}
@@ -362,6 +518,113 @@ export function UploadPage() {
                     ) : null}
                   </div>
                 ))}
+              </div>
+            ) : null}
+
+            {reviewingPending?.status === 'pending' ? (
+              <div className="space-y-3 rounded-xl border border-amber-200 bg-amber-50/50 p-3">
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold text-slate-800">{t('upload.reviewDrawerTitle')}</p>
+                  <p className="text-xs text-slate-600">
+                    {t('upload.reviewDrawerDescription', { id: reviewingPending.id })}
+                  </p>
+                  {existingReportQuery.data == null ? (
+                    <p className="text-xs text-slate-500">{t('upload.reviewBaselineMissing')}</p>
+                  ) : null}
+                </div>
+                <div className="space-y-2">
+                  {DISCLOSURE_REVIEW_METRICS.map((metric) => {
+                    const extracted = reviewingPending.extracted_payload as Record<string, unknown>
+                    const nextValue = extracted[metric.key]
+                    const currentValue = (existingReportQuery.data as Record<string, unknown> | null)?.[
+                      metric.key
+                    ]
+                    const selectable = nextValue != null
+                    const changed = !areReviewValuesEqual(currentValue, nextValue, metric.valueKind)
+                    if (!selectable && currentValue == null) return null
+                    return (
+                      <label
+                        key={metric.key}
+                        className="grid grid-cols-[auto_1fr] gap-3 rounded-lg border border-stone-200 bg-white/80 p-2 text-xs"
+                      >
+                        <input
+                          type="checkbox"
+                          className="mt-1 h-4 w-4 rounded border-stone-300"
+                          checked={selectedMergeMetrics.includes(metric.key)}
+                          disabled={!selectable}
+                          onChange={(event) => toggleMergeMetric(metric.key, event.target.checked)}
+                        />
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-medium text-slate-700">{t(metric.labelKey)}</span>
+                            {changed ? (
+                              <Badge variant="secondary" className="bg-amber-100 text-amber-900">
+                                {t('upload.reviewChangedBadge')}
+                              </Badge>
+                            ) : (
+                              <Badge variant="secondary">{t('upload.reviewUnchangedBadge')}</Badge>
+                            )}
+                          </div>
+                          <div className="grid gap-1 md:grid-cols-2">
+                            <div className="rounded border border-stone-200 bg-stone-50 p-2">
+                              <p className="text-[11px] uppercase tracking-wide text-slate-500">
+                                {t('upload.reviewCurrentValue')}
+                              </p>
+                              <p className="text-slate-700">
+                                {formatReviewMetricValue(
+                                  currentValue,
+                                  metric.valueKind,
+                                  i18n.resolvedLanguage ?? 'en-US'
+                                )}
+                              </p>
+                            </div>
+                            <div className="rounded border border-stone-200 bg-stone-50 p-2">
+                              <p className="text-[11px] uppercase tracking-wide text-slate-500">
+                                {t('upload.reviewPendingValue')}
+                              </p>
+                              <p className="text-slate-700">
+                                {formatReviewMetricValue(
+                                  nextValue,
+                                  metric.valueKind,
+                                  i18n.resolvedLanguage ?? 'en-US'
+                                )}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </label>
+                    )
+                  })}
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    type="button"
+                    data-testid="pending-approve-selected"
+                    onClick={() =>
+                      approvePendingMutation.mutate({
+                        pendingId: reviewingPending.id,
+                        payload: {
+                          review_note: 'approved_with_selected_metrics',
+                          include_metrics:
+                            selectedMergeMetrics.length > 0 ? selectedMergeMetrics : undefined,
+                        },
+                      })
+                    }
+                    disabled={approvePendingMutation.isPending || selectedMergeMetrics.length === 0}
+                  >
+                    {t('upload.approveSelectedButton', { count: selectedMergeMetrics.length })}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setReviewingPendingId(null)
+                      setSelectedMergeMetrics([])
+                    }}
+                  >
+                    {t('common.cancel')}
+                  </Button>
+                </div>
               </div>
             ) : null}
           </div>

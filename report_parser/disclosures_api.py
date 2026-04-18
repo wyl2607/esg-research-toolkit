@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 from core.database import SessionLocal, get_db
 from core.schemas import (
     CompanyESGData,
+    DisclosureMergeMetric,
     DisclosureFetchRequest,
     DisclosureFetchResponse,
     DisclosureReviewRequest,
@@ -30,6 +31,7 @@ from report_parser.company_identity import canonical_company_name
 from report_parser.extractor import extract_text_from_pdf
 from report_parser.storage import (
     PendingDisclosure,
+    get_report,
     get_pending_disclosure,
     list_pending_disclosures,
     review_pending_disclosure,
@@ -49,6 +51,22 @@ HTTP_HEADERS = {
     "Accept": "application/pdf,text/html;q=0.9,*/*;q=0.8",
 }
 SOURCE_HINTS = {"company_site", "sec_edgar", "hkex", "csrc"}
+MERGEABLE_DISCLOSURE_METRICS: tuple[DisclosureMergeMetric, ...] = (
+    "scope1_co2e_tonnes",
+    "scope2_co2e_tonnes",
+    "scope3_co2e_tonnes",
+    "energy_consumption_mwh",
+    "renewable_energy_pct",
+    "water_usage_m3",
+    "waste_recycled_pct",
+    "total_revenue_eur",
+    "taxonomy_aligned_revenue_pct",
+    "total_capex_eur",
+    "taxonomy_aligned_capex_pct",
+    "total_employees",
+    "female_pct",
+    "primary_activities",
+)
 
 
 def _slugify_company(name: str) -> str:
@@ -417,6 +435,41 @@ def _record_to_company_data(record: Any) -> CompanyESGData:
     return CompanyESGData.model_validate(payload)
 
 
+def _merge_payload_with_selected_metrics(
+    *,
+    row: PendingDisclosure,
+    extracted_payload: dict[str, Any],
+    include_metrics: list[DisclosureMergeMetric],
+    db: Session,
+) -> dict[str, Any]:
+    existing_record = get_report(db, company_name=row.company_name, report_year=row.report_year)
+    if existing_record is None:
+        base_payload: dict[str, Any] = {
+            "company_name": row.company_name,
+            "report_year": row.report_year,
+            "primary_activities": [],
+            "evidence_summary": [],
+        }
+    else:
+        base_payload = _record_to_company_data(existing_record).model_dump(mode="json")
+
+    for metric in include_metrics:
+        if metric in extracted_payload:
+            base_payload[metric] = extracted_payload[metric]
+
+    base_payload["company_name"] = row.company_name
+    base_payload["report_year"] = row.report_year
+    base_payload["source_document_type"] = extracted_payload.get(
+        "source_document_type",
+        base_payload.get("source_document_type", "sustainability_report"),
+    )
+    if not isinstance(base_payload.get("primary_activities"), list):
+        base_payload["primary_activities"] = []
+    if not isinstance(base_payload.get("evidence_summary"), list):
+        base_payload["evidence_summary"] = []
+    return base_payload
+
+
 @router.post("/fetch", response_model=DisclosureFetchResponse, status_code=status.HTTP_202_ACCEPTED)
 def fetch_disclosure(
     payload: DisclosureFetchRequest,
@@ -516,6 +569,17 @@ def approve_pending_disclosure(
 
     extracted_payload["company_name"] = row.company_name
     extracted_payload["report_year"] = row.report_year
+
+    include_metrics = payload.include_metrics or []
+    if include_metrics:
+        include_metrics = [metric for metric in include_metrics if metric in MERGEABLE_DISCLOSURE_METRICS]
+        extracted_payload = _merge_payload_with_selected_metrics(
+            row=row,
+            extracted_payload=extracted_payload,
+            include_metrics=include_metrics,
+            db=db,
+        )
+
     extracted_payload.setdefault("source_document_type", "sustainability_report")
     extracted_payload.setdefault("evidence_summary", [])
 
@@ -527,6 +591,7 @@ def approve_pending_disclosure(
                 "source_url": row.source_url,
                 "source_type": row.source_type,
                 "snippet": "Pending disclosure approved and merged into company_reports.",
+                "selected_metrics": include_metrics if include_metrics else "all",
                 "approved_at": datetime.now(timezone.utc).isoformat(),
             }
         )

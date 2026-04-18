@@ -196,8 +196,9 @@ test.describe('seeded analyst workflow', () => {
 
       const pendingItem = page.getByTestId('pending-disclosure-item').first()
       await expect(pendingItem).toContainText(sourceUrl)
-
-      await pendingItem.locator('[data-testid^="pending-approve-"]').first().click()
+      await pendingItem.locator('[data-testid^="pending-review-"]').first().click()
+      await expect(page.getByTestId('pending-approve-selected')).toBeVisible()
+      await page.getByTestId('pending-approve-selected').click()
 
       await expect
         .poll(async () => {

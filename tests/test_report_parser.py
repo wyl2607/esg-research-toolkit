@@ -37,6 +37,7 @@ from report_parser.storage import (
     list_reports,
     list_source_reports_for_company_year,
     save_report,
+    update_pending_disclosure_payload,
 )
 
 
@@ -752,6 +753,122 @@ def test_disclosures_approve_merges_pending_report() -> None:
         merged = get_report(db_session, company_name="BASF SE", report_year=2022)
         assert merged is not None
         assert merged.source_url == "https://example.com/basf-2022.pdf"
+    finally:
+        db_session.close()
+        Base.metadata.drop_all(bind=engine)
+
+
+def test_disclosures_approve_can_merge_selected_metrics_only(make_company_data) -> None:
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    testing_session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    Base.metadata.create_all(bind=engine)
+    db_session = testing_session_local()
+    app = FastAPI()
+    app.include_router(disclosures_router)
+    app.dependency_overrides[get_db] = lambda: db_session
+
+    try:
+        save_report(
+            db_session,
+            make_company_data(
+                company_name="BASF SE",
+                report_year=2022,
+                scope1_co2e_tonnes=100.0,
+                renewable_energy_pct=20.0,
+                total_employees=700,
+            ),
+            source_url="https://example.com/existing-basf-2022.pdf",
+        )
+
+        with patch.dict(os.environ, {"ESG_CONTRACT_TEST_MODE": "1"}):
+            with TestClient(app) as client:
+                queued = client.post(
+                    "/disclosures/fetch",
+                    json={
+                        "company_name": "BASF",
+                        "report_year": 2022,
+                        "source_url": "https://example.com/basf-2022-fetched.pdf",
+                    },
+                )
+                pending_id = queued.json()["pending"]["id"]
+                update_pending_disclosure_payload(
+                    db_session,
+                    pending_id=pending_id,
+                    extracted_payload={
+                        "company_name": "BASF SE",
+                        "report_year": 2022,
+                        "scope1_co2e_tonnes": 333.0,
+                        "renewable_energy_pct": 88.0,
+                        "total_employees": 1234,
+                        "primary_activities": ["solar_pv"],
+                        "evidence_summary": [],
+                    },
+                    review_note="patched-for-selected-metrics-test",
+                )
+                approved = client.post(
+                    f"/disclosures/{pending_id}/approve",
+                    json={
+                        "review_note": "selected-metric-merge",
+                        "include_metrics": ["scope1_co2e_tonnes"],
+                    },
+                )
+
+        assert queued.status_code == 202
+        assert approved.status_code == 200
+        payload = approved.json()
+        assert payload["status"] == "approved"
+        assert payload["merged_report"]["scope1_co2e_tonnes"] == pytest.approx(333.0)
+        assert payload["merged_report"]["renewable_energy_pct"] == pytest.approx(20.0)
+        assert payload["merged_report"]["total_employees"] == 700
+
+        merged = get_report(db_session, company_name="BASF SE", report_year=2022)
+        assert merged is not None
+        assert merged.scope1_co2e_tonnes == pytest.approx(333.0)
+        assert merged.renewable_energy_pct == pytest.approx(20.0)
+        assert merged.total_employees == 700
+    finally:
+        db_session.close()
+        Base.metadata.drop_all(bind=engine)
+
+
+def test_disclosures_approve_rejects_unknown_include_metric() -> None:
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    testing_session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    Base.metadata.create_all(bind=engine)
+    db_session = testing_session_local()
+    app = FastAPI()
+    app.include_router(disclosures_router)
+    app.dependency_overrides[get_db] = lambda: db_session
+
+    try:
+        with patch.dict(os.environ, {"ESG_CONTRACT_TEST_MODE": "1"}):
+            with TestClient(app) as client:
+                queued = client.post(
+                    "/disclosures/fetch",
+                    json={
+                        "company_name": "BASF",
+                        "report_year": 2022,
+                        "source_url": "https://example.com/basf-2022-fetched.pdf",
+                    },
+                )
+                pending_id = queued.json()["pending"]["id"]
+                invalid = client.post(
+                    f"/disclosures/{pending_id}/approve",
+                    json={
+                        "include_metrics": ["totally_unknown_metric"],
+                    },
+                )
+
+        assert queued.status_code == 202
+        assert invalid.status_code == 422
     finally:
         db_session.close()
         Base.metadata.drop_all(bind=engine)
