@@ -4,6 +4,11 @@ import { listCompanies, getTaxonomyReport, downloadTaxonomyPdf } from '@/lib/api
 import { TaxonomyRadarChart } from '@/components/RadarChart'
 import { MetricCard } from '@/components/MetricCard'
 import { QueryStateCard } from '@/components/QueryStateCard'
+import { PageContainer } from '@/components/layout/PageContainer'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { Panel } from '@/components/layout/Panel'
+import { NoticeBanner } from '@/components/NoticeBanner'
+import { FilterBar } from '@/components/FilterBar'
 import { Badge } from '@/components/ui/badge'
 import {
   Select,
@@ -44,17 +49,12 @@ export function TaxonomyPage() {
   const backendOffline = isBackendOffline(companiesError) || isBackendOffline(reportError)
 
   return (
-    <div className="space-y-8 max-w-5xl mx-auto">
-      <div className="space-y-2">
-        <p className="section-kicker">{t('taxonomy.kicker')}</p>
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-semibold text-slate-900">{t('taxonomy.title')}</h1>
-            <p className="max-w-3xl text-sm leading-6 text-slate-600">
-              {t('taxonomy.subtitle')}
-            </p>
-          </div>
-          {report && companyName && companyYear && (
+    <PageContainer>
+      <PageHeader
+        title={t('taxonomy.title')}
+        subtitle={t('taxonomy.subtitle')}
+        actions={
+          report && companyName && companyYear ? (
             <Button
               variant="outline"
               className="border-amber-300 bg-amber-50/80 text-amber-900 hover:bg-amber-100"
@@ -72,12 +72,11 @@ export function TaxonomyPage() {
               <Download size={16} className="mr-2" />
               {pdfLoading ? t('taxonomy.generating') : t('taxonomy.downloadPdf')}
             </Button>
-          )}
-        </div>
-        <div className="rounded-xl border border-stone-300 bg-stone-50 px-4 py-3 text-sm text-stone-700">
-          {t('taxonomy.disclaimer')}
-        </div>
-      </div>
+          ) : null
+        }
+      />
+
+      <NoticeBanner tone="info">{t('taxonomy.disclaimer')}</NoticeBanner>
 
       {backendOffline ? (
         <BackendOfflineBanner />
@@ -104,29 +103,32 @@ export function TaxonomyPage() {
         />
       ) : null}
 
-      <div className="surface-card max-w-3xl">
-        <p className="mb-3 text-xs uppercase tracking-[0.2em] text-stone-500">
-          {t('common.company')} & {t('common.year')}
-        </p>
-        <Select value={selected} onValueChange={setSelected}>
-          <SelectTrigger
-            className="h-14 w-full bg-white text-base border-stone-300 shadow-sm hover:border-stone-400 focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-            aria-label={t('common.selectCompany')}
-          >
-            <SelectValue placeholder={t('common.selectCompany')} />
-          </SelectTrigger>
-          <SelectContent>
-            {companies.map((c) => (
-              <SelectItem
-                key={`${c.company_name}|${c.report_year}`}
-                value={`${c.company_name}|${c.report_year}`}
-              >
-                {c.company_name} ({c.report_year})
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <FilterBar>
+        <FilterBar.Field
+          label={`${t('common.company')} & ${t('common.year')}`}
+          htmlFor="taxonomy-company-year"
+        >
+          <Select value={selected} onValueChange={setSelected}>
+            <SelectTrigger
+              id="taxonomy-company-year"
+              className="w-full"
+              aria-label={t('common.selectCompany')}
+            >
+              <SelectValue placeholder={t('common.selectCompany')} />
+            </SelectTrigger>
+            <SelectContent>
+              {companies.map((c) => (
+                <SelectItem
+                  key={`${c.company_name}|${c.report_year}`}
+                  value={`${c.company_name}|${c.report_year}`}
+                >
+                  {c.company_name} ({c.report_year})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FilterBar.Field>
+      </FilterBar>
 
       {companies.length === 0 && !companiesLoading && !companiesError && !backendOffline ? (
         <QueryStateCard
@@ -175,15 +177,12 @@ export function TaxonomyPage() {
           </div>
 
           <div className="grid gap-6 xl:grid-cols-2">
-            <div className="editorial-panel">
-              <p className="section-kicker">{t('taxonomy.kicker')}</p>
-              <h2 className="mb-3 text-2xl text-slate-900">{t('taxonomy.objectiveScores')}</h2>
+            <Panel title={t('taxonomy.objectiveScores')}>
               <TaxonomyRadarChart data={report.objective_scores} />
-            </div>
+            </Panel>
 
-            <div className="editorial-panel space-y-4">
+            <Panel title={t('taxonomy.dnshCheck')} className="space-y-4">
               <div>
-                <h2 className="mb-3 text-2xl text-slate-900">{t('taxonomy.dnshCheck')}</h2>
                 <div className="flex items-center gap-2">
                   {report.dnsh_pass ? (
                     <>
@@ -231,7 +230,7 @@ export function TaxonomyPage() {
                   </ul>
                 </div>
               )}
-            </div>
+            </Panel>
           </div>
         </div>
       )}
@@ -244,6 +243,6 @@ export function TaxonomyPage() {
           className="max-w-2xl py-8"
         />
       ) : null}
-    </div>
+    </PageContainer>
   )
 }
