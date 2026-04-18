@@ -28,16 +28,18 @@ from report_parser.api import (
     router as report_router,
     save_manual_report,
 )
-from report_parser.disclosures_api import router as disclosures_router
+from report_parser.disclosures_api import _run_fetch_pipeline, router as disclosures_router
 from report_parser.analyzer import AIExtractionError, analyze_esg_data
 from report_parser.extractor import extract_text_from_pdf
 from report_parser.storage import (
     CompanyReport,
+    get_pending_disclosure,
     get_report,
     list_reports,
     list_source_reports_for_company_year,
     save_report,
     update_pending_disclosure_payload,
+    upsert_pending_disclosure,
 )
 
 
@@ -648,6 +650,41 @@ def test_disclosures_fetch_supports_official_source_hints() -> None:
         Base.metadata.drop_all(bind=engine)
 
 
+def test_disclosures_fetch_sec_hint_keeps_company_name_query_tokens() -> None:
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    testing_session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    Base.metadata.create_all(bind=engine)
+    db_session = testing_session_local()
+    app = FastAPI()
+    app.include_router(disclosures_router)
+    app.dependency_overrides[get_db] = lambda: db_session
+
+    try:
+        with TestClient(app) as client:
+            response = client.post(
+                "/disclosures/fetch",
+                json={
+                    "company_name": "BMW Group",
+                    "report_year": 2023,
+                    "source_type": "filing",
+                    "source_hint": "sec_edgar",
+                },
+            )
+
+        assert response.status_code == 202
+        pending_url = response.json()["pending"]["source_url"]
+        assert "sec.gov/edgar/search" in pending_url
+        assert "bmw-ag" not in pending_url.lower()
+        assert "BMW+AG" in pending_url
+    finally:
+        db_session.close()
+        Base.metadata.drop_all(bind=engine)
+
+
 def test_disclosures_fetch_source_url_override_wins_over_source_hint() -> None:
     engine = create_engine(
         "sqlite://",
@@ -706,6 +743,73 @@ def test_disclosures_fetch_rejects_non_http_source_url() -> None:
             )
 
         assert response.status_code == 422
+    finally:
+        db_session.close()
+        Base.metadata.drop_all(bind=engine)
+
+
+def test_disclosures_fetch_pipeline_records_attempted_urls_on_failure() -> None:
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    testing_session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    Base.metadata.create_all(bind=engine)
+    db_session = testing_session_local()
+
+    try:
+        queued_payload = CompanyESGData(
+            company_name="BASF SE",
+            report_year=2022,
+            source_document_type="sustainability_report",
+            evidence_summary=[],
+        )
+        row, _ = upsert_pending_disclosure(
+            db_session,
+            company_name="BASF SE",
+            report_year=2022,
+            source_url="https://example.com/basf-2022.pdf",
+            source_type="filing",
+            extracted_payload=queued_payload.model_dump(mode="json"),
+            status="pending",
+            review_note="queued",
+        )
+
+        with (
+            patch.dict(os.environ, {"ESG_CONTRACT_TEST_MODE": "0"}, clear=False),
+            patch("report_parser.disclosures_api.SessionLocal", testing_session_local),
+            patch(
+                "report_parser.disclosures_api._candidate_source_urls",
+                return_value=[
+                    "https://www.sec.gov/edgar/search/#/q=basf",
+                    "https://www1.hkexnews.hk/search/titlesearch.xhtml?lang=en&query=basf",
+                ],
+            ),
+            patch("report_parser.disclosures_api._download_pdf_bytes", return_value=None),
+            patch("report_parser.disclosures_api._discover_pdf_url_from_html", return_value=None),
+        ):
+            _run_fetch_pipeline(
+                pending_id=row.id,
+                company_name=row.company_name,
+                report_year=row.report_year,
+                source_type=row.source_type,
+                source_hint="sec_edgar",
+                source_url=row.source_url,
+            )
+
+        db_session.expire_all()
+        updated = get_pending_disclosure(db_session, row.id)
+        assert updated is not None
+        assert updated.review_note == "fetch_no_public_pdf_found:2"
+
+        payload = json.loads(updated.extracted_payload)
+        evidence = payload["evidence_summary"][-1]
+        assert evidence["attempted_urls"] == [
+            "https://www.sec.gov/edgar/search/#/q=basf",
+            "https://www1.hkexnews.hk/search/titlesearch.xhtml?lang=en&query=basf",
+        ]
+        assert "after 2 attempts" in evidence["snippet"]
     finally:
         db_session.close()
         Base.metadata.drop_all(bind=engine)

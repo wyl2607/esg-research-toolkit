@@ -29,9 +29,11 @@
 - `disclosures` 抓取后端改为 source-type aware：默认 `source_url` 与候选 URL 列表按 `source_type` 分支，不再对非 PDF 类型直接短路跳过。
 - `disclosures` 请求契约新增 `source_hint`，默认 URL 与候选来源对 hint 做分支回退，同时保留 `source_url` override 优先级。
 - `POST /disclosures/{id}/approve` 请求契约新增 `include_metrics`，支持仅合并选中字段；后端按已入库基线+待审 payload 进行字段级合并。
+- `disclosures` 官方来源通道（SEC/HKEX/CSRC）默认/候选 URL 统一改为 canonical 公司名 query token，减少 slug 检索导致的无效命中；fetch 失败时把 `attempted_urls` 与尝试次数写入 pending evidence，便于 Upload 审核与排障追踪。
 - `tests/test_report_parser.py` 新增参数化回归，锁定 html/filing 默认 URL 生成行为。
 - `tests/test_report_parser.py` 增加 source-hint 回归，锁定 SEC/HKEX/CSRC 默认入口与 override 语义。
 - `tests/test_report_parser.py` 增加字段级合并回归（selected metrics only）与非法 metric 422 契约校验。
+- `tests/test_report_parser.py` 新增回归，锁定 SEC query token 保真与 fetch 失败路径 attempt 审计落盘。
 
 ### Verified
 
@@ -40,6 +42,7 @@
 - `cd frontend && npm run gen:types && npm run lint && npm run build` → pass
 - `cd frontend && npm run test:playwright -- tests/workflow.spec.ts` → `6 passed`
 - `cd frontend && npx playwright test --config=playwright.config.ts tests/workflow.spec.ts -g "upload auto-fetch can queue and approve a deep-linked missing year"` → `2 passed`
+- `cd frontend && npm run test:smoke && npm run test:a11y` → `20 passed`, `10 passed`
 
 ## [0.2.3-beta.1] - 2026-04-17
 

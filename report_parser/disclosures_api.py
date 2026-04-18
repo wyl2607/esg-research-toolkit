@@ -8,7 +8,7 @@ import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
-from urllib.parse import urljoin, urlparse
+from urllib.parse import quote_plus, urljoin, urlparse
 
 import httpx
 from fastapi import APIRouter, BackgroundTasks, Body, Depends, HTTPException, Path as FastAPIPath, Query, status
@@ -51,6 +51,7 @@ HTTP_HEADERS = {
     "Accept": "application/pdf,text/html;q=0.9,*/*;q=0.8",
 }
 SOURCE_HINTS = {"company_site", "sec_edgar", "hkex", "csrc"}
+MAX_SOURCE_CANDIDATES = 12
 MERGEABLE_DISCLOSURE_METRICS: tuple[DisclosureMergeMetric, ...] = (
     "scope1_co2e_tonnes",
     "scope2_co2e_tonnes",
@@ -81,21 +82,22 @@ def _default_source_url(
     source_hint: str = "company_site",
 ) -> str:
     slug = _slugify_company(company_name)
+    query_company = quote_plus(canonical_company_name(company_name))
     if source_hint == "sec_edgar":
         return (
             "https://www.sec.gov/edgar/search/#/"
-            f"q={slug}%20{report_year}%20sustainability%20report"
+            f"q={query_company}%20{report_year}%20sustainability%20report"
             f"&dateRange=custom&startdt={report_year}-01-01&enddt={report_year}-12-31"
         )
     if source_hint == "hkex":
         return (
             "https://www1.hkexnews.hk/search/titlesearch.xhtml"
-            f"?lang=en&query={slug}%20{report_year}%20sustainability"
+            f"?lang=en&query={query_company}%20{report_year}%20sustainability"
         )
     if source_hint == "csrc":
         return (
             "https://www.cninfo.com.cn/new/fulltextSearch"
-            f"?notautosubmit=&keyWord={slug}%20{report_year}%20可持续发展报告"
+            f"?notautosubmit=&keyWord={query_company}%20{report_year}%20可持续发展报告"
         )
     if source_type == "html":
         return f"https://www.{slug}.com/sustainability/{report_year}"
@@ -156,43 +158,58 @@ def _candidate_source_urls(
         return [explicit_source_url]
 
     slug = _slugify_company(company_name)
+    query_company = quote_plus(canonical_company_name(company_name))
+
+    def _dedupe_candidates(candidates: list[str]) -> list[str]:
+        deduped: list[str] = []
+        seen: set[str] = set()
+        for candidate in candidates:
+            normalized = candidate.strip()
+            if not normalized or normalized in seen:
+                continue
+            seen.add(normalized)
+            deduped.append(normalized)
+            if len(deduped) >= MAX_SOURCE_CANDIDATES:
+                break
+        return deduped
+
     if source_hint == "sec_edgar":
-        return [
+        return _dedupe_candidates([
             _default_source_url(company_name, report_year, source_type=source_type, source_hint="sec_edgar"),
-            f"https://www.sec.gov/cgi-bin/browse-edgar?company={slug}&owner=exclude&action=getcompany",
+            f"https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&company={query_company}&owner=exclude&count=40",
             f"https://www.{slug}.com/investor-relations/{report_year}/annual-report.pdf",
-        ]
+        ])
     if source_hint == "hkex":
-        return [
+        return _dedupe_candidates([
             _default_source_url(company_name, report_year, source_type=source_type, source_hint="hkex"),
-            f"https://www1.hkexnews.hk/search/prefixsearch.xhtml?lang=en&query={slug}",
+            f"https://www1.hkexnews.hk/search/prefixsearch.xhtml?lang=en&query={query_company}",
             f"https://www.{slug}.com/investor-relations/{report_year}/annual-report.pdf",
-        ]
+        ])
     if source_hint == "csrc":
-        return [
+        return _dedupe_candidates([
             _default_source_url(company_name, report_year, source_type=source_type, source_hint="csrc"),
-            f"https://www.cninfo.com.cn/new/fulltextSearch?notautosubmit=&keyWord={slug}%20{report_year}",
+            f"https://www.cninfo.com.cn/new/fulltextSearch?notautosubmit=&keyWord={query_company}%20{report_year}",
             f"https://www.{slug}.com/sustainability/{report_year}/report.pdf",
-        ]
+        ])
     if source_type == "html":
-        return [
+        return _dedupe_candidates([
             f"https://www.{slug}.com/sustainability/{report_year}",
             f"https://www.{slug}.com/sustainability",
             f"https://www.{slug}.com/esg",
             f"https://www.{slug}.com/investor-relations/{report_year}",
-        ]
+        ])
     if source_type == "filing":
-        return [
+        return _dedupe_candidates([
             f"https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&company={slug}",
             f"https://www.{slug}.com/investor-relations/{report_year}/annual-report.pdf",
             f"https://www.{slug}.com/investor-relations/{report_year}",
             f"https://www.{slug}.com/sustainability/{report_year}/report.pdf",
-        ]
-    return [
+        ])
+    return _dedupe_candidates([
         f"https://www.{slug}.com/sustainability/{report_year}/report.pdf",
         f"https://www.{slug}.com/investor-relations/{report_year}/annual-report.pdf",
         f"https://www.{slug}.com/sustainability/{report_year}",
-    ]
+    ])
 
 
 def _download_pdf_bytes(client: httpx.Client, source_url: str) -> tuple[bytes, str] | None:
@@ -245,22 +262,25 @@ def _build_pending_payload(
     source_type: str,
     source_hint: str,
     snippet: str,
+    attempted_urls: list[str] | None = None,
 ) -> CompanyESGData:
+    evidence_item: dict[str, Any] = {
+        "metric": "auto_disclosure_fetch",
+        "source": source_url,
+        "source_url": source_url,
+        "source_type": source_type,
+        "source_hint": source_hint,
+        "snippet": snippet,
+        "fetched_at": datetime.now(timezone.utc).isoformat(),
+    }
+    if attempted_urls:
+        evidence_item["attempted_urls"] = attempted_urls[:MAX_SOURCE_CANDIDATES]
+
     return CompanyESGData(
         company_name=company_name,
         report_year=report_year,
         source_document_type="sustainability_report",
-        evidence_summary=[
-            {
-                "metric": "auto_disclosure_fetch",
-                "source": source_url,
-                "source_url": source_url,
-                "source_type": source_type,
-                "source_hint": source_hint,
-                "snippet": snippet,
-                "fetched_at": datetime.now(timezone.utc).isoformat(),
-            }
-        ],
+        evidence_summary=[evidence_item],
     )
 
 
@@ -303,11 +323,13 @@ def _run_fetch_pipeline(
     )
     client = httpx.Client(follow_redirects=True)
     downloaded: tuple[bytes, str] | None = None
+    attempted_urls: list[str] = []
 
     try:
         for candidate in candidates:
             if _is_private_or_local_hostname(urlparse(candidate).hostname):
                 continue
+            attempted_urls.append(candidate)
 
             if candidate.lower().endswith(".pdf"):
                 downloaded = _download_pdf_bytes(client, candidate)
@@ -330,13 +352,17 @@ def _run_fetch_pipeline(
                 source_url=source_url,
                 source_type=source_type,
                 source_hint=source_hint,
-                snippet="No reachable public PDF was found. Upload manually or provide a direct PDF URL.",
+                snippet=(
+                    f"No reachable public PDF was found after {len(attempted_urls)} attempts. "
+                    "Upload manually or provide a direct PDF URL."
+                ),
+                attempted_urls=attempted_urls,
             )
             update_pending_disclosure_payload(
                 db,
                 pending_id=pending_id,
                 extracted_payload=fallback.model_dump(mode="json"),
-                review_note="fetch_no_public_pdf_found",
+                review_note=f"fetch_no_public_pdf_found:{len(attempted_urls)}",
             )
             return
 
@@ -367,6 +393,7 @@ def _run_fetch_pipeline(
                 "source_type": source_type,
                 "source_hint": source_hint,
                 "snippet": "Auto fetch succeeded and extracted draft metrics.",
+                "attempted_urls": attempted_urls[:MAX_SOURCE_CANDIDATES],
                 "fetched_at": datetime.now(timezone.utc).isoformat(),
             }
         )
@@ -386,6 +413,7 @@ def _run_fetch_pipeline(
             source_type=source_type,
             source_hint=source_hint,
             snippet="Fetch attempted but extraction failed. Review source and upload manually if needed.",
+            attempted_urls=attempted_urls,
         )
         update_pending_disclosure_payload(
             db,
