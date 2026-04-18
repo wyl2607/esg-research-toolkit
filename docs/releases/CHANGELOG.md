@@ -32,6 +32,7 @@
 - `POST /disclosures/{id}/approve` 请求契约新增 `include_metrics`，支持仅合并选中字段；后端按已入库基线+待审 payload 进行字段级合并。
 - `disclosures` 官方来源通道（SEC/HKEX/CSRC）默认/候选 URL 统一改为 canonical 公司名 query token，减少 slug 检索导致的无效命中；fetch 失败时把 `attempted_urls` 与尝试次数写入 pending evidence，便于 Upload 审核与排障追踪。
 - `disclosures` 请求契约新增 `source_hints`（兼容保留 `source_hint`），支持一次任务按多来源候选列表串行回退尝试。
+- `disclosures` pending evidence 新增 `lane_stats`（按来源通道统计 attempted/succeeded/failed）与 `success_lane`，用于 Upload 侧实时展示来源可靠性。
 - `tests/test_report_parser.py` 新增参数化回归，锁定 html/filing 默认 URL 生成行为。
 - `tests/test_report_parser.py` 增加 source-hint 回归，锁定 SEC/HKEX/CSRC 默认入口与 override 语义。
 - `tests/test_report_parser.py` 增加字段级合并回归（selected metrics only）与非法 metric 422 契约校验。

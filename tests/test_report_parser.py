@@ -716,6 +716,11 @@ def test_disclosures_fetch_accepts_multi_source_hints_and_persists_them() -> Non
         evidence = payload["pending"]["extracted_payload"]["evidence_summary"][0]
         assert evidence["source_hint"] == "sec_edgar"
         assert evidence["source_hints"] == ["sec_edgar", "hkex", "csrc"]
+        assert evidence["success_lane"] is None
+        lane_stats = {item["lane"]: item for item in evidence["lane_stats"]}
+        assert lane_stats["sec_edgar"]["attempted"] == 0
+        assert lane_stats["hkex"]["attempted"] == 0
+        assert lane_stats["csrc"]["attempted"] == 0
         assert "sec.gov" in payload["pending"]["source_url"]
     finally:
         db_session.close()
@@ -847,6 +852,12 @@ def test_disclosures_fetch_pipeline_records_attempted_urls_on_failure() -> None:
             "https://www.sec.gov/edgar/search/#/q=basf",
             "https://www1.hkexnews.hk/search/titlesearch.xhtml?lang=en&query=basf",
         ]
+        lane_stats = {item["lane"]: item for item in evidence["lane_stats"]}
+        assert lane_stats["sec_edgar"]["attempted"] == 1
+        assert lane_stats["sec_edgar"]["failed"] == 1
+        assert lane_stats["hkex"]["attempted"] == 1
+        assert lane_stats["hkex"]["failed"] == 1
+        assert evidence["success_lane"] is None
         assert "after 2 attempts" in evidence["snippet"]
     finally:
         db_session.close()

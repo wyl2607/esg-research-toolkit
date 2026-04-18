@@ -536,6 +536,41 @@ export function UploadPage() {
                             SOURCE_HINT_OPTIONS.includes(hint as DisclosureSourceHint)
                           )
                       : []
+                    const laneStatsRaw = evidence?.lane_stats
+                    const laneStats = Array.isArray(laneStatsRaw)
+                      ? laneStatsRaw
+                          .map((entry) => {
+                            if (!entry || typeof entry !== 'object') return null
+                            const value = entry as Record<string, unknown>
+                            const lane = String(value.lane ?? '')
+                            if (!SOURCE_HINT_OPTIONS.includes(lane as DisclosureSourceHint)) return null
+                            const attempted = Number(value.attempted ?? 0)
+                            const succeeded = Number(value.succeeded ?? 0)
+                            const failed = Number(value.failed ?? Math.max(attempted - succeeded, 0))
+                            return {
+                              lane: lane as DisclosureSourceHint,
+                              attempted: Number.isFinite(attempted) ? attempted : 0,
+                              succeeded: Number.isFinite(succeeded) ? succeeded : 0,
+                              failed: Number.isFinite(failed) ? failed : 0,
+                            }
+                          })
+                          .filter(
+                            (
+                              value
+                            ): value is {
+                              lane: DisclosureSourceHint
+                              attempted: number
+                              succeeded: number
+                              failed: number
+                            } => value != null
+                          )
+                      : []
+                    const successLaneRaw = evidence?.success_lane
+                    const successLane =
+                      typeof successLaneRaw === 'string' &&
+                      SOURCE_HINT_OPTIONS.includes(successLaneRaw as DisclosureSourceHint)
+                        ? (successLaneRaw as DisclosureSourceHint)
+                        : null
 
                     return (
                       <div
@@ -558,6 +593,30 @@ export function UploadPage() {
                             {t('upload.autoFetchLanesUsedLabel')}:{' '}
                             {sourceHints.map((hint) => t(sourceHintLabelKey(hint))).join(', ')}
                           </p>
+                        ) : null}
+                        {laneStats.length > 0 ? (
+                          <div className="mt-1 space-y-1 text-xs text-slate-500">
+                            <p>{t('upload.autoFetchLaneStatsLabel')}</p>
+                            <ul className="space-y-1 pl-3">
+                              {laneStats.map((stat) => (
+                                <li key={`${row.id}-${stat.lane}`} data-testid={`pending-lane-stat-${stat.lane}`}>
+                                  {t('upload.autoFetchLaneStatsLine', {
+                                    lane: t(sourceHintLabelKey(stat.lane)),
+                                    succeeded: stat.succeeded,
+                                    attempted: stat.attempted,
+                                    failed: stat.failed,
+                                  })}
+                                </li>
+                              ))}
+                            </ul>
+                            {successLane ? (
+                              <p className="text-emerald-700">
+                                {t('upload.autoFetchSuccessLaneLabel', {
+                                  lane: t(sourceHintLabelKey(successLane)),
+                                })}
+                              </p>
+                            ) : null}
+                          </div>
                         ) : null}
                         {row.review_note ? (
                           <p className="mt-1 text-xs text-slate-500">{row.review_note}</p>

@@ -260,6 +260,57 @@ def _candidate_source_urls_for_hints(
     return combined
 
 
+def _source_hint_from_url(url: str) -> DisclosureSourceHint:
+    hostname = (urlparse(url).hostname or "").lower()
+    if "sec.gov" in hostname:
+        return "sec_edgar"
+    if "hkexnews.hk" in hostname:
+        return "hkex"
+    if "cninfo.com.cn" in hostname:
+        return "csrc"
+    return "company_site"
+
+
+def _compute_lane_stats(
+    *,
+    source_hints: list[DisclosureSourceHint],
+    attempted_urls: list[str],
+    resolved_source_url: str | None = None,
+) -> tuple[list[dict[str, int | str]], list[str], DisclosureSourceHint | None]:
+    attempts: dict[DisclosureSourceHint, int] = {hint: 0 for hint in source_hints}
+    for attempted_url in attempted_urls:
+        lane = _source_hint_from_url(attempted_url)
+        attempts[lane] = attempts.get(lane, 0) + 1
+
+    success_lane: DisclosureSourceHint | None = (
+        _source_hint_from_url(resolved_source_url) if resolved_source_url else None
+    )
+    if success_lane is not None and success_lane not in attempts:
+        attempts[success_lane] = 1
+
+    priority = {hint: index for index, hint in enumerate(source_hints)}
+    lane_stats = [
+        {
+            "lane": lane,
+            "attempted": count,
+            "succeeded": 1 if lane == success_lane else 0,
+            "failed": max(count - (1 if lane == success_lane else 0), 0),
+        }
+        for lane, count in attempts.items()
+    ]
+    lane_stats.sort(
+        key=lambda item: (
+            -int(item["succeeded"]),
+            -int(item["attempted"]),
+            priority.get(str(item["lane"]), len(priority)),
+            str(item["lane"]),
+        )
+    )
+
+    recommended_lane_order = [str(item["lane"]) for item in lane_stats]
+    return lane_stats, recommended_lane_order, success_lane
+
+
 def _download_pdf_bytes(client: httpx.Client, source_url: str) -> tuple[bytes, str] | None:
     try:
         response = client.get(source_url, timeout=HTTP_TIMEOUT_SECONDS, headers=HTTP_HEADERS)
@@ -313,6 +364,10 @@ def _build_pending_payload(
     snippet: str,
     attempted_urls: list[str] | None = None,
 ) -> CompanyESGData:
+    lane_stats, recommended_lane_order, success_lane = _compute_lane_stats(
+        source_hints=source_hints,
+        attempted_urls=attempted_urls or [],
+    )
     evidence_item: dict[str, Any] = {
         "metric": "auto_disclosure_fetch",
         "source": source_url,
@@ -320,6 +375,9 @@ def _build_pending_payload(
         "source_type": source_type,
         "source_hint": source_hint,
         "source_hints": source_hints,
+        "lane_stats": lane_stats,
+        "recommended_lane_order": recommended_lane_order,
+        "success_lane": success_lane,
         "snippet": snippet,
         "fetched_at": datetime.now(timezone.utc).isoformat(),
     }
@@ -438,6 +496,11 @@ def _run_fetch_pipeline(
         evidence_summary = payload.get("evidence_summary")
         if not isinstance(evidence_summary, list):
             evidence_summary = []
+        lane_stats, recommended_lane_order, success_lane = _compute_lane_stats(
+            source_hints=source_hints,
+            attempted_urls=attempted_urls,
+            resolved_source_url=resolved_source_url,
+        )
         evidence_summary.append(
             {
                 "metric": "auto_disclosure_fetch",
@@ -446,6 +509,9 @@ def _run_fetch_pipeline(
                 "source_type": source_type,
                 "source_hint": source_hint,
                 "source_hints": source_hints,
+                "lane_stats": lane_stats,
+                "recommended_lane_order": recommended_lane_order,
+                "success_lane": success_lane,
                 "snippet": "Auto fetch succeeded and extracted draft metrics.",
                 "attempted_urls": attempted_urls[:MAX_SOURCE_CANDIDATES],
                 "fetched_at": datetime.now(timezone.utc).isoformat(),

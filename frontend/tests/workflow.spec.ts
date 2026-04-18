@@ -197,6 +197,8 @@ test.describe('seeded analyst workflow', () => {
 
       const pendingItem = page.getByTestId('pending-disclosure-item').first()
       await expect(pendingItem).toContainText(sourceUrl)
+      await expect(page.getByTestId('pending-lane-stat-sec_edgar').first()).toBeVisible()
+      await expect(page.getByTestId('pending-lane-stat-hkex').first()).toBeVisible()
       await expect
         .poll(async () => {
           const response = await request.get('/api/disclosures/pending', {
