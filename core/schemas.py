@@ -331,7 +331,7 @@ class LCOEInput(BaseModel):
     capacity_mw: float = Field(default=100.0, gt=0.0, le=1_000_000.0)
     capex_eur_per_kw: float = Field(gt=0.0, le=1_000_000.0)
     opex_eur_per_kw_year: float = Field(ge=0.0, le=1_000_000.0)
-    capacity_factor: float = Field(gt=0.0, le=1.0)
+    capacity_factor: float = Field(ge=0.001, le=1.0)
     lifetime_years: int = Field(default=25, gt=0, le=100)
     discount_rate: float = Field(default=0.07, ge=0.0, lt=1.0)
     electricity_price_eur_per_mwh: float = Field(default=95.0, ge=0.0, le=1_000_000.0)

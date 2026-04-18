@@ -106,6 +106,8 @@ def test_sensitivity_analysis() -> None:
 def test_zero_capacity_factor() -> None:
     with pytest.raises(ValidationError):
         make_lcoe_input(capacity_factor=0.0)
+    with pytest.raises(ValidationError):
+        make_lcoe_input(capacity_factor=1e-6)
 
 
 def test_sensitivity_endpoint_returns_openapi_aligned_fields() -> None:
@@ -134,6 +136,18 @@ def test_sensitivity_endpoint_handles_zero_base_lcoe_without_500() -> None:
     assert response.status_code == 200
     body = response.json()
     assert all(change == 0.0 for change in body[0]["lcoe_change_pct"])
+
+
+def test_techno_endpoints_reject_subminimum_capacity_factor() -> None:
+    payload = make_lcoe_input().model_dump()
+    payload["capacity_factor"] = 1e-6
+
+    with TestClient(app) as client:
+        lcoe_response = client.post("/techno/lcoe", json=payload)
+        sensitivity_response = client.post("/techno/sensitivity", json=payload)
+
+    assert lcoe_response.status_code == 422
+    assert sensitivity_response.status_code == 422
 
 
 def test_benchmark_presets_return_full_lcoe_inputs() -> None:
