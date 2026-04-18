@@ -5,6 +5,11 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { InfoTooltip } from '@/components/InfoTooltip'
 import { QueryStateCard } from '@/components/QueryStateCard'
+import { PageContainer } from '@/components/layout/PageContainer'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { Panel, FormCard } from '@/components/layout/Panel'
+import { NoticeBanner } from '@/components/NoticeBanner'
+import { FilterBar } from '@/components/FilterBar'
 import type { CompanyESGData } from '@/lib/types'
 import { useTranslation } from 'react-i18next'
 import { localizeErrorMessage } from '@/lib/error-utils'
@@ -217,16 +222,11 @@ export function ComparePage() {
   ]
 
   return (
-    <div className="space-y-8">
-      <div className="space-y-2 pt-4 pb-2 md:pt-0 md:pb-0">
-        <p className="section-kicker">{t('compare.kicker')}</p>
-        <h1 className="text-4xl leading-tight font-semibold text-slate-900 dark:text-slate-100 md:text-5xl">
-          {t('compare.title')}
-        </h1>
-        <p className="max-w-[32ch] text-base leading-7 text-slate-600 dark:text-slate-300 md:max-w-3xl md:text-sm md:leading-6">
-          {t('compare.subtitle')}
-        </p>
-      </div>
+    <PageContainer>
+      <PageHeader
+        title={t('compare.title')}
+        subtitle={t('compare.subtitle')}
+      />
 
       {error ? (
         <QueryStateCard
@@ -255,116 +255,121 @@ export function ComparePage() {
         />
       ) : null}
 
-      {/* Company + year selector */}
-      <div className="surface-card p-5">
-        <h3 className="mb-3 flex items-center text-sm font-medium text-slate-700 dark:text-slate-200">
-          {t('compare.selectUp4')}
-          <span
-            className={cn(
-              'ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium',
-              selected.length >= 2
-                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
-                : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300',
-            )}
-            aria-live="polite"
-          >
-            {selected.length}/4
-          </span>
-        </h3>
-        <div className="flex flex-wrap gap-3">
-          {uniqueCompanyNames.map((name) => {
-            const isSelected = isCompanySelected(name)
-            const entry = selected.find((s) => s.name === name)
-            const years = yearsForCompany(name)
-            const disabled = !isSelected && selected.length >= 4
-            return (
-              <div key={name} className="flex flex-col gap-1.5">
-                <Button
-                  variant={isSelected ? 'default' : 'outline'}
-                  size="sm"
-                  className={cn(
-                    'h-auto whitespace-normal px-3 py-2 text-left leading-5 transition-all active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600',
-                    isSelected && 'ring-2 ring-amber-200 dark:ring-amber-900/60',
-                    disabled && 'opacity-40 cursor-not-allowed',
-                  )}
-                  onClick={() => !disabled && toggleCompany(name)}
-                  aria-pressed={isSelected}
-                >
-                  {name}
-                </Button>
-                {isSelected && years.length > 1 && (
-                  <div className="flex flex-wrap gap-1 pl-1">
-                    {years.map((year) => (
-                      <button
-                        key={year}
-                        type="button"
-                        onClick={() => setYear(name, year)}
-                        className={cn(
-                          'px-2 py-0.5 text-xs rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600',
-                          year === entry?.year
-                            ? 'bg-amber-100 border-amber-300 text-amber-900 font-semibold dark:bg-amber-900/40 dark:border-amber-600 dark:text-amber-300'
-                            : 'bg-white border-stone-200 text-stone-600 hover:bg-stone-50 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-600'
-                        )}
-                      >
-                        {year}
-                      </button>
-                    ))}
-                  </div>
+      <FilterBar>
+        <FilterBar.Field
+          label={(
+            <span className="flex items-center gap-2">
+              <span>{t('compare.selectUp4')}</span>
+              <span
+                className={cn(
+                  'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium normal-case tracking-normal',
+                  selected.length >= 2
+                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+                    : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300',
                 )}
-              </div>
-            )
-          })}
-        </div>
-        <Button
-          type="button"
-          className="mt-6 self-start rounded-xl bg-amber-700 px-5 py-2.5 text-white hover:bg-amber-800 disabled:bg-slate-200 disabled:text-slate-500 dark:bg-amber-800 dark:hover:bg-amber-900"
-          disabled={selectedCompanies.length < 2}
-          onClick={() => {
-            const el = document.getElementById('compare-results')
-            el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-          }}
+                aria-live="polite"
+              >
+                {selected.length}/4
+              </span>
+            </span>
+          )}
         >
-          {t('compare.startCta', { defaultValue: 'Vergleich starten' })}
-        </Button>
-      </div>
+          <div className="flex flex-wrap gap-3">
+            {uniqueCompanyNames.map((name) => {
+              const isSelected = isCompanySelected(name)
+              const entry = selected.find((s) => s.name === name)
+              const years = yearsForCompany(name)
+              const disabled = !isSelected && selected.length >= 4
+              return (
+                <div key={name} className="flex flex-col gap-1.5">
+                  <Button
+                    variant={isSelected ? 'default' : 'outline'}
+                    size="sm"
+                    className={cn(
+                      'h-auto whitespace-normal px-3 py-2 text-left leading-5 transition-all active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600',
+                      isSelected && 'ring-2 ring-amber-200 dark:ring-amber-900/60',
+                      disabled && 'opacity-40 cursor-not-allowed',
+                    )}
+                    onClick={() => !disabled && toggleCompany(name)}
+                    aria-pressed={isSelected}
+                  >
+                    {name}
+                  </Button>
+                  {isSelected && years.length > 1 && (
+                    <div className="flex flex-wrap gap-1 pl-1">
+                      {years.map((year) => (
+                        <button
+                          key={year}
+                          type="button"
+                          onClick={() => setYear(name, year)}
+                          className={cn(
+                            'px-2 py-0.5 text-xs rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600',
+                            year === entry?.year
+                              ? 'bg-amber-100 border-amber-300 text-amber-900 font-semibold dark:bg-amber-900/40 dark:border-amber-600 dark:text-amber-300'
+                              : 'bg-white border-stone-200 text-stone-600 hover:bg-stone-50 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-600'
+                          )}
+                        >
+                          {year}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </FilterBar.Field>
+        <FilterBar.Actions>
+          <Button
+            type="button"
+            className="rounded-xl bg-amber-700 px-5 py-2.5 text-white hover:bg-amber-800 disabled:bg-slate-200 disabled:text-slate-500 dark:bg-amber-800 dark:hover:bg-amber-900"
+            disabled={selectedCompanies.length < 2}
+            onClick={() => {
+              const el = document.getElementById('compare-results')
+              el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            }}
+          >
+            {t('compare.startCta', { defaultValue: 'Vergleich starten' })}
+          </Button>
+        </FilterBar.Actions>
+      </FilterBar>
 
       {selectedCompanies.length >= 2 ? (
         <div id="compare-results" className="space-y-8">
-          {/* View mode toggle */}
-          <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-xs font-semibold uppercase tracking-wide text-stone-500 dark:text-slate-400">
-              {t('compare.viewMode')}
-            </span>
-            <div className="flex rounded-xl border border-stone-200 dark:border-slate-600 overflow-hidden">
-              {viewModes.map((m) => (
-                <button
-                  key={m.key}
-                  type="button"
-                  onClick={() => setViewMode(m.key)}
-                  className={cn(
-                    'px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600',
-                    viewMode === m.key
-                      ? 'bg-amber-700 text-white dark:bg-amber-800'
-                      : 'bg-white text-slate-600 hover:bg-stone-50 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
-                  )}
-                  style={{ minHeight: 'unset', minWidth: 'unset' }}
-                >
-                  {m.label}
-                </button>
-              ))}
-            </div>
+          <FilterBar>
+            <FilterBar.Field label={t('compare.viewMode')}>
+              <div className="flex w-fit overflow-hidden rounded-xl border border-stone-200 dark:border-slate-600">
+                {viewModes.map((m) => (
+                  <button
+                    key={m.key}
+                    type="button"
+                    onClick={() => setViewMode(m.key)}
+                    className={cn(
+                      'px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600',
+                      viewMode === m.key
+                        ? 'bg-amber-700 text-white dark:bg-amber-800'
+                        : 'bg-white text-slate-600 hover:bg-stone-50 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
+                    )}
+                    style={{ minHeight: 'unset', minWidth: 'unset' }}
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+            </FilterBar.Field>
             {viewMode === 'intensity' && (
-              <span className="text-xs text-slate-500 dark:text-slate-400 italic">
-                <InfoTooltip content={t('compare.tooltips.intensity')} />
-                {' '}{t('compare.intensityUnit')}
-              </span>
+              <FilterBar.Field>
+                <span className="text-xs text-slate-500 dark:text-slate-400 italic">
+                  <InfoTooltip content={t('compare.tooltips.intensity')} />
+                  {' '}{t('compare.intensityUnit')}
+                </span>
+              </FilterBar.Field>
             )}
-          </div>
+          </FilterBar>
 
-          {/* Company header cards */}
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {selectedCompanies.map((company) => (
-              <div key={`${company.company_name}-${company.report_year}`} className="surface-card space-y-3 p-4">
+              <FormCard key={`${company.company_name}-${company.report_year}`} className="space-y-3">
                 <div className="space-y-2">
                   <p className="section-kicker">{t('common.company')}</p>
                   <h2 className="text-lg leading-snug text-slate-900 dark:text-slate-100 break-words">{company.company_name}</h2>
@@ -396,15 +401,11 @@ export function ComparePage() {
                     </div>
                   ))}
                 </div>
-              </div>
+              </FormCard>
             ))}
           </div>
 
-          {/* Full comparison table */}
-          <div className="editorial-panel p-0 overflow-hidden">
-            <div className="px-5 pt-5 pb-3">
-              <h2 className="text-2xl text-slate-900 dark:text-slate-100">{t('compare.tableTitle')}</h2>
-            </div>
+          <Panel title={t('compare.tableTitle')} className="overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="editorial-table-header">
@@ -490,12 +491,11 @@ export function ComparePage() {
                 </tbody>
               </table>
             </div>
-          </div>
+          </Panel>
         </div>
       ) : (
-        <div className="rounded-2xl border border-slate-200 bg-white/70 p-8 text-center dark:border-slate-700 dark:bg-slate-800/40">
-          <p className="text-base font-semibold text-slate-700 dark:text-slate-200">{t('compare.noSelectionHeadline')}</p>
-          <ul className="mt-4 space-y-2 text-sm text-slate-500 dark:text-slate-400">
+        <NoticeBanner tone="info" title={t('compare.noSelectionHeadline')}>
+          <ul className="mt-2 space-y-2 text-sm text-slate-600 dark:text-slate-300">
             <li className="flex items-center justify-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full bg-amber-500" aria-hidden="true" />
               {t('compare.noSelectionBullet1')}
@@ -514,8 +514,8 @@ export function ComparePage() {
               <div key={i} className="h-16 rounded-xl border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800" />
             ))}
           </div>
-        </div>
+        </NoticeBanner>
       )}
-    </div>
+    </PageContainer>
   )
 }
