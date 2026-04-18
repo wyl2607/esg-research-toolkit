@@ -169,6 +169,8 @@
     "deMarketRefNote": "Quelle: EPEX SPOT / Bundesnetzagentur SMARD. Nicht aus Unternehmensberichten – muss manuell gesetzt werden.",
     "cnMarketRef": "China Referenz (Großhandelsdurchschnitt, CEPCI/NEA)",
     "cnMarketRefNote": "Quelle: CEPCI / NEA Jahresdaten, Preise in CNY/MWh. Nicht aus Unternehmensberichten – muss manuell gesetzt werden.",
+    "usMarketRef": "USA Referenz (Großhandelsdurchschnitt, EIA)",
+    "usMarketRefNote": "Quelle: EIA Großhandelsstrommarktdaten, Preise in USD/MWh. Nicht aus Unternehmensberichten – muss manuell gesetzt werden.",
     "currencySection": "Währung & Wechselkurs",
     "inputCurrency": "Eingabewährung",
     "fxToEur": "Kurs zu EUR (1 Einheit → EUR)",

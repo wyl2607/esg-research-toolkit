@@ -168,6 +168,8 @@
     "deMarketRefNote": "Source: EPEX SPOT / Bundesnetzagentur SMARD. Not from company reports — set manually.",
     "cnMarketRef": "China reference (wholesale avg, CEPCI/NEA)",
     "cnMarketRefNote": "Source: CEPCI / NEA annual data. Prices in CNY/MWh. Not from company reports — set manually.",
+    "usMarketRef": "US reference (wholesale avg, EIA)",
+    "usMarketRefNote": "Source: EIA wholesale electricity market data. Prices in USD/MWh. Not from company reports — set manually.",
     "currencySection": "Currency & FX settings",
     "inputCurrency": "Input currency",
     "fxToEur": "FX rate to EUR (1 unit → EUR)",

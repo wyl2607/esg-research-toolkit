@@ -169,6 +169,8 @@
     "deMarketRefNote": "数据来源：EPEX SPOT / 联邦网络局 SMARD。不来自公司报告，需手动设置。",
     "cnMarketRef": "中国参考价格（年均批发价，CEPCI/NEA）",
     "cnMarketRefNote": "数据来源：中电联 / 国家能源局年度数据，单位 元/MWh，不来自公司报告，需手动设置。",
+    "usMarketRef": "美国参考价格（年均批发价，EIA）",
+    "usMarketRefNote": "数据来源：EIA 批发电力市场年度数据，单位 美元/MWh，不来自公司报告，需手动设置。",
     "currencySection": "货币与汇率设置",
     "inputCurrency": "输入货币",
     "fxToEur": "兑欧元汇率（1单位 → EUR）",

@@ -48,30 +48,28 @@ const TECH_LABEL_KEYS: Record<string, string> = {
   battery_storage: 'lcoe.technologyOptions.batteryStorage',
 }
 
-const DEFAULTS: LCOEInput = {
-  technology: 'solar_pv',
-  capacity_mw: 100,
-  capacity_factor: 0.22,
-  capex_eur_per_kw: 800,
-  opex_eur_per_kw_year: 16,
-  lifetime_years: 25,
-  discount_rate: 0.05,
-  electricity_price_eur_per_mwh: 95,
-  currency: 'EUR',
-  reference_fx_to_eur: 1.0,
-}
-
 const FX_PRESETS: Record<'EUR' | 'USD' | 'CNY', { label: string; fx: number }> = {
   EUR: { label: '1 EUR = 1.000 EUR', fx: 1.0 },
   USD: { label: '1 USD ≈ 0.920 EUR (2023 avg)', fx: 0.920 },
   CNY: { label: '1 CNY ≈ 0.127 EUR (2023 avg)', fx: 0.127 },
 }
 
+// Prices are stored in the row's native currency (EUR for DE, USD for US,
+// CNY for CN) to stay readable — the LCOE input uses the same field name
+// (`electricity_price_eur_per_mwh`) because the backend treats the number as
+// "price in input currency" and converts via reference_fx_to_eur.
 const DE_MARKET_PRICES: { year: number; price: number; note?: string }[] = [
   { year: 2021, price: 96 },
   { year: 2022, price: 235, note: '⚡ energy crisis' },
   { year: 2023, price: 95 },
   { year: 2024, price: 65 },
+]
+
+const US_MARKET_PRICES: { year: number; price: number; note?: string }[] = [
+  { year: 2021, price: 39 },
+  { year: 2022, price: 67, note: '⚡ gas spike' },
+  { year: 2023, price: 40 },
+  { year: 2024, price: 38 },
 ]
 
 const CN_MARKET_PRICES: { year: number; price: number }[] = [
@@ -80,6 +78,35 @@ const CN_MARKET_PRICES: { year: number; price: number }[] = [
   { year: 2023, price: 363 },
   { year: 2024, price: 370 },
 ]
+
+// Language ↔ market defaults: en→US, zh→CN, de/fallback→EU
+function currencyForLanguage(lng: string): 'EUR' | 'USD' | 'CNY' {
+  const tag = lng.toLowerCase()
+  if (tag.startsWith('en')) return 'USD'
+  if (tag.startsWith('zh')) return 'CNY'
+  return 'EUR'
+}
+
+function defaultPriceForCurrency(currency: 'EUR' | 'USD' | 'CNY'): number {
+  if (currency === 'USD') return US_MARKET_PRICES[US_MARKET_PRICES.length - 1].price
+  if (currency === 'CNY') return CN_MARKET_PRICES[CN_MARKET_PRICES.length - 1].price
+  return DE_MARKET_PRICES[DE_MARKET_PRICES.length - 1].price
+}
+
+function buildDefaults(currency: 'EUR' | 'USD' | 'CNY'): LCOEInput {
+  return {
+    technology: 'solar_pv',
+    capacity_mw: 100,
+    capacity_factor: 0.22,
+    capex_eur_per_kw: 800,
+    opex_eur_per_kw_year: 16,
+    lifetime_years: 25,
+    discount_rate: 0.05,
+    electricity_price_eur_per_mwh: defaultPriceForCurrency(currency),
+    currency,
+    reference_fx_to_eur: FX_PRESETS[currency].fx,
+  }
+}
 
 const FIELD_CONFIG: [keyof LCOEInput, string, string][] = [
   ['capacity_mw', 'capacity_mw', '0.1'],
@@ -104,8 +131,10 @@ const FIELD_UNIT_KEYS: Partial<Record<keyof LCOEInput, string>> = {
 }
 
 export function LcoePage() {
-  const { t } = useTranslation()
-  const [form, setForm] = useState<LCOEInput>(DEFAULTS)
+  const { t, i18n } = useTranslation()
+  const [form, setForm] = useState<LCOEInput>(() =>
+    buildDefaults(currencyForLanguage(i18n.language || 'de'))
+  )
 
   const lcoeMutation = useMutation({ mutationFn: calcLcoe })
   const sensitivityMutation = useMutation({ mutationFn: calcSensitivity })
@@ -310,6 +339,32 @@ export function LcoePage() {
                   ))}
                 </div>
                 <p className="text-[11px] text-slate-400 dark:text-slate-500">{t('lcoe.deMarketRefNote')}</p>
+              </div>
+            )}
+
+            {form.currency === 'USD' && (
+              <div className="space-y-2 rounded-2xl border border-sky-100 bg-sky-50/60 px-4 py-3 dark:border-sky-900/40 dark:bg-sky-900/10">
+                <p className="text-xs font-medium uppercase tracking-wide text-sky-600 dark:text-sky-400">
+                  {t('lcoe.usMarketRef')}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {US_MARKET_PRICES.map(({ year, price, note }) => (
+                    <button
+                      key={year}
+                      type="button"
+                      onClick={() => setForm((f) => ({ ...f, electricity_price_eur_per_mwh: price }))}
+                      style={{ minHeight: 'unset', minWidth: 'unset' }}
+                      className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${
+                        form.electricity_price_eur_per_mwh === price
+                          ? 'border-sky-300 bg-sky-100 text-sky-900 dark:border-sky-600 dark:bg-sky-800/40 dark:text-sky-300'
+                          : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300'
+                      }`}
+                    >
+                      {year} — ${price}/MWh{note ? ` ${note}` : ''}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[11px] text-slate-400 dark:text-slate-500">{t('lcoe.usMarketRefNote')}</p>
               </div>
             )}
 
