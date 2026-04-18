@@ -115,6 +115,15 @@ The table below is generated from current FastAPI routes in `main.py`.
 | POST | `/techno/lcoe` | Compute LCOE from project input parameters. |
 | POST | `/techno/sensitivity` | Run sensitivity analysis around techno assumptions. |
 
+## 🛡 Auto-Fetch Compliance Guardrails (F2)
+
+The disclosure backfill flow (`POST /disclosures/fetch` + pending review in Upload page) is intentionally constrained:
+
+- **Supported official-source lanes:** company website disclosure pages, SEC EDGAR, HKEX filings, and CSRC/CNINFO search entry points.
+- **Explicitly excluded:** paid/proprietary ESG data providers and third-party scraped aggregation sites.
+- **Identification:** requests include a project user-agent (`esg-research-toolkit/<ver> (+contact)`).
+- **Rate limits by policy:** per-host fetch pace and global concurrency are restricted; records go to `pending_disclosures` first and require explicit approve/reject before merge.
+
 ## 🏗 Architecture
 
 ```text

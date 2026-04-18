@@ -170,4 +170,51 @@ test.describe('seeded analyst workflow', () => {
       await deleteSeededCompany(request, seeded)
     }
   })
+
+  test('upload auto-fetch can queue and approve a deep-linked missing year', async ({
+    page,
+    request,
+  }, testInfo) => {
+    test.setTimeout(60_000)
+    const seeded = await seedManualCompany(request, testInfo)
+    const missingYear = seeded.reportYear - 1
+    const issues = trackBrowserIssues(page)
+
+    try {
+      await page.goto(
+        `/upload?company=${encodeURIComponent(seeded.companyName)}&year=${missingYear}`,
+        { waitUntil: 'networkidle' }
+      )
+      await expect(page.getByRole('main')).toBeVisible()
+
+      const sourceUrl = `https://example.com/${encodeURIComponent(seeded.companyName)}/${missingYear}.pdf`
+      await page.getByTestId('auto-fetch-source-url').fill(sourceUrl)
+      await page.locator('#auto-fetch-source-hint').selectOption('sec_edgar')
+      await page.locator('#auto-fetch-source-type').selectOption('pdf')
+
+      await page.getByTestId('auto-fetch-trigger').click()
+
+      const pendingItem = page.getByTestId('pending-disclosure-item').first()
+      await expect(pendingItem).toContainText(sourceUrl)
+
+      await pendingItem.locator('[data-testid^="pending-approve-"]').first().click()
+
+      await expect
+        .poll(async () => {
+          const response = await request.get(
+            `/api/report/companies/${encodeURIComponent(seeded.companyName)}/${missingYear}`
+          )
+          return response.status()
+        })
+        .toBe(200)
+
+      await expectNoTrackedBrowserIssues(testInfo, 'upload-auto-fetch-approve-missing-year', issues)
+    } finally {
+      const cleanupMissing = await request.delete(
+        `/api/report/companies/${encodeURIComponent(seeded.companyName)}/${missingYear}?hard=true`
+      )
+      expect([200, 404]).toContain(cleanupMissing.status())
+      await deleteSeededCompany(request, seeded)
+    }
+  })
 })

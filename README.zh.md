@@ -100,6 +100,15 @@ Backend API 默认暴露在 `http://localhost:8000`。
 | POST | `/techno/lcoe` | 计算项目 LCOE。 |
 | POST | `/techno/sensitivity` | 运行技术经济敏感性分析。 |
 
+## 🛡 Auto-Fetch 合规边界（F2）
+
+披露补录链路（`POST /disclosures/fetch` + Upload 页待审核队列）默认受以下约束：
+
+- **支持的官方来源通道：** 公司官网披露页、SEC EDGAR、HKEX、CSRC/CNINFO。
+- **明确排除：** 付费/专有 ESG 数据商，以及第三方爬虫聚合站。
+- **请求标识：** 抓取请求携带项目 User-Agent（`esg-research-toolkit/<ver> (+contact)`）。
+- **速率与入库策略：** 限制 host 级节奏与全局并发；抓取结果先写入 `pending_disclosures`，必须经人工 approve/reject 后才可并入主表。
+
 ## 🏗 架构
 
 ```text

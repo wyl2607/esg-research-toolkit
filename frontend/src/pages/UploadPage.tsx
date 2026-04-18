@@ -231,6 +231,7 @@ export function UploadPage() {
               type="button"
               onClick={() => autoFetchMutation.mutate()}
               disabled={autoFetchMutation.isPending}
+              data-testid="auto-fetch-trigger"
             >
               {autoFetchMutation.isPending
                 ? t('upload.autoFetchRunning')
@@ -278,6 +279,7 @@ export function UploadPage() {
               <span>{t('upload.autoFetchSourceLabel')}</span>
               <input
                 id="auto-fetch-source-url"
+                data-testid="auto-fetch-source-url"
                 className="h-10 rounded-lg border border-stone-300 bg-white px-3 text-sm text-stone-800 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-100"
                 value={autoFetchSourceUrl}
                 onChange={(event) => setAutoFetchSourceUrl(event.target.value)}
@@ -319,6 +321,7 @@ export function UploadPage() {
                 {pendingDisclosuresQuery.data.map((row) => (
                   <div
                     key={row.id}
+                    data-testid="pending-disclosure-item"
                     className="rounded-xl border border-stone-200 bg-white/80 px-3 py-2 text-sm"
                   >
                     <div className="flex items-center justify-between gap-2">
@@ -339,6 +342,7 @@ export function UploadPage() {
                         <Button
                           type="button"
                           size="sm"
+                          data-testid={`pending-approve-${row.id}`}
                           onClick={() => approvePendingMutation.mutate(row.id)}
                           disabled={approvePendingMutation.isPending || rejectPendingMutation.isPending}
                         >
@@ -348,6 +352,7 @@ export function UploadPage() {
                           type="button"
                           size="sm"
                           variant="outline"
+                          data-testid={`pending-reject-${row.id}`}
                           onClick={() => rejectPendingMutation.mutate(row.id)}
                           disabled={approvePendingMutation.isPending || rejectPendingMutation.isPending}
                         >

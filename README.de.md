@@ -100,6 +100,15 @@ Die folgende Tabelle basiert auf den aktuell registrierten FastAPI-Routen in `ma
 | POST | `/techno/lcoe` | LCOE-Berechnung für Projektparameter. |
 | POST | `/techno/sensitivity` | Sensitivitätsanalyse für techno-ökonomische Annahmen. |
 
+## 🛡 Auto-Fetch Compliance-Leitplanken (F2)
+
+Der Disclosure-Backfill-Flow (`POST /disclosures/fetch` + Pending-Review in der Upload-Seite) ist absichtlich eingeschränkt:
+
+- **Unterstützte offizielle Quellenpfade:** Unternehmens-Webseiten, SEC EDGAR, HKEX und CSRC/CNINFO.
+- **Explizit ausgeschlossen:** kostenpflichtige/proprietäre ESG-Datenanbieter und Drittseiten mit Scraper-Aggregaten.
+- **Identifikation:** Requests tragen einen projektbezogenen User-Agent (`esg-research-toolkit/<ver> (+contact)`).
+- **Rate- und Merge-Policy:** host-bezogene Abrufrate und globale Parallelität sind begrenzt; Ergebnisse landen zuerst in `pending_disclosures` und werden erst nach explizitem Approve/Reject übernommen.
+
 ## 🏗 Architektur
 
 ```text

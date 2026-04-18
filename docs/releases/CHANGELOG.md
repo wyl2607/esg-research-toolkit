@@ -17,6 +17,8 @@
 - Upload 页面新增 Auto Fetch 面板：支持 company/year 预填触发抓取、查看 pending 队列。
 - Upload Auto Fetch 面板补充 `source_type` 选择（`pdf` / `html` / `filing`）及三语文案，避免前端请求被硬编码为 PDF。
 - Upload Auto Fetch 面板新增 `source_hint` 官方来源通道（`company_site` / `sec_edgar` / `hkex` / `csrc`）选择，支持 analyst 按区域监管来源发起补录。
+- `frontend/tests/workflow.spec.ts` 新增 F2 e2e：深链进入 Upload 后触发 auto-fetch 并 approve，断言缺失年份记录可回读。
+- README（en/zh/de）补充 Auto-Fetch 合规声明：支持来源、排除来源、User-Agent 标识与 pending 审核入库策略。
 
 ### Changed
 
@@ -34,6 +36,7 @@
 - `.venv/bin/ruff check core report_parser taxonomy_scorer esg_frameworks techno_economics benchmark tests main.py --ignore E501` → pass
 - `cd frontend && npm run gen:types && npm run lint && npm run build` → pass
 - `cd frontend && npm run test:playwright -- tests/workflow.spec.ts` → `6 passed`
+- `cd frontend && npx playwright test --config=playwright.config.ts tests/workflow.spec.ts -g "upload auto-fetch can queue and approve a deep-linked missing year"` → `2 passed`
 
 ## [0.2.3-beta.1] - 2026-04-17
 
