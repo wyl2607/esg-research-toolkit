@@ -4,12 +4,15 @@ import { getDashboardStats, listCompanies } from '@/lib/api'
 import { SortableMetricList, type MetricItem } from '@/components/SortableMetricList'
 import { QueryStateCard } from '@/components/QueryStateCard'
 import { Badge } from '@/components/ui/badge'
+import { PageContainer } from '@/components/layout/PageContainer'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { Panel } from '@/components/layout/Panel'
+import { NoticeBanner } from '@/components/NoticeBanner'
 import { useNavigate, Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { useTranslation } from 'react-i18next'
 import { ArrowDownUp, ArrowRight, ArrowUpDown } from 'lucide-react'
 import { localizeErrorMessage, isBackendOffline } from '@/lib/error-utils'
-import { BackendOfflineBanner } from '@/components/BackendOfflineBanner'
 
 const DashboardHeavyCharts = lazy(() =>
   import('@/components/dashboard/DashboardHeavyCharts').then((module) => ({
@@ -113,20 +116,17 @@ export function DashboardPage() {
 
   const chartFallback = (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-      <div className="editorial-panel h-[320px] animate-pulse bg-stone-100/70" />
-      <div className="editorial-panel h-[320px] animate-pulse bg-stone-100/70" />
+      <Panel className="h-[320px] animate-pulse bg-stone-100/70"><div /></Panel>
+      <Panel className="h-[320px] animate-pulse bg-stone-100/70"><div /></Panel>
     </div>
   )
 
   return (
-    <div className="space-y-8">
-      <div className="space-y-2">
-        <p className="section-kicker">{t('dashboard.kicker')}</p>
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-semibold text-slate-900">{t('dashboard.title')}</h1>
-            <p className="max-w-3xl text-sm leading-6 text-slate-600">{t('dashboard.subtitle')}</p>
-          </div>
+    <PageContainer>
+      <PageHeader
+        title={t('dashboard.title')}
+        subtitle={t('dashboard.subtitle')}
+        actions={(
           <Button
             className="shrink-0 self-start rounded-xl bg-amber-700 text-amber-50 hover:bg-amber-800 lg:self-end"
             onClick={() => navigate('/upload')}
@@ -134,8 +134,8 @@ export function DashboardPage() {
             {t('dashboard.uploadReport')}
             <ArrowRight size={14} className="ml-1 shrink-0" aria-hidden="true" />
           </Button>
-        </div>
-      </div>
+        )}
+      />
 
       <SortableMetricList
         loading={statsLoading}
@@ -164,7 +164,9 @@ export function DashboardPage() {
       />
 
       {backendOffline ? (
-        <BackendOfflineBanner />
+        <NoticeBanner tone="info" title={t('dashboard.backendOfflineTitle')}>
+          {t('dashboard.backendOfflineBody')}
+        </NoticeBanner>
       ) : statsError ? (
         <QueryStateCard
           tone="error"
@@ -189,31 +191,26 @@ export function DashboardPage() {
         </Suspense>
       </DeferredHeavyCharts>
 
-      <section className="editorial-panel space-y-4 p-4 md:p-5" aria-labelledby="coverage-rates-title">
-        {/* header row */}
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 id="coverage-rates-title" className="text-2xl font-semibold text-stone-900">
-            {t('dashboard.coverageRates')}
-          </h2>
-          {coverageRows.length > 0 && (
-            <button
-              type="button"
-              onClick={cycleCoverageSort}
-              className="flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 shadow-sm transition hover:border-amber-400 hover:text-amber-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600"
-              aria-label={t('dashboard.coverageSortDefault')}
-            >
-              {coverageSort === 'default' ? (
-                <><ArrowUpDown size={13} />{t('dashboard.coverageSortDefault')}</>
-              ) : coverageSort === 'desc' ? (
-                <><ArrowDownUp size={13} />{t('dashboard.coverageSortDesc')}</>
-              ) : (
-                <><ArrowUpDown size={13} />{t('dashboard.coverageSortAsc')}</>
-              )}
-            </button>
-          )}
-        </div>
+      <Panel
+        title={t('dashboard.coverageRates')}
+        actions={coverageRows.length > 0 ? (
+          <button
+            type="button"
+            onClick={cycleCoverageSort}
+            className="flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 shadow-sm transition hover:border-amber-400 hover:text-amber-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600"
+            aria-label={t('dashboard.coverageSortDefault')}
+          >
+            {coverageSort === 'default' ? (
+              <><ArrowUpDown size={13} />{t('dashboard.coverageSortDefault')}</>
+            ) : coverageSort === 'desc' ? (
+              <><ArrowDownUp size={13} />{t('dashboard.coverageSortDesc')}</>
+            ) : (
+              <><ArrowUpDown size={13} />{t('dashboard.coverageSortAsc')}</>
+            )}
+          </button>
+        ) : null}
+      >
 
-        {/* progress summary */}
         {coverageRows.length > 0 && (
           <div className="rounded-xl border border-stone-100 bg-stone-50 px-4 py-3">
             <div className="mb-2 flex items-center justify-between text-xs text-slate-500">
@@ -243,7 +240,6 @@ export function DashboardPage() {
           </div>
         )}
 
-        {/* bars */}
         {coverageRows.length === 0 ? (
           <QueryStateCard
             tone="empty"
@@ -262,12 +258,9 @@ export function DashboardPage() {
             ))}
           </div>
         )}
-      </section>
+      </Panel>
 
-      <div aria-labelledby="recent-analyses-title">
-        <h2 id="recent-analyses-title" className="mb-3 text-2xl font-semibold text-stone-900">
-          {t('dashboard.recentAnalyses')}
-        </h2>
+      <Panel title={t('dashboard.recentAnalyses')}>
         {companiesError && !backendOffline ? (
           <QueryStateCard
             tone="error"
@@ -288,7 +281,7 @@ export function DashboardPage() {
             body={t('dashboard.noCompanies')}
           />
         ) : (
-          <div className="editorial-panel overflow-hidden">
+          <div className="overflow-hidden">
             <div className="space-y-3 p-4 md:hidden">
               {recent.map((company) => (
                 <button
@@ -365,7 +358,7 @@ export function DashboardPage() {
             </div>
           </div>
         )}
-      </div>
-    </div>
+      </Panel>
+    </PageContainer>
   )
 }

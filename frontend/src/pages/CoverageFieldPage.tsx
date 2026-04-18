@@ -4,6 +4,9 @@ import { useQuery } from '@tanstack/react-query'
 import { listCompanies } from '@/lib/api'
 import { FIELD_CONFIG_MAP } from '@/lib/coverage-field-config'
 import { QueryStateCard } from '@/components/QueryStateCard'
+import { PageContainer } from '@/components/layout/PageContainer'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { Panel } from '@/components/layout/Panel'
 import { ArrowLeft, TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import type { CompanyESGData } from '@/lib/types'
 
@@ -75,12 +78,18 @@ export function CoverageFieldPage() {
 
   if (!config) {
     return (
-      <div className="space-y-4">
-        <Link to="/" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800">
-          <ArrowLeft size={14} /> 返回仪表盘
-        </Link>
+      <PageContainer>
+        <PageHeader
+          title="未知字段"
+          subtitle={`字段 "${field}" 不存在`}
+          actions={
+            <Link to="/" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800">
+              <ArrowLeft size={14} /> 返回仪表盘
+            </Link>
+          }
+        />
         <QueryStateCard tone="error" title="未知字段" body={`字段 "${field}" 不存在`} />
-      </div>
+      </PageContainer>
     )
   }
 
@@ -91,47 +100,29 @@ export function CoverageFieldPage() {
       : 0
 
   return (
-    <div className="space-y-6">
-      {/* back + header */}
-      <div className="space-y-2">
-        <Link
-          to="/"
-          className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-amber-700"
-        >
-          <ArrowLeft size={14} /> 返回仪表盘
-        </Link>
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <p className="section-kicker">数据覆盖率 · 字段详情</p>
-            <h1 className="text-3xl font-semibold text-slate-900">{config.label}</h1>
-            <p className="mt-1 text-sm text-slate-500">
-              单位：{config.unit} · {config.higherIsBetter ? '越高越好' : '越低越好'}
-              {config.target !== null && ` · 目标：${config.format(config.target)}`}
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <div className="rounded-xl border border-stone-200 bg-white px-4 py-2 text-center shadow-sm">
-              <p className="text-xl font-semibold text-slate-900">{withDataCount}</p>
-              <p className="text-xs text-slate-500">有数据公司</p>
-            </div>
-            {config.target !== null && (
-              <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-center shadow-sm">
-                <p className="text-xl font-semibold text-emerald-700">{overTargetCount}</p>
-                <p className="text-xs text-emerald-600">达成或超过目标</p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+    <PageContainer>
+      <PageHeader
+        title={config.label}
+        subtitle={`单位：${config.unit} · ${config.higherIsBetter ? '越高越好' : '越低越好'}${config.target !== null ? ` · 目标：${config.format(config.target)}` : ''}`}
+        actions={
+          <Link to="/" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-amber-700">
+            <ArrowLeft size={14} /> 返回仪表盘
+          </Link>
+        }
+        kpis={[
+          { label: '有数据公司', value: withDataCount },
+          ...(config.target !== null
+            ? [{ label: '达成或超过目标', value: overTargetCount }]
+            : []),
+        ]}
+      />
 
-      {/* table */}
       {isLoading ? (
         <QueryStateCard tone="loading" title="加载中…" body="正在读取公司数据" />
       ) : error ? (
         <QueryStateCard tone="error" title="加载失败" body="无法读取公司列表" />
       ) : (
-        <div className="editorial-panel overflow-hidden">
-          {/* desktop table */}
+        <Panel className="overflow-hidden">
           <div className="hidden overflow-x-auto md:block">
             <table className="min-w-[640px] w-full text-sm">
               <thead className="border-b editorial-table-header">
@@ -198,7 +189,6 @@ export function CoverageFieldPage() {
             </table>
           </div>
 
-          {/* mobile cards */}
           <div className="space-y-3 p-4 md:hidden">
             {rows.map((row, idx) => (
               <div
@@ -254,8 +244,8 @@ export function CoverageFieldPage() {
               </div>
             ))}
           </div>
-        </div>
+        </Panel>
       )}
-    </div>
+    </PageContainer>
   )
 }
