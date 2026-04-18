@@ -427,7 +427,14 @@ def get_pending_disclosures(
     return [_pending_to_item(row) for row in rows]
 
 
-@router.post("/{pending_id}/approve", response_model=DisclosureReviewResponse)
+@router.post(
+    "/{pending_id}/approve",
+    response_model=DisclosureReviewResponse,
+    responses={
+        404: {"description": "Pending disclosure not found"},
+        409: {"description": "Pending disclosure is in a conflicting final status"},
+    },
+)
 def approve_pending_disclosure(
     pending_id: int,
     payload: DisclosureReviewRequest,
@@ -487,7 +494,14 @@ def approve_pending_disclosure(
     )
 
 
-@router.post("/{pending_id}/reject", response_model=DisclosureReviewResponse)
+@router.post(
+    "/{pending_id}/reject",
+    response_model=DisclosureReviewResponse,
+    responses={
+        404: {"description": "Pending disclosure not found"},
+        409: {"description": "Pending disclosure is in a conflicting final status"},
+    },
+)
 def reject_pending_disclosure(
     pending_id: int,
     payload: DisclosureReviewRequest,
