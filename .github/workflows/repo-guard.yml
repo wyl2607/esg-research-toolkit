@@ -1,4 +1,4 @@
-name: Repo Guard
+name: security-guard
 
 on:
   pull_request:
@@ -8,7 +8,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  guard:
+  leak_guard:
+    name: leak-guard
     runs-on: ubuntu-latest
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
