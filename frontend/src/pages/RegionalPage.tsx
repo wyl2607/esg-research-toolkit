@@ -11,14 +11,8 @@ import {
 } from 'recharts'
 import { TrendingUp, CheckCircle } from 'lucide-react'
 
-import { listCompanies, getRegionalComparison } from '@/lib/api'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { listCompaniesWithYearCoverage, getRegionalComparison } from '@/lib/api'
+import { CompanyYearPicker, type CompanyYearSelection } from '@/components/CompanyYearPicker'
 import { QueryStateCard } from '@/components/QueryStateCard'
 import { localizeErrorMessage, isBackendOffline } from '@/lib/error-utils'
 import { BackendOfflineBanner } from '@/components/BackendOfflineBanner'
@@ -30,16 +24,20 @@ import { FilterBar } from '@/components/FilterBar'
 
 export function RegionalPage() {
   const { t } = useTranslation()
-  const [selected, setSelected] = useState('')
+  const [selection, setSelection] = useState<CompanyYearSelection>({
+    company: null,
+    year: null,
+  })
 
   const {
     data: companies = [],
     isLoading: companiesLoading,
     error: companiesError,
     refetch: refetchCompanies,
-  } = useQuery({ queryKey: ['companies'], queryFn: listCompanies })
-
-  const [companyName, companyYear] = selected ? selected.split('|') : [null, null]
+  } = useQuery({
+    queryKey: ['companies-v2'],
+    queryFn: listCompaniesWithYearCoverage,
+  })
 
   const {
     data: report,
@@ -47,9 +45,9 @@ export function RegionalPage() {
     error: reportError,
     refetch: refetchReport,
   } = useQuery({
-    queryKey: ['regional', companyName, companyYear],
-    queryFn: () => getRegionalComparison(companyName!, Number(companyYear)),
-    enabled: !!companyName && !!companyYear,
+    queryKey: ['regional', selection.company, selection.year],
+    queryFn: () => getRegionalComparison(selection.company!, selection.year!),
+    enabled: !!selection.company && !!selection.year,
   })
 
   const backendOffline = isBackendOffline(companiesError) || isBackendOffline(reportError)
@@ -104,22 +102,16 @@ export function RegionalPage() {
       ) : null}
 
       <FilterBar>
-        <FilterBar.Field label={t('common.selectCompany')} htmlFor="regional-company-select">
-          <Select value={selected} onValueChange={setSelected}>
-            <SelectTrigger id="regional-company-select" className="w-full">
-              <SelectValue placeholder={t('common.selectCompany')} />
-            </SelectTrigger>
-            <SelectContent>
-              {companies.map((c) => (
-                <SelectItem
-                  key={`${c.company_name}|${c.report_year}`}
-                  value={`${c.company_name}|${c.report_year}`}
-                >
-                  {c.company_name} ({c.report_year})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <FilterBar.Field
+          label={`${t('common.company')} & ${t('common.year')}`}
+          htmlFor="regional-company-year-picker-company"
+        >
+          <CompanyYearPicker
+            idPrefix="regional-company-year-picker"
+            companies={companies}
+            value={selection}
+            onChange={setSelection}
+          />
         </FilterBar.Field>
       </FilterBar>
 
@@ -138,6 +130,15 @@ export function RegionalPage() {
           title={t('common.loading')}
           body={t('regional.subtitle')}
           className="max-w-2xl"
+        />
+      ) : null}
+
+      {!selection.year && companies.length > 0 ? (
+        <QueryStateCard
+          tone="empty"
+          title={t('common.selectCompany')}
+          body={t('regional.selectPrompt')}
+          className="max-w-2xl py-8"
         />
       ) : null}
 
@@ -282,14 +283,6 @@ export function RegionalPage() {
         </div>
       )}
 
-      {!selected && !companiesLoading && companies.length > 0 ? (
-        <QueryStateCard
-          tone="empty"
-          title={t('common.selectCompany')}
-          body={t('regional.selectPrompt')}
-          className="max-w-2xl"
-        />
-      ) : null}
     </PageContainer>
   )
 }

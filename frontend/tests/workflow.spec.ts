@@ -131,4 +131,38 @@ test.describe('seeded analyst workflow', () => {
       await deleteSeededCompany(request, seeded)
     }
   })
+
+  test('frameworks picker routes not-imported years to upload deep-link', async ({
+    page,
+    request,
+  }, testInfo) => {
+    const seeded = await seedManualCompany(request, testInfo)
+    const missingYear = seeded.reportYear - 1
+    const issues = trackBrowserIssues(page)
+
+    try {
+      await page.goto('/frameworks', { waitUntil: 'networkidle' })
+      await expect(page.getByRole('main')).toBeVisible()
+
+      const companySelect = page.getByRole('combobox').first()
+      await companySelect.click()
+      await page.getByRole('option', { name: seeded.companyName }).click()
+
+      const yearSelect = page.getByRole('combobox').nth(1)
+      await yearSelect.click()
+      await page.getByRole('option', { name: new RegExp(`^${missingYear}\\b`) }).click()
+
+      await page.waitForURL((url) => url.pathname === '/upload')
+      const current = new URL(page.url())
+      expect(current.searchParams.get('company')).toBe(seeded.companyName)
+      expect(current.searchParams.get('year')).toBe(String(missingYear))
+      await expect(page.locator('main')).toContainText(seeded.companyName)
+      await expect(page.locator('main')).toContainText(String(missingYear))
+      await page.waitForLoadState('networkidle')
+
+      await expectNoTrackedBrowserIssues(testInfo, 'frameworks-missing-year-upload-handoff', issues)
+    } finally {
+      await deleteSeededCompany(request, seeded)
+    }
+  })
 })
