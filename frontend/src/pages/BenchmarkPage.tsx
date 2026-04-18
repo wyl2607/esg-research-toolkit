@@ -2,6 +2,11 @@ import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 
+import { FilterBar } from '@/components/FilterBar'
+import { NoticeBanner } from '@/components/NoticeBanner'
+import { PageContainer } from '@/components/layout/PageContainer'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { Panel } from '@/components/layout/Panel'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   getCompaniesByIndustry,
@@ -87,68 +92,60 @@ export function BenchmarkPage() {
   const lowSampleSize = minSampleSize != null && Number.isFinite(minSampleSize) && minSampleSize < 5
 
   return (
-    <div className="space-y-6">
-      <header className="space-y-1">
-        <h1 className="text-3xl font-semibold text-stone-900 md:text-4xl dark:text-slate-100">
-          {t('benchmark.title')}
-        </h1>
-        <p className="max-w-3xl text-sm leading-6 text-stone-600 dark:text-slate-300">
-          {t('benchmark.subtitle')}
-        </p>
-      </header>
+    <PageContainer>
+      <PageHeader
+        title={t('benchmark.title')}
+        subtitle={t('benchmark.subtitle')}
+      />
 
-      <div className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm leading-6 text-stone-700 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-300">
+      <NoticeBanner tone="info">
         {t('benchmark.disclaimer')}
-      </div>
+      </NoticeBanner>
 
-      <section className="surface-card space-y-4 p-5">
-        <div className="grid gap-4 md:grid-cols-12 md:items-end">
-          <div className="space-y-2 md:col-span-6">
-            <label className="text-sm font-medium text-stone-700 dark:text-slate-300">
-              {t('benchmark.industryLabel')}
-            </label>
-            <select
-              className="h-12 w-full rounded-xl border border-stone-300 bg-white px-3 text-sm text-stone-800 shadow-sm transition hover:border-stone-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-              value={industryCode}
-              onChange={(event) => {
-                setIndustryCode(event.target.value)
-                setSelectedYear(null)
-              }}
-            >
-              {NACE_OPTIONS.map((nace) => (
-                <option key={nace.code} value={nace.code}>
-                  {nace.code} —{' '}
-                  {locale === 'de' ? nace.sectorDe : nace.sectorEn}
+      <FilterBar>
+        <FilterBar.Field label={t('benchmark.industryLabel')} htmlFor="benchmark-industry">
+          <select
+            id="benchmark-industry"
+            className="h-12 w-full rounded-xl border border-stone-300 bg-white px-3 text-sm text-stone-800 shadow-sm transition hover:border-stone-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+            value={industryCode}
+            onChange={(event) => {
+              setIndustryCode(event.target.value)
+              setSelectedYear(null)
+            }}
+          >
+            {NACE_OPTIONS.map((nace) => (
+              <option key={nace.code} value={nace.code}>
+                {nace.code} —{' '}
+                {locale === 'de' ? nace.sectorDe : nace.sectorEn}
+              </option>
+            ))}
+          </select>
+        </FilterBar.Field>
+
+        <FilterBar.Field label={t('benchmark.yearLabel')} htmlFor="benchmark-year">
+          <select
+            id="benchmark-year"
+            className="h-12 w-full rounded-xl border border-stone-300 bg-white px-3 text-sm text-stone-800 shadow-sm transition hover:border-stone-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+            value={effectiveYear ?? ''}
+            onChange={(event) => setSelectedYear(Number(event.target.value))}
+            disabled={availableYears.length === 0}
+          >
+            {availableYears.length === 0 ? (
+              <option value="">{t('benchmark.yearEmpty')}</option>
+            ) : (
+              availableYears.map((year) => (
+                <option key={year} value={year}>
+                  {year}
                 </option>
-              ))}
-            </select>
-          </div>
+              ))
+            )}
+          </select>
+        </FilterBar.Field>
 
-          <div className="space-y-2 md:col-span-3">
-            <label className="text-sm font-medium text-stone-700 dark:text-slate-300">
-              {t('benchmark.yearLabel')}
-            </label>
-            <select
-              className="h-12 w-full rounded-xl border border-stone-300 bg-white px-3 text-sm text-stone-800 shadow-sm transition hover:border-stone-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-              value={effectiveYear ?? ''}
-              onChange={(event) => setSelectedYear(Number(event.target.value))}
-              disabled={availableYears.length === 0}
-            >
-              {availableYears.length === 0 ? (
-                <option value="">{t('benchmark.yearEmpty')}</option>
-              ) : (
-                availableYears.map((year) => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ))
-              )}
-            </select>
-          </div>
-
+        <FilterBar.Actions>
           <button
             type="button"
-            className="h-12 rounded-xl bg-amber-600 px-5 text-sm font-medium text-white shadow-sm transition hover:bg-amber-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:text-stone-600 md:col-span-3 dark:focus-visible:ring-offset-slate-900"
+            className="h-12 rounded-xl bg-amber-600 px-5 text-sm font-medium text-white shadow-sm transition hover:bg-amber-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:text-stone-600 dark:focus-visible:ring-offset-slate-900"
             onClick={() => recomputeMutation.mutate()}
             disabled={recomputeMutation.isPending}
           >
@@ -156,38 +153,34 @@ export function BenchmarkPage() {
               ? t('benchmark.refreshingButton')
               : t('benchmark.refreshButton')}
           </button>
-        </div>
+        </FilterBar.Actions>
+      </FilterBar>
 
-        {recomputeMutation.isSuccess ? (
-          <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-900 dark:border-emerald-700/50 dark:bg-emerald-900/20 dark:text-emerald-200">
-            {t('benchmark.refreshSuccess', {
-              industries: recomputeMutation.data.industries,
-              rows: recomputeMutation.data.metric_rows,
-            })}
-          </p>
-        ) : null}
+      {recomputeMutation.isSuccess ? (
+        <NoticeBanner tone="success">
+          {t('benchmark.refreshSuccess', {
+            industries: recomputeMutation.data.industries,
+            rows: recomputeMutation.data.metric_rows,
+          })}
+        </NoticeBanner>
+      ) : null}
 
-        {recomputeMutation.isError ? (
-          <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-900 dark:border-red-800/60 dark:bg-red-900/20 dark:text-red-200">
-            {localizeErrorMessage(t, recomputeMutation.error)}
-          </p>
-        ) : null}
-      </section>
+      {recomputeMutation.isError ? (
+        <NoticeBanner tone="warning">
+          {localizeErrorMessage(t, recomputeMutation.error)}
+        </NoticeBanner>
+      ) : null}
 
-      <section className="surface-card space-y-4 p-5">
-        <div className="space-y-1">
-          <h2 className="text-xl font-semibold text-stone-900 dark:text-slate-100">
-            {t('benchmark.percentilesHeading', { industry: industryLabel })}
-          </h2>
-          {latestComputedAt ? (
-            <p className="text-xs text-stone-500 dark:text-slate-400">
-              {t('benchmark.lastComputedAt', {
+      <Panel
+        title={t('benchmark.percentilesHeading', { industry: industryLabel })}
+        description={
+          latestComputedAt
+            ? t('benchmark.lastComputedAt', {
                 time: latestComputedAt.toLocaleString(locale),
-              })}
-            </p>
-          ) : null}
-        </div>
-
+              })
+            : undefined
+        }
+      >
         {visibleMetrics.length > 0 ? (
           <div className="flex flex-wrap gap-2 text-sm">
             <span className="inline-flex items-center rounded-full bg-stone-100 px-3 py-1 text-stone-700 dark:bg-slate-800 dark:text-slate-200">
@@ -207,12 +200,9 @@ export function BenchmarkPage() {
         ) : null}
 
         {lowSampleSize ? (
-          <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-700/60 dark:bg-amber-950/30 dark:text-amber-100">
-            <p className="font-semibold">{t('benchmark.lowSampleWarningTitle')}</p>
-            <p className="mt-1 leading-6">
-              {t('benchmark.lowSampleWarningBody', { count: minSampleSize ?? 0 })}
-            </p>
-          </div>
+          <NoticeBanner tone="warning" title={t('benchmark.lowSampleWarningTitle')}>
+            {t('benchmark.lowSampleWarningBody', { count: minSampleSize ?? 0 })}
+          </NoticeBanner>
         ) : null}
 
         {benchmarksQuery.isLoading ? (
@@ -234,7 +224,7 @@ export function BenchmarkPage() {
         ) : null}
 
         {visibleMetrics.length > 0 ? (
-          <div className="overflow-x-auto -mx-5 px-5">
+          <div className="-mx-6 overflow-x-auto px-6">
             <table className="min-w-[560px] border-collapse text-sm md:min-w-full">
               <thead>
                 <tr className="border-b border-stone-200 text-left text-[11px] uppercase tracking-wide text-stone-500 dark:border-slate-700 dark:text-slate-400">
@@ -272,15 +262,13 @@ export function BenchmarkPage() {
             </table>
           </div>
         ) : null}
-      </section>
+      </Panel>
 
-      <section className="surface-card space-y-4 p-5">
-        <h2 className="text-xl font-semibold text-stone-900 dark:text-slate-100">
-          {t('benchmark.peersHeading', {
-            count: companiesQuery.data?.company_count ?? 0,
-          })}
-        </h2>
-
+      <Panel
+        title={t('benchmark.peersHeading', {
+          count: companiesQuery.data?.company_count ?? 0,
+        })}
+      >
         {companiesQuery.isLoading ? (
           <div className="space-y-2">
             <Skeleton count={4} height="h-12" />
@@ -317,8 +305,8 @@ export function BenchmarkPage() {
             ))}
           </ul>
         ) : null}
-      </section>
-    </div>
+      </Panel>
+    </PageContainer>
   )
 }
 
