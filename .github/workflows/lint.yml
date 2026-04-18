@@ -20,4 +20,14 @@ jobs:
         run: pip install ruff
 
       - name: Run ruff
-        run: ruff check . --ignore E501
+        run: |
+          ruff check \
+            core \
+            report_parser \
+            taxonomy_scorer \
+            esg_frameworks \
+            techno_economics \
+            benchmark \
+            tests \
+            main.py \
+            --ignore E501

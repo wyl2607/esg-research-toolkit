@@ -7,7 +7,6 @@ from datetime import datetime, timezone
 from typing import Literal
 
 from core.config import settings
-from core.database import Base
 
 ModelPurpose = Literal["extraction", "validation", "audit"]
 

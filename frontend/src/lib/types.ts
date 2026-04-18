@@ -7,6 +7,92 @@
  */
 
 export interface paths {
+    "/report/companies/by-industry/{industry_code}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Companies By Industry */
+        get: operations["list_companies_by_industry_report_companies_by_industry__industry_code__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/report/companies/{company_name}/{report_year}/request-deletion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Request Source Deletion */
+        post: operations["request_source_deletion_report_companies__company_name___report_year__request_deletion_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/report/companies/{company_name}/{report_year}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Company Report */
+        get: operations["get_company_report_report_companies__company_name___report_year__get"];
+        put?: never;
+        post?: never;
+        /** Delete Company Report */
+        delete: operations["delete_company_report_report_companies__company_name___report_year__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/report/companies/export/csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export Companies Csv */
+        get: operations["export_companies_csv_report_companies_export_csv_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/report/companies/export/xlsx": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export Companies Xlsx */
+        get: operations["export_companies_xlsx_report_companies_export_xlsx_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/report/upload": {
         parameters: {
             query?: never;
@@ -104,48 +190,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/report/companies/by-industry/{industry_code}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List Companies By Industry
-         * @description Return the latest report per company for a given NACE industry code,
-         *     plus the numeric metric values that feed benchmark aggregation.
-         */
-        get: operations["list_companies_by_industry_report_companies_by_industry__industry_code__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/report/companies/{company_name}/{report_year}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Company Report */
-        get: operations["get_company_report_report_companies__company_name___report_year__get"];
-        put?: never;
-        post?: never;
-        /**
-         * Delete Company Report
-         * @description 删除公司报告。hard=true 时彻底删除，否则仅软删除（标记 deletion_requested）。
-         */
-        delete: operations["delete_company_report_report_companies__company_name___report_year__delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/report/{company_report_id}/audit-trail": {
         parameters: {
             query?: never;
@@ -231,54 +275,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/report/companies/{company_name}/{report_year}/request-deletion": {
+    "/report/companies/v2": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get?: never;
-        put?: never;
         /**
-         * Request Source Deletion
-         * @description 来源删除机制（Requirement 4）：
-         *     接收权利人请求，立即删除本地 PDF 副本，标记记录为 deletion_requested。
-         *     提取的指标数据保留 30 天（可配置）后由管理员彻底删除。
+         * List Companies With Year Coverage
+         * @description Return one row per canonical company with imported_years + suggested_years.
+         *
+         *     Used by the CompanyYearPicker so the UI can show imported vs
+         *     not-imported years side by side (see
+         *     docs/design-docs/company_year_dual_picker.md). Kept as a separate
+         *     endpoint from /report/companies so the existing single-year combo
+         *     dropdown keeps working during rollout.
          */
-        post: operations["request_source_deletion_report_companies__company_name___report_year__request_deletion_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/report/companies/export/csv": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Export Companies Csv */
-        get: operations["export_companies_csv_report_companies_export_csv_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/report/companies/export/xlsx": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Export Companies Xlsx */
-        get: operations["export_companies_xlsx_report_companies_export_xlsx_get"];
+        get: operations["list_companies_with_year_coverage_report_companies_v2_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -690,6 +704,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/health/models": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Health Models */
+        get: operations["health_models_health_models_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -761,11 +792,37 @@ export interface components {
             industry_code?: string | null;
             /** Industry Sector */
             industry_sector?: string | null;
+            /** Override Company Name */
+            override_company_name?: string | null;
         };
         /** Body_upload_reports_batch_report_upload_batch_post */
         Body_upload_reports_batch_report_upload_batch_post: {
             /** Files */
             files: string[];
+        };
+        /** CompanyByIndustryItem */
+        CompanyByIndustryItem: {
+            /** Company Name */
+            company_name: string;
+            /** Report Year */
+            report_year: number;
+            /** Industry Code */
+            industry_code?: string | null;
+            /** Industry Sector */
+            industry_sector?: string | null;
+            /** Metrics */
+            metrics?: {
+                [key: string]: number | null;
+            };
+        };
+        /** CompanyByIndustryResponse */
+        CompanyByIndustryResponse: {
+            /** Industry Code */
+            industry_code: string;
+            /** Company Count */
+            company_count: number;
+            /** Companies */
+            companies?: components["schemas"]["CompanyByIndustryItem"][];
         };
         /** CompanyESGData */
         CompanyESGData: {
@@ -813,6 +870,23 @@ export interface components {
             primary_activities?: string[];
             /** Evidence Summary */
             evidence_summary?: {
+                [key: string]: unknown;
+            }[];
+        };
+        /** CompanyHistoryResponse */
+        CompanyHistoryResponse: {
+            /** Company Name */
+            company_name: string;
+            /** Periods */
+            periods?: {
+                [key: string]: unknown;
+            }[];
+            /** Trend */
+            trend?: {
+                [key: string]: unknown;
+            }[];
+            /** Framework Metadata */
+            framework_metadata?: {
                 [key: string]: unknown;
             }[];
         };
@@ -979,6 +1053,107 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        /** CompanyReportListItem */
+        CompanyReportListItem: {
+            /** Company Name */
+            company_name: string;
+            /** Report Year */
+            report_year: number;
+            /** Pdf Filename */
+            pdf_filename?: string | null;
+            /** Source Url */
+            source_url?: string | null;
+            /** File Hash */
+            file_hash?: string | null;
+            /** Downloaded At */
+            downloaded_at?: string | null;
+            /** Reporting Period Label */
+            reporting_period_label?: string | null;
+            /** Reporting Period Type */
+            reporting_period_type?: string | null;
+            /** Source Document Type */
+            source_document_type?: string | null;
+            /** Industry Code */
+            industry_code?: string | null;
+            /** Industry Sector */
+            industry_sector?: string | null;
+            /** Period */
+            period: {
+                [key: string]: unknown;
+            };
+            /** Created At */
+            created_at?: string | null;
+            /** Scope1 Co2E Tonnes */
+            scope1_co2e_tonnes?: number | null;
+            /** Scope2 Co2E Tonnes */
+            scope2_co2e_tonnes?: number | null;
+            /** Scope3 Co2E Tonnes */
+            scope3_co2e_tonnes?: number | null;
+            /** Energy Consumption Mwh */
+            energy_consumption_mwh?: number | null;
+            /** Renewable Energy Pct */
+            renewable_energy_pct?: number | null;
+            /** Water Usage M3 */
+            water_usage_m3?: number | null;
+            /** Waste Recycled Pct */
+            waste_recycled_pct?: number | null;
+            /** Total Revenue Eur */
+            total_revenue_eur?: number | null;
+            /** Taxonomy Aligned Revenue Pct */
+            taxonomy_aligned_revenue_pct?: number | null;
+            /** Total Capex Eur */
+            total_capex_eur?: number | null;
+            /** Taxonomy Aligned Capex Pct */
+            taxonomy_aligned_capex_pct?: number | null;
+            /** Total Employees */
+            total_employees?: number | null;
+            /** Female Pct */
+            female_pct?: number | null;
+            /** Primary Activities */
+            primary_activities?: string[];
+            /** Evidence Summary */
+            evidence_summary?: {
+                [key: string]: unknown;
+            }[];
+        };
+        /** DashboardStatsResponse */
+        DashboardStatsResponse: {
+            /** Total Companies */
+            total_companies: number;
+            /** Avg Taxonomy Aligned */
+            avg_taxonomy_aligned: number;
+            /** Avg Renewable Pct */
+            avg_renewable_pct: number;
+            /** Yearly Trend */
+            yearly_trend?: {
+                [key: string]: unknown;
+            }[];
+            /** Top Emitters */
+            top_emitters?: {
+                [key: string]: unknown;
+            }[];
+            /** Bottom Emitters */
+            bottom_emitters?: {
+                [key: string]: unknown;
+            }[];
+            /** Coverage Rates */
+            coverage_rates?: {
+                [key: string]: number;
+            };
+        };
+        /** DeletionStatusResponse */
+        DeletionStatusResponse: {
+            /** Status */
+            status: string;
+            /** Company Name */
+            company_name: string;
+            /** Report Year */
+            report_year: number;
+            /** Pdf Deleted */
+            pdf_deleted?: boolean | null;
+            /** Message */
+            message?: string | null;
+        };
         /**
          * DimensionScore
          * @description 单维度得分（E/S/G 或子目标）
@@ -1023,6 +1198,13 @@ export interface components {
              * @default 0.5
              */
             confidence: number;
+        };
+        /** FrameworkCacheClearResponse */
+        FrameworkCacheClearResponse: {
+            /** Status */
+            status: string;
+            /** Entries Removed */
+            entries_removed: number;
         };
         /** FrameworkMetricMapping */
         FrameworkMetricMapping: {
@@ -1074,6 +1256,11 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** HealthResponse */
+        HealthResponse: {
+            /** Status */
+            status: string;
         };
         /** LCOEInput */
         LCOEInput: {
@@ -1303,6 +1490,32 @@ export interface components {
             /** Downloaded At */
             downloaded_at?: string | null;
         };
+        /** ModelHealthEntry */
+        ModelHealthEntry: {
+            /** Model */
+            model: string;
+            /** Max Tokens */
+            max_tokens: number;
+            /** Fallback */
+            fallback?: string[];
+            /** Available */
+            available?: boolean | null;
+            /** Check Source */
+            check_source?: string | null;
+            /** Last Checked At */
+            last_checked_at?: string | null;
+            /** Detail */
+            detail?: string | null;
+        };
+        /** ModelsHealthResponse */
+        ModelsHealthResponse: {
+            /** Status */
+            status: string;
+            /** Models */
+            models?: {
+                [key: string]: components["schemas"]["ModelHealthEntry"];
+            };
+        };
         /** MultiFrameworkReport */
         MultiFrameworkReport: {
             /** Company Name */
@@ -1361,6 +1574,11 @@ export interface components {
             /** Recommendations */
             recommendations: string[];
         };
+        /** TaxonomyTextReportResponse */
+        TaxonomyTextReportResponse: {
+            /** Report */
+            report: string;
+        };
         /** ValidationError */
         ValidationError: {
             /** Location */
@@ -1383,6 +1601,197 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    list_companies_by_industry_report_companies_by_industry__industry_code__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                industry_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyByIndustryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    request_source_deletion_report_companies__company_name___report_year__request_deletion_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                company_name: string;
+                report_year: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeletionStatusResponse"];
+                };
+            };
+            /** @description Report not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_company_report_report_companies__company_name___report_year__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                company_name: string;
+                report_year: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyESGData"];
+                };
+            };
+            /** @description Report not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_company_report_report_companies__company_name___report_year__delete: {
+        parameters: {
+            query?: {
+                /** @description 彻底删除所有数据（管理员操作） */
+                hard?: boolean;
+            };
+            header?: never;
+            path: {
+                company_name: string;
+                report_year: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeletionStatusResponse"];
+                };
+            };
+            /** @description Report not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_companies_csv_report_companies_export_csv_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    export_companies_xlsx_report_companies_export_xlsx_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
     upload_report_report_upload_post: {
         parameters: {
             query?: never;
@@ -1616,122 +2025,6 @@ export interface operations {
             };
         };
     };
-    list_companies_by_industry_report_companies_by_industry__industry_code__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                industry_code: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_company_report_report_companies__company_name___report_year__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                company_name: string;
-                report_year: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CompanyESGData"];
-                };
-            };
-            /** @description Report not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    delete_company_report_report_companies__company_name___report_year__delete: {
-        parameters: {
-            query?: {
-                /** @description 彻底删除所有数据（管理员操作） */
-                hard?: boolean;
-            };
-            header?: never;
-            path: {
-                company_name: string;
-                report_year: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: string | number;
-                    };
-                };
-            };
-            /** @description Report not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     get_audit_trail_report__company_report_id__audit_trail_get: {
         parameters: {
             query?: never;
@@ -1787,9 +2080,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["CompanyHistoryResponse"];
                 };
             };
             /** @description No reports found for the company. */
@@ -1864,9 +2155,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["DashboardStatsResponse"];
                 };
             };
         };
@@ -1876,6 +2165,37 @@ export interface operations {
             query?: {
                 skip?: number;
                 limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyReportListItem"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_companies_with_year_coverage_report_companies_v2_get: {
+        parameters: {
+            query?: {
+                suggested_span?: number;
             };
             header?: never;
             path?: never;
@@ -1901,87 +2221,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    request_source_deletion_report_companies__company_name___report_year__request_deletion_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                company_name: string;
-                report_year: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: string | number | boolean;
-                    };
-                };
-            };
-            /** @description Report not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    export_companies_csv_report_companies_export_csv_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-        };
-    };
-    export_companies_xlsx_report_companies_export_xlsx_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
                 };
             };
         };
@@ -2145,9 +2384,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: string;
-                    };
+                    "application/json": components["schemas"]["TaxonomyTextReportResponse"];
                 };
             };
             /** @description Validation Error */
@@ -2562,7 +2799,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        [key: string]: unknown;
+                        [key: string]: string;
                     }[];
                 };
             };
@@ -2583,9 +2820,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: number | string;
-                    };
+                    "application/json": components["schemas"]["FrameworkCacheClearResponse"];
                 };
             };
         };
@@ -2682,9 +2917,27 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: string;
-                    };
+                    "application/json": components["schemas"]["HealthResponse"];
+                };
+            };
+        };
+    };
+    health_models_health_models_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ModelsHealthResponse"];
                 };
             };
         };

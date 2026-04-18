@@ -5,7 +5,7 @@ Human review is required before any writeback to source-of-truth tables.
 """
 
 from datetime import datetime, timedelta
-from sqlalchemy import Column, String, Integer, Float, DateTime, Text, Index, func
+from sqlalchemy import Column, String, Integer, Float, DateTime, Text, Index
 from sqlalchemy.orm import Session
 
 from core.database import Base
@@ -110,7 +110,7 @@ def get_pending_reviews(db: Session, limit: int = 50) -> list["AuditQAResult"]:
     """Get audits awaiting human review."""
     return (
         db.query(AuditQAResult)
-        .filter(AuditQAResult.human_review == None)
+        .filter(AuditQAResult.human_review.is_(None))
         .order_by(AuditQAResult.audit_timestamp.desc())
         .limit(limit)
         .all()
