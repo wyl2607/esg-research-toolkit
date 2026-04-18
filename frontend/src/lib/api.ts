@@ -125,6 +125,7 @@ export interface DisclosureFetchRequest {
   report_year: number
   source_url?: string
   source_type?: 'pdf' | 'html' | 'filing'
+  source_hint?: 'company_site' | 'sec_edgar' | 'hkex' | 'csrc'
 }
 
 export interface PendingDisclosureItem {

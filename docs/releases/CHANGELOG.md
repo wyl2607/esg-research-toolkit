@@ -16,6 +16,7 @@
 - 新增 `pending_disclosures` 存储模型与 upsert/list 辅助函数，写入 `report_parser/storage.py` 并接入 SQLite schema 自愈。
 - Upload 页面新增 Auto Fetch 面板：支持 company/year 预填触发抓取、查看 pending 队列。
 - Upload Auto Fetch 面板补充 `source_type` 选择（`pdf` / `html` / `filing`）及三语文案，避免前端请求被硬编码为 PDF。
+- Upload Auto Fetch 面板新增 `source_hint` 官方来源通道（`company_site` / `sec_edgar` / `hkex` / `csrc`）选择，支持 analyst 按区域监管来源发起补录。
 
 ### Changed
 
@@ -23,11 +24,13 @@
 - `core/schemas.py` 新增 disclosure 请求/响应契约，`main.py` 注册 disclosures router。
 - 前端 i18n（en/zh/de）补齐 auto-fetch 文案与 backendOffline 英文缺失项。
 - `disclosures` 抓取后端改为 source-type aware：默认 `source_url` 与候选 URL 列表按 `source_type` 分支，不再对非 PDF 类型直接短路跳过。
+- `disclosures` 请求契约新增 `source_hint`，默认 URL 与候选来源对 hint 做分支回退，同时保留 `source_url` override 优先级。
 - `tests/test_report_parser.py` 新增参数化回归，锁定 html/filing 默认 URL 生成行为。
+- `tests/test_report_parser.py` 增加 source-hint 回归，锁定 SEC/HKEX/CSRC 默认入口与 override 语义。
 
 ### Verified
 
-- `OPENAI_API_KEY=dummy .venv/bin/pytest -q` → `154 passed`
+- `OPENAI_API_KEY=dummy .venv/bin/pytest -q` → `156 passed`
 - `.venv/bin/ruff check core report_parser taxonomy_scorer esg_frameworks techno_economics benchmark tests main.py --ignore E501` → pass
 - `cd frontend && npm run gen:types && npm run lint && npm run build` → pass
 - `cd frontend && npm run test:playwright -- tests/workflow.spec.ts` → `6 passed`

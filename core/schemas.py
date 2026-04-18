@@ -322,6 +322,7 @@ class DisclosureFetchRequest(BaseModel):
         pattern=r"^https?://.+",
     )
     source_type: Literal["pdf", "html", "filing"] = "pdf"
+    source_hint: Literal["company_site", "sec_edgar", "hkex", "csrc"] = "company_site"
 
 
 class PendingDisclosureItem(BaseModel):

@@ -593,6 +593,93 @@ def test_disclosures_fetch_uses_source_type_aware_default_source_url(
         Base.metadata.drop_all(bind=engine)
 
 
+def test_disclosures_fetch_supports_official_source_hints() -> None:
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    testing_session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    Base.metadata.create_all(bind=engine)
+    db_session = testing_session_local()
+    app = FastAPI()
+    app.include_router(disclosures_router)
+    app.dependency_overrides[get_db] = lambda: db_session
+
+    try:
+        with TestClient(app) as client:
+            sec_response = client.post(
+                "/disclosures/fetch",
+                json={
+                    "company_name": "BASF",
+                    "report_year": 2022,
+                    "source_type": "filing",
+                    "source_hint": "sec_edgar",
+                },
+            )
+            hkex_response = client.post(
+                "/disclosures/fetch",
+                json={
+                    "company_name": "BASF",
+                    "report_year": 2022,
+                    "source_type": "filing",
+                    "source_hint": "hkex",
+                },
+            )
+            csrc_response = client.post(
+                "/disclosures/fetch",
+                json={
+                    "company_name": "BASF",
+                    "report_year": 2022,
+                    "source_type": "filing",
+                    "source_hint": "csrc",
+                },
+            )
+
+        assert sec_response.status_code == 202
+        assert hkex_response.status_code == 202
+        assert csrc_response.status_code == 202
+        assert "sec.gov" in sec_response.json()["pending"]["source_url"]
+        assert "hkexnews.hk" in hkex_response.json()["pending"]["source_url"]
+        assert "cninfo.com.cn" in csrc_response.json()["pending"]["source_url"]
+    finally:
+        db_session.close()
+        Base.metadata.drop_all(bind=engine)
+
+
+def test_disclosures_fetch_source_url_override_wins_over_source_hint() -> None:
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    testing_session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    Base.metadata.create_all(bind=engine)
+    db_session = testing_session_local()
+    app = FastAPI()
+    app.include_router(disclosures_router)
+    app.dependency_overrides[get_db] = lambda: db_session
+
+    custom_url = "https://example.com/custom-source.pdf"
+    try:
+        with TestClient(app) as client:
+            response = client.post(
+                "/disclosures/fetch",
+                json={
+                    "company_name": "BASF",
+                    "report_year": 2022,
+                    "source_url": custom_url,
+                    "source_hint": "sec_edgar",
+                },
+            )
+
+        assert response.status_code == 202
+        assert response.json()["pending"]["source_url"] == custom_url
+    finally:
+        db_session.close()
+        Base.metadata.drop_all(bind=engine)
+
+
 def test_disclosures_fetch_rejects_non_http_source_url() -> None:
     engine = create_engine(
         "sqlite://",

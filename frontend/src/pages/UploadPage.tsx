@@ -43,6 +43,9 @@ export function UploadPage() {
   const [result, setResult] = useState<CompanyESGData | null>(null)
   const [autoFetchSourceUrl, setAutoFetchSourceUrl] = useState('')
   const [autoFetchSourceType, setAutoFetchSourceType] = useState<'pdf' | 'html' | 'filing'>('pdf')
+  const [autoFetchSourceHint, setAutoFetchSourceHint] = useState<
+    'company_site' | 'sec_edgar' | 'hkex' | 'csrc'
+  >('company_site')
   // Init batch_id from localStorage so progress survives page refresh
   const [batchId, setBatchId] = useState<string | null>(
     () => localStorage.getItem(BATCH_STORAGE_KEY)
@@ -105,6 +108,7 @@ export function UploadPage() {
         report_year: prefilledYearNumber!,
         source_url: autoFetchSourceUrl.trim() || undefined,
         source_type: autoFetchSourceType,
+        source_hint: autoFetchSourceHint,
       })
     },
     onSuccess: () => {
@@ -235,6 +239,25 @@ export function UploadPage() {
           }
         >
           <div className="space-y-3">
+            <label className="flex flex-col gap-1 text-sm text-slate-600" htmlFor="auto-fetch-source-hint">
+              <span>{t('upload.autoFetchSourceHintLabel')}</span>
+              <select
+                id="auto-fetch-source-hint"
+                className="h-10 rounded-lg border border-stone-300 bg-white px-3 text-sm text-stone-800 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-100"
+                value={autoFetchSourceHint}
+                onChange={(event) =>
+                  setAutoFetchSourceHint(
+                    event.target.value as 'company_site' | 'sec_edgar' | 'hkex' | 'csrc'
+                  )
+                }
+              >
+                <option value="company_site">{t('upload.autoFetchSourceHintCompanySite')}</option>
+                <option value="sec_edgar">{t('upload.autoFetchSourceHintSec')}</option>
+                <option value="hkex">{t('upload.autoFetchSourceHintHkex')}</option>
+                <option value="csrc">{t('upload.autoFetchSourceHintCsrc')}</option>
+              </select>
+            </label>
+
             <label className="flex flex-col gap-1 text-sm text-slate-600" htmlFor="auto-fetch-source-type">
               <span>{t('upload.autoFetchSourceTypeLabel')}</span>
               <select
