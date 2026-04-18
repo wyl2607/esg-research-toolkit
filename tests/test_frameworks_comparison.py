@@ -308,3 +308,32 @@ def test_taxonomy_report_get_uses_cache(monkeypatch) -> None:
     assert first.status_code == 200
     assert second.status_code == 200
     assert score_calls["count"] == 1
+
+
+def test_taxonomy_report_rejects_invalid_query_bounds() -> None:
+    client = TestClient(app)
+
+    response = client.get(
+        "/taxonomy/report",
+        params={"company_name": "", "report_year": 9223372036854775808},
+    )
+
+    assert response.status_code == 422
+
+
+def test_framework_results_endpoints_reject_out_of_range_identifiers() -> None:
+    client = TestClient(app)
+
+    list_response = client.get(
+        "/frameworks/results",
+        params={"company_name": "", "report_year": 9223372036854775808},
+    )
+    by_id_response = client.get("/frameworks/results/9223372036854775808")
+    regional_response = client.get(
+        "/frameworks/compare/regional",
+        params={"company_name": "", "report_year": 9223372036854775808},
+    )
+
+    assert list_response.status_code == 422
+    assert by_id_response.status_code == 422
+    assert regional_response.status_code == 422

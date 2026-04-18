@@ -16,6 +16,8 @@ from taxonomy_scorer.scorer import score_company
 router = APIRouter(prefix="/taxonomy", tags=["taxonomy_scorer"])
 _report_cache: TTLCache = TTLCache(maxsize=200, ttl=300)
 _cache_lock = threading.Lock()
+MIN_REPORT_YEAR = 1900
+MAX_REPORT_YEAR = 2100
 
 
 def _record_to_company_esg(record) -> CompanyESGData:
@@ -55,8 +57,8 @@ def text_report(data: CompanyESGData) -> TaxonomyTextReportResponse:
 
 @router.get("/report", response_model=dict[str, Any])
 def get_report_by_name(
-    company_name: str = Query(...),
-    report_year: int = Query(...),
+    company_name: str = Query(..., min_length=1, max_length=200),
+    report_year: int = Query(..., ge=MIN_REPORT_YEAR, le=MAX_REPORT_YEAR),
 ) -> dict[str, Any]:
     """Fetch stored company data and return taxonomy report (GET convenience endpoint)."""
     cache_key = hashkey(company_name.strip().lower(), report_year)
@@ -86,8 +88,8 @@ def get_report_by_name(
 
 @router.get("/report/pdf", response_model=None)
 def download_pdf_report(
-    company_name: str = Query(...),
-    report_year: int = Query(...),
+    company_name: str = Query(..., min_length=1, max_length=200),
+    report_year: int = Query(..., ge=MIN_REPORT_YEAR, le=MAX_REPORT_YEAR),
 ) -> Response:
     """Generate and return a PDF EU Taxonomy report for a stored company."""
     from core.database import get_db

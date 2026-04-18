@@ -120,6 +120,22 @@ def test_sensitivity_endpoint_returns_openapi_aligned_fields() -> None:
     assert "lcoe_values" not in payload[0]
 
 
+def test_sensitivity_endpoint_handles_zero_base_lcoe_without_500() -> None:
+    payload = make_lcoe_input(
+        capex_eur_per_kw=0.5,
+        opex_eur_per_kw_year=0.0,
+        capacity_factor=1.0,
+        electricity_price_eur_per_mwh=0.0,
+    ).model_dump()
+
+    with TestClient(app) as client:
+        response = client.post("/techno/sensitivity", json=payload)
+
+    assert response.status_code == 200
+    body = response.json()
+    assert all(change == 0.0 for change in body[0]["lcoe_change_pct"])
+
+
 def test_benchmark_presets_return_full_lcoe_inputs() -> None:
     with TestClient(app) as client:
         response = client.get("/techno/benchmarks")

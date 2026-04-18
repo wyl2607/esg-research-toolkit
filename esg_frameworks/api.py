@@ -6,7 +6,7 @@ from typing import Any
 
 from cachetools import TTLCache
 from cachetools.keys import hashkey
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 
 from core.database import get_db
@@ -33,6 +33,8 @@ _SCORERS = {
 
 _score_cache: TTLCache = TTLCache(maxsize=200, ttl=300)
 _cache_lock = threading.Lock()
+MIN_REPORT_YEAR = 1900
+MAX_REPORT_YEAR = 2100
 
 
 def _load_company(db: Session, company_name: str, report_year: int) -> CompanyESGData:
@@ -63,8 +65,8 @@ def _make_summary(results: list[FrameworkScoreResult]) -> str:
 
 @router.get("/score", response_model=FrameworkScoreResult)
 def score_single_framework(
-    company_name: str = Query(...),
-    report_year: int = Query(...),
+    company_name: str = Query(..., min_length=1, max_length=200),
+    report_year: int = Query(..., ge=MIN_REPORT_YEAR, le=MAX_REPORT_YEAR),
     framework: str = Query(
         ...,
         description="eu_taxonomy | csrc_2023 | csrd | sec_climate | gri_universal | sasb_standards",
@@ -82,8 +84,8 @@ def score_single_framework(
 
 @router.get("/compare", response_model=MultiFrameworkReport)
 def compare_frameworks(
-    company_name: str = Query(...),
-    report_year: int = Query(...),
+    company_name: str = Query(..., min_length=1, max_length=200),
+    report_year: int = Query(..., ge=MIN_REPORT_YEAR, le=MAX_REPORT_YEAR),
     db: Session = Depends(get_db),
 ) -> MultiFrameworkReport:
     """对指定公司同时跑三个框架，返回并排对比报告。"""
@@ -111,8 +113,8 @@ def compare_frameworks(
 
 @router.get("/compare/regional", response_model=dict[str, Any])
 def compare_regional_frameworks(
-    company_name: str = Query(...),
-    report_year: int = Query(...),
+    company_name: str = Query(..., min_length=1, max_length=200),
+    report_year: int = Query(..., ge=MIN_REPORT_YEAR, le=MAX_REPORT_YEAR),
     db: Session = Depends(get_db),
 ) -> dict[str, object]:
     """三地对比分析：返回 RegionalComparisonReport。"""
@@ -140,8 +142,8 @@ def score_from_data(data: CompanyESGData) -> MultiFrameworkReport:
 
 @router.get("/results", response_model=list[dict[str, Any]])
 def get_saved_results(
-    company_name: str = Query(...),
-    report_year: int = Query(...),
+    company_name: str = Query(..., min_length=1, max_length=200),
+    report_year: int = Query(..., ge=MIN_REPORT_YEAR, le=MAX_REPORT_YEAR),
     db: Session = Depends(get_db),
 ) -> list[dict[str, Any]]:
     rows = list_framework_results(db, company_name=company_name, report_year=report_year)
@@ -156,7 +158,7 @@ def get_saved_results(
 
 @router.get("/results/{result_id}", response_model=FrameworkScoreResult)
 def get_saved_result_by_id(
-    result_id: int,
+    result_id: int = Path(..., ge=1, le=2_147_483_647),
     db: Session = Depends(get_db),
 ) -> FrameworkScoreResult:
     row = get_framework_result(db, result_id)

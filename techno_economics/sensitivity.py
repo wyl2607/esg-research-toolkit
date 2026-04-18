@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import math
 
 from core.schemas import LCOEInput, LCOEResult
 from techno_economics.lcoe import calculate_lcoe
@@ -38,15 +39,19 @@ def run_sensitivity(
         for variation in variations:
             modified = inp.model_copy(update={param: base_val * (1 + variation)})
             lcoe_vals.append(calculate_lcoe(modified).lcoe_eur_per_mwh)
+        if math.isclose(base_lcoe, 0.0, abs_tol=1e-12):
+            pct_change = [0.0 for _ in lcoe_vals]
+        else:
+            pct_change = [
+                round((lcoe - base_lcoe) / base_lcoe * 100, 1) for lcoe in lcoe_vals
+            ]
         results.append(
             SensitivityResult(
                 parameter=param,
                 base_value=base_val,
                 variations=variations,
                 lcoe_values=lcoe_vals,
-                lcoe_change_pct=[
-                    round((lcoe - base_lcoe) / base_lcoe * 100, 1) for lcoe in lcoe_vals
-                ],
+                lcoe_change_pct=pct_change,
             )
         )
 

@@ -203,8 +203,10 @@ def test_company_profile_v1_openapi_exposes_typed_contract(client: TestClient) -
     schema = client.get("/openapi.json").json()
 
     assert "/api/v1/companies/{company_name}/profile" in schema["paths"]
-    response_schema = schema["paths"]["/api/v1/companies/{company_name}/profile"]["get"]["responses"]["200"]
+    responses = schema["paths"]["/api/v1/companies/{company_name}/profile"]["get"]["responses"]
+    response_schema = responses["200"]
     assert response_schema["content"]["application/json"]["schema"]["$ref"].endswith("CompanyProfileV1Response")
+    assert "404" in responses
     evidence_schema = schema["components"]["schemas"]["Evidence"]
     assert set(evidence_schema["properties"]) >= {
         "source_doc_id",

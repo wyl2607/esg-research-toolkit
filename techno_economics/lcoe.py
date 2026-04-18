@@ -49,13 +49,19 @@ def calculate_lcoe(inp: LCOEInput) -> LCOEResult:
 
     lcoe_local = lcoe_eur_per_mwh / fx if fx > 0 else lcoe_eur_per_mwh
 
+    payback_value: float | None
+    if np.isfinite(payback_years):
+        payback_value = round(float(payback_years), 2)
+    else:
+        payback_value = None
+
     return LCOEResult(
         technology=inp.technology,
         lcoe_eur_per_mwh=round(float(lcoe_eur_per_mwh), 2),
         lcoe_local_per_mwh=round(float(lcoe_local), 2),
         npv_eur=npv_eur,
         irr=irr,
-        payback_years=payback_years if np.isinf(payback_years) else round(float(payback_years), 2),
+        payback_years=payback_value,
         lifetime_years=inp.lifetime_years,
         electricity_price_eur_per_mwh=round(price_eur, 2),
         currency=inp.currency,

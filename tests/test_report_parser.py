@@ -429,6 +429,35 @@ def test_list_companies_v2_rejects_unbounded_suggested_span(
         Base.metadata.drop_all(bind=engine)
 
 
+def test_get_company_report_rejects_out_of_range_report_year(make_company_data) -> None:
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    testing_session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    Base.metadata.create_all(bind=engine)
+    db_session = testing_session_local()
+    app = FastAPI()
+    app.include_router(report_router)
+    app.dependency_overrides[get_db] = lambda: db_session
+
+    try:
+        save_report(
+            db_session,
+            make_company_data(company_name="Year Bound Corp", report_year=2024),
+            pdf_filename="year-bound.pdf",
+        )
+
+        with TestClient(app) as client:
+            response = client.get("/report/companies/Year%20Bound%20Corp/9223372036854775808")
+
+        assert response.status_code == 422
+    finally:
+        db_session.close()
+        Base.metadata.drop_all(bind=engine)
+
+
 def test_save_manual_report_persists_period_and_manual_evidence(
     db_session: Session,
 ) -> None:

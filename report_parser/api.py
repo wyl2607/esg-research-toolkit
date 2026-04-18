@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, Response, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Path as FastApiPath, Query, Request, Response, UploadFile
 from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session
 
@@ -58,6 +58,8 @@ _MULTIPART_AVAILABLE = any(
 MAX_PDF_BYTES = 50 * 1024 * 1024          # 50 MB hard cap
 MIN_PDF_BYTES = 1024                       # < 1 KB cannot be a real PDF
 PDF_MAGIC_BYTES = b"%PDF-"
+MIN_REPORT_YEAR = 1900
+MAX_REPORT_YEAR = 2100
 
 _PROFILE_METRICS = [
     "scope1_co2e_tonnes",
@@ -899,8 +901,8 @@ def _build_scored_metrics(
 
 @router.get("/companies/{company_name}/{report_year:int}", response_model=CompanyESGData)
 def get_company_report(
-    company_name: str,
-    report_year: int,
+    company_name: str = FastApiPath(..., min_length=1, max_length=200),
+    report_year: int = FastApiPath(..., ge=MIN_REPORT_YEAR, le=MAX_REPORT_YEAR),
     db: Session = Depends(get_db),
 ) -> CompanyESGData:
     record = get_report(db, company_name, report_year)
@@ -1151,7 +1153,11 @@ def get_company_profile(
     return response_model.model_dump(mode="json")
 
 
-@v1_router.get("/companies/{company_name}/profile", response_model=CompanyProfileV1Response)
+@v1_router.get(
+    "/companies/{company_name}/profile",
+    response_model=CompanyProfileV1Response,
+    responses={404: {"description": "No reports found for company."}},
+)
 def get_company_profile_v1(
     company_name: str,
     db: Session = Depends(get_db),
@@ -1162,7 +1168,10 @@ def get_company_profile_v1(
 @router.get(
     "/companies/{company_name}/profile",
     response_model=CompanyProfileV1Response,
-    responses={200: {"headers": {"Deprecation": {"schema": {"type": "string"}}}}},
+    responses={
+        200: {"headers": {"Deprecation": {"schema": {"type": "string"}}}},
+        404: {"description": "No reports found for company."},
+    },
 )
 def get_company_profile_legacy(
     company_name: str,
