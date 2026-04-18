@@ -73,6 +73,8 @@
     "title": "上传 ESG 报告",
     "subtitle": "把年报或可持续发展报告导入系统，并把每份文件沉淀为可复用的公司案例，而不是一次性提取结果。",
     "supportedHint": "建议先以年报作为主基线，再把可持续发展报告和公告作为补充证据加入。",
+    "gapBannerTitle": "正在补齐披露缺口",
+    "gapBannerBody": "请为 {{company}}（{{year}}）上传 PDF，提取结果会挂到该公司/年份，趋势图与框架视图会立即更新。",
     "dropzone": "将 PDF 文件拖拽至此…",
     "dropzoneHint": "或点击选择文件",
     "singleUpload": "单文件上传",

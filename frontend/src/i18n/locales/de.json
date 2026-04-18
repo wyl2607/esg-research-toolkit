@@ -73,6 +73,8 @@
     "title": "ESG-Bericht hochladen",
     "subtitle": "Jahres- oder Nachhaltigkeitsberichte importieren und jede Datei als wiederverwendbaren Firmenfall statt als einmalige Extraktion speichern.",
     "supportedHint": "Am besten zuerst den Jahresbericht als Basis nutzen und Nachhaltigkeitsberichte oder Meldungen später als Zusatzbelege ergänzen.",
+    "gapBannerTitle": "Offenlegungslücke schließen",
+    "gapBannerBody": "PDF für {{company}} ({{year}}) hochladen — die Extraktion wird diesem Unternehmen/Jahr zugeordnet, sodass Trendansicht und Rahmenwerke sie sofort übernehmen.",
     "dropzone": "PDF-Dateien hier ablegen…",
     "dropzoneHint": "oder klicken Sie zur Dateiauswahl",
     "singleUpload": "Einzelupload",

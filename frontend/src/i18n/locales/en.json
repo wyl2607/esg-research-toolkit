@@ -71,6 +71,8 @@
     "title": "Upload ESG Report",
     "subtitle": "Bring in annual reports or sustainability reports, keep the parsing workflow visible, and turn each file into a reusable company case rather than a one-off extraction.",
     "supportedHint": "Best used for annual reports as the baseline, with sustainability reports and filings added later as supporting evidence.",
+    "gapBannerTitle": "Filling a disclosure gap",
+    "gapBannerBody": "Upload a PDF for {{company}} ({{year}}) — the extraction will be stored against this company/year so the trend and framework views can pick it up.",
     "dropzone": "Drop the PDF file(s) here…",
     "dropzoneHint": "or click to select files",
     "singleUpload": "Single Upload",

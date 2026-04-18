@@ -13,7 +13,7 @@ import { NoticeBanner } from '@/components/NoticeBanner'
 import { FilterBar } from '@/components/FilterBar'
 import { Upload, FileText, CheckCircle, AlertCircle, Clock3 } from 'lucide-react'
 import type { BatchStatusResponse, CompanyESGData } from '@/lib/types'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { localizeErrorMessage } from '@/lib/error-utils'
 import { findNaceOption, NACE_OPTIONS } from '@/lib/nace-codes'
@@ -23,6 +23,12 @@ const BATCH_STORAGE_KEY = 'esg_last_batch_id'
 export function UploadPage() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  // Deep-link contract from CompanyYearPicker when a user picks a year that
+  // hasn't been imported yet — we show a hint banner so the user knows the
+  // upload is expected to close a specific gap.
+  const prefilledCompany = searchParams.get('company')
+  const prefilledYear = searchParams.get('year')
   const [result, setResult] = useState<CompanyESGData | null>(null)
   // Init batch_id from localStorage so progress survives page refresh
   const [batchId, setBatchId] = useState<string | null>(
@@ -149,6 +155,12 @@ export function UploadPage() {
   return (
     <PageContainer>
       <PageHeader title={t('upload.title')} subtitle={t('upload.subtitle')} />
+
+      {prefilledCompany && prefilledYear ? (
+        <NoticeBanner tone="info" title={t('upload.gapBannerTitle')}>
+          {t('upload.gapBannerBody', { company: prefilledCompany, year: prefilledYear })}
+        </NoticeBanner>
+      ) : null}
 
       <NoticeBanner tone="warning">{t('upload.supportedHint')}</NoticeBanner>
 
