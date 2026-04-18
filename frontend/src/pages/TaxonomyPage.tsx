@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { listCompanies, getTaxonomyReport, downloadTaxonomyPdf } from '@/lib/api'
+import { listCompaniesWithYearCoverage, getTaxonomyReport, downloadTaxonomyPdf } from '@/lib/api'
+import { CompanyYearPicker, type CompanyYearSelection } from '@/components/CompanyYearPicker'
 import { TaxonomyRadarChart } from '@/components/RadarChart'
 import { MetricCard } from '@/components/MetricCard'
 import { QueryStateCard } from '@/components/QueryStateCard'
@@ -10,13 +11,6 @@ import { Panel } from '@/components/layout/Panel'
 import { NoticeBanner } from '@/components/NoticeBanner'
 import { FilterBar } from '@/components/FilterBar'
 import { Badge } from '@/components/ui/badge'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { CheckCircle, XCircle, Download } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -25,7 +19,7 @@ import { BackendOfflineBanner } from '@/components/BackendOfflineBanner'
 
 export function TaxonomyPage() {
   const { t } = useTranslation()
-  const [selected, setSelected] = useState<string>('')
+  const [selection, setSelection] = useState<CompanyYearSelection>({ company: null, year: null })
   const [pdfLoading, setPdfLoading] = useState(false)
 
   const {
@@ -34,15 +28,16 @@ export function TaxonomyPage() {
     error: companiesError,
     refetch: refetchCompanies,
   } = useQuery({
-    queryKey: ['companies'],
-    queryFn: listCompanies,
+    queryKey: ['companies-v2'],
+    queryFn: listCompaniesWithYearCoverage,
   })
 
-  const [companyName, companyYear] = selected ? selected.split('|') : [null, null]
+  const companyName = selection.company
+  const companyYear = selection.year
 
   const { data: report, isLoading, error: reportError, refetch: refetchReport } = useQuery({
     queryKey: ['taxonomy', companyName, companyYear],
-    queryFn: () => getTaxonomyReport(companyName!, Number(companyYear)),
+    queryFn: () => getTaxonomyReport(companyName!, companyYear!),
     enabled: !!companyName && !!companyYear,
   })
 
@@ -62,7 +57,7 @@ export function TaxonomyPage() {
               onClick={async () => {
                 setPdfLoading(true)
                 try {
-                  await downloadTaxonomyPdf(companyName, Number(companyYear))
+                  await downloadTaxonomyPdf(companyName, companyYear)
                 } finally {
                   setPdfLoading(false)
                 }
@@ -106,27 +101,14 @@ export function TaxonomyPage() {
       <FilterBar>
         <FilterBar.Field
           label={`${t('common.company')} & ${t('common.year')}`}
-          htmlFor="taxonomy-company-year"
+          htmlFor="taxonomy-company-year-picker-company"
         >
-          <Select value={selected} onValueChange={setSelected}>
-            <SelectTrigger
-              id="taxonomy-company-year"
-              className="w-full"
-              aria-label={t('common.selectCompany')}
-            >
-              <SelectValue placeholder={t('common.selectCompany')} />
-            </SelectTrigger>
-            <SelectContent>
-              {companies.map((c) => (
-                <SelectItem
-                  key={`${c.company_name}|${c.report_year}`}
-                  value={`${c.company_name}|${c.report_year}`}
-                >
-                  {c.company_name} ({c.report_year})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <CompanyYearPicker
+            idPrefix="taxonomy-company-year-picker"
+            companies={companies}
+            value={selection}
+            onChange={setSelection}
+          />
         </FilterBar.Field>
       </FilterBar>
 
@@ -235,7 +217,7 @@ export function TaxonomyPage() {
         </div>
       )}
 
-      {!selected && companies.length > 0 ? (
+      {!companyYear && companies.length > 0 ? (
         <QueryStateCard
           tone="empty"
           title={t('common.selectCompany')}
