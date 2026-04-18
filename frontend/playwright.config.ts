@@ -11,7 +11,7 @@ const localPython = path.join(repoRoot, '.venv', 'bin', 'python')
 const pythonCommand = process.env.ESG_PYTHON_CMD || (fs.existsSync(localPython) ? localPython : 'python')
 const frontendPort = process.env.ESG_FRONTEND_PORT || '4173'
 const baseURL = process.env.ESG_FRONTEND_URL || `http://127.0.0.1:${frontendPort}`
-const apiPort = process.env.ESG_API_PORT || '8000'
+const apiPort = process.env.ESG_API_PORT || '8001'
 const browserChannel = process.env.ESG_PW_CHANNEL || 'chrome'
 const skipWebServer = process.env.ESG_PW_SKIP_WEBSERVER === '1'
 
@@ -56,7 +56,7 @@ export default defineConfig({
           timeout: 120_000,
         },
         {
-          command: `npm run dev -- --host 127.0.0.1 --port ${frontendPort}`,
+          command: `ESG_API_PORT=${apiPort} npm run dev -- --host 127.0.0.1 --port ${frontendPort}`,
           cwd: __dirname,
           url: baseURL,
           reuseExistingServer: !process.env.CI,

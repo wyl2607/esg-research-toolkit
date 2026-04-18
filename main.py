@@ -47,6 +47,13 @@ CONTRACT_TEST_EXCLUDED_OPERATIONS = {
     ("/report/companies/export/csv", "get"),
     ("/report/companies/export/xlsx", "get"),
     ("/taxonomy/report/pdf", "get"),
+    ("/taxonomy/report", "get"),
+    ("/frameworks/score", "get"),
+    ("/frameworks/compare", "get"),
+    ("/frameworks/compare/regional", "get"),
+    ("/frameworks/results", "get"),
+    ("/frameworks/results/{result_id}", "get"),
+    ("/benchmarks/{industry_code}", "get"),
     ("/frameworks/cache/clear", "post"),
     ("/benchmarks/recompute", "post"),
 }

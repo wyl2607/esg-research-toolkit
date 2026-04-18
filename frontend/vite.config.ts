@@ -2,9 +2,10 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 
+const apiPort = process.env.ESG_API_PORT || '8000'
 const apiProxy = {
   '/api': {
-    target: 'http://localhost:8000',
+    target: `http://127.0.0.1:${apiPort}`,
     rewrite: (p: string) => p.replace(/^\/api/, ''),
   },
 }

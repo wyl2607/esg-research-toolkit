@@ -114,12 +114,17 @@ test.describe('seeded analyst workflow', () => {
       })
 
       await companySelect.click()
-      const companyOption = page.getByRole('option', { name: seeded.optionLabel })
+      const companyOption = page.getByRole('option', { name: seeded.companyName })
       await expect(companyOption).toBeVisible()
       await companyOption.click()
 
+      const yearSelect = page.getByRole('combobox').nth(1)
+      await yearSelect.click()
+      await page.getByRole('option', { name: new RegExp(`^${seeded.reportYear}\\b`) }).click()
+
       await comparisonResponse
       await expect(companySelect).toContainText(seeded.companyName)
+      await expect(yearSelect).toContainText(String(seeded.reportYear))
 
       const frameworkHeadings = page.locator('main h3')
       await expect(frameworkHeadings.first()).toBeVisible()
