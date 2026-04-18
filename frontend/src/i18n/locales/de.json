@@ -363,6 +363,13 @@
       "csrc_governance": "Governance"
     }
   },
+  "companyYearPicker": {
+    "selectYear": "Jahr auswählen",
+    "selectCompanyFirst": "Erst Unternehmen wählen",
+    "imported": "importiert",
+    "notImported": "nicht importiert",
+    "yearsImportedShort": "J"
+  },
   "profile": {
     "backToCompanies": "Zurück zur Unternehmensliste",
     "heroLabel": "Kernaussage",

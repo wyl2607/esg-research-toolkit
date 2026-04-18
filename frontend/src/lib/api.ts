@@ -96,6 +96,17 @@ export const getBatchStatus = (batchId: string): Promise<BatchStatusResponse> =>
 export const listCompanies = (): Promise<CompanyESGData[]> =>
   req('/report/companies')
 
+export interface CompanyYearCoverage {
+  company_name: string
+  industry_sector: string | null
+  industry_code: string | null
+  imported_years: number[]
+  suggested_years: number[]
+}
+
+export const listCompaniesWithYearCoverage = (): Promise<CompanyYearCoverage[]> =>
+  req('/report/companies/v2')
+
 export interface DashboardStats {
   total_companies: number
   avg_taxonomy_aligned: number

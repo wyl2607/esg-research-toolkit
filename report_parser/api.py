@@ -1287,3 +1287,54 @@ def list_company_reports(
             }
         )
     return payload
+
+
+@router.get("/companies/v2")
+def list_companies_with_year_coverage(
+    db: Session = Depends(get_db),
+    suggested_span: int = 5,
+) -> list[dict[str, Any]]:
+    """Return one row per canonical company with imported_years + suggested_years.
+
+    Used by the CompanyYearPicker so the UI can show imported vs
+    not-imported years side by side (see
+    docs/design-docs/company_year_dual_picker.md). Kept as a separate
+    endpoint from /report/companies so the existing single-year combo
+    dropdown keeps working during rollout.
+    """
+    from datetime import datetime as _dt, timezone as _tz
+
+    records = list_reports_grouped(db)
+    by_name: dict[str, dict[str, Any]] = {}
+    for record in records:
+        entry = by_name.setdefault(
+            record.company_name,
+            {
+                "company_name": record.company_name,
+                "industry_sector": record.industry_sector,
+                "industry_code": record.industry_code,
+                "imported_years": set(),
+            },
+        )
+        if record.report_year is not None:
+            entry["imported_years"].add(int(record.report_year))
+
+    current_year = _dt.now(_tz.utc).year
+    # Suggested window: last `suggested_span` full calendar years
+    suggested_base = list(range(current_year - suggested_span, current_year))
+
+    payload = []
+    for entry in sorted(by_name.values(), key=lambda e: e["company_name"].lower()):
+        imported_sorted = sorted(entry["imported_years"], reverse=True)
+        # Merge so the picker can render a unified year list without dedup in UI
+        union_years = sorted(set(suggested_base) | set(imported_sorted), reverse=True)
+        payload.append(
+            {
+                "company_name": entry["company_name"],
+                "industry_sector": entry["industry_sector"],
+                "industry_code": entry["industry_code"],
+                "imported_years": imported_sorted,
+                "suggested_years": union_years,
+            }
+        )
+    return payload

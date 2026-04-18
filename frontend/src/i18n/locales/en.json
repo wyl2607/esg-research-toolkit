@@ -361,6 +361,13 @@
       "csrc_governance": "Governance"
     }
   },
+  "companyYearPicker": {
+    "selectYear": "Select a year",
+    "selectCompanyFirst": "Pick a company first",
+    "imported": "imported",
+    "notImported": "not imported",
+    "yearsImportedShort": "yrs"
+  },
   "profile": {
     "backToCompanies": "Back to companies",
     "heroLabel": "Primary insight",

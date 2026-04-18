@@ -363,6 +363,13 @@
       "csrc_governance": "治理"
     }
   },
+  "companyYearPicker": {
+    "selectYear": "选择年份",
+    "selectCompanyFirst": "请先选择公司",
+    "imported": "已入库",
+    "notImported": "未入库",
+    "yearsImportedShort": "年"
+  },
   "profile": {
     "backToCompanies": "返回公司列表",
     "heroLabel": "核心洞察",

@@ -1,14 +1,8 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { listCompanies, getFrameworkComparison } from '@/lib/api'
+import { listCompaniesWithYearCoverage, getFrameworkComparison } from '@/lib/api'
 import type { FrameworkScoreResult, DimensionScore } from '@/lib/types'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { CompanyYearPicker, type CompanyYearSelection } from '@/components/CompanyYearPicker'
 import { Badge } from '@/components/ui/badge'
 import { QueryStateCard } from '@/components/QueryStateCard'
 import { PageContainer } from '@/components/layout/PageContainer'
@@ -170,7 +164,10 @@ function FrameworkCard({ fw }: { fw: FrameworkScoreResult }) {
 
 export function FrameworksPage() {
   const { t } = useTranslation()
-  const [selected, setSelected] = useState('')
+  const [selection, setSelection] = useState<CompanyYearSelection>({
+    company: null,
+    year: null,
+  })
 
   const {
     data: companies = [],
@@ -178,16 +175,14 @@ export function FrameworksPage() {
     error: companiesError,
     refetch: refetchCompanies,
   } = useQuery({
-    queryKey: ['companies'],
-    queryFn: listCompanies,
+    queryKey: ['companies-v2'],
+    queryFn: listCompaniesWithYearCoverage,
   })
 
-  const [companyName, companyYear] = selected ? selected.split('|') : [null, null]
-
   const { data: report, isLoading, error: reportError, refetch: refetchReport } = useQuery({
-    queryKey: ['frameworks', companyName, companyYear],
-    queryFn: () => getFrameworkComparison(companyName!, Number(companyYear)),
-    enabled: !!companyName && !!companyYear,
+    queryKey: ['frameworks', selection.company, selection.year],
+    queryFn: () => getFrameworkComparison(selection.company!, selection.year!),
+    enabled: !!selection.company && !!selection.year,
   })
 
   const backendOffline = isBackendOffline(companiesError) || isBackendOffline(reportError)
@@ -224,27 +219,14 @@ export function FrameworksPage() {
       <FilterBar>
         <FilterBar.Field
           label={`${t('common.company')} & ${t('common.year')}`}
-          htmlFor="frameworks-company-select"
+          htmlFor="frameworks-company-year-picker-company"
         >
-          <Select value={selected} onValueChange={setSelected}>
-            <SelectTrigger
-              id="frameworks-company-select"
-              className="h-14 w-full text-base"
-              aria-label={t('common.selectCompany')}
-            >
-              <SelectValue placeholder={t('common.selectCompany')} />
-            </SelectTrigger>
-            <SelectContent>
-              {companies.map((c) => (
-                <SelectItem
-                  key={`${c.company_name}|${c.report_year}`}
-                  value={`${c.company_name}|${c.report_year}`}
-                >
-                  {c.company_name} ({c.report_year})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <CompanyYearPicker
+            idPrefix="frameworks-company-year-picker"
+            companies={companies}
+            value={selection}
+            onChange={setSelection}
+          />
         </FilterBar.Field>
       </FilterBar>
 
@@ -278,7 +260,7 @@ export function FrameworksPage() {
         </div>
       )}
 
-      {!selected && companies.length > 0 ? (
+      {!selection.year && companies.length > 0 ? (
         <QueryStateCard
           tone="empty"
           title={t('common.selectCompany')}

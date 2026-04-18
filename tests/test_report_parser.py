@@ -19,6 +19,7 @@ from esg_frameworks.schemas import DimensionScore, FrameworkScoreResult
 from esg_frameworks.storage import list_framework_results, save_framework_result
 from report_parser.api import (
     _upload_evidence_summary,
+    list_companies_with_year_coverage,
     list_company_reports,
     get_company_history,
     get_company_profile,
@@ -360,6 +361,41 @@ def test_list_company_reports_keeps_legacy_and_metric_fields(
     assert row["period"]["type"] == "annual"
     assert row["period"]["source_document_type"] == "sustainability_report"
     assert row["evidence_summary"] == []
+
+
+def test_list_companies_v2_returns_imported_and_suggested_years(
+    db_session: Session,
+    make_company_data,
+) -> None:
+    save_report(
+        db_session,
+        make_company_data(company_name="Multi Year Corp", report_year=2022),
+        pdf_filename="multi-2022.pdf",
+    )
+    save_report(
+        db_session,
+        make_company_data(company_name="Multi Year Corp", report_year=2024),
+        pdf_filename="multi-2024.pdf",
+    )
+    save_report(
+        db_session,
+        make_company_data(company_name="Single Year Co", report_year=2023),
+        pdf_filename="single-2023.pdf",
+    )
+
+    rows = list_companies_with_year_coverage(db=db_session)
+    by_name = {r["company_name"]: r for r in rows}
+
+    assert by_name["Multi Year Corp"]["imported_years"] == [2024, 2022]
+    assert by_name["Single Year Co"]["imported_years"] == [2023]
+
+    # suggested_years is the union of the DB years and the rolling 5-year
+    # window, sorted descending — it must be a superset of imported_years
+    # so the picker always has a place to render the imported chip.
+    for name in ("Multi Year Corp", "Single Year Co"):
+        suggested = by_name[name]["suggested_years"]
+        assert suggested == sorted(set(suggested), reverse=True)
+        assert set(by_name[name]["imported_years"]).issubset(set(suggested))
 
 
 def test_save_manual_report_persists_period_and_manual_evidence(
