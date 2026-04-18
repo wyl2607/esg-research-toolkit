@@ -685,6 +685,43 @@ def test_disclosures_fetch_sec_hint_keeps_company_name_query_tokens() -> None:
         Base.metadata.drop_all(bind=engine)
 
 
+def test_disclosures_fetch_accepts_multi_source_hints_and_persists_them() -> None:
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    testing_session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    Base.metadata.create_all(bind=engine)
+    db_session = testing_session_local()
+    app = FastAPI()
+    app.include_router(disclosures_router)
+    app.dependency_overrides[get_db] = lambda: db_session
+
+    try:
+        with TestClient(app) as client:
+            response = client.post(
+                "/disclosures/fetch",
+                json={
+                    "company_name": "BASF",
+                    "report_year": 2022,
+                    "source_type": "filing",
+                    "source_hint": "sec_edgar",
+                    "source_hints": ["sec_edgar", "hkex", "csrc"],
+                },
+            )
+
+        assert response.status_code == 202
+        payload = response.json()
+        evidence = payload["pending"]["extracted_payload"]["evidence_summary"][0]
+        assert evidence["source_hint"] == "sec_edgar"
+        assert evidence["source_hints"] == ["sec_edgar", "hkex", "csrc"]
+        assert "sec.gov" in payload["pending"]["source_url"]
+    finally:
+        db_session.close()
+        Base.metadata.drop_all(bind=engine)
+
+
 def test_disclosures_fetch_source_url_override_wins_over_source_hint() -> None:
     engine = create_engine(
         "sqlite://",
@@ -780,7 +817,7 @@ def test_disclosures_fetch_pipeline_records_attempted_urls_on_failure() -> None:
             patch.dict(os.environ, {"ESG_CONTRACT_TEST_MODE": "0"}, clear=False),
             patch("report_parser.disclosures_api.SessionLocal", testing_session_local),
             patch(
-                "report_parser.disclosures_api._candidate_source_urls",
+                "report_parser.disclosures_api._candidate_source_urls_for_hints",
                 return_value=[
                     "https://www.sec.gov/edgar/search/#/q=basf",
                     "https://www1.hkexnews.hk/search/titlesearch.xhtml?lang=en&query=basf",
@@ -795,6 +832,7 @@ def test_disclosures_fetch_pipeline_records_attempted_urls_on_failure() -> None:
                 report_year=row.report_year,
                 source_type=row.source_type,
                 source_hint="sec_edgar",
+                source_hints=["sec_edgar", "hkex"],
                 source_url=row.source_url,
             )
 

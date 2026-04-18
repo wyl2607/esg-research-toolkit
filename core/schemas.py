@@ -310,6 +310,7 @@ class CompanyReportListItem(BaseModel):
 
 
 PendingDisclosureStatus: TypeAlias = Literal["pending", "approved", "rejected"]
+DisclosureSourceHint: TypeAlias = Literal["company_site", "sec_edgar", "hkex", "csrc"]
 DisclosureMergeMetric: TypeAlias = Literal[
     "scope1_co2e_tonnes",
     "scope2_co2e_tonnes",
@@ -338,7 +339,12 @@ class DisclosureFetchRequest(BaseModel):
         pattern=r"^https?://.+",
     )
     source_type: Literal["pdf", "html", "filing"] = "pdf"
-    source_hint: Literal["company_site", "sec_edgar", "hkex", "csrc"] = "company_site"
+    source_hint: DisclosureSourceHint = "company_site"
+    source_hints: list[DisclosureSourceHint] | None = Field(
+        default=None,
+        min_length=1,
+        max_length=4,
+    )
 
 
 class PendingDisclosureItem(BaseModel):

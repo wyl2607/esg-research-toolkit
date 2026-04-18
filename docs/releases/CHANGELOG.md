@@ -17,6 +17,7 @@
 - Upload 页面新增 Auto Fetch 面板：支持 company/year 预填触发抓取、查看 pending 队列。
 - Upload Auto Fetch 面板补充 `source_type` 选择（`pdf` / `html` / `filing`）及三语文案，避免前端请求被硬编码为 PDF。
 - Upload Auto Fetch 面板新增 `source_hint` 官方来源通道（`company_site` / `sec_edgar` / `hkex` / `csrc`）选择，支持 analyst 按区域监管来源发起补录。
+- Upload Auto Fetch 面板新增“附加来源通道”勾选（multi-source），可一次 fetch 串行尝试多个官方来源。
 - Upload Auto Fetch pending 队列新增字段级审核面板：可按指标勾选后再 approve，支持对照当前值/待审值做差异确认。
 - `frontend/tests/workflow.spec.ts` 新增 F2 e2e：深链进入 Upload 后触发 auto-fetch 并 approve，断言缺失年份记录可回读。
 - README（en/zh/de）补充 Auto-Fetch 合规声明：支持来源、排除来源、User-Agent 标识与 pending 审核入库策略。
@@ -30,17 +31,19 @@
 - `disclosures` 请求契约新增 `source_hint`，默认 URL 与候选来源对 hint 做分支回退，同时保留 `source_url` override 优先级。
 - `POST /disclosures/{id}/approve` 请求契约新增 `include_metrics`，支持仅合并选中字段；后端按已入库基线+待审 payload 进行字段级合并。
 - `disclosures` 官方来源通道（SEC/HKEX/CSRC）默认/候选 URL 统一改为 canonical 公司名 query token，减少 slug 检索导致的无效命中；fetch 失败时把 `attempted_urls` 与尝试次数写入 pending evidence，便于 Upload 审核与排障追踪。
+- `disclosures` 请求契约新增 `source_hints`（兼容保留 `source_hint`），支持一次任务按多来源候选列表串行回退尝试。
 - `tests/test_report_parser.py` 新增参数化回归，锁定 html/filing 默认 URL 生成行为。
 - `tests/test_report_parser.py` 增加 source-hint 回归，锁定 SEC/HKEX/CSRC 默认入口与 override 语义。
 - `tests/test_report_parser.py` 增加字段级合并回归（selected metrics only）与非法 metric 422 契约校验。
 - `tests/test_report_parser.py` 新增回归，锁定 SEC query token 保真与 fetch 失败路径 attempt 审计落盘。
+- `frontend/tests/workflow.spec.ts` auto-fetch e2e 新增断言：附加 HKEX 通道后 pending payload 中 `source_hints` 正确落盘。
 
 ### Verified
 
-- `OPENAI_API_KEY=dummy .venv/bin/pytest -q` → `158 passed`
+- `OPENAI_API_KEY=dummy .venv/bin/pytest -q` → `161 passed`
 - `.venv/bin/ruff check core report_parser taxonomy_scorer esg_frameworks techno_economics benchmark tests main.py --ignore E501` → pass
 - `cd frontend && npm run gen:types && npm run lint && npm run build` → pass
-- `cd frontend && npm run test:playwright -- tests/workflow.spec.ts` → `6 passed`
+- `cd frontend && npm run test:playwright -- tests/workflow.spec.ts` → `8 passed`
 - `cd frontend && npx playwright test --config=playwright.config.ts tests/workflow.spec.ts -g "upload auto-fetch can queue and approve a deep-linked missing year"` → `2 passed`
 - `cd frontend && npm run test:smoke && npm run test:a11y` → `20 passed`, `10 passed`
 

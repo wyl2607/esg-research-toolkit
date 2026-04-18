@@ -12,7 +12,7 @@ import {
   uploadReport,
   uploadReportsBatch,
 } from '@/lib/api'
-import { ApiError, type DisclosureMergeMetric } from '@/lib/api'
+import { ApiError, type DisclosureMergeMetric, type DisclosureSourceHint } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { QueryStateCard } from '@/components/QueryStateCard'
@@ -29,6 +29,7 @@ import { localizeErrorMessage } from '@/lib/error-utils'
 import { findNaceOption, NACE_OPTIONS } from '@/lib/nace-codes'
 
 const BATCH_STORAGE_KEY = 'esg_last_batch_id'
+const SOURCE_HINT_OPTIONS: DisclosureSourceHint[] = ['company_site', 'sec_edgar', 'hkex', 'csrc']
 
 const DISCLOSURE_REVIEW_METRICS: Array<{
   key: DisclosureMergeMetric
@@ -91,6 +92,32 @@ function formatReviewMetricValue(
   return value.toLocaleString(locale, { maximumFractionDigits: 2 })
 }
 
+function sourceHintLabelKey(hint: DisclosureSourceHint): string {
+  switch (hint) {
+    case 'sec_edgar':
+      return 'upload.autoFetchSourceHintSec'
+    case 'hkex':
+      return 'upload.autoFetchSourceHintHkex'
+    case 'csrc':
+      return 'upload.autoFetchSourceHintCsrc'
+    case 'company_site':
+    default:
+      return 'upload.autoFetchSourceHintCompanySite'
+  }
+}
+
+function latestAutoFetchEvidence(row: { extracted_payload: Record<string, unknown> }) {
+  const evidenceSummary = row.extracted_payload?.evidence_summary
+  if (!Array.isArray(evidenceSummary)) return null
+  for (let index = evidenceSummary.length - 1; index >= 0; index -= 1) {
+    const item = evidenceSummary[index]
+    if (!item || typeof item !== 'object') continue
+    if ((item as Record<string, unknown>).metric !== 'auto_disclosure_fetch') continue
+    return item as Record<string, unknown>
+  }
+  return null
+}
+
 export function UploadPage() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
@@ -106,9 +133,8 @@ export function UploadPage() {
   const [result, setResult] = useState<CompanyESGData | null>(null)
   const [autoFetchSourceUrl, setAutoFetchSourceUrl] = useState('')
   const [autoFetchSourceType, setAutoFetchSourceType] = useState<'pdf' | 'html' | 'filing'>('pdf')
-  const [autoFetchSourceHint, setAutoFetchSourceHint] = useState<
-    'company_site' | 'sec_edgar' | 'hkex' | 'csrc'
-  >('company_site')
+  const [autoFetchSourceHint, setAutoFetchSourceHint] = useState<DisclosureSourceHint>('company_site')
+  const [autoFetchExtraHints, setAutoFetchExtraHints] = useState<DisclosureSourceHint[]>([])
   const [reviewingPendingId, setReviewingPendingId] = useState<number | null>(null)
   const [selectedMergeMetrics, setSelectedMergeMetrics] = useState<DisclosureMergeMetric[]>([])
   // Init batch_id from localStorage so progress survives page refresh
@@ -205,6 +231,7 @@ export function UploadPage() {
         source_url: autoFetchSourceUrl.trim() || undefined,
         source_type: autoFetchSourceType,
         source_hint: autoFetchSourceHint,
+        source_hints: selectedSourceHints,
       })
     },
     onSuccess: () => {
@@ -280,6 +307,20 @@ export function UploadPage() {
         return [...prev, metric]
       }
       return prev.filter((item) => item !== metric)
+    })
+  }
+
+  const selectedSourceHints = [autoFetchSourceHint, ...autoFetchExtraHints].filter(
+    (hint, index, hints) => hints.indexOf(hint) === index
+  )
+
+  const toggleExtraHint = (hint: DisclosureSourceHint, checked: boolean) => {
+    setAutoFetchExtraHints((prev) => {
+      if (checked) {
+        if (prev.includes(hint) || hint === autoFetchSourceHint) return prev
+        return [...prev, hint]
+      }
+      return prev.filter((item) => item !== hint)
     })
   }
 
@@ -387,11 +428,11 @@ export function UploadPage() {
                 id="auto-fetch-source-hint"
                 className="h-10 rounded-lg border border-stone-300 bg-white px-3 text-sm text-stone-800 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-100"
                 value={autoFetchSourceHint}
-                onChange={(event) =>
-                  setAutoFetchSourceHint(
-                    event.target.value as 'company_site' | 'sec_edgar' | 'hkex' | 'csrc'
-                  )
-                }
+                onChange={(event) => {
+                  const nextHint = event.target.value as DisclosureSourceHint
+                  setAutoFetchSourceHint(nextHint)
+                  setAutoFetchExtraHints((prev) => prev.filter((hint) => hint !== nextHint))
+                }}
               >
                 <option value="company_site">{t('upload.autoFetchSourceHintCompanySite')}</option>
                 <option value="sec_edgar">{t('upload.autoFetchSourceHintSec')}</option>
@@ -399,6 +440,27 @@ export function UploadPage() {
                 <option value="csrc">{t('upload.autoFetchSourceHintCsrc')}</option>
               </select>
             </label>
+
+            <div className="space-y-1 text-sm text-slate-600">
+              <span>{t('upload.autoFetchSourceHintsExtraLabel')}</span>
+              <div className="grid gap-2 rounded-lg border border-stone-300 bg-white p-3 md:grid-cols-2">
+                {SOURCE_HINT_OPTIONS.filter((hint) => hint !== autoFetchSourceHint).map((hint) => (
+                  <label key={hint} className="flex items-center gap-2 text-xs text-slate-700">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-stone-300"
+                      data-testid={`auto-fetch-extra-hint-${hint}`}
+                      checked={autoFetchExtraHints.includes(hint)}
+                      onChange={(event) => toggleExtraHint(hint, event.target.checked)}
+                    />
+                    <span>{t(sourceHintLabelKey(hint))}</span>
+                  </label>
+                ))}
+              </div>
+              <p className="text-xs text-slate-500">
+                {t('upload.autoFetchSourceHintsSelected', { count: selectedSourceHints.length })}
+              </p>
+            </div>
 
             <label className="flex flex-col gap-1 text-sm text-slate-600" htmlFor="auto-fetch-source-type">
               <span>{t('upload.autoFetchSourceTypeLabel')}</span>
@@ -460,63 +522,101 @@ export function UploadPage() {
                   {t('upload.pendingQueueTitle')}
                 </p>
                 {pendingRows.map((row) => (
-                  <div
-                    key={row.id}
-                    data-testid="pending-disclosure-item"
-                    className="rounded-xl border border-stone-200 bg-white/80 px-3 py-2 text-sm"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-medium text-slate-700">
-                        #{row.id} · {row.source_type.toUpperCase()}
-                      </span>
-                      <Badge variant="secondary">{row.status}</Badge>
-                    </div>
-                    <p className="mt-1 break-all text-xs text-slate-500">{row.source_url}</p>
-                    <p className="mt-1 text-xs text-slate-400">
-                      {new Date(row.fetched_at).toLocaleString(i18n.resolvedLanguage)}
-                    </p>
-                    {row.review_note ? (
-                      <p className="mt-1 text-xs text-slate-500">{row.review_note}</p>
-                    ) : null}
-                    {row.status === 'pending' ? (
-                      <div className="mt-2 flex gap-2">
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={() => openPendingReview(row.id)}
-                          data-testid={`pending-review-${row.id}`}
-                          disabled={approvePendingMutation.isPending || rejectPendingMutation.isPending}
-                        >
-                          {t('upload.reviewFieldsButton')}
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          data-testid={`pending-approve-${row.id}`}
-                          onClick={() =>
-                            approvePendingMutation.mutate({
-                              pendingId: row.id,
-                              payload: { review_note: 'approved_from_upload_panel' },
-                            })
-                          }
-                          disabled={approvePendingMutation.isPending || rejectPendingMutation.isPending}
-                        >
-                          {t('upload.approveButton')}
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          data-testid={`pending-reject-${row.id}`}
-                          onClick={() => rejectPendingMutation.mutate(row.id)}
-                          disabled={approvePendingMutation.isPending || rejectPendingMutation.isPending}
-                        >
-                          {t('upload.rejectButton')}
-                        </Button>
+                  (() => {
+                    const evidence = latestAutoFetchEvidence(row)
+                    const attemptedUrlsRaw = evidence?.attempted_urls
+                    const attemptedUrls = Array.isArray(attemptedUrlsRaw)
+                      ? attemptedUrlsRaw.map((value) => String(value))
+                      : []
+                    const sourceHintsRaw = evidence?.source_hints
+                    const sourceHints = Array.isArray(sourceHintsRaw)
+                      ? sourceHintsRaw
+                          .map((hint) => String(hint))
+                          .filter((hint): hint is DisclosureSourceHint =>
+                            SOURCE_HINT_OPTIONS.includes(hint as DisclosureSourceHint)
+                          )
+                      : []
+
+                    return (
+                      <div
+                        key={row.id}
+                        data-testid="pending-disclosure-item"
+                        className="rounded-xl border border-stone-200 bg-white/80 px-3 py-2 text-sm"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-medium text-slate-700">
+                            #{row.id} · {row.source_type.toUpperCase()}
+                          </span>
+                          <Badge variant="secondary">{row.status}</Badge>
+                        </div>
+                        <p className="mt-1 break-all text-xs text-slate-500">{row.source_url}</p>
+                        <p className="mt-1 text-xs text-slate-400">
+                          {new Date(row.fetched_at).toLocaleString(i18n.resolvedLanguage)}
+                        </p>
+                        {sourceHints.length > 0 ? (
+                          <p className="mt-1 text-xs text-slate-500">
+                            {t('upload.autoFetchLanesUsedLabel')}:{' '}
+                            {sourceHints.map((hint) => t(sourceHintLabelKey(hint))).join(', ')}
+                          </p>
+                        ) : null}
+                        {row.review_note ? (
+                          <p className="mt-1 text-xs text-slate-500">{row.review_note}</p>
+                        ) : null}
+                        {attemptedUrls.length > 0 ? (
+                          <details className="mt-1 text-xs text-slate-500">
+                            <summary className="cursor-pointer select-none">
+                              {t('upload.autoFetchAttemptedUrlsToggle', {
+                                count: attemptedUrls.length,
+                              })}
+                            </summary>
+                            <ul className="mt-1 space-y-1 break-all pl-4">
+                              {attemptedUrls.map((url) => (
+                                <li key={`${row.id}-${url}`}>{url}</li>
+                              ))}
+                            </ul>
+                          </details>
+                        ) : null}
+                        {row.status === 'pending' ? (
+                          <div className="mt-2 flex gap-2">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openPendingReview(row.id)}
+                              data-testid={`pending-review-${row.id}`}
+                              disabled={approvePendingMutation.isPending || rejectPendingMutation.isPending}
+                            >
+                              {t('upload.reviewFieldsButton')}
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              data-testid={`pending-approve-${row.id}`}
+                              onClick={() =>
+                                approvePendingMutation.mutate({
+                                  pendingId: row.id,
+                                  payload: { review_note: 'approved_from_upload_panel' },
+                                })
+                              }
+                              disabled={approvePendingMutation.isPending || rejectPendingMutation.isPending}
+                            >
+                              {t('upload.approveButton')}
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              data-testid={`pending-reject-${row.id}`}
+                              onClick={() => rejectPendingMutation.mutate(row.id)}
+                              disabled={approvePendingMutation.isPending || rejectPendingMutation.isPending}
+                            >
+                              {t('upload.rejectButton')}
+                            </Button>
+                          </div>
+                        ) : null}
                       </div>
-                    ) : null}
-                  </div>
+                    )
+                  })()
                 ))}
               </div>
             ) : null}

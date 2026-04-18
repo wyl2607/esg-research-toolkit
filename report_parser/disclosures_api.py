@@ -19,6 +19,7 @@ from core.database import SessionLocal, get_db
 from core.schemas import (
     CompanyESGData,
     DisclosureMergeMetric,
+    DisclosureSourceHint,
     DisclosureFetchRequest,
     DisclosureFetchResponse,
     DisclosureReviewRequest,
@@ -212,6 +213,53 @@ def _candidate_source_urls(
     ])
 
 
+def _normalize_source_hints(
+    source_hint: DisclosureSourceHint,
+    source_hints: list[DisclosureSourceHint] | None,
+) -> list[DisclosureSourceHint]:
+    normalized: list[DisclosureSourceHint] = []
+    candidates = source_hints or [source_hint]
+    for hint in candidates:
+        if hint not in SOURCE_HINTS:
+            continue
+        if hint not in normalized:
+            normalized.append(hint)
+    if source_hint in SOURCE_HINTS and source_hint not in normalized:
+        normalized.insert(0, source_hint)
+    if not normalized:
+        normalized = ["company_site"]
+    return normalized
+
+
+def _candidate_source_urls_for_hints(
+    *,
+    company_name: str,
+    report_year: int,
+    explicit_source_url: str | None,
+    source_type: str,
+    source_hints: list[DisclosureSourceHint],
+) -> list[str]:
+    if explicit_source_url:
+        return [explicit_source_url]
+    combined: list[str] = []
+    seen: set[str] = set()
+    for source_hint in source_hints:
+        for candidate in _candidate_source_urls(
+            company_name=company_name,
+            report_year=report_year,
+            explicit_source_url=None,
+            source_type=source_type,
+            source_hint=source_hint,
+        ):
+            if candidate in seen:
+                continue
+            seen.add(candidate)
+            combined.append(candidate)
+            if len(combined) >= MAX_SOURCE_CANDIDATES:
+                return combined
+    return combined
+
+
 def _download_pdf_bytes(client: httpx.Client, source_url: str) -> tuple[bytes, str] | None:
     try:
         response = client.get(source_url, timeout=HTTP_TIMEOUT_SECONDS, headers=HTTP_HEADERS)
@@ -261,6 +309,7 @@ def _build_pending_payload(
     source_url: str,
     source_type: str,
     source_hint: str,
+    source_hints: list[DisclosureSourceHint],
     snippet: str,
     attempted_urls: list[str] | None = None,
 ) -> CompanyESGData:
@@ -270,6 +319,7 @@ def _build_pending_payload(
         "source_url": source_url,
         "source_type": source_type,
         "source_hint": source_hint,
+        "source_hints": source_hints,
         "snippet": snippet,
         "fetched_at": datetime.now(timezone.utc).isoformat(),
     }
@@ -291,6 +341,7 @@ def _run_fetch_pipeline(
     report_year: int,
     source_type: str,
     source_hint: str,
+    source_hints: list[DisclosureSourceHint],
     source_url: str,
 ) -> None:
     if _is_contract_test_mode():
@@ -302,6 +353,7 @@ def _run_fetch_pipeline(
                 source_url=source_url,
                 source_type=source_type,
                 source_hint=source_hint,
+                source_hints=source_hints,
                 snippet="Contract test mode: fetch skipped.",
             )
             update_pending_disclosure_payload(
@@ -314,12 +366,12 @@ def _run_fetch_pipeline(
             db.close()
         return
 
-    candidates = _candidate_source_urls(
-        company_name,
-        report_year,
-        source_url,
-        source_type,
-        source_hint=source_hint,
+    candidates = _candidate_source_urls_for_hints(
+        company_name=company_name,
+        report_year=report_year,
+        explicit_source_url=source_url,
+        source_type=source_type,
+        source_hints=source_hints,
     )
     client = httpx.Client(follow_redirects=True)
     downloaded: tuple[bytes, str] | None = None
@@ -352,6 +404,7 @@ def _run_fetch_pipeline(
                 source_url=source_url,
                 source_type=source_type,
                 source_hint=source_hint,
+                source_hints=source_hints,
                 snippet=(
                     f"No reachable public PDF was found after {len(attempted_urls)} attempts. "
                     "Upload manually or provide a direct PDF URL."
@@ -392,6 +445,7 @@ def _run_fetch_pipeline(
                 "source_url": resolved_source_url,
                 "source_type": source_type,
                 "source_hint": source_hint,
+                "source_hints": source_hints,
                 "snippet": "Auto fetch succeeded and extracted draft metrics.",
                 "attempted_urls": attempted_urls[:MAX_SOURCE_CANDIDATES],
                 "fetched_at": datetime.now(timezone.utc).isoformat(),
@@ -412,6 +466,7 @@ def _run_fetch_pipeline(
             source_url=source_url,
             source_type=source_type,
             source_hint=source_hint,
+            source_hints=source_hints,
             snippet="Fetch attempted but extraction failed. Review source and upload manually if needed.",
             attempted_urls=attempted_urls,
         )
@@ -505,6 +560,7 @@ def fetch_disclosure(
     db: Session = Depends(get_db),
 ) -> DisclosureFetchResponse:
     source_hint = payload.source_hint if payload.source_hint in SOURCE_HINTS else "company_site"
+    source_hints = _normalize_source_hints(source_hint, payload.source_hints)
     source_url = (
         payload.source_url.strip()
         if payload.source_url
@@ -518,6 +574,7 @@ def fetch_disclosure(
         source_url=source_url,
         source_type=payload.source_type,
         source_hint=source_hint,
+        source_hints=source_hints,
         snippet="Auto-fetch queued. Awaiting extraction + review before merge.",
     )
 
@@ -540,6 +597,7 @@ def fetch_disclosure(
             report_year=payload.report_year,
             source_type=payload.source_type,
             source_hint=source_hint,
+            source_hints=source_hints,
             source_url=source_url,
         )
 

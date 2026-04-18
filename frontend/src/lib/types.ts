@@ -1263,6 +1263,8 @@ export interface components {
              * @enum {string}
              */
             source_hint: "company_site" | "sec_edgar" | "hkex" | "csrc";
+            /** Source Hints */
+            source_hints?: ("company_site" | "sec_edgar" | "hkex" | "csrc")[] | null;
         };
         /** DisclosureFetchResponse */
         DisclosureFetchResponse: {

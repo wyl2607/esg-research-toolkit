@@ -190,12 +190,30 @@ test.describe('seeded analyst workflow', () => {
       const sourceUrl = `https://example.com/${encodeURIComponent(seeded.companyName)}/${missingYear}.pdf`
       await page.getByTestId('auto-fetch-source-url').fill(sourceUrl)
       await page.locator('#auto-fetch-source-hint').selectOption('sec_edgar')
+      await page.getByTestId('auto-fetch-extra-hint-hkex').check()
       await page.locator('#auto-fetch-source-type').selectOption('pdf')
 
       await page.getByTestId('auto-fetch-trigger').click()
 
       const pendingItem = page.getByTestId('pending-disclosure-item').first()
       await expect(pendingItem).toContainText(sourceUrl)
+      await expect
+        .poll(async () => {
+          const response = await request.get('/api/disclosures/pending', {
+            params: {
+              company_name: seeded.companyName,
+              report_year: String(missingYear),
+              status: 'pending',
+              limit: '1',
+            },
+          })
+          if (response.status() !== 200) return []
+          const body = (await response.json()) as Array<{
+            extracted_payload?: { evidence_summary?: Array<{ source_hints?: string[] }> }
+          }>
+          return body[0]?.extracted_payload?.evidence_summary?.[0]?.source_hints ?? []
+        })
+        .toEqual(['sec_edgar', 'hkex'])
       await pendingItem.locator('[data-testid^="pending-review-"]').first().click()
       await expect(page.getByTestId('pending-approve-selected')).toBeVisible()
       await page.getByTestId('pending-approve-selected').click()
