@@ -21,12 +21,13 @@ _cache_lock = threading.Lock()
 def _record_to_company_esg(record) -> CompanyESGData:
     """Normalize DB record fields to CompanyESGData input shape."""
     payload = record.__dict__.copy()
-    raw_activities = payload.get("primary_activities")
-    if isinstance(raw_activities, str):
-        try:
-            payload["primary_activities"] = json.loads(raw_activities) if raw_activities else []
-        except json.JSONDecodeError:
-            payload["primary_activities"] = []
+    for json_field in ("primary_activities", "evidence_summary"):
+        raw = payload.get(json_field)
+        if isinstance(raw, str):
+            try:
+                payload[json_field] = json.loads(raw) if raw else []
+            except json.JSONDecodeError:
+                payload[json_field] = []
     return CompanyESGData.model_validate(payload)
 
 

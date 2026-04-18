@@ -342,7 +342,24 @@
     "coverage": "覆盖率 {{pct}}%",
     "viewGaps": "查看差距（{{count}}）和建议（{{recs}}）",
     "collapse": "收起",
-    "disclosed": "{{n}}/{{total}} 项已披露"
+    "disclosed": "{{n}}/{{total}} 项已披露",
+    "dim": {
+      "climate_mitigation": "气候减缓",
+      "climate_adaptation": "气候适应",
+      "water": "水资源与海洋",
+      "circular_economy": "循环经济",
+      "pollution": "污染防治",
+      "biodiversity": "生物多样性",
+      "e1_climate": "E1 气候变化",
+      "e2_e5_pollution_circular": "E2/E5 污染与循环",
+      "e3_water": "E3 水资源",
+      "e4_biodiversity": "E4 生物多样性",
+      "s1_workforce": "S1 自有员工",
+      "g1_governance": "G1 商业行为",
+      "csrc_environment": "环境",
+      "csrc_social": "社会",
+      "csrc_governance": "治理"
+    }
   },
   "profile": {
     "backToCompanies": "返回公司列表",

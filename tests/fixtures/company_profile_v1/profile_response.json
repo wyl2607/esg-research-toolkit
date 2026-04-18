@@ -287,7 +287,7 @@
         {
           "disclosed": 1,
           "gaps": [],
-          "name": "气候减缓 (Climate Mitigation)",
+          "name": "climate_mitigation",
           "score": 0.5,
           "total": 1,
           "weight": 0.16666666666666666
@@ -295,7 +295,7 @@
         {
           "disclosed": 1,
           "gaps": [],
-          "name": "气候适应 (Climate Adaptation)",
+          "name": "climate_adaptation",
           "score": 0.5,
           "total": 1,
           "weight": 0.16666666666666666
@@ -303,7 +303,7 @@
         {
           "disclosed": 1,
           "gaps": [],
-          "name": "水资源 (Water & Marine)",
+          "name": "water",
           "score": 0.6,
           "total": 1,
           "weight": 0.16666666666666666
@@ -311,7 +311,7 @@
         {
           "disclosed": 1,
           "gaps": [],
-          "name": "循环经济 (Circular Economy)",
+          "name": "circular_economy",
           "score": 0.62,
           "total": 1,
           "weight": 0.16666666666666666
@@ -319,7 +319,7 @@
         {
           "disclosed": 0,
           "gaps": [],
-          "name": "污染防治 (Pollution Prevention)",
+          "name": "pollution",
           "score": 0.0,
           "total": 1,
           "weight": 0.16666666666666666
@@ -327,7 +327,7 @@
         {
           "disclosed": 0,
           "gaps": [],
-          "name": "生物多样性 (Biodiversity)",
+          "name": "biodiversity",
           "score": 0.0,
           "total": 1,
           "weight": 0.16666666666666666
@@ -351,7 +351,7 @@
         {
           "disclosed": 5,
           "gaps": [],
-          "name": "环境 (Environment)",
+          "name": "csrc_environment",
           "score": 1.0,
           "total": 5,
           "weight": 0.4
@@ -362,7 +362,7 @@
             "[S] 缺失指标：工伤事故率（每10万人）",
             "[S] 缺失指标：人均培训时长（小时）"
           ],
-          "name": "社会 (Social)",
+          "name": "csrc_social",
           "score": 0.5,
           "total": 4,
           "weight": 0.35
@@ -374,7 +374,7 @@
             "[G] 缺失指标：反腐败政策披露",
             "[G] 缺失指标：可持续发展委员会设立"
           ],
-          "name": "治理 (Governance)",
+          "name": "csrc_governance",
           "score": 0.0,
           "total": 3,
           "weight": 0.25
@@ -408,7 +408,7 @@
         {
           "disclosed": 5,
           "gaps": [],
-          "name": "E1 气候变化 (Climate Change)",
+          "name": "e1_climate",
           "score": 1.0,
           "total": 5,
           "weight": 0.2
@@ -416,7 +416,7 @@
         {
           "disclosed": 1,
           "gaps": [],
-          "name": "E2/E5 污染+循环 (Pollution & Circular)",
+          "name": "e2_e5_pollution_circular",
           "score": 1.0,
           "total": 1,
           "weight": 0.1
@@ -424,7 +424,7 @@
         {
           "disclosed": 1,
           "gaps": [],
-          "name": "E3 水资源 (Water)",
+          "name": "e3_water",
           "score": 1.0,
           "total": 1,
           "weight": 0.1
@@ -432,7 +432,7 @@
         {
           "disclosed": 0,
           "gaps": [],
-          "name": "E4 生物多样性 (Biodiversity)",
+          "name": "e4_biodiversity",
           "score": 0.0,
           "total": 1,
           "weight": 0.1
@@ -440,7 +440,7 @@
         {
           "disclosed": 2,
           "gaps": [],
-          "name": "S1 员工 (Own Workforce)",
+          "name": "s1_workforce",
           "score": 0.5,
           "total": 4,
           "weight": 0.25
@@ -448,7 +448,7 @@
         {
           "disclosed": 0,
           "gaps": [],
-          "name": "G1 治理 (Business Conduct)",
+          "name": "g1_governance",
           "score": 0.0,
           "total": 3,
           "weight": 0.25

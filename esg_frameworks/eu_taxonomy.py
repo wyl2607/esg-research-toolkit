@@ -30,20 +30,20 @@ def score(data: CompanyESGData) -> FrameworkScoreResult:
 
     obj_scores = result.objective_scores  # dict[str, float]
 
-    # 六大目标 → DimensionScore
-    objective_labels = {
-        "climate_mitigation": "气候减缓 (Climate Mitigation)",
-        "climate_adaptation": "气候适应 (Climate Adaptation)",
-        "water": "水资源 (Water & Marine)",
-        "circular_economy": "循环经济 (Circular Economy)",
-        "pollution": "污染防治 (Pollution Prevention)",
-        "biodiversity": "生物多样性 (Biodiversity)",
-    }
+    # 六大目标 → DimensionScore（name 使用稳定 key，前端用 i18n 本地化）
+    objective_keys = (
+        "climate_mitigation",
+        "climate_adaptation",
+        "water",
+        "circular_economy",
+        "pollution",
+        "biodiversity",
+    )
     dimensions: list[DimensionScore] = []
-    for key, label in objective_labels.items():
+    for key in objective_keys:
         s = obj_scores.get(key, 0.0)
         dimensions.append(DimensionScore(
-            name=label,
+            name=key,
             score=s,
             weight=1 / 6,
             disclosed=1 if s > 0 else 0,

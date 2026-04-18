@@ -72,7 +72,7 @@ function FrameworkCard({ fw }: { fw: FrameworkScoreResult }) {
   const [expanded, setExpanded] = useState(false)
   const color = FRAMEWORK_COLORS[fw.framework_id] ?? '#b45309'
   const radarData = fw.dimensions.map((d: DimensionScore) => ({
-    subject: d.name.split(' ')[0],
+    subject: t(`frameworks.dim.${d.name}`, { defaultValue: d.name }).split(' ')[0],
     score: Math.round(d.score * 100),
   }))
 
@@ -109,7 +109,7 @@ function FrameworkCard({ fw }: { fw: FrameworkScoreResult }) {
         {fw.dimensions.map((d: DimensionScore) => (
           <div key={d.name}>
             <div className="mb-0.5 flex justify-between text-xs text-slate-600">
-              <span>{d.name}</span>
+              <span>{t(`frameworks.dim.${d.name}`, { defaultValue: d.name })}</span>
               <span>{t('frameworks.disclosed', { n: d.disclosed, total: d.total })}</span>
             </div>
             <ScoreBar value={d.score} />

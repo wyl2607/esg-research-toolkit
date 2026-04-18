@@ -200,9 +200,11 @@ export function BenchmarkPage() {
         ) : null}
 
         {lowSampleSize ? (
-          <NoticeBanner tone="warning" title={t('benchmark.lowSampleWarningTitle')}>
-            {t('benchmark.lowSampleWarningBody', { count: minSampleSize ?? 0 })}
-          </NoticeBanner>
+          <div className="mt-4">
+            <NoticeBanner tone="warning" title={t('benchmark.lowSampleWarningTitle')}>
+              {t('benchmark.lowSampleWarningBody', { count: minSampleSize ?? 0 })}
+            </NoticeBanner>
+          </div>
         ) : null}
 
         {benchmarksQuery.isLoading ? (

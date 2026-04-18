@@ -342,7 +342,24 @@
     "coverage": "Abdeckung {{pct}}%",
     "viewGaps": "Lücken ({{count}}) und Empfehlungen ({{recs}}) anzeigen",
     "collapse": "Einklappen",
-    "disclosed": "{{n}}/{{total}} offengelegt"
+    "disclosed": "{{n}}/{{total}} offengelegt",
+    "dim": {
+      "climate_mitigation": "Klimaschutz",
+      "climate_adaptation": "Klimawandelanpassung",
+      "water": "Wasser & Meeresressourcen",
+      "circular_economy": "Kreislaufwirtschaft",
+      "pollution": "Vermeidung von Umweltverschmutzung",
+      "biodiversity": "Biodiversität",
+      "e1_climate": "E1 Klimawandel",
+      "e2_e5_pollution_circular": "E2/E5 Verschmutzung & Kreislauf",
+      "e3_water": "E3 Wasser",
+      "e4_biodiversity": "E4 Biodiversität",
+      "s1_workforce": "S1 Eigene Belegschaft",
+      "g1_governance": "G1 Unternehmensführung",
+      "csrc_environment": "Umwelt",
+      "csrc_social": "Soziales",
+      "csrc_governance": "Governance"
+    }
   },
   "profile": {
     "backToCompanies": "Zurück zur Unternehmensliste",

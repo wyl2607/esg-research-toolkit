@@ -113,21 +113,21 @@ def score(data: CompanyESGData) -> FrameworkScoreResult:
     )
 
     dimensions = [
-        DimensionScore(name="E1 气候变化 (Climate Change)", score=round(e1_score, 3),
+        DimensionScore(name="e1_climate", score=round(e1_score, 3),
                        weight=weights["e1"], disclosed=sum(1 for _, ok in e1_items if ok),
                        total=len(e1_items)),
-        DimensionScore(name="E2/E5 污染+循环 (Pollution & Circular)", score=round(e2_score, 3),
+        DimensionScore(name="e2_e5_pollution_circular", score=round(e2_score, 3),
                        weight=weights["e2"], disclosed=sum(1 for _, ok in e2_items if ok),
                        total=len(e2_items)),
-        DimensionScore(name="E3 水资源 (Water)", score=round(e3_score, 3),
+        DimensionScore(name="e3_water", score=round(e3_score, 3),
                        weight=weights["e3"], disclosed=sum(1 for _, ok in e3_items if ok),
                        total=len(e3_items)),
-        DimensionScore(name="E4 生物多样性 (Biodiversity)", score=0.0,
+        DimensionScore(name="e4_biodiversity", score=0.0,
                        weight=weights["e4"], disclosed=0, total=1),
-        DimensionScore(name="S1 员工 (Own Workforce)", score=round(s1_score, 3),
+        DimensionScore(name="s1_workforce", score=round(s1_score, 3),
                        weight=weights["s1"], disclosed=sum(1 for _, ok in s1_items if ok),
                        total=len(s1_items)),
-        DimensionScore(name="G1 治理 (Business Conduct)", score=round(g1_score, 3),
+        DimensionScore(name="g1_governance", score=round(g1_score, 3),
                        weight=weights["g1"], disclosed=sum(1 for _, ok in g1_items if ok),
                        total=len(g1_items)),
     ]

@@ -1061,7 +1061,7 @@ export function CompanyProfilePage() {
                         {framework.dimensions.map((dimension) => (
                           <div key={dimension.name}>
                             <div className="mb-1 flex items-center justify-between text-xs text-slate-600">
-                              <span>{dimension.name}</span>
+                              <span>{t(`frameworks.dim.${dimension.name}`, { defaultValue: dimension.name })}</span>
                               <span>
                                 {dimension.disclosed}/{dimension.total}
                               </span>

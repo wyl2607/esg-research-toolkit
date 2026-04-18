@@ -340,7 +340,24 @@
     "coverage": "Coverage {{pct}}%",
     "viewGaps": "View gaps ({{count}}) and recommendations ({{recs}})",
     "collapse": "Collapse",
-    "disclosed": "{{n}}/{{total}} disclosed"
+    "disclosed": "{{n}}/{{total}} disclosed",
+    "dim": {
+      "climate_mitigation": "Climate Mitigation",
+      "climate_adaptation": "Climate Adaptation",
+      "water": "Water & Marine Resources",
+      "circular_economy": "Circular Economy",
+      "pollution": "Pollution Prevention",
+      "biodiversity": "Biodiversity",
+      "e1_climate": "E1 Climate Change",
+      "e2_e5_pollution_circular": "E2/E5 Pollution & Circular",
+      "e3_water": "E3 Water",
+      "e4_biodiversity": "E4 Biodiversity",
+      "s1_workforce": "S1 Own Workforce",
+      "g1_governance": "G1 Business Conduct",
+      "csrc_environment": "Environment",
+      "csrc_social": "Social",
+      "csrc_governance": "Governance"
+    }
   },
   "profile": {
     "backToCompanies": "Back to companies",

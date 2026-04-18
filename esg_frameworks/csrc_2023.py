@@ -51,7 +51,7 @@ def score(data: CompanyESGData) -> FrameworkScoreResult:
         gaps.append("[E] 建议披露 Scope 3 排放（供应链/产品使用阶段）")
 
     e_dim = DimensionScore(
-        name="环境 (Environment)",
+        name="csrc_environment",
         score=round(e_score, 3),
         weight=0.40,
         disclosed=e_disclosed,
@@ -77,7 +77,7 @@ def score(data: CompanyESGData) -> FrameworkScoreResult:
             recommendations.append(f"补充 {name} 数据（CSRC 2023 B 章节）")
 
     s_dim = DimensionScore(
-        name="社会 (Social)",
+        name="csrc_social",
         score=round(s_score, 3),
         weight=0.35,
         disclosed=s_disclosed,
@@ -103,7 +103,7 @@ def score(data: CompanyESGData) -> FrameworkScoreResult:
         recommendations.append("建议设立董事会可持续发展委员会并披露反腐败政策（CSRC 2023 C 章节）")
 
     g_dim = DimensionScore(
-        name="治理 (Governance)",
+        name="csrc_governance",
         score=round(g_score, 3),
         weight=0.25,
         disclosed=g_disclosed,
