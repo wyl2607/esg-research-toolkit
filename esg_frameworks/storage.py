@@ -10,7 +10,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from core.database import Base
-from esg_frameworks.schemas import FrameworkScoreResult
+from esg_frameworks.schemas import FRAMEWORK_VERSIONS, FrameworkScoreResult
 from report_parser.company_identity import canonical_company_name, company_name_variants
 
 
@@ -47,7 +47,10 @@ def _normalize_framework_payload(
     framework_version: str,
 ) -> dict:
     normalized = dict(payload)
-    normalized["framework_version"] = normalized.get("framework_version") or framework_version
+    normalized["framework_version"] = _resolve_framework_version(
+        framework_id=normalized.get("framework_id", ""),
+        framework_version=normalized.get("framework_version") or framework_version,
+    )
     normalized["analyzed_at"] = None
     return normalized
 
@@ -58,6 +61,22 @@ def _serialize_framework_payload(payload: dict) -> str:
 
 def _payload_hash(payload: str) -> str:
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def _resolve_framework_version(
+    *,
+    framework_id: str,
+    framework_version: str | None,
+) -> str:
+    canonical_version = FRAMEWORK_VERSIONS.get(framework_id)
+    if not framework_version:
+        return canonical_version or "v1"
+    normalized_version = framework_version.strip()
+    if not normalized_version:
+        return canonical_version or "v1"
+    if normalized_version == "v1" and canonical_version:
+        return canonical_version
+    return normalized_version
 
 
 def _payload_matches_row(
@@ -80,10 +99,13 @@ def save_framework_result(
     db: Session,
     result: FrameworkScoreResult,
     *,
-    framework_version: str = "v1",
+    framework_version: str | None = None,
 ) -> FrameworkAnalysisResult:
     payload = result.model_dump()
-    resolved_framework_version = payload.get("framework_version") or framework_version
+    resolved_framework_version = _resolve_framework_version(
+        framework_id=result.framework_id,
+        framework_version=payload.get("framework_version") or framework_version,
+    )
     normalized_payload = _normalize_framework_payload(
         payload,
         framework_version=resolved_framework_version,

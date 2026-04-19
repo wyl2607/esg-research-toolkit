@@ -13,7 +13,13 @@ from core.database import get_db
 from core.schemas import CompanyESGData, FrameworkCacheClearResponse
 from esg_frameworks import csrc_2023, csrd, eu_taxonomy, gri_standards, sasb_standards, sec_climate
 from esg_frameworks.comparison import build_comparison
-from esg_frameworks.schemas import FrameworkScoreResult, MultiFrameworkReport
+from esg_frameworks.schemas import (
+    FRAMEWORK_DISPLAY_NAMES,
+    FRAMEWORK_VERSIONS,
+    FrameworkScoreResult,
+    FrameworkVersionInfo,
+    MultiFrameworkReport,
+)
 from esg_frameworks.storage import (
     get_framework_result,
     list_framework_results,
@@ -225,6 +231,32 @@ def list_frameworks() -> list[dict[str, str]]:
             "mandatory_from": "Industry-aligned",
             "description": "SASB 行业特定可持续会计披露标准",
         },
+    ]
+
+
+@router.get("/versions", response_model=list[FrameworkVersionInfo])
+def list_framework_versions() -> list[FrameworkVersionInfo]:
+    """列出受支持框架的标准版本元数据。"""
+    framework_ids = tuple(_SCORERS.keys())
+    missing_metadata = [
+        framework_id
+        for framework_id in framework_ids
+        if framework_id not in FRAMEWORK_VERSIONS or framework_id not in FRAMEWORK_DISPLAY_NAMES
+    ]
+    if missing_metadata:
+        raise HTTPException(
+            500,
+            "Framework version metadata is incomplete for: "
+            + ", ".join(sorted(missing_metadata)),
+        )
+
+    return [
+        FrameworkVersionInfo(
+            framework_id=framework_id,
+            framework_version=FRAMEWORK_VERSIONS[framework_id],
+            display_name=FRAMEWORK_DISPLAY_NAMES[framework_id],
+        )
+        for framework_id in framework_ids
     ]
 
 

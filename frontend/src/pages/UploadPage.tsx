@@ -28,70 +28,14 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { localizeErrorMessage } from '@/lib/error-utils'
 import { findNaceOption, NACE_OPTIONS } from '@/lib/nace-codes'
+import {
+  DISCLOSURE_REVIEW_METRICS,
+  areDisclosureReviewValuesEqual,
+  formatDisclosureReviewMetricValue,
+} from '@/lib/disclosure-review'
 
 const BATCH_STORAGE_KEY = 'esg_last_batch_id'
 const SOURCE_HINT_OPTIONS: DisclosureSourceHint[] = ['company_site', 'sec_edgar', 'hkex', 'csrc']
-
-const DISCLOSURE_REVIEW_METRICS: Array<{
-  key: DisclosureMergeMetric
-  labelKey: string
-  valueKind: 'number' | 'percent' | 'integer' | 'activities'
-}> = [
-  { key: 'scope1_co2e_tonnes', labelKey: 'companies.scope1', valueKind: 'number' },
-  { key: 'scope2_co2e_tonnes', labelKey: 'companies.scope2', valueKind: 'number' },
-  { key: 'scope3_co2e_tonnes', labelKey: 'companies.scope3', valueKind: 'number' },
-  { key: 'energy_consumption_mwh', labelKey: 'upload.reviewMetricEnergy', valueKind: 'number' },
-  { key: 'renewable_energy_pct', labelKey: 'upload.renewableEnergy', valueKind: 'percent' },
-  { key: 'water_usage_m3', labelKey: 'upload.reviewMetricWater', valueKind: 'number' },
-  { key: 'waste_recycled_pct', labelKey: 'upload.reviewMetricWaste', valueKind: 'percent' },
-  { key: 'total_revenue_eur', labelKey: 'upload.reviewMetricRevenue', valueKind: 'number' },
-  { key: 'taxonomy_aligned_revenue_pct', labelKey: 'upload.taxonomyAligned', valueKind: 'percent' },
-  { key: 'total_capex_eur', labelKey: 'upload.reviewMetricCapex', valueKind: 'number' },
-  { key: 'taxonomy_aligned_capex_pct', labelKey: 'upload.reviewMetricTaxonomyCapex', valueKind: 'percent' },
-  { key: 'total_employees', labelKey: 'companies.employees', valueKind: 'integer' },
-  { key: 'female_pct', labelKey: 'upload.reviewMetricFemale', valueKind: 'percent' },
-  { key: 'primary_activities', labelKey: 'upload.reviewMetricActivities', valueKind: 'activities' },
-]
-
-function normalizeReviewValue(
-  value: unknown,
-  kind: 'number' | 'percent' | 'integer' | 'activities'
-): unknown {
-  if (value == null) return null
-  if (kind === 'activities') {
-    if (!Array.isArray(value)) return []
-    return value.map((item) => String(item))
-  }
-  return value
-}
-
-function areReviewValuesEqual(
-  current: unknown,
-  next: unknown,
-  kind: 'number' | 'percent' | 'integer' | 'activities'
-): boolean {
-  const a = normalizeReviewValue(current, kind)
-  const b = normalizeReviewValue(next, kind)
-  if (a == null && b == null) return true
-  if (Array.isArray(a) || Array.isArray(b)) return JSON.stringify(a ?? []) === JSON.stringify(b ?? [])
-  return a === b
-}
-
-function formatReviewMetricValue(
-  value: unknown,
-  kind: 'number' | 'percent' | 'integer' | 'activities',
-  locale: string
-): string {
-  if (value == null) return '—'
-  if (kind === 'activities') {
-    if (!Array.isArray(value)) return '—'
-    return value.length ? value.join(', ') : '—'
-  }
-  if (typeof value !== 'number' || Number.isNaN(value)) return String(value)
-  if (kind === 'percent') return `${value.toFixed(1)}%`
-  if (kind === 'integer') return value.toLocaleString(locale)
-  return value.toLocaleString(locale, { maximumFractionDigits: 2 })
-}
 
 function sourceHintLabelKey(hint: DisclosureSourceHint): string {
   switch (hint) {
@@ -311,7 +255,7 @@ export function UploadPage() {
     let defaults = DISCLOSURE_REVIEW_METRICS.filter((metric) => {
       const nextValue = extracted[metric.key]
       if (nextValue == null) return false
-      return !areReviewValuesEqual(current?.[metric.key], nextValue, metric.valueKind)
+      return !areDisclosureReviewValuesEqual(current?.[metric.key], nextValue, metric.valueKind)
     }).map((metric) => metric.key)
 
     if (defaults.length === 0) {
@@ -750,7 +694,11 @@ export function UploadPage() {
                       metric.key
                     ]
                     const selectable = nextValue != null
-                    const changed = !areReviewValuesEqual(currentValue, nextValue, metric.valueKind)
+                    const changed = !areDisclosureReviewValuesEqual(
+                      currentValue,
+                      nextValue,
+                      metric.valueKind
+                    )
                     if (!selectable && currentValue == null) return null
                     return (
                       <label
@@ -781,7 +729,7 @@ export function UploadPage() {
                                 {t('upload.reviewCurrentValue')}
                               </p>
                               <p className="text-slate-700">
-                                {formatReviewMetricValue(
+                                {formatDisclosureReviewMetricValue(
                                   currentValue,
                                   metric.valueKind,
                                   i18n.resolvedLanguage ?? 'en-US'
@@ -793,7 +741,7 @@ export function UploadPage() {
                                 {t('upload.reviewPendingValue')}
                               </p>
                               <p className="text-slate-700">
-                                {formatReviewMetricValue(
+                                {formatDisclosureReviewMetricValue(
                                   nextValue,
                                   metric.valueKind,
                                   i18n.resolvedLanguage ?? 'en-US'
