@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 from core.schemas import CompanyESGData
+from .schemas import FRAMEWORK_VERSIONS
 from esg_frameworks.schemas import DimensionScore, FrameworkScoreResult
 
 
@@ -120,7 +121,7 @@ def score(data: CompanyESGData) -> FrameworkScoreResult:
         framework="中国证监会 CSRC 2023",
         framework_id="csrc_2023",
         framework_region="CN",
-        framework_version="2023",
+        framework_version=FRAMEWORK_VERSIONS["csrc_2023"],
         company_name=data.company_name,
         report_year=data.report_year,
         total_score=round(total, 3),

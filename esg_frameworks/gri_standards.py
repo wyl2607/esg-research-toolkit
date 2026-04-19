@@ -4,6 +4,7 @@ GRI Universal Standards 2021 评分器。
 from __future__ import annotations
 
 from core.schemas import CompanyESGData
+from .schemas import FRAMEWORK_VERSIONS
 from esg_frameworks.schemas import DimensionScore, FrameworkScoreResult
 
 
@@ -113,7 +114,7 @@ def score(data: CompanyESGData) -> FrameworkScoreResult:
         framework="GRI Universal Standards 2021",
         framework_id="gri_universal",
         framework_region="US",
-        framework_version="GRI-2021",
+        framework_version=FRAMEWORK_VERSIONS["gri_universal"],
         company_name=data.company_name,
         report_year=data.report_year,
         total_score=round(total, 3),

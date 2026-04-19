@@ -4,6 +4,7 @@ SASB 行业标准评分器（简化通用版本）。
 from __future__ import annotations
 
 from core.schemas import CompanyESGData
+from .schemas import FRAMEWORK_VERSIONS
 from esg_frameworks.schemas import DimensionScore, FrameworkScoreResult
 
 
@@ -97,7 +98,7 @@ def score(data: CompanyESGData) -> FrameworkScoreResult:
         framework="SASB Industry Standards",
         framework_id="sasb_standards",
         framework_region="US",
-        framework_version="SASB-2023",
+        framework_version=FRAMEWORK_VERSIONS["sasb_standards"],
         company_name=data.company_name,
         report_year=data.report_year,
         total_score=round(total, 3),
