@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from core.schemas import CompanyESGData
+from .schemas import FRAMEWORK_VERSIONS
 from esg_frameworks.schemas import DimensionScore, FrameworkScoreResult
 
 
@@ -108,7 +109,7 @@ def score(data: CompanyESGData) -> FrameworkScoreResult:
         framework="SEC Climate Disclosure",
         framework_id="sec_climate",
         framework_region="US",
-        framework_version="SEC-2024",
+        framework_version=FRAMEWORK_VERSIONS["sec_climate"],
         company_name=data.company_name,
         report_year=data.report_year,
         total_score=round(total, 3),

@@ -5,6 +5,7 @@ EU Taxonomy 2020 框架适配器
 from __future__ import annotations
 
 from core.schemas import CompanyESGData
+from .schemas import FRAMEWORK_VERSIONS
 from esg_frameworks.schemas import DimensionScore, FrameworkScoreResult
 from taxonomy_scorer.gap_analyzer import analyze_gaps
 from taxonomy_scorer.reporter import generate_json_report
@@ -74,7 +75,7 @@ def score(data: CompanyESGData) -> FrameworkScoreResult:
         framework="EU Taxonomy 2020",
         framework_id="eu_taxonomy",
         framework_region="EU",
-        framework_version="2020/852",
+        framework_version=FRAMEWORK_VERSIONS["eu_taxonomy"],
         company_name=data.company_name,
         report_year=data.report_year,
         total_score=round(total, 3),

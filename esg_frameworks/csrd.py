@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 from core.schemas import CompanyESGData
+from .schemas import FRAMEWORK_VERSIONS
 from esg_frameworks.schemas import DimensionScore, FrameworkScoreResult
 
 
@@ -139,7 +140,7 @@ def score(data: CompanyESGData) -> FrameworkScoreResult:
         framework="EU CSRD / ESRS",
         framework_id="csrd",
         framework_region="EU",
-        framework_version="ESRS-2024",
+        framework_version=FRAMEWORK_VERSIONS["csrd"],
         company_name=data.company_name,
         report_year=data.report_year,
         total_score=round(total, 3),
