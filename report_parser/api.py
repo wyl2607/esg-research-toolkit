@@ -28,7 +28,6 @@ from core.schemas import (
     MergeSourceInput,
 )
 from report_parser.admin_routes import router as admin_router
-from report_parser.industry_routes import router as industry_router
 from report_parser.merge_engine import build_merge_preview
 from report_parser.merge_engine import build_merged_result
 from report_parser.analyzer import AIExtractionError, analyze_esg_data
@@ -47,7 +46,6 @@ from taxonomy_scorer.scorer import get_metric_framework_mappings
 
 router = APIRouter(prefix="/report", tags=["report_parser"])
 v1_router = APIRouter(prefix="/api/v1", tags=["report_parser_v1"])
-router.include_router(industry_router)
 router.include_router(admin_router)
 _MULTIPART_AVAILABLE = any(
     importlib.util.find_spec(module_name) is not None
@@ -897,6 +895,52 @@ def _build_scored_metrics(
                 evidence_anchors.append(anchor)
 
     return scored_metrics, evidence_anchors
+
+
+@router.get("/companies/by-industry/{industry_code}")
+def list_companies_by_industry(
+    industry_code: str,
+    db: Session = Depends(get_db),
+) -> dict:
+    """
+    Return the latest report per company for a given NACE industry code,
+    plus the numeric metric values that feed benchmark aggregation.
+    """
+    from benchmark.compute import BENCHMARK_METRICS
+
+    rows = (
+        db.query(CompanyReport)
+        .filter(CompanyReport.industry_code == industry_code)
+        .order_by(CompanyReport.company_name.asc(), CompanyReport.report_year.desc())
+        .all()
+    )
+
+    # Keep only the latest (highest report_year) row per company.
+    latest_per_company: dict[str, CompanyReport] = {}
+    for r in rows:
+        existing = latest_per_company.get(r.company_name)
+        if existing is None or (r.report_year or 0) > (existing.report_year or 0):
+            latest_per_company[r.company_name] = r
+
+    companies = []
+    for name, r in sorted(latest_per_company.items()):
+        metrics = {}
+        for metric in BENCHMARK_METRICS:
+            val = getattr(r, metric, None)
+            metrics[metric] = float(val) if val is not None else None
+        companies.append({
+            "company_name": name,
+            "report_year": r.report_year,
+            "industry_code": r.industry_code,
+            "industry_sector": r.industry_sector,
+            "metrics": metrics,
+        })
+
+    return {
+        "industry_code": industry_code,
+        "company_count": len(companies),
+        "companies": companies,
+    }
 
 
 @router.get("/companies/{company_name}/{report_year:int}", response_model=CompanyESGData)
