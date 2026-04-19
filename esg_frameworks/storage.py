@@ -10,7 +10,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from core.database import Base
-from esg_frameworks.schemas import FRAMEWORK_VERSIONS, FrameworkScoreResult
+from esg_frameworks.schemas import FrameworkScoreResult, normalize_framework_version
 from report_parser.company_identity import canonical_company_name, company_name_variants
 
 
@@ -68,15 +68,10 @@ def _resolve_framework_version(
     framework_id: str,
     framework_version: str | None,
 ) -> str:
-    canonical_version = FRAMEWORK_VERSIONS.get(framework_id)
-    if not framework_version:
-        return canonical_version or "v1"
-    normalized_version = framework_version.strip()
-    if not normalized_version:
-        return canonical_version or "v1"
-    if normalized_version == "v1" and canonical_version:
-        return canonical_version
-    return normalized_version
+    return normalize_framework_version(
+        framework_id=framework_id,
+        framework_version=framework_version,
+    )
 
 
 def _payload_matches_row(

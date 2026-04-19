@@ -6,6 +6,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.pool import StaticPool
 
 from esg_frameworks.api import router as frameworks_router
+from esg_frameworks.schemas import FrameworkScoreResult
 from esg_frameworks.schemas import (
     FRAMEWORK_DISPLAY_NAMES,
     FRAMEWORK_VERSIONS,
@@ -101,10 +102,17 @@ def test_backfill_framework_versions_updates_legacy_v1_rows() -> None:
                 "framework_version_4": "v1",
             },
         )
+        conn.execute(
+            text(
+                "INSERT INTO framework_analysis_results (framework_id, framework_version) "
+                "VALUES (:framework_id, :framework_version)"
+            ),
+            {"framework_id": "sasb_standards", "framework_version": " V1 "},
+        )
 
     updated_rows = run(bind_engine=engine)
 
-    assert updated_rows == 2
+    assert updated_rows == 3
 
     with engine.connect() as conn:
         rows = conn.execute(
@@ -119,7 +127,79 @@ def test_backfill_framework_versions_updates_legacy_v1_rows() -> None:
         ("csrc_2023", FRAMEWORK_VERSIONS["csrc_2023"]),
         ("csrd", "ESRS-2024"),
         ("custom_framework", "v1"),
+        ("sasb_standards", FRAMEWORK_VERSIONS["sasb_standards"]),
     ]
 
     second_run_updated_rows = run(bind_engine=engine)
     assert second_run_updated_rows == 0
+
+
+def test_backfill_framework_versions_skips_rows_that_would_hit_unique_conflict() -> None:
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                """
+                CREATE TABLE framework_analysis_results (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    company_name TEXT NOT NULL,
+                    report_year INTEGER NOT NULL,
+                    framework_id TEXT NOT NULL,
+                    framework_version TEXT NOT NULL,
+                    payload_hash TEXT NOT NULL,
+                    UNIQUE (company_name, report_year, framework_id, framework_version, payload_hash)
+                )
+                """
+            )
+        )
+        conn.execute(
+            text(
+                "INSERT INTO framework_analysis_results "
+                "(company_name, report_year, framework_id, framework_version, payload_hash) VALUES "
+                "(:company, :year, :framework_id, :legacy_version, :payload_hash), "
+                "(:company, :year, :framework_id, :canonical_version, :payload_hash)"
+            ),
+            {
+                "company": "BMW AG",
+                "year": 2024,
+                "framework_id": "eu_taxonomy",
+                "legacy_version": "v1",
+                "canonical_version": FRAMEWORK_VERSIONS["eu_taxonomy"],
+                "payload_hash": "same-hash",
+            },
+        )
+
+    updated_rows = run(bind_engine=engine)
+    assert updated_rows == 0
+
+    with engine.connect() as conn:
+        versions = conn.execute(
+            text(
+                "SELECT framework_version FROM framework_analysis_results "
+                "ORDER BY framework_version"
+            )
+        ).scalars().all()
+    assert versions == [FRAMEWORK_VERSIONS["eu_taxonomy"], "v1"]
+
+
+def test_framework_score_result_normalizes_uppercase_legacy_version() -> None:
+    result = FrameworkScoreResult(
+        framework="EU Taxonomy",
+        framework_id="eu_taxonomy",
+        framework_region="EU",
+        company_name="BMW AG",
+        report_year=2024,
+        framework_version=" V1 ",
+        total_score=0.8,
+        grade="B",
+        dimensions=[],
+        gaps=[],
+        recommendations=[],
+        coverage_pct=90.0,
+    )
+    assert result.framework_version == FRAMEWORK_VERSIONS["eu_taxonomy"]

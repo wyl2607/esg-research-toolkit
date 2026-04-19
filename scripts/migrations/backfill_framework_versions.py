@@ -35,18 +35,36 @@ def run(bind_engine: Engine | None = None) -> int:
         )
         return fixed
 
+    dedupe_columns = {"company_name", "report_year", "payload_hash"}
+    has_dedupe_columns = dedupe_columns.issubset(available_columns)
+
+    if has_dedupe_columns:
+        update_sql = text(
+            "UPDATE framework_analysis_results "
+            "SET framework_version = :ver "
+            "WHERE framework_id = :fid "
+            "AND lower(trim(framework_version)) = 'v1' "
+            "AND NOT EXISTS ("
+            "  SELECT 1 FROM framework_analysis_results existing "
+            "  WHERE existing.company_name = framework_analysis_results.company_name "
+            "    AND existing.report_year = framework_analysis_results.report_year "
+            "    AND existing.framework_id = framework_analysis_results.framework_id "
+            "    AND existing.payload_hash = framework_analysis_results.payload_hash "
+            "    AND existing.framework_version = :ver"
+            ")"
+        )
+    else:
+        update_sql = text(
+            "UPDATE framework_analysis_results "
+            "SET framework_version = :ver "
+            "WHERE framework_id = :fid "
+            "AND lower(trim(framework_version)) = 'v1' "
+            "AND framework_version != :ver"
+        )
+
     with target_engine.begin() as conn:
         for framework_id, canonical_version in FRAMEWORK_VERSIONS.items():
-            result = conn.execute(
-                text(
-                    "UPDATE framework_analysis_results "
-                    "SET framework_version = :ver "
-                    "WHERE framework_id = :fid "
-                    "AND framework_version = 'v1' "
-                    "AND framework_version != :ver"
-                ),
-                {"ver": canonical_version, "fid": framework_id},
-            )
+            result = conn.execute(update_sql, {"ver": canonical_version, "fid": framework_id})
             fixed += result.rowcount
     print(f"Backfill complete: {fixed} rows updated")
     return fixed

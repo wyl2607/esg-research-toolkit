@@ -156,6 +156,7 @@ def get_saved_results(
     payload: list[dict[str, Any]] = []
     for row in rows:
         result = json.loads(row.result_payload)
+        result["framework_version"] = row.framework_version
         result["analysis_result_id"] = row.id
         result["stored_at"] = row.created_at.isoformat() if row.created_at else None
         payload.append(result)
