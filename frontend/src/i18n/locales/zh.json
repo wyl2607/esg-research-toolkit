@@ -67,7 +67,12 @@
     "coverageSortDesc": "高 → 低",
     "coverageSortAsc": "低 → 高",
     "backendOfflineTitle": "API 服务器未运行",
-    "backendOfflineBody": "请启动后端服务（uvicorn main:app）以加载实时数据。LCOE 计算器等静态页面仍可正常使用。"
+    "backendOfflineBody": "请启动后端服务（uvicorn main:app）以加载实时数据。LCOE 计算器等静态页面仍可正常使用。",
+    "coverageProgressLabel": "覆盖进度",
+    "coverageAverage": "平均覆盖 {{pct}}%",
+    "coverageBandGood": "良好（≥80%）{{count}} 个字段",
+    "coverageBandPartial": "部分（50–79%）{{count}} 个字段",
+    "coverageBandWeak": "不足（<50%）{{count}} 个字段"
   },
   "upload": {
     "kicker": "文档录入",
@@ -604,6 +609,152 @@
     "invalidJson": "JSON 草稿格式无效。",
     "previewTitle": "请求预览",
     "viewCompanies": "查看公司列表"
+  },
+  "coverageField": {
+    "unknownTitle": "未知字段",
+    "unknownBody": "字段“{{field}}”不存在",
+    "backToDashboard": "返回仪表盘",
+    "directionHigher": "数值越高越好",
+    "directionLower": "数值越低越好",
+    "subtitleWithTarget": "单位：{{unit}} · {{direction}} · 目标：{{target}}",
+    "subtitleWithoutTarget": "单位：{{unit}} · {{direction}}",
+    "kpis": {
+      "withDataCompanies": "有数据公司",
+      "onTargetCompanies": "达成或超过目标"
+    },
+    "states": {
+      "loadingTitle": "加载中…",
+      "loadingBody": "正在读取公司数据",
+      "errorTitle": "加载失败",
+      "errorBody": "无法读取公司列表"
+    },
+    "table": {
+      "valueWithUnit": "数值（{{unit}}）",
+      "targetWithUnit": "目标（{{unit}}）",
+      "achievement": "达成率",
+      "noData": "无数据"
+    },
+    "mobileTarget": "目标 {{target}}",
+    "labels": {
+      "renewable_energy_pct": "可再生能源占比",
+      "taxonomy_aligned_revenue_pct": "分类法收入对齐率",
+      "taxonomy_aligned_capex_pct": "分类法资本开支对齐率",
+      "waste_recycled_pct": "废弃物回收率",
+      "female_pct": "女性员工占比",
+      "scope1_co2e_tonnes": "Scope 1",
+      "scope2_co2e_tonnes": "Scope 2",
+      "scope3_co2e_tonnes": "Scope 3",
+      "energy_consumption_mwh": "能源消耗",
+      "water_usage_m3": "用水量"
+    }
+  },
+  "designPreview": {
+    "hero": {
+      "kicker": "内部 · 设计预览",
+      "title": "设计系统 · 选择你的变体",
+      "subtitle": "逐段滚动查看，并决定哪个变体（A / B / C）应被锁定为默认方案。选定组合将成为 Phase 2 页面迁移的基线。"
+    },
+    "nav": {
+      "header": "页头",
+      "stat-cards": "统计卡",
+      "banners": "提示横幅",
+      "filter-bar": "筛选栏",
+      "companies-mock": "公司页样稿"
+    },
+    "sections": {
+      "header": {
+        "title": "页头 · 3 个变体",
+        "subtitle": "决定：是否要 kicker、KPI、操作按钮放右侧还是下方？"
+      },
+      "statCards": {
+        "title": "统计卡 · 2 种密度",
+        "subtitle": "同一组件，决定默认尺寸"
+      },
+      "banners": {
+        "title": "提示横幅 · 4 种语义色调",
+        "subtitle": "替换当前同时存在的 5 种横幅配色"
+      },
+      "filterBar": {
+        "title": "筛选栏",
+        "subtitle": "统一选择器与操作按钮行的模式"
+      },
+      "companiesMock": {
+        "title": "完整公司页 · 新视觉样稿",
+        "subtitle": "把 6 个基础组件组合成一个页面，这就是 Phase 2 要交付的效果。"
+      }
+    },
+    "variants": {
+      "headerA": "A · 简洁版（推荐）",
+      "headerB": "B · 带 kicker",
+      "headerC": "C · 无 KPI，仅标题与操作",
+      "statCardsA": "A · 紧凑（p-4, text-3xl）· 推荐",
+      "statCardsB": "B · 宽松（p-6, text-5xl）· 当前仪表盘风格",
+      "filterBarA": "A · 字段加主操作",
+      "filterBarB": "B · 搜索、排序标签、导出分组"
+    },
+    "samples": {
+      "companiesTitle": "公司",
+      "companiesSubtitle": "把已保存的公司案例当作可复用的分析对象来查看。",
+      "companiesKicker": "公司情报",
+      "compareTitle": "公司对比",
+      "compareSubtitle": "把多个公司案例并排放在一起比较。"
+    },
+    "actions": {
+      "csvExport": "导出 CSV",
+      "reset": "重置",
+      "startCompare": "开始对比",
+      "recalculateBenchmarks": "重新计算基准",
+      "sortByName": "按名称排序",
+      "sortByYear": "按年份排序",
+      "sortByTaxonomy": "按分类法排序",
+      "csv": "CSV",
+      "json": "JSON"
+    },
+    "kpis": {
+      "companies": "公司数",
+      "years": "年份数",
+      "datasets": "数据集数"
+    },
+    "statCards": {
+      "avgTaxonomy": "平均分类法对齐率",
+      "avgRenewable": "平均可再生能源占比",
+      "yearsHint": "2022–2024"
+    },
+    "banners": {
+      "infoTitle": "说明",
+      "infoBody": "该视图镜像展示企业在 EU Taxonomy 下披露的内容。",
+      "warningTitle": "样本较小",
+      "warningBody": "当前选择中存在样本量低至 1 的情况，请谨慎解读。",
+      "successTitle": "关键结论",
+      "successBody": "可再生能源占比上升了 +6.0%，同时 Scope 1 排放下降了 10,000 吨。",
+      "modeTitle": "项目分析模式",
+      "modeBody": "输入项是由用户提供的技术参数。"
+    },
+    "filters": {
+      "industry": "行业",
+      "industryPlaceholder": "电力生产",
+      "industryOption": "D35.11 — 电力生产",
+      "year": "年份",
+      "search": "搜索",
+      "searchPlaceholder": "搜索公司…"
+    },
+    "companiesMock": {
+      "trendBanner": "36 家公司中有 3 家具备 2022–2024 趋势数据，其余仅有 2024 年。",
+      "cardDescription": "sustainability_report · 2024",
+      "scope1": "Scope 1",
+      "employeesShort": "员工",
+      "people": "人",
+      "taxonomy": "分类法",
+      "revenuePercent": "收入占比 %"
+    },
+    "footer": {
+      "title": "决策速查",
+      "body": "告诉 Claude：“Header = A, StatCard = A, FilterBar A+B, Companies mock looks good”。他会据此锁定方案，并交接给 Codex 的 Phase 2 迁移脚本。",
+      "bulletHeader": "• Header · A（简洁）/ B（带 kicker）/ C（无 KPI）",
+      "bulletStatCards": "• StatCard · A（紧凑）/ B（宽松）",
+      "bulletFilterBar": "• 筛选栏 · A 和 B 都保留（适配不同页面类型）",
+      "bulletBanners": "• 横幅 · 保留 4 种语义色调，它们各有含义"
+    }
   },
   "errors": {
     "networkError": "网络错误——请检查网络连接",

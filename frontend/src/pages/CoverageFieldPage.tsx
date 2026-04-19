@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { listCompanies } from '@/lib/api'
 import { FIELD_CONFIG_MAP } from '@/lib/coverage-field-config'
 import { QueryStateCard } from '@/components/QueryStateCard'
@@ -42,6 +43,7 @@ function AchievementBadge({ pct }: { pct: number }) {
 }
 
 export function CoverageFieldPage() {
+  const { t } = useTranslation()
   const { field = '' } = useParams<{ field: string }>()
   const config = FIELD_CONFIG_MAP[field]
 
@@ -80,19 +82,27 @@ export function CoverageFieldPage() {
     return (
       <PageContainer>
         <PageHeader
-          title="未知字段"
-          subtitle={`字段 "${field}" 不存在`}
+          title={t('coverageField.unknownTitle')}
+          subtitle={t('coverageField.unknownBody', { field })}
           actions={
             <Link to="/" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800">
-              <ArrowLeft size={14} /> 返回仪表盘
+              <ArrowLeft size={14} /> {t('coverageField.backToDashboard')}
             </Link>
           }
         />
-        <QueryStateCard tone="error" title="未知字段" body={`字段 "${field}" 不存在`} />
+        <QueryStateCard
+          tone="error"
+          title={t('coverageField.unknownTitle')}
+          body={t('coverageField.unknownBody', { field })}
+        />
       </PageContainer>
     )
   }
 
+  const directionLabel = config.higherIsBetter
+    ? t('coverageField.directionHigher')
+    : t('coverageField.directionLower')
+  const fieldLabel = t(`coverageField.labels.${config.field}`, { defaultValue: config.label })
   const withDataCount = rows.filter((r) => r.value !== null).length
   const overTargetCount =
     config.target !== null
@@ -102,25 +112,42 @@ export function CoverageFieldPage() {
   return (
     <PageContainer>
       <PageHeader
-        title={config.label}
-        subtitle={`单位：${config.unit} · ${config.higherIsBetter ? '越高越好' : '越低越好'}${config.target !== null ? ` · 目标：${config.format(config.target)}` : ''}`}
+        title={fieldLabel}
+        subtitle={config.target !== null
+          ? t('coverageField.subtitleWithTarget', {
+              unit: config.unit,
+              direction: directionLabel,
+              target: config.format(config.target),
+            })
+          : t('coverageField.subtitleWithoutTarget', {
+              unit: config.unit,
+              direction: directionLabel,
+            })}
         actions={
           <Link to="/" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-amber-700">
-            <ArrowLeft size={14} /> 返回仪表盘
+            <ArrowLeft size={14} /> {t('coverageField.backToDashboard')}
           </Link>
         }
         kpis={[
-          { label: '有数据公司', value: withDataCount },
+          { label: t('coverageField.kpis.withDataCompanies'), value: withDataCount },
           ...(config.target !== null
-            ? [{ label: '达成或超过目标', value: overTargetCount }]
+            ? [{ label: t('coverageField.kpis.onTargetCompanies'), value: overTargetCount }]
             : []),
         ]}
       />
 
       {isLoading ? (
-        <QueryStateCard tone="loading" title="加载中…" body="正在读取公司数据" />
+        <QueryStateCard
+          tone="loading"
+          title={t('coverageField.states.loadingTitle')}
+          body={t('coverageField.states.loadingBody')}
+        />
       ) : error ? (
-        <QueryStateCard tone="error" title="加载失败" body="无法读取公司列表" />
+        <QueryStateCard
+          tone="error"
+          title={t('coverageField.states.errorTitle')}
+          body={t('coverageField.states.errorBody')}
+        />
       ) : (
         <Panel className="overflow-hidden">
           <div className="hidden overflow-x-auto md:block">
@@ -128,18 +155,18 @@ export function CoverageFieldPage() {
               <thead className="border-b editorial-table-header">
                 <tr>
                   <th className="w-8 px-4 py-3 text-left font-medium text-slate-500">#</th>
-                  <th className="px-4 py-3 text-left font-medium text-slate-600">公司</th>
-                  <th className="px-4 py-3 text-left font-medium text-slate-600">年份</th>
+                  <th className="px-4 py-3 text-left font-medium text-slate-600">{t('common.company')}</th>
+                  <th className="px-4 py-3 text-left font-medium text-slate-600">{t('common.year')}</th>
                   <th className="px-4 py-3 text-right font-medium text-slate-600">
-                    数值 ({config.unit})
+                    {t('coverageField.table.valueWithUnit', { unit: config.unit })}
                   </th>
                   {config.target !== null && (
                     <>
                       <th className="px-4 py-3 text-right font-medium text-slate-600">
-                        目标 ({config.unit})
+                        {t('coverageField.table.targetWithUnit', { unit: config.unit })}
                       </th>
                       <th className="px-4 py-3 text-right font-medium text-slate-600">
-                        达成率
+                        {t('coverageField.table.achievement')}
                       </th>
                     </>
                   )}
@@ -167,7 +194,9 @@ export function CoverageFieldPage() {
                     </td>
                     <td className="px-4 py-3 text-slate-500">{row.company.report_year}</td>
                     <td className="px-4 py-3 text-right font-mono">
-                      {row.value !== null ? config.format(row.value) : <span className="text-slate-300">无数据</span>}
+                      {row.value !== null ? config.format(row.value) : (
+                        <span className="text-slate-300">{t('coverageField.table.noData')}</span>
+                      )}
                     </td>
                     {config.target !== null && (
                       <>
@@ -237,7 +266,7 @@ export function CoverageFieldPage() {
                       />
                     </div>
                     <p className="mt-0.5 text-right text-xs text-slate-400">
-                      目标 {config.format(config.target)}
+                      {t('coverageField.mobileTarget', { target: config.format(config.target) })}
                     </p>
                   </div>
                 )}

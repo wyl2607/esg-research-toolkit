@@ -20,18 +20,6 @@ const DashboardHeavyCharts = lazy(() =>
   }))
 )
 
-const coverageLabelMap: Record<string, string> = {
-  scope1_co2e_tonnes: 'Scope 1',
-  scope2_co2e_tonnes: 'Scope 2',
-  scope3_co2e_tonnes: 'Scope 3',
-  energy_consumption_mwh: 'Energy',
-  renewable_energy_pct: 'Renewable %',
-  water_usage_m3: 'Water',
-  waste_recycled_pct: 'Waste %',
-  taxonomy_aligned_revenue_pct: 'Taxonomy %',
-  female_pct: 'Female %',
-}
-
 function CoverageBar({ label, pct, href }: { label: string; pct: number; href?: string }) {
   const colorClass = pct >= 80 ? 'bg-green-500' : pct >= 50 ? 'bg-yellow-400' : 'bg-red-400'
   const labelEl = href ? (
@@ -214,8 +202,10 @@ export function DashboardPage() {
         {coverageRows.length > 0 && (
           <div className="rounded-xl border border-stone-100 bg-stone-50 px-4 py-3">
             <div className="mb-2 flex items-center justify-between text-xs text-slate-500">
-              <span>数据采集进展</span>
-              <span className="font-semibold text-slate-700">{overallProgress}% 平均覆盖</span>
+              <span>{t('dashboard.coverageProgressLabel')}</span>
+              <span className="font-semibold text-slate-700">
+                {t('dashboard.coverageAverage', { pct: overallProgress })}
+              </span>
             </div>
             <div className="h-2 w-full overflow-hidden rounded-full bg-stone-200">
               <div
@@ -226,15 +216,15 @@ export function DashboardPage() {
             <div className="mt-2 flex flex-wrap gap-3 text-xs">
               <span className="flex items-center gap-1">
                 <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
-                <span className="text-slate-600">良好 (≥80%) <strong>{goodFields}</strong> 个字段</span>
+                <span className="text-slate-600">{t('dashboard.coverageBandGood', { count: goodFields })}</span>
               </span>
               <span className="flex items-center gap-1">
                 <span className="inline-block h-2 w-2 rounded-full bg-yellow-400" />
-                <span className="text-slate-600">部分 (50–79%) <strong>{partialFields}</strong> 个字段</span>
+                <span className="text-slate-600">{t('dashboard.coverageBandPartial', { count: partialFields })}</span>
               </span>
               <span className="flex items-center gap-1">
                 <span className="inline-block h-2 w-2 rounded-full bg-red-400" />
-                <span className="text-slate-600">不足 (&lt;50%) <strong>{weakFields}</strong> 个字段</span>
+                <span className="text-slate-600">{t('dashboard.coverageBandWeak', { count: weakFields })}</span>
               </span>
             </div>
           </div>
@@ -251,7 +241,7 @@ export function DashboardPage() {
             {sortedCoverageRows.map(([field, pct]) => (
               <CoverageBar
                 key={field}
-                label={coverageLabelMap[field] ?? field}
+                label={t(`coverageField.labels.${field}`, { defaultValue: field })}
                 pct={pct}
                 href={`/coverage/${field}`}
               />
