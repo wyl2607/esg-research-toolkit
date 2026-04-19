@@ -28,6 +28,15 @@ echo "[guard] scanning range: $RANGE"
 
 FAILED=0
 
+# Worktree 收敛守卫：默认启用，可用 CONVERGE_WORKTREE_GUARD=0 临时关闭。
+if [ "${CONVERGE_WORKTREE_GUARD:-1}" = "1" ] && [ -x scripts/automation/converge_worktrees.sh ]; then
+  if ! scripts/automation/converge_worktrees.sh --assert-no-lanes --assert-no-lane-artifacts >/tmp/review_push_guard_converge.out 2>&1; then
+    echo "[guard][FAIL] worktree converge guard failed"
+    cat /tmp/review_push_guard_converge.out
+    FAILED=1
+  fi
+fi
+
 # 文件分区审计：必须归类，且 local-only 变更默认阻断（删除 local 文件允许）
 if ! scripts/review_file_zones.sh --range "$RANGE" --block-local; then
   FAILED=1

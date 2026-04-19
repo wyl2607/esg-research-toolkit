@@ -35,6 +35,8 @@ CLEAN_LANE_VENV_COPIES=0
 DELETE_LOCAL_BRANCHES=0
 DELETE_REMOTE_BRANCHES=0
 INCLUDE_REPO_ROOT=1
+ASSERT_NO_LANES=0
+ASSERT_NO_LANE_ARTIFACTS=0
 
 LANES=()
 EXPLICIT_BRANCHES=()
@@ -66,6 +68,8 @@ Options:
   --remove-worktrees               回收 lane worktree（保留分支，除非另开删除分支开关）
   --delete-local-branches          删除 lane 对应本地分支（默认安全模式，仅删已并入 main）
   --delete-remote-branches         删除 lane 对应远程分支（origin/<branch>）
+  --assert-no-lanes                守卫模式：若存在任何附加 worktree，直接退出 1
+  --assert-no-lane-artifacts       守卫模式：若 lane 下存在重型产物，直接退出 1
 
   --no-repo-root                   清理产物时不处理主仓，只处理 lane
   --force                          强制模式：允许 dirty worktree remove / 强制删除未并入分支
@@ -120,6 +124,14 @@ parse_args() {
         DELETE_REMOTE_BRANCHES=1
         shift
         ;;
+      --assert-no-lanes)
+        ASSERT_NO_LANES=1
+        shift
+        ;;
+      --assert-no-lane-artifacts)
+        ASSERT_NO_LANE_ARTIFACTS=1
+        shift
+        ;;
       --branch)
         EXPLICIT_BRANCHES+=("$2")
         shift 2
@@ -171,6 +183,15 @@ collect_auto_lanes() {
         ;;
     esac
   done < <(git -C "$REPO_PATH" worktree list --porcelain)
+
+  # Handle final stanza when porcelain output does not end with a blank line.
+  if [ -n "$current_path" ]; then
+    local abs_path
+    abs_path="$(cd "$current_path" 2>/dev/null && pwd || true)"
+    if [ -n "$abs_path" ] && [ "$abs_path" != "$REPO_PATH" ]; then
+      LANES+=("$abs_path")
+    fi
+  fi
 }
 
 uniq_lanes() {
@@ -316,6 +337,23 @@ clean_artifacts_under_path() {
   fi
 }
 
+lane_artifact_kb() {
+  local lane="$1"
+  local rel target total=0
+  for rel in "${ARTIFACT_PATHS[@]}"; do
+    target="$lane/$rel"
+    if [ -e "$target" ]; then
+      total=$(( total + $(du -sk "$target" 2>/dev/null | awk '{print $1}') ))
+    fi
+  done
+  if [ "$CLEAN_LANE_VENV_COPIES" -eq 1 ]; then
+    if [ -d "$lane/.venv" ] && [ ! -L "$lane/.venv" ]; then
+      total=$(( total + $(du -sk "$lane/.venv" 2>/dev/null | awk '{print $1}') ))
+    fi
+  fi
+  echo "$total"
+}
+
 remove_lane_worktree() {
   local lane="$1"
   local branch="$2"
@@ -433,6 +471,30 @@ main() {
 
   if [ "${LANES[0]+x}" != "x" ]; then
     warn "no lane worktree detected"
+  elif [ "$ASSERT_NO_LANES" -eq 1 ]; then
+    error "guard failed: lane worktree still exists"
+    local lane
+    for lane in "${LANES[@]-}"; do
+      [ -z "$lane" ] && continue
+      error "  lane: $lane"
+    done
+    exit 1
+  fi
+
+  if [ "$ASSERT_NO_LANE_ARTIFACTS" -eq 1 ] && [ "${LANES[0]+x}" = "x" ]; then
+    local lane artifact_kb
+    local failed=0
+    for lane in "${LANES[@]-}"; do
+      [ -z "$lane" ] && continue
+      artifact_kb="$(lane_artifact_kb "$lane")"
+      if [ "$artifact_kb" -gt 0 ]; then
+        error "guard failed: lane has heavy artifacts ($(awk -v kb=\"$artifact_kb\" 'BEGIN{printf \"%.1fMB\", kb/1024}')) -> $lane"
+        failed=1
+      fi
+    done
+    if [ "$failed" -ne 0 ]; then
+      exit 1
+    fi
   fi
 
   local lane
