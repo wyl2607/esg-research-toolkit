@@ -47,10 +47,26 @@ function deltaNumber(current: number | null | undefined, previous: number | null
   return current - previous
 }
 
+function deltaPercent(current: number | null | undefined, previous: number | null | undefined) {
+  if (current == null || previous == null || previous === 0) return null
+  return ((current - previous) / Math.abs(previous)) * 100
+}
+
 function deltaPctLabel(value: number | null | undefined) {
   if (value == null) return '—'
   const prefix = value > 0 ? '+' : ''
   return `${prefix}${value.toFixed(1)}`
+}
+
+function deltaPercentLabel(value: number | null | undefined) {
+  if (value == null) return '—'
+  const prefix = value > 0 ? '+' : ''
+  return `${prefix}${value.toFixed(1)}%`
+}
+
+function deltaToneClass(value: number | null | undefined) {
+  if (value == null) return 'text-slate-400'
+  return value >= 0 ? 'text-emerald-600' : 'text-rose-600'
 }
 
 function metricDisclosureLabel(t: (key: string) => string, metricKey: string) {
@@ -173,7 +189,9 @@ type TrendDatum = {
 }
 
 function buildCompanyTrendData(trend: CompanyTrendPoint[]): TrendDatum[] {
-  return trend.map((point) => ({
+  return [...trend]
+    .sort((a, b) => a.year - b.year)
+    .map((point) => ({
     year: point.year,
     scope1: point.scope1,
     renewable: point.renewable_pct,
@@ -241,6 +259,17 @@ export function CompanyProfilePage() {
     () => buildCompanyTrendData(profile?.trend ?? []),
     [profile]
   )
+  const sortedTrendPoints = useMemo(
+    () => [...(profile?.trend ?? [])].sort((a, b) => a.year - b.year),
+    [profile]
+  )
+  const periodMetricsByYear = useMemo(() => {
+    const entries = (profile?.periods ?? []).map((period) => [
+      period.report_year,
+      period.merged_result.merged_metrics,
+    ] as const)
+    return new Map(entries)
+  }, [profile])
 
   const frameworkScores: FrameworkDisplayResult[] = useMemo(() => {
     if (!profile) return []
@@ -300,9 +329,44 @@ export function CompanyProfilePage() {
   )
 
   const previousTrendPoint = useMemo(() => {
-    if (!profile || profile.trend.length < 2) return null
-    return profile.trend[profile.trend.length - 2]
-  }, [profile])
+    if (sortedTrendPoints.length < 2) return null
+    return sortedTrendPoints[sortedTrendPoints.length - 2]
+  }, [sortedTrendPoints])
+
+  const yoyDeltaCard = useMemo(() => {
+    if (!profile || sortedTrendPoints.length < 2) return null
+    const latestTrendPoint = sortedTrendPoints[sortedTrendPoints.length - 1]
+    const previous = sortedTrendPoints[sortedTrendPoints.length - 2]
+    const latestMetrics =
+      periodMetricsByYear.get(latestTrendPoint.year) ?? profile.latest_metrics
+    const previousMetrics = periodMetricsByYear.get(previous.year)
+
+    const co2eDeltaPct = deltaPercent(
+      latestMetrics.scope1_co2e_tonnes ?? latestTrendPoint.scope1,
+      previousMetrics?.scope1_co2e_tonnes ?? previous.scope1
+    )
+    const revenueDeltaPct = deltaPercent(
+      latestMetrics.total_revenue_eur,
+      previousMetrics?.total_revenue_eur ?? null
+    )
+    const alignmentDeltaPct = deltaPercent(
+      latestMetrics.taxonomy_aligned_revenue_pct ??
+        latestTrendPoint.taxonomy_aligned_revenue_pct,
+      previousMetrics?.taxonomy_aligned_revenue_pct ??
+        previous.taxonomy_aligned_revenue_pct
+    )
+
+    return {
+      previousYear: previous.year,
+      co2eDeltaPct,
+      revenueDeltaPct,
+      alignmentDeltaPct,
+      hasAnyDelta:
+        co2eDeltaPct != null ||
+        revenueDeltaPct != null ||
+        alignmentDeltaPct != null,
+    }
+  }, [periodMetricsByYear, profile, sortedTrendPoints])
 
   const yoySummary = useMemo(() => {
     if (!profile) return null
@@ -960,61 +1024,65 @@ export function CompanyProfilePage() {
         </Suspense>
       </DeferredHeavyCharts>
 
-      <Panel
-        title={(
-          <span className="flex items-center gap-2 text-base">
-            <TrendingUp size={16} className="text-indigo-600" />
-            {t('profile.yoyTitle')}
-          </span>
-        )}
-      >
-        <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-lg border bg-slate-50 px-4 py-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-              {t('profile.yoyRenewable')}
-            </p>
-            <p className="mt-2 text-2xl font-semibold text-emerald-600">
-              {yoySummary?.renewableDelta != null ? `${yoySummary.renewableDelta >= 0 ? '+' : ''}${yoySummary.renewableDelta.toFixed(1)}%` : '—'}
-            </p>
-            <p className="mt-1 text-xs text-slate-500">
-              {t('profile.yoyComparedTo', { year: yoySummary?.previousYear ?? '—' })}
-            </p>
-          </div>
-          <div className="rounded-lg border bg-slate-50 px-4 py-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-              {t('profile.yoyScope1')}
-            </p>
-            <p className={`mt-2 text-2xl font-semibold ${yoySummary?.scope1Delta != null && yoySummary.scope1Delta <= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-              {yoySummary?.scope1Delta != null ? `${yoySummary.scope1Delta >= 0 ? '+' : ''}${yoySummary.scope1Delta.toLocaleString(locale)}` : '—'}
-            </p>
-            <p className="mt-1 text-xs text-slate-500">
-              {t('profile.yoyScope1Hint')}
-            </p>
-          </div>
-          <div className="rounded-lg border bg-slate-50 px-4 py-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-              {t('profile.yoyTaxonomy')}
-            </p>
-            <p className="mt-2 text-2xl font-semibold text-indigo-600">
-              {yoySummary?.taxonomyDelta != null ? `${yoySummary.taxonomyDelta >= 0 ? '+' : ''}${yoySummary.taxonomyDelta.toFixed(1)}%` : '—'}
-            </p>
-            <p className="mt-1 text-xs text-slate-500">
-              {t('profile.yoyTaxonomyHint')}
-            </p>
-          </div>
-          <div className="rounded-lg border bg-white px-4 py-4 md:col-span-3">
-            <p className="text-sm leading-6 text-slate-700">
-              {yoySummary?.hasAnyDelta
-                ? t('profile.yoyNarrativeReady', {
-                    year: yoySummary.previousYear ?? '—',
-                    renewableDelta: yoySummary.renewableDelta != null ? `${yoySummary.renewableDelta >= 0 ? '+' : ''}${yoySummary.renewableDelta.toFixed(1)}%` : '—',
-                    taxonomyDelta: yoySummary.taxonomyDelta != null ? `${yoySummary.taxonomyDelta >= 0 ? '+' : ''}${yoySummary.taxonomyDelta.toFixed(1)}%` : '—',
-                  })
-                : t('profile.yoyNarrativeMissing')}
-            </p>
-          </div>
+      {yoyDeltaCard && (
+        <div data-testid="yoy-delta-card">
+          <Panel
+            title={(
+              <span className="flex items-center gap-2 text-base">
+                <TrendingUp size={16} className="text-indigo-600" />
+                {t('profile.yoyTitle')}
+              </span>
+            )}
+          >
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="rounded-lg border bg-slate-50 px-4 py-4">
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                  YoY CO2e
+                </p>
+                <p className={`mt-2 text-2xl font-semibold ${deltaToneClass(yoyDeltaCard.co2eDeltaPct)}`}>
+                  {deltaPercentLabel(yoyDeltaCard.co2eDeltaPct)}
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  {t('profile.yoyComparedTo', { year: yoyDeltaCard.previousYear ?? '—' })}
+                </p>
+              </div>
+              <div className="rounded-lg border bg-slate-50 px-4 py-4">
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                  YoY Revenue
+                </p>
+                <p className={`mt-2 text-2xl font-semibold ${deltaToneClass(yoyDeltaCard.revenueDeltaPct)}`}>
+                  {deltaPercentLabel(yoyDeltaCard.revenueDeltaPct)}
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  {t('profile.yoyComparedTo', { year: yoyDeltaCard.previousYear ?? '—' })}
+                </p>
+              </div>
+              <div className="rounded-lg border bg-slate-50 px-4 py-4">
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                  YoY Alignment
+                </p>
+                <p className={`mt-2 text-2xl font-semibold ${deltaToneClass(yoyDeltaCard.alignmentDeltaPct)}`}>
+                  {deltaPercentLabel(yoyDeltaCard.alignmentDeltaPct)}
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  {t('profile.yoyComparedTo', { year: yoyDeltaCard.previousYear ?? '—' })}
+                </p>
+              </div>
+              <div className="rounded-lg border bg-white px-4 py-4 md:col-span-3">
+                <p className="text-sm leading-6 text-slate-700">
+                  {yoySummary?.hasAnyDelta
+                    ? t('profile.yoyNarrativeReady', {
+                        year: yoySummary.previousYear ?? '—',
+                        renewableDelta: yoySummary.renewableDelta != null ? `${yoySummary.renewableDelta >= 0 ? '+' : ''}${yoySummary.renewableDelta.toFixed(1)}%` : '—',
+                        taxonomyDelta: yoySummary.taxonomyDelta != null ? `${yoySummary.taxonomyDelta >= 0 ? '+' : ''}${yoySummary.taxonomyDelta.toFixed(1)}%` : '—',
+                      })
+                    : t('profile.yoyNarrativeMissing')}
+                </p>
+              </div>
+            </div>
+          </Panel>
         </div>
-      </Panel>
+      )}
 
       <Panel
         title={(

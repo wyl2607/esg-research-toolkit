@@ -53,6 +53,17 @@ export function CompanyProfileHeavyCharts({
   scope1Label,
   renewableLabel,
 }: CompanyProfileHeavyChartsProps) {
+  const tooltipValueLabel = (value: unknown) => {
+    if (Array.isArray(value)) return value.map((item) => String(item)).join(', ')
+    if (value == null) return '—'
+    if (typeof value === 'string') return value
+    if (typeof value === 'number') {
+      if (Number.isNaN(value)) return '—'
+      return Number.isInteger(value) ? value.toLocaleString() : value.toFixed(1)
+    }
+    return String(value)
+  }
+
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <Card>
@@ -98,16 +109,22 @@ export function CompanyProfileHeavyCharts({
         <CardContent className="space-y-3" data-testid="company-profile-trend-chart">
           <ResponsiveContainer width="100%" height={260} minWidth={0} minHeight={0}>
             <LineChart data={trendData}>
-              <XAxis dataKey="year" />
-              <YAxis />
-              <Tooltip />
+              <XAxis dataKey="year" type="number" allowDecimals={false} />
+              <YAxis domain={['auto', 'auto']} />
+              <Tooltip
+                labelFormatter={(year) => `Year ${year}`}
+                formatter={(value: unknown, name: unknown) => [
+                  tooltipValueLabel(value),
+                  String(name ?? ''),
+                ]}
+              />
               <Legend />
               <Line
                 type="monotone"
                 dataKey="scope1"
                 stroke="#ef4444"
                 strokeWidth={2}
-                dot
+                dot={{ r: 4 }}
                 connectNulls={false}
                 name={scope1Label}
               />
@@ -116,7 +133,7 @@ export function CompanyProfileHeavyCharts({
                 dataKey="renewable"
                 stroke="#16a34a"
                 strokeWidth={2}
-                dot
+                dot={{ r: 4 }}
                 connectNulls={false}
                 name={renewableLabel}
               />
