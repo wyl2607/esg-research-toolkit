@@ -1,0 +1,22 @@
+你是该仓库的维护 agent。请完成 CR-02：清理 report_parser/industry_routes.py 死代码。
+
+背景:
+- T30F 已把 /companies/by-industry/{industry_code} 端点移进 report_parser/api.py 主 router。
+- report_parser/industry_routes.py 已不再被 main.py include，属于孤立文件。
+- 详见 docs/policies/project-consistency-rules.md §2。
+
+任务:
+1. grep 验证 industry_routes 没有任何 import / include 引用（除了文件自身）。
+2. 若确认无引用，`git rm report_parser/industry_routes.py`。
+3. 若发现仍有引用，改为在 main.py 重新 include（不要改 API 形状）。
+4. 跑 `pytest -q tests/test_report_parser*.py tests/test_api*.py` 验证不回归。
+5. 提交：消息格式 `chore(report_parser): remove dead industry_routes module (CR-02)`。
+
+硬约束:
+- 不要跳过 hooks，不要 --no-verify。
+- 不要 push，只本地 commit。
+- 不要修改 report_parser/api.py 的端点签名。
+- 若任何测试 fail，revert 并报告根因，不要盲目修补。
+
+完成后输出:
+  CR-02_RESULT: <removed|re-included> commit=<sha> tests=<passed/failed>
