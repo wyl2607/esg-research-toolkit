@@ -807,7 +807,7 @@ export function CompanyProfilePage() {
             ) : (
               <div className="mt-2 space-y-2">
                 {frameworkScores.slice(0, 2).map((framework) => (
-                  <div key={`${framework.framework_id}-${framework.framework_version ?? 'unknown'}`}>
+                  <div key={`${framework.framework_id}-${framework.framework_version ?? 'unknown'}-${framework.analyzed_at ?? framework.stored_at ?? 'none'}`}>
                     <p className="text-sm font-semibold text-slate-900">
                       {t('profile.provenanceFrameworkVersion', {
                         framework: framework.framework,
@@ -1109,7 +1109,7 @@ export function CompanyProfilePage() {
 
                 return (
                   <details
-                    key={`${framework.framework_id}-${framework.framework_version ?? 'v1'}`}
+                    key={`${framework.framework_id}-${framework.framework_version ?? 'v1'}-${framework.analyzed_at ?? framework.stored_at ?? 'none'}`}
                     className="rounded-md border p-3 open:bg-slate-50"
                   >
                     <summary className="cursor-pointer list-none">
