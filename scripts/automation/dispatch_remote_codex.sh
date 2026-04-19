@@ -10,14 +10,21 @@
 # Usage:
 #   ./scripts/automation/dispatch_remote_codex.sh <host> <task_id> <prompt_file>
 #
+# Env:
+#   REMOTE_REPO=<path>   远端仓库绝对路径。默认 ~/projects/esg-research-toolkit
+#                        mac-mini 用 ~/esg-research-toolkit
+#
 # Example:
-#   ./scripts/automation/dispatch_remote_codex.sh coco CR-02 prompts/cr-02.txt
+#   REMOTE_REPO=~/esg-research-toolkit \
+#     ./scripts/automation/dispatch_remote_codex.sh mac-mini CR-01 prompts/cr-01.txt
 #
 set -euo pipefail
 
 HOST="${1:?usage: $0 <host> <task_id> <prompt_file>}"
 TASK_ID="${2:?missing task_id}"
 PROMPT_FILE="${3:?missing prompt_file}"
+# Remote repo path (literal — tilde expanded on REMOTE by shell at exec time)
+REMOTE_REPO="${REMOTE_REPO:-~/projects/esg-research-toolkit}"
 
 REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$REPO_ROOT"
@@ -31,47 +38,50 @@ TRACE_FILE="$TRACE_DIR/remote-roundtrip-${TASK_ID}-${HOST}-${TS}.json"
 
 LOCAL_HEAD="$(git rev-parse HEAD)"
 echo "[local] HEAD=$LOCAL_HEAD"
+echo "[$HOST] repo=$REMOTE_REPO"
 
 # --- §6.1 HEAD sync precondition --------------------------------------------
 REMOTE_HEAD="$(ssh -o ConnectTimeout=5 "$HOST" \
-  "cd ~/projects/esg-research-toolkit && git fetch --quiet origin && git rev-parse HEAD" 2>/dev/null || echo "UNKNOWN")"
+  "cd $REMOTE_REPO && git fetch --quiet origin && git rev-parse HEAD" 2>/dev/null || echo "UNKNOWN")"
 echo "[$HOST] HEAD=$REMOTE_HEAD"
 
 if [[ "$REMOTE_HEAD" != "$LOCAL_HEAD" ]]; then
   echo "[gate] remote HEAD != local; attempting fast-forward pull on $HOST ..." >&2
-  ssh "$HOST" "cd ~/projects/esg-research-toolkit && git pull --ff-only origin main" || {
+  ssh "$HOST" "cd $REMOTE_REPO && git pull --ff-only origin main" || {
     echo "[abort] $HOST cannot fast-forward to $LOCAL_HEAD" >&2
     exit 3
   }
-  REMOTE_HEAD="$(ssh "$HOST" 'cd ~/projects/esg-research-toolkit && git rev-parse HEAD')"
+  REMOTE_HEAD="$(ssh "$HOST" "cd $REMOTE_REPO && git rev-parse HEAD")"
   [[ "$REMOTE_HEAD" == "$LOCAL_HEAD" ]] || { echo "[abort] post-pull HEAD mismatch" >&2; exit 3; }
 fi
 
-# --- Dispatch prompt --------------------------------------------------------
-PROMPT_CONTENT="$(cat "$PROMPT_FILE")"
+# --- Dispatch prompt (base64 to survive quoting) ----------------------------
 echo "[dispatch] $TASK_ID -> $HOST ($(wc -c < "$PROMPT_FILE") bytes)"
+PROMPT_B64="$({ printf '[TASK=%s]\n' "$TASK_ID"; cat "$PROMPT_FILE"; } | base64 | tr -d '\n')"
 
 START_EPOCH="$(date +%s)"
 set +e
-REMOTE_OUT="$(ssh "$HOST" "cd ~/projects/esg-research-toolkit && codex exec --dangerously-bypass-approvals-and-sandbox -C . \
-  \"[TASK=$TASK_ID] $PROMPT_CONTENT\" 2>&1")"
+REMOTE_OUT="$(ssh "$HOST" "cd $REMOTE_REPO && \
+  PROMPT=\$(printf %s '$PROMPT_B64' | base64 -d) && \
+  codex exec --dangerously-bypass-approvals-and-sandbox -C . \"\$PROMPT\" 2>&1")"
 REMOTE_EXIT=$?
 set -e
 END_EPOCH="$(date +%s)"
 DURATION=$((END_EPOCH - START_EPOCH))
 
 # --- Collect remote git state ----------------------------------------------
-REMOTE_POST_HEAD="$(ssh "$HOST" 'cd ~/projects/esg-research-toolkit && git rev-parse HEAD' 2>/dev/null || echo "UNKNOWN")"
-REMOTE_STATUS="$(ssh "$HOST" 'cd ~/projects/esg-research-toolkit && git status --porcelain | head -20' 2>/dev/null || true)"
+REMOTE_POST_HEAD="$(ssh "$HOST" "cd $REMOTE_REPO && git rev-parse HEAD" 2>/dev/null || echo "UNKNOWN")"
+REMOTE_STATUS="$(ssh "$HOST" "cd $REMOTE_REPO && git status --porcelain | head -20" 2>/dev/null || true)"
 
 # --- Write trace record (valid JSON via python) -----------------------------
 python3 - "$TRACE_FILE" <<PYEOF
-import json, os, sys
+import json, sys
 path = sys.argv[1]
 record = {
     "ts": "$TS",
     "task_id": "$TASK_ID",
     "host": "$HOST",
+    "remote_repo": "$REMOTE_REPO",
     "local_head": "$LOCAL_HEAD",
     "remote_head_before": "$REMOTE_HEAD",
     "remote_head_after": "$REMOTE_POST_HEAD",

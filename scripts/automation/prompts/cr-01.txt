@@ -1,0 +1,37 @@
+你是该仓库的维护 agent。请完成 CR-01：framework_version 单一事实源去重。
+
+背景:
+- canonical 定义已在 esg_frameworks/schemas.py::FRAMEWORK_VERSIONS / FRAMEWORK_DISPLAY_NAMES。
+- 下列 scorer 文件各自硬编码了 framework_version 字面量，违反 SSoT：
+    esg_frameworks/eu_taxonomy.py
+    esg_frameworks/csrd.py
+    esg_frameworks/csrc_2023.py
+    esg_frameworks/gri_standards.py
+    esg_frameworks/sec_climate.py
+    esg_frameworks/sasb_standards.py
+- 见 docs/policies/project-consistency-rules.md §1 和 §7 CR-01。
+
+任务:
+1. 对每个 scorer 文件：
+   - 在顶部 `from .schemas import FRAMEWORK_VERSIONS`
+   - 把 `framework_version="<literal>"` 改成 `framework_version=FRAMEWORK_VERSIONS["<framework_id>"]`
+   - framework_id 映射（严格按此 key）：
+       eu_taxonomy.py     -> "eu_taxonomy"
+       csrd.py            -> "csrd"
+       csrc_2023.py       -> "csrc_2023"
+       gri_standards.py   -> "gri_universal"
+       sec_climate.py     -> "sec_climate"
+       sasb_standards.py  -> "sasb_standards"
+2. 不要改 FRAMEWORK_VERSIONS 里的版本字符串，不要改 schemas.py。
+3. 不要改 scorer 的其它逻辑（打分、规则、阈值一律不动）。
+4. 跑 `pytest -q tests/test_framework_versioning.py tests/test_esg_frameworks*.py` 必须全绿。
+5. 跑 `pytest -q` 完整套件（sqlite in-memory, dummy OpenAI key）作为回归。
+6. 提交：`refactor(frameworks): read framework_version from schemas SSoT (CR-01)`。
+
+硬约束:
+- 不跳 hooks、不 push、不 --amend。
+- 任何测试失败立即 revert，并在输出里报告失败用例 + 根因假设。
+- 不要 touch frontend。
+
+完成后输出:
+  CR-01_RESULT: files_changed=<n> commit=<sha> full_suite=<passed/failed/count>

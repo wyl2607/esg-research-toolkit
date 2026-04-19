@@ -1,0 +1,26 @@
+你是该仓库的维护 agent。请完成 CR-03：前端 i18n 覆盖补齐。
+
+背景:
+- 当前 frontend/src/pages/ 有 14 页，其中 12 页已用 useTranslation()/t()，2 页仍有硬编码中/英/德文字面量。
+- canonical locale 文件：frontend/src/i18n/locales/{en,de,zh}.json
+- 见 docs/policies/project-consistency-rules.md §3 和 §7 CR-03。
+
+任务:
+1. 扫描 frontend/src/pages/*.tsx 找出未使用 useTranslation 或仍含非 ASCII 硬编码 UI 字面量的页面（预期 2 页）。
+2. 对每个缺口页面：
+   - 引入 useTranslation()
+   - 把所有用户可见字面量替换为 t('<pageNamespace>.<key>')
+   - 在 en.json / de.json / zh.json 同步补全三语 key（英文为原文；德/中文给出合理翻译）
+3. 不要改页面布局 / 组件结构 / props / 路由。
+4. 跑 `npm --prefix frontend run lint` 和 `npm --prefix frontend run build` 必须通过。
+5. 若已有 smoke 测试引用了原文本，同步更新选择器改用角色/data-testid（不要删测试）。
+6. 提交：`feat(i18n): complete translation coverage for remaining pages (CR-03)`。
+
+硬约束:
+- 不修改 backend。
+- 不新增 locale 文件；只编辑三个既有 json。
+- zh.json / de.json 缺失的 key 必须补齐，三个文件 key 集合严格相等。
+- 不跳 hooks、不 push。
+
+完成后输出:
+  CR-03_RESULT: pages_fixed=<list> keys_added=<n> lint=<pass/fail> build=<pass/fail> commit=<sha>
