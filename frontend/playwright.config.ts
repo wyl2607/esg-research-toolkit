@@ -44,6 +44,10 @@ export default defineConfig({
         channel: browserChannel,
       },
     },
+    {
+      name: 'desktop-firefox',
+      use: { ...devices['Desktop Firefox'] },
+    },
   ],
   webServer: skipWebServer
     ? undefined
