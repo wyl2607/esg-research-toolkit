@@ -380,6 +380,23 @@ class DisclosureReviewResponse(BaseModel):
     merged_report: CompanyESGData | None = None
 
 
+class DisclosureLaneStat(BaseModel):
+    lane: DisclosureSourceHint
+    attempted: int = Field(ge=0)
+    succeeded: int = Field(ge=0)
+    failed: int = Field(ge=0)
+    success_rate_pct: float = Field(ge=0.0, le=100.0)
+
+
+class DisclosureLaneStatsResponse(BaseModel):
+    window_days: int = Field(ge=1, le=365)
+    total_fetches: int = Field(ge=0)
+    total_attempts: int = Field(ge=0)
+    recommended_lane_order: list[DisclosureSourceHint] = Field(default_factory=list)
+    lanes: list[DisclosureLaneStat] = Field(default_factory=list)
+    generated_at: str
+
+
 class DeletionStatusResponse(BaseModel):
     status: str
     company_name: str

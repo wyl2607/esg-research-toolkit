@@ -84,6 +84,8 @@
     "autoFetchSourceHintCsrc": "CSRC/CNINFO filings",
     "autoFetchSourceHintsExtraLabel": "Also try source lanes",
     "autoFetchSourceHintsSelected": "{{count}} lanes selected for this fetch",
+    "autoFetchRecommendedOrderLabel": "Recommended lane order",
+    "autoFetchApplyRecommendedButton": "Apply recommended lanes",
     "autoFetchSourceTypeLabel": "Source type",
     "autoFetchSourceTypePdf": "PDF report",
     "autoFetchSourceTypeHtml": "HTML sustainability page",

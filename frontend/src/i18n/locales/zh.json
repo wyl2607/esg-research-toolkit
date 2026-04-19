@@ -86,6 +86,8 @@
     "autoFetchSourceHintCsrc": "CSRC/CNINFO 披露",
     "autoFetchSourceHintsExtraLabel": "附加尝试来源通道",
     "autoFetchSourceHintsSelected": "本次抓取共选择 {{count}} 个通道",
+    "autoFetchRecommendedOrderLabel": "推荐通道顺序",
+    "autoFetchApplyRecommendedButton": "应用推荐通道",
     "autoFetchSourceTypeLabel": "来源类型",
     "autoFetchSourceTypePdf": "PDF 报告",
     "autoFetchSourceTypeHtml": "HTML 可持续发展页面",

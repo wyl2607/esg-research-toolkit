@@ -5,7 +5,7 @@ import json
 import os
 import re
 import tempfile
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 from urllib.parse import quote_plus, urljoin, urlparse
@@ -13,11 +13,14 @@ from urllib.parse import quote_plus, urljoin, urlparse
 import httpx
 from fastapi import APIRouter, BackgroundTasks, Body, Depends, HTTPException, Path as FastAPIPath, Query, status
 from pydantic import ValidationError
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from core.database import SessionLocal, get_db
 from core.schemas import (
     CompanyESGData,
+    DisclosureLaneStat,
+    DisclosureLaneStatsResponse,
     DisclosureMergeMetric,
     DisclosureSourceHint,
     DisclosureFetchRequest,
@@ -28,7 +31,7 @@ from core.schemas import (
     PendingDisclosureStatus,
 )
 from report_parser.analyzer import analyze_esg_data
-from report_parser.company_identity import canonical_company_name
+from report_parser.company_identity import canonical_company_name, company_name_variants
 from report_parser.extractor import extract_text_from_pdf
 from report_parser.storage import (
     PendingDisclosure,
@@ -309,6 +312,63 @@ def _compute_lane_stats(
 
     recommended_lane_order = [str(item["lane"]) for item in lane_stats]
     return lane_stats, recommended_lane_order, success_lane
+
+
+def _latest_auto_fetch_evidence_from_payload(payload: dict[str, Any]) -> dict[str, Any] | None:
+    evidence_summary = payload.get("evidence_summary")
+    if not isinstance(evidence_summary, list):
+        return None
+    for entry in reversed(evidence_summary):
+        if not isinstance(entry, dict):
+            continue
+        if entry.get("metric") == "auto_disclosure_fetch":
+            return entry
+    return None
+
+
+def _lane_stats_from_evidence(evidence: dict[str, Any]) -> list[dict[str, int | str]]:
+    lane_stats_raw = evidence.get("lane_stats")
+    lane_stats: list[dict[str, int | str]] = []
+    if isinstance(lane_stats_raw, list):
+        for item in lane_stats_raw:
+            if not isinstance(item, dict):
+                continue
+            lane = str(item.get("lane", ""))
+            if lane not in SOURCE_HINTS:
+                continue
+            attempted = int(item.get("attempted", 0))
+            succeeded = int(item.get("succeeded", 0))
+            failed = int(item.get("failed", max(attempted - succeeded, 0)))
+            lane_stats.append(
+                {
+                    "lane": lane,
+                    "attempted": max(attempted, 0),
+                    "succeeded": max(succeeded, 0),
+                    "failed": max(failed, 0),
+                }
+            )
+    if lane_stats:
+        return lane_stats
+
+    attempted_urls_raw = evidence.get("attempted_urls")
+    attempted_urls = [str(url) for url in attempted_urls_raw] if isinstance(attempted_urls_raw, list) else []
+    source_hints_raw = evidence.get("source_hints")
+    source_hints = [
+        str(hint)
+        for hint in source_hints_raw
+        if isinstance(hint, str) and hint in SOURCE_HINTS
+    ] if isinstance(source_hints_raw, list) else []
+    source_hint = evidence.get("source_hint")
+    if isinstance(source_hint, str) and source_hint in SOURCE_HINTS and source_hint not in source_hints:
+        source_hints.insert(0, source_hint)
+    if not source_hints:
+        source_hints = ["company_site"]
+    computed_lane_stats, _, _ = _compute_lane_stats(
+        source_hints=source_hints,  # type: ignore[arg-type]
+        attempted_urls=attempted_urls,
+        resolved_source_url=evidence.get("source_url") if isinstance(evidence.get("source_url"), str) else None,
+    )
+    return computed_lane_stats
 
 
 def _download_pdf_bytes(client: httpx.Client, source_url: str) -> tuple[bytes, str] | None:
@@ -690,6 +750,80 @@ def get_pending_disclosures(
         limit=limit,
     )
     return [_pending_to_item(row) for row in rows]
+
+
+@router.get("/lane-stats", response_model=DisclosureLaneStatsResponse)
+def get_disclosure_lane_stats(
+    company_name: str | None = Query(default=None, min_length=1, max_length=200),
+    report_year: int | None = Query(default=None, ge=MIN_REPORT_YEAR, le=MAX_REPORT_YEAR),
+    window_days: int = Query(default=30, ge=1, le=365),
+    db: Session = Depends(get_db),
+) -> DisclosureLaneStatsResponse:
+    cutoff = datetime.now(timezone.utc) - timedelta(days=window_days)
+    query = db.query(PendingDisclosure).filter(PendingDisclosure.fetched_at >= cutoff)
+    if company_name:
+        variants = [variant.lower() for variant in company_name_variants(company_name)]
+        query = query.filter(func.lower(PendingDisclosure.company_name).in_(variants))
+    if report_year is not None:
+        query = query.filter(PendingDisclosure.report_year == report_year)
+
+    rows = query.order_by(PendingDisclosure.fetched_at.desc(), PendingDisclosure.id.desc()).all()
+    lane_aggregate: dict[str, dict[str, int]] = {}
+    total_fetches = 0
+    total_attempts = 0
+
+    for row in rows:
+        try:
+            payload = json.loads(row.extracted_payload)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(payload, dict):
+            continue
+        evidence = _latest_auto_fetch_evidence_from_payload(payload)
+        if evidence is None:
+            continue
+        total_fetches += 1
+        for lane_stat in _lane_stats_from_evidence(evidence):
+            lane = str(lane_stat["lane"])
+            if lane not in SOURCE_HINTS:
+                continue
+            attempted = int(lane_stat.get("attempted", 0))
+            succeeded = int(lane_stat.get("succeeded", 0))
+            failed = int(lane_stat.get("failed", max(attempted - succeeded, 0)))
+            bucket = lane_aggregate.setdefault(lane, {"attempted": 0, "succeeded": 0, "failed": 0})
+            bucket["attempted"] += max(attempted, 0)
+            bucket["succeeded"] += max(succeeded, 0)
+            bucket["failed"] += max(failed, 0)
+            total_attempts += max(attempted, 0)
+
+    lane_stats = [
+        DisclosureLaneStat(
+            lane=lane,  # type: ignore[arg-type]
+            attempted=stats["attempted"],
+            succeeded=stats["succeeded"],
+            failed=stats["failed"],
+            success_rate_pct=round((stats["succeeded"] / stats["attempted"]) * 100, 2)
+            if stats["attempted"] > 0
+            else 0.0,
+        )
+        for lane, stats in lane_aggregate.items()
+    ]
+    lane_stats.sort(
+        key=lambda item: (
+            -item.success_rate_pct,
+            -item.attempted,
+            item.lane,
+        )
+    )
+
+    return DisclosureLaneStatsResponse(
+        window_days=window_days,
+        total_fetches=total_fetches,
+        total_attempts=total_attempts,
+        recommended_lane_order=[item.lane for item in lane_stats],
+        lanes=lane_stats,
+        generated_at=datetime.now(timezone.utc).isoformat(),
+    )
 
 
 @router.post(

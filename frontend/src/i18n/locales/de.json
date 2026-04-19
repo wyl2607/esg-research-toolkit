@@ -86,6 +86,8 @@
     "autoFetchSourceHintCsrc": "CSRC/CNINFO-Einreichungen",
     "autoFetchSourceHintsExtraLabel": "Zusätzliche Quellenpfade mitprüfen",
     "autoFetchSourceHintsSelected": "{{count}} Pfade für diesen Abruf ausgewählt",
+    "autoFetchRecommendedOrderLabel": "Empfohlene Pfadreihenfolge",
+    "autoFetchApplyRecommendedButton": "Empfohlene Pfade anwenden",
     "autoFetchSourceTypeLabel": "Quellentyp",
     "autoFetchSourceTypePdf": "PDF-Bericht",
     "autoFetchSourceTypeHtml": "HTML-Nachhaltigkeitsseite",

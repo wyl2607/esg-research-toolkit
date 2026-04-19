@@ -176,6 +176,23 @@ export interface DisclosureReviewResponse {
   merged_report: CompanyESGData | null
 }
 
+export interface DisclosureLaneStat {
+  lane: DisclosureSourceHint
+  attempted: number
+  succeeded: number
+  failed: number
+  success_rate_pct: number
+}
+
+export interface DisclosureLaneStatsResponse {
+  window_days: number
+  total_fetches: number
+  total_attempts: number
+  recommended_lane_order: DisclosureSourceHint[]
+  lanes: DisclosureLaneStat[]
+  generated_at: string
+}
+
 export const fetchDisclosure = (
   payload: DisclosureFetchRequest
 ): Promise<DisclosureFetchResponse> =>
@@ -183,6 +200,22 @@ export const fetchDisclosure = (
     method: 'POST',
     body: JSON.stringify(payload),
   })
+
+export const getDisclosureLaneStats = ({
+  companyName,
+  reportYear,
+  windowDays = 30,
+}: {
+  companyName?: string
+  reportYear?: number
+  windowDays?: number
+} = {}): Promise<DisclosureLaneStatsResponse> => {
+  const params = new URLSearchParams()
+  if (companyName) params.set('company_name', companyName)
+  if (reportYear != null) params.set('report_year', String(reportYear))
+  params.set('window_days', String(windowDays))
+  return req(`/disclosures/lane-stats?${params.toString()}`)
+}
 
 export const listPendingDisclosures = ({
   companyName,

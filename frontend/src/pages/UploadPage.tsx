@@ -4,6 +4,7 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import {
   approvePendingDisclosure,
   fetchDisclosure,
+  getDisclosureLaneStats,
   getBatchStatus,
   getCompany,
   listCompaniesWithYearCoverage,
@@ -191,6 +192,19 @@ export function UploadPage() {
     refetchInterval: 5000,
   })
 
+  const laneStatsQuery = useQuery({
+    queryKey: ['disclosure-lane-stats', prefilledCompany, prefilledYearNumber],
+    queryFn: () =>
+      getDisclosureLaneStats({
+        companyName: prefilledCompany ?? undefined,
+        reportYear: prefilledYearNumber ?? undefined,
+        windowDays: 30,
+      }),
+    enabled: hasPrefilledGapTarget,
+    staleTime: 60_000,
+    refetchInterval: 30_000,
+  })
+
   const companyCoverageQuery = useQuery({
     queryKey: ['company-year-coverage'],
     queryFn: listCompaniesWithYearCoverage,
@@ -267,6 +281,16 @@ export function UploadPage() {
   const pendingRows = pendingDisclosuresQuery.data ?? []
   const reviewingPending = pendingRows.find((row) => row.id === reviewingPendingId) ?? null
 
+  const lanePriorityOrder = laneStatsQuery.data?.recommended_lane_order ?? []
+  const sourceHintOptionsOrdered = [...SOURCE_HINT_OPTIONS].sort((a, b) => {
+    const rankA = lanePriorityOrder.indexOf(a)
+    const rankB = lanePriorityOrder.indexOf(b)
+    const normalizedA = rankA === -1 ? Number.POSITIVE_INFINITY : rankA
+    const normalizedB = rankB === -1 ? Number.POSITIVE_INFINITY : rankB
+    if (normalizedA !== normalizedB) return normalizedA - normalizedB
+    return a.localeCompare(b)
+  })
+
   // Clear stored batch_id once batch fully completes
   useEffect(() => {
     if (!batchId) return
@@ -322,6 +346,14 @@ export function UploadPage() {
       }
       return prev.filter((item) => item !== hint)
     })
+  }
+
+  const applyRecommendedLanes = () => {
+    if (!lanePriorityOrder.length) return
+    const nextPrimary = lanePriorityOrder[0]
+    const nextExtras = lanePriorityOrder.slice(1).filter((hint) => SOURCE_HINT_OPTIONS.includes(hint))
+    setAutoFetchSourceHint(nextPrimary)
+    setAutoFetchExtraHints(nextExtras)
   }
 
   const onDrop = useCallback(
@@ -434,17 +466,36 @@ export function UploadPage() {
                   setAutoFetchExtraHints((prev) => prev.filter((hint) => hint !== nextHint))
                 }}
               >
-                <option value="company_site">{t('upload.autoFetchSourceHintCompanySite')}</option>
-                <option value="sec_edgar">{t('upload.autoFetchSourceHintSec')}</option>
-                <option value="hkex">{t('upload.autoFetchSourceHintHkex')}</option>
-                <option value="csrc">{t('upload.autoFetchSourceHintCsrc')}</option>
+                {sourceHintOptionsOrdered.map((hint) => (
+                  <option key={hint} value={hint}>
+                    {t(sourceHintLabelKey(hint))}
+                  </option>
+                ))}
               </select>
             </label>
 
             <div className="space-y-1 text-sm text-slate-600">
               <span>{t('upload.autoFetchSourceHintsExtraLabel')}</span>
+              {laneStatsQuery.data?.lanes?.length ? (
+                <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-2 text-xs text-slate-600">
+                  <p>
+                    {t('upload.autoFetchRecommendedOrderLabel')}:{' '}
+                    {lanePriorityOrder.map((hint) => t(sourceHintLabelKey(hint))).join(' → ')}
+                  </p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="mt-2"
+                    onClick={applyRecommendedLanes}
+                    data-testid="auto-fetch-apply-recommended"
+                  >
+                    {t('upload.autoFetchApplyRecommendedButton')}
+                  </Button>
+                </div>
+              ) : null}
               <div className="grid gap-2 rounded-lg border border-stone-300 bg-white p-3 md:grid-cols-2">
-                {SOURCE_HINT_OPTIONS.filter((hint) => hint !== autoFetchSourceHint).map((hint) => (
+                {sourceHintOptionsOrdered.filter((hint) => hint !== autoFetchSourceHint).map((hint) => (
                   <label key={hint} className="flex items-center gap-2 text-xs text-slate-700">
                     <input
                       type="checkbox"

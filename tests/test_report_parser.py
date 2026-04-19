@@ -864,6 +864,95 @@ def test_disclosures_fetch_pipeline_records_attempted_urls_on_failure() -> None:
         Base.metadata.drop_all(bind=engine)
 
 
+def test_disclosures_lane_stats_endpoint_aggregates_and_orders_lanes() -> None:
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    testing_session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    Base.metadata.create_all(bind=engine)
+    db_session = testing_session_local()
+    app = FastAPI()
+    app.include_router(disclosures_router)
+    app.dependency_overrides[get_db] = lambda: db_session
+
+    try:
+        row1, _ = upsert_pending_disclosure(
+            db_session,
+            company_name="BASF SE",
+            report_year=2022,
+            source_url="https://example.com/basf-2022-source-1.pdf",
+            source_type="filing",
+            extracted_payload={
+                "company_name": "BASF SE",
+                "report_year": 2022,
+                "evidence_summary": [
+                    {
+                        "metric": "auto_disclosure_fetch",
+                        "source_hint": "sec_edgar",
+                        "source_hints": ["sec_edgar", "hkex"],
+                        "lane_stats": [
+                            {"lane": "sec_edgar", "attempted": 3, "succeeded": 2, "failed": 1},
+                            {"lane": "hkex", "attempted": 1, "succeeded": 0, "failed": 1},
+                        ],
+                    }
+                ],
+            },
+            status="pending",
+        )
+        row2, _ = upsert_pending_disclosure(
+            db_session,
+            company_name="BASF SE",
+            report_year=2022,
+            source_url="https://example.com/basf-2022-source-2.pdf",
+            source_type="filing",
+            extracted_payload={
+                "company_name": "BASF SE",
+                "report_year": 2022,
+                "evidence_summary": [
+                    {
+                        "metric": "auto_disclosure_fetch",
+                        "source_hint": "csrc",
+                        "source_hints": ["csrc", "sec_edgar"],
+                        "lane_stats": [
+                            {"lane": "csrc", "attempted": 2, "succeeded": 1, "failed": 1},
+                            {"lane": "sec_edgar", "attempted": 1, "succeeded": 0, "failed": 1},
+                        ],
+                    }
+                ],
+            },
+            status="pending",
+        )
+        assert row1.id != row2.id
+
+        with TestClient(app) as client:
+            response = client.get(
+                "/disclosures/lane-stats",
+                params={"company_name": "BASF", "window_days": 30},
+            )
+
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["window_days"] == 30
+        assert payload["total_fetches"] == 2
+        assert payload["total_attempts"] == 7
+        assert payload["recommended_lane_order"][:3] == ["sec_edgar", "csrc", "hkex"]
+
+        lanes = {item["lane"]: item for item in payload["lanes"]}
+        assert lanes["sec_edgar"]["attempted"] == 4
+        assert lanes["sec_edgar"]["succeeded"] == 2
+        assert lanes["sec_edgar"]["failed"] == 2
+        assert lanes["sec_edgar"]["success_rate_pct"] == pytest.approx(50.0)
+        assert lanes["csrc"]["attempted"] == 2
+        assert lanes["csrc"]["succeeded"] == 1
+        assert lanes["hkex"]["attempted"] == 1
+        assert lanes["hkex"]["succeeded"] == 0
+    finally:
+        db_session.close()
+        Base.metadata.drop_all(bind=engine)
+
+
 def test_disclosures_approve_merges_pending_report() -> None:
     engine = create_engine(
         "sqlite://",

@@ -352,6 +352,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/disclosures/lane-stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Disclosure Lane Stats */
+        get: operations["get_disclosure_lane_stats_disclosures_lane_stats_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/disclosures/{pending_id}/approve": {
         parameters: {
             query?: never;
@@ -1276,6 +1293,37 @@ export interface components {
             /** Created */
             created: boolean;
             pending: components["schemas"]["PendingDisclosureItem"];
+        };
+        /** DisclosureLaneStat */
+        DisclosureLaneStat: {
+            /**
+             * Lane
+             * @enum {string}
+             */
+            lane: "company_site" | "sec_edgar" | "hkex" | "csrc";
+            /** Attempted */
+            attempted: number;
+            /** Succeeded */
+            succeeded: number;
+            /** Failed */
+            failed: number;
+            /** Success Rate Pct */
+            success_rate_pct: number;
+        };
+        /** DisclosureLaneStatsResponse */
+        DisclosureLaneStatsResponse: {
+            /** Window Days */
+            window_days: number;
+            /** Total Fetches */
+            total_fetches: number;
+            /** Total Attempts */
+            total_attempts: number;
+            /** Recommended Lane Order */
+            recommended_lane_order?: ("company_site" | "sec_edgar" | "hkex" | "csrc")[];
+            /** Lanes */
+            lanes?: components["schemas"]["DisclosureLaneStat"][];
+            /** Generated At */
+            generated_at: string;
         };
         /** DisclosureReviewRequest */
         DisclosureReviewRequest: {
@@ -2462,6 +2510,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PendingDisclosureItem"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_disclosure_lane_stats_disclosures_lane_stats_get: {
+        parameters: {
+            query?: {
+                company_name?: string | null;
+                report_year?: number | null;
+                window_days?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DisclosureLaneStatsResponse"];
                 };
             };
             /** @description Validation Error */
