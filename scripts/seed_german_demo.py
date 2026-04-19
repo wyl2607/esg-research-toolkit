@@ -46,7 +46,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from core.ai_client import get_client
-from core.config import settings
+from core.config import settings  # noqa: F401 — re-exported for test monkeypatch
 from core.database import SessionLocal, engine
 from core.models import get as get_model_name
 from report_parser.storage import ensure_storage_schema, record_extraction_run

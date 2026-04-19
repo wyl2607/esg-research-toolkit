@@ -15,7 +15,6 @@ from __future__ import annotations
 import argparse
 import sys
 from pathlib import Path
-from datetime import datetime
 from typing import Optional
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -25,7 +24,6 @@ if str(ROOT) not in sys.path:
 from core.database import SessionLocal  # noqa: E402
 from report_parser.audit_models import (  # noqa: E402
     AuditQAResult,
-    AuditSummary,
     get_pending_reviews,
     get_audit_trend,
     approve_correction,

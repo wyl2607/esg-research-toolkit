@@ -139,6 +139,10 @@ scripts/automation/screenshots/
 scripts/automation/ui_reports/
 scripts/automation/*.png
 
+# Remote dispatch runtime artifacts (shell logs + JSON roundtrip traces).
+# Traces contain remote absolute paths (other users' $HOME) — local-only by policy.
+runtime/ai-trace/
+
 # Local-only phase completion / milestone snapshots
 PHASE_*.md
 

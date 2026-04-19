@@ -38,7 +38,6 @@ import os
 import sys
 from dataclasses import dataclass, asdict
 from pathlib import Path
-from typing import Any
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(ROOT))

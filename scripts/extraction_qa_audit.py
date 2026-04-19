@@ -21,7 +21,7 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Literal
+from typing import Literal
 
 import httpx
 
@@ -29,8 +29,7 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from core.database import SessionLocal, engine  # noqa: E402
-from report_parser.extractor import extract_text_from_pdf  # noqa: E402
+from core.database import SessionLocal  # noqa: E402
 from scripts.seed_german_demo import PDF_CACHE_DIR  # noqa: E402
 
 # ─── Types ──────────────────────────────────────────────────────────────

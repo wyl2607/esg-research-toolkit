@@ -6,7 +6,6 @@ import argparse
 import json
 import math
 import sqlite3
-import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any

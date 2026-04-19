@@ -185,7 +185,6 @@ def act_git_status() -> str:
 
 
 def act_seed_status() -> str:
-    import re
     out: list[str] = []
     log = ROOT / "scripts" / "automation" / "logs" / "seed_run.log"
     if log.exists():
