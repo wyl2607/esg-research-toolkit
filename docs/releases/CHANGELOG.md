@@ -8,7 +8,43 @@
 - 在本文件追加版本摘要
 - 在 `docs/releases/` 下新增同日详细日报
 
-## [Unreleased] - 2026-04-18
+## [0.3.0] - 2026-04-19
+
+### Added
+
+- **F1 CompanyYearPicker**：新增两步联动选择组件（`frontend/src/components/CompanyYearPicker.tsx`），支持公司→年份级联，已导入年份高亮（check 图标），缺失年份直接深链到 `/upload?company=X&year=Y`。Benchmark / Regional / Frameworks / Taxonomy / Upload 5 个页面统一接入。
+- **F1 `/report/companies/v2` 端点**：返回 `imported_years[]` 与 `suggested_years[]`，前端通过 `listCompaniesWithYearCoverage()` 消费。
+- **F2 PendingDisclosuresPage**：新增 `/disclosures` 路由（`frontend/src/pages/PendingDisclosuresPage.tsx`）+ 侧边栏条目（`nav.pendingDisclosures`），analyst 可在此集中处理所有待审抓取记录。
+- **F2 disclosures lane 全链路**：`POST /disclosures/fetch`、`GET /disclosures/pending`、`POST /disclosures/{id}/approve|reject`、`GET /disclosures/lane-stats`；审批走字段级 merge，fetch 失败写 attempted_urls 审计；lane-stats 按近期 evidence 质量推荐来源通道顺序。
+- **F2 多来源通道**：`source_hint` / `source_hints` 支持 `company_site` / `sec_edgar` / `hkex` / `csrc` 串行尝试回退，pending evidence 落盘 `lane_stats` + `success_lane`。
+- **B-level 多年趋势回填**：`scripts/seed_data/backfill_via_disclosures.py` + `tests/test_backfill_via_disclosures.py`，结合 disclosures lane 将核心公司扩到 ≥3 年历史覆盖（6/5 公司达标）。
+- **F3/F4 LCOE 区域化默认**：`LcoePage` 根据 UI 语言自动切换 EUR/USD 币种与默认电价，USD 新增 EIA 美国批发电价参考块（2021-2024）。
+- **Playwright 工作流 e2e**：`frontend/tests/workflow-gap-fill.spec.ts` 覆盖"picker 缺失年份 → Upload 深链 → /disclosures 审批 → 公司入库"完整闭环。
+- **Automation 保护**：`scripts/automation/converge_worktrees.sh` 增加 `--assert-no-lanes` / `--assert-no-lane-artifacts`，`scripts/review_push_guard.sh` 在推送前调用该 guard；`docs/design-docs/company_year_dual_picker.md` 与 `docs/design-docs/auto_disclosure_fetch.md` 两份设计文档落地。
+- 继承自 v0.2.3-beta.1 周期的 Auto Fetch 面板 / source-hint 契约 / README 合规声明。
+
+### Changed
+
+- Frameworks / Taxonomy / Benchmark / Regional / Upload 五页迁移到 CompanyYearPicker；`queryKey` 统一到 `['companies-v2']`。
+- `taxonomy_scorer/api.py::_record_to_company_esg()` 在反序列化时同时处理 `primary_activities` 与 `evidence_summary`（修 BASF 2024 500 错误）。
+- EU Taxonomy / CSRD / CSRC 2023 scorer 的 `DimensionScore.name` 统一改为稳定 snake_case 键（`climate_mitigation` / `e1_climate` / `csrc_environment` 等），前端按 `frameworks.dim.*` 做 i18n 渲染；`tests/fixtures/company_profile_v1/profile_response.json` 同步更新。
+- `main.py` 版本号对齐到 `0.3.0`；侧栏新增 `/disclosures` 快捷入口，Sidebar / App 路由表一致。
+
+### Fixed
+
+- **B1**：Benchmark 页的 NoticeBanner 缺少外部间距 → 包一层 `div.mt-4`。
+- **B2**：BASF 2024 触发 500（`ValidationError` on `evidence_summary`）→ 在 record→schema 时反序列化 JSON 字符串列表。
+- **B3**：框架雷达图/维度卡片的维度名硬编码中文 → 改为 snake_case key + i18n 查表。
+- **B4**：Upload 深链丢失用户上下文 → 识别 `?company=&year=` 后渲染 gap banner。
+
+### Verified
+
+- `OPENAI_API_KEY=dummy .venv/bin/pytest -q` → `163 passed`
+- `cd frontend && npm run lint && npm run build` → pass
+- `cd frontend && npm run test:smoke` → `26 passed`（含 `workflow-gap-fill.spec.ts`）
+- `scripts/seed_data/backfill_via_disclosures.py` → 6/5 公司 ≥3 年 history 覆盖达标。
+
+## [Unreleased-legacy] - 2026-04-18
 
 ### Added
 

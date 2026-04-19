@@ -254,6 +254,10 @@ export const rejectPendingDisclosure = (
     body: JSON.stringify(payload),
   })
 
+// Backward-compatible aliases for disclosure review workflows.
+export const approveDisclosure = approvePendingDisclosure
+export const rejectDisclosure = rejectPendingDisclosure
+
 export const getCompany = (
   name: string,
   year: number

@@ -9,6 +9,11 @@ const DashboardPage = lazy(() =>
 const UploadPage = lazy(() =>
   import('@/pages/UploadPage').then((module) => ({ default: module.UploadPage }))
 )
+const PendingDisclosuresPage = lazy(() =>
+  import('@/pages/PendingDisclosuresPage').then((module) => ({
+    default: module.PendingDisclosuresPage,
+  }))
+)
 const TaxonomyPage = lazy(() =>
   import('@/pages/TaxonomyPage').then((module) => ({ default: module.TaxonomyPage }))
 )
@@ -58,6 +63,7 @@ export default function App() {
             <Route element={<Layout />}>
               <Route index element={<DashboardPage />} />
               <Route path="upload" element={<UploadPage />} />
+              <Route path="disclosures" element={<PendingDisclosuresPage />} />
               <Route path="taxonomy" element={<TaxonomyPage />} />
               <Route path="lcoe" element={<LcoePage />} />
               <Route path="companies" element={<CompaniesPage />} />

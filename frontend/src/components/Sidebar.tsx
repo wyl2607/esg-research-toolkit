@@ -10,6 +10,7 @@ import {
   Globe,
   BarChart3,
   FilePenLine,
+  ClipboardList,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
@@ -27,6 +28,7 @@ export function Sidebar({ id, className, onNavigate }: SidebarProps) {
   const disclosureLinks = [
     { to: '/', label: t('nav.dashboard'), icon: LayoutDashboard },
     { to: '/upload', label: t('nav.upload'), icon: Upload },
+    { to: '/disclosures', label: t('nav.pendingDisclosures'), icon: ClipboardList },
     { to: '/companies', label: t('nav.companies'), icon: Building2 },
     { to: '/compare', label: t('nav.compare'), icon: GitCompare },
     { to: '/benchmarks', label: t('nav.benchmarks'), icon: BarChart3 },

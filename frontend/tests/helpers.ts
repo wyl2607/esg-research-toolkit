@@ -17,6 +17,7 @@ export type BrowserIssues = {
 export const smokeRoutes: RouteExpectation[] = [
   { path: '/', heading: 'Dashboard', name: 'dashboard' },
   { path: '/upload', heading: 'ESG-Bericht hochladen', name: 'upload' },
+  { path: '/disclosures', heading: 'Ausstehende Offenlegungen', name: 'disclosures' },
   { path: '/manual', heading: 'Manuelle Eingabe / Case Builder', name: 'manual' },
   { path: '/taxonomy', heading: 'EU-Taxonomie Offenlegungsspiegel', name: 'taxonomy' },
   { path: '/lcoe', heading: 'Stromgestehungskosten-Analyse', name: 'lcoe' },

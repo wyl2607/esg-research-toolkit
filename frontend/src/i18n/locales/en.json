@@ -2,6 +2,7 @@
   "nav": {
     "dashboard": "Dashboard",
     "upload": "Upload",
+    "pendingDisclosures": "Pending Disclosures",
     "manual": "Case Builder",
     "taxonomy": "Taxonomy",
     "lcoe": "LCOE",
@@ -140,6 +141,22 @@
     "industryLabel": "Industry (NACE Rev.2)",
     "industryNone": "Not specified",
     "industryHint": "Required for cross-company peer benchmarking"
+  },
+  "disclosures": {
+    "title": "Pending Disclosures",
+    "subtitle": "Review queued disclosure fetches before they merge into canonical company records.",
+    "pendingCount": "Pending queue",
+    "loading": "Loading pending disclosures…",
+    "emptyTitle": "No pending disclosures",
+    "emptyBody": "New auto-fetch items will appear here for review.",
+    "hasCurrentReport": "Current CompanyReport found for this company/year.",
+    "noCurrentReport": "No current CompanyReport found — approval will create the first row.",
+    "diffSummary": "Field diff: {{changed}} changed of {{total}} comparable fields",
+    "noComparableMetrics": "No comparable metrics found in this pending payload.",
+    "changed": "Changed",
+    "unchanged": "Same",
+    "currentValue": "Current value",
+    "pendingValue": "Pending value"
   },
   "taxonomy": {
     "kicker": "Disclosure completeness",

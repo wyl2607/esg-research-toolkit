@@ -17,6 +17,9 @@
 - 📊 Export company records to CSV/XLSX and generate PDF reports for external review.
 - 🔬 Calculate LCOE and perform sensitivity analysis for renewable energy economics.
 - 🖥️ Provide a React frontend for upload, dashboard, comparison, and company history views.
+- 🎯 Gap-aware **Company+Year picker** that highlights imported vs. missing years and deep-links into the upload/auto-fetch workflow for the missing one.
+- 📥 **Pending Disclosures** workspace for analyst review of auto-fetched reports pulled from official sources (company sites, SEC EDGAR, HKEX, CSRC/CNINFO) with field-level approve/reject and per-lane reliability ranking.
+- 💱 Region-aware LCOE defaults (EUR / USD) with EIA US wholesale price reference on the English UI.
 - 🐳 Support local Docker deployment with persistent `data/` and `reports/` volumes.
 
 ## 🚀 Quick Start
@@ -97,6 +100,12 @@ The table below is generated from current FastAPI routes in `main.py`.
 | GET | `/openapi.json` | OpenAPI schema document. |
 | GET | `/redoc` | ReDoc API documentation UI. |
 | GET | `/report/companies` | List stored company report records. |
+| GET | `/report/companies/v2` | List companies with imported + suggested years (feeds the gap-aware company/year picker). |
+| POST | `/disclosures/fetch` | Queue an auto-fetch attempt against official sources for `(company, year)`. |
+| GET | `/disclosures/pending` | List pending auto-fetched disclosures awaiting analyst review. |
+| POST | `/disclosures/{id}/approve` | Merge selected metrics from a pending disclosure into company history. |
+| POST | `/disclosures/{id}/reject` | Reject a pending disclosure with an analyst note. |
+| GET | `/disclosures/lane-stats` | Per-source-lane fetch reliability telemetry + recommended lane order. |
 | GET | `/report/companies/export/csv` | Export stored company records as CSV. |
 | GET | `/report/companies/export/xlsx` | Export stored company records as Excel. |
 | GET | `/report/companies/{company_name}/{report_year:int}` | Get one stored company record by key. |
@@ -158,7 +167,8 @@ CSRD/ESRS introduces broader sustainability reporting requirements across enviro
 ## 📊 Frontend Pages
 
 - `DashboardPage.tsx`: overall KPI dashboard with high-level scoring and trend blocks.
-- `UploadPage.tsx`: report upload workflow for single/batch file ingestion.
+- `UploadPage.tsx`: report upload workflow for single/batch file ingestion (honors `?company=&year=` deep-links from the gap picker).
+- `PendingDisclosuresPage.tsx`: analyst review lane for auto-fetched official-source disclosures (`/disclosures`).
 - `TaxonomyPage.tsx`: EU Taxonomy scoring and report generation workspace.
 - `FrameworksPage.tsx`: framework-specific scoring and standards view.
 - `ComparePage.tsx`: side-by-side framework comparison results.

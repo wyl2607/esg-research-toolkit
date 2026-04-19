@@ -2,6 +2,7 @@
   "nav": {
     "dashboard": "Dashboard",
     "upload": "Hochladen",
+    "pendingDisclosures": "Ausstehende Offenlegungen",
     "manual": "Case Builder",
     "taxonomy": "Taxonomie",
     "lcoe": "LCOE",
@@ -142,6 +143,22 @@
     "industryLabel": "Branche (NACE Rev.2)",
     "industryNone": "Nicht angegeben",
     "industryHint": "Erforderlich für branchenübergreifende Vergleiche"
+  },
+  "disclosures": {
+    "title": "Ausstehende Offenlegungen",
+    "subtitle": "Prüfen Sie eingereihte Disclosure-Fetches, bevor sie in den kanonischen Unternehmensbestand übernommen werden.",
+    "pendingCount": "Ausstehende Einträge",
+    "loading": "Ausstehende Offenlegungen werden geladen…",
+    "emptyTitle": "Keine ausstehenden Offenlegungen",
+    "emptyBody": "Neue Auto-Fetch-Einträge erscheinen hier zur Prüfung.",
+    "hasCurrentReport": "Für dieses Unternehmen/Jahr liegt bereits ein CompanyReport vor.",
+    "noCurrentReport": "Kein bestehender CompanyReport gefunden – Freigabe erzeugt den ersten Eintrag.",
+    "diffSummary": "Feld-Diff: {{changed}} geändert von {{total}} vergleichbaren Feldern",
+    "noComparableMetrics": "In diesem Pending-Payload wurden keine vergleichbaren Kennzahlen gefunden.",
+    "changed": "Geändert",
+    "unchanged": "Gleich",
+    "currentValue": "Aktueller Wert",
+    "pendingValue": "Ausstehender Wert"
   },
   "taxonomy": {
     "kicker": "Offenlegungs-Tracking",

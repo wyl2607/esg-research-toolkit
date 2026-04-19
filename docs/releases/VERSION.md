@@ -1,3 +1,3 @@
 # Current Version
 
-`v0.2.3-beta.1`
+`v0.3.0`

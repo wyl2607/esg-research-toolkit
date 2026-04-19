@@ -17,6 +17,9 @@
 - 📊 Export von Unternehmensdatensätzen als CSV/XLSX sowie PDF-Report-Erstellung.
 - 🔬 Berechnung von LCOE und Sensitivitätsanalysen für Energieprojekte.
 - 🖥️ React-Frontend für Upload, Dashboard, Vergleich und Historie.
+- 🎯 **Lücken-bewusster Unternehmen+Jahr-Picker**: zeigt bereits importierte vs. fehlende Berichtsjahre und springt per Deep-Link direkt in den Upload- bzw. Auto-Fetch-Workflow.
+- 📥 **Pending-Disclosures-Workbench**: Analyst:innen-Review für automatisch geholte Berichte aus offiziellen Quellen (Unternehmensseite, SEC EDGAR, HKEX, CSRC/CNINFO) mit feldweiser Freigabe und Lane-Zuverlässigkeits-Ranking.
+- 💱 Regionsabhängige LCOE-Defaults (EUR / USD) inkl. EIA-Referenzpreisen für die englische Oberfläche.
 - 🐳 Docker-basierter Start mit persistenter Speicherung in `data/` und `reports/`.
 
 ## 🚀 Schnellstart
@@ -82,6 +85,12 @@ Die folgende Tabelle basiert auf den aktuell registrierten FastAPI-Routen in `ma
 | GET | `/openapi.json` | OpenAPI-Schema als JSON. |
 | GET | `/redoc` | ReDoc-Dokumentationsseite. |
 | GET | `/report/companies` | Gespeicherte Unternehmensdatensätze auflisten. |
+| GET | `/report/companies/v2` | Unternehmen mit importierten + vorgeschlagenen Jahren (liefert den Gap-Picker). |
+| POST | `/disclosures/fetch` | Auto-Fetch-Versuch aus offiziellen Quellen für `(Unternehmen, Jahr)` einreihen. |
+| GET | `/disclosures/pending` | Ausstehende auto-geholte Disclosures zur Analystenprüfung auflisten. |
+| POST | `/disclosures/{id}/approve` | Ausgewählte Kennzahlen einer Pending-Disclosure in die Unternehmenshistorie übernehmen. |
+| POST | `/disclosures/{id}/reject` | Pending-Disclosure mit Analystennotiz ablehnen. |
+| GET | `/disclosures/lane-stats` | Zuverlässigkeitstelemetrie je Quelle-Lane + empfohlene Reihenfolge. |
 | GET | `/report/companies/export/csv` | Unternehmensdatensätze als CSV exportieren. |
 | GET | `/report/companies/export/xlsx` | Unternehmensdatensätze als Excel exportieren. |
 | GET | `/report/companies/{company_name}/{report_year:int}` | Einzelnen Datensatz nach Schlüssel abrufen. |
@@ -143,7 +152,8 @@ CSRD/ESRS erweitert die Berichtsanforderungen über Umwelt-, Sozial- und Governa
 ## 📊 Frontend-Seiten
 
 - `DashboardPage.tsx`: KPI-Überblick und zusammenfassende Ergebnisdarstellung.
-- `UploadPage.tsx`: Upload-Prozess für Einzel- und Batch-Dateien.
+- `UploadPage.tsx`: Upload-Prozess für Einzel- und Batch-Dateien (erkennt `?company=&year=` Deep-Links aus dem Gap-Picker).
+- `PendingDisclosuresPage.tsx`: Analystenfreigabe für automatisch geholte offizielle Disclosures (`/disclosures`).
 - `TaxonomyPage.tsx`: Arbeitsfläche für EU-Taxonomie-Scoring und Berichte.
 - `FrameworksPage.tsx`: Framework-orientierte Bewertung und Standardsicht.
 - `ComparePage.tsx`: Nebeneinandervergleich unterschiedlicher Framework-Ergebnisse.

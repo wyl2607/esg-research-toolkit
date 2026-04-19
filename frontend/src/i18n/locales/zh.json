@@ -2,6 +2,7 @@
   "nav": {
     "dashboard": "仪表盘",
     "upload": "上传",
+    "pendingDisclosures": "待审核披露",
     "manual": "案例构建",
     "taxonomy": "披露分析",
     "lcoe": "度电成本",
@@ -142,6 +143,22 @@
     "industryLabel": "行业（NACE Rev.2）",
     "industryNone": "未指定",
     "industryHint": "跨公司对比所需"
+  },
+  "disclosures": {
+    "title": "待审核披露",
+    "subtitle": "在合并到正式 CompanyReport 前，先审核自动抓取进入队列的披露记录。",
+    "pendingCount": "待审核队列",
+    "loading": "正在加载待审核披露…",
+    "emptyTitle": "暂无待审核披露",
+    "emptyBody": "新的自动抓取记录会在这里出现，等待审核。",
+    "hasCurrentReport": "该公司/年份已有现存 CompanyReport。",
+    "noCurrentReport": "该公司/年份暂无 CompanyReport，批准后将创建首条记录。",
+    "diffSummary": "字段差异：{{total}} 个可比较字段中有 {{changed}} 个变化",
+    "noComparableMetrics": "该待审 payload 中没有可比较的指标字段。",
+    "changed": "有变化",
+    "unchanged": "相同",
+    "currentValue": "当前值",
+    "pendingValue": "待审值"
   },
   "taxonomy": {
     "kicker": "披露完整度",
