@@ -67,7 +67,12 @@
     "coverageSortDesc": "Hoch → Niedrig",
     "coverageSortAsc": "Niedrig → Hoch",
     "backendOfflineTitle": "API-Server nicht gestartet",
-    "backendOfflineBody": "Bitte starten Sie den Backend-Server (uvicorn main:app), um Live-Daten zu laden. Der LCOE-Rechner und andere statische Seiten sind weiterhin verfügbar."
+    "backendOfflineBody": "Bitte starten Sie den Backend-Server (uvicorn main:app), um Live-Daten zu laden. Der LCOE-Rechner und andere statische Seiten sind weiterhin verfügbar.",
+    "coverageProgressLabel": "Abdeckungsfortschritt",
+    "coverageAverage": "{{pct}}% durchschnittliche Abdeckung",
+    "coverageBandGood": "Stark (≥80%) {{count}} Felder",
+    "coverageBandPartial": "Teilweise (50–79%) {{count}} Felder",
+    "coverageBandWeak": "Schwach (<50%) {{count}} Felder"
   },
   "upload": {
     "kicker": "Dokumentenaufnahme",
@@ -604,6 +609,152 @@
     "invalidJson": "Ungültiger JSON-Entwurf.",
     "previewTitle": "Payload-Vorschau",
     "viewCompanies": "Unternehmen ansehen"
+  },
+  "coverageField": {
+    "unknownTitle": "Unbekanntes Feld",
+    "unknownBody": "Feld \"{{field}}\" existiert nicht",
+    "backToDashboard": "Zurück zum Dashboard",
+    "directionHigher": "Höher ist besser",
+    "directionLower": "Niedriger ist besser",
+    "subtitleWithTarget": "Einheit: {{unit}} · {{direction}} · Ziel: {{target}}",
+    "subtitleWithoutTarget": "Einheit: {{unit}} · {{direction}}",
+    "kpis": {
+      "withDataCompanies": "Unternehmen mit Daten",
+      "onTargetCompanies": "Auf oder über Ziel"
+    },
+    "states": {
+      "loadingTitle": "Wird geladen…",
+      "loadingBody": "Unternehmensdaten werden geladen",
+      "errorTitle": "Laden fehlgeschlagen",
+      "errorBody": "Unternehmensliste konnte nicht geladen werden"
+    },
+    "table": {
+      "valueWithUnit": "Wert ({{unit}})",
+      "targetWithUnit": "Ziel ({{unit}})",
+      "achievement": "Zielerreichung",
+      "noData": "Keine Daten"
+    },
+    "mobileTarget": "Ziel {{target}}",
+    "labels": {
+      "renewable_energy_pct": "Erneuerbare %",
+      "taxonomy_aligned_revenue_pct": "Taxonomie %",
+      "taxonomy_aligned_capex_pct": "CapEx-Ausrichtung %",
+      "waste_recycled_pct": "Abfall %",
+      "female_pct": "Frauenanteil %",
+      "scope1_co2e_tonnes": "Scope 1",
+      "scope2_co2e_tonnes": "Scope 2",
+      "scope3_co2e_tonnes": "Scope 3",
+      "energy_consumption_mwh": "Energie",
+      "water_usage_m3": "Wasser"
+    }
+  },
+  "designPreview": {
+    "hero": {
+      "kicker": "Intern · Designvorschau",
+      "title": "Designsystem · Varianten auswählen",
+      "subtitle": "Durch jede Sektion scrollen und festlegen, welche Variante (A / B / C) standardmäßig gesetzt werden soll. Die gewählte Kombination bildet die Basis für die Seitenmigration in Phase 2."
+    },
+    "nav": {
+      "header": "Header",
+      "stat-cards": "StatCards",
+      "banners": "Banner",
+      "filter-bar": "Filterleiste",
+      "companies-mock": "Unternehmens-Mock"
+    },
+    "sections": {
+      "header": {
+        "title": "Seitenkopf · 3 Varianten",
+        "subtitle": "Entscheiden: Kicker, KPIs, Aktionen rechts oder darunter?"
+      },
+      "statCards": {
+        "title": "StatCards · 2 Dichten",
+        "subtitle": "Gleiche Komponente, bitte die Standardgröße festlegen"
+      },
+      "banners": {
+        "title": "Hinweisbanner · 4 semantische Töne",
+        "subtitle": "Ersetzt die fünf unterschiedlichen Bannerfarben, die derzeit verwendet werden"
+      },
+      "filterBar": {
+        "title": "Filterleiste",
+        "subtitle": "Einheitliches Muster für Auswahlfelder und Aktionszeilen"
+      },
+      "companiesMock": {
+        "title": "Unternehmensseite komplett · neuer Look (Mock)",
+        "subtitle": "Alle sechs Bausteine in einer Seite kombiniert. Genau das liefert Phase 2."
+      }
+    },
+    "variants": {
+      "headerA": "A · clean (empfohlen)",
+      "headerB": "B · mit Kicker",
+      "headerC": "C · ohne KPIs, nur Titel plus Aktionen",
+      "statCardsA": "A · kompakt (p-4, text-3xl) · empfohlen",
+      "statCardsB": "B · großzügig (p-6, text-5xl) · aktuelles Dashboard",
+      "filterBarA": "A · Felder plus Primäraktion",
+      "filterBarB": "B · Suche, Sortier-Chips, Export-Cluster"
+    },
+    "samples": {
+      "companiesTitle": "Unternehmen",
+      "companiesSubtitle": "Gespeicherte Unternehmensfälle als wiederverwendbare Analyseobjekte lesen.",
+      "companiesKicker": "Unternehmensintelligenz",
+      "compareTitle": "Unternehmensvergleich",
+      "compareSubtitle": "Mehrere Unternehmensfälle nebeneinander legen."
+    },
+    "actions": {
+      "csvExport": "CSV exportieren",
+      "reset": "Reset",
+      "startCompare": "Vergleich starten",
+      "recalculateBenchmarks": "Benchmarks neu berechnen",
+      "sortByName": "Nach Name",
+      "sortByYear": "Nach Jahr",
+      "sortByTaxonomy": "Nach Taxonomie",
+      "csv": "CSV",
+      "json": "JSON"
+    },
+    "kpis": {
+      "companies": "Unternehmen",
+      "years": "Jahre",
+      "datasets": "Datensätze"
+    },
+    "statCards": {
+      "avgTaxonomy": "Ø Taxonomie",
+      "avgRenewable": "Ø Erneuerbare",
+      "yearsHint": "2022–2024"
+    },
+    "banners": {
+      "infoTitle": "Hinweis",
+      "infoBody": "Diese Ansicht spiegelt wider, was das Unternehmen im Rahmen der EU-Taxonomie offengelegt hat.",
+      "warningTitle": "Kleine Stichprobe",
+      "warningBody": "Die aktuelle Auswahl enthält Stichprobengrößen bis hinunter zu 1. Mit Vorsicht interpretieren.",
+      "successTitle": "Kernaussage",
+      "successBody": "Der Anteil erneuerbarer Energien stieg um +6,0%, während Scope-1-Emissionen um 10.000 t zurückgingen.",
+      "modeTitle": "Projektanalyse-Modus",
+      "modeBody": "Eingaben sind vom Benutzer bereitgestellte technische Parameter."
+    },
+    "filters": {
+      "industry": "Branche",
+      "industryPlaceholder": "Elektrizitätserzeugung",
+      "industryOption": "D35.11 — Elektrizitätserzeugung",
+      "year": "Jahr",
+      "search": "Suche",
+      "searchPlaceholder": "Unternehmen suchen…"
+    },
+    "companiesMock": {
+      "trendBanner": "3 von 36 Unternehmen haben Trenddaten für 2022–2024. Der Rest nur 2024.",
+      "cardDescription": "sustainability_report · 2024",
+      "scope1": "Scope 1",
+      "employeesShort": "Mitarb.",
+      "people": "Personen",
+      "taxonomy": "Taxonomie",
+      "revenuePercent": "% Umsatz"
+    },
+    "footer": {
+      "title": "Entscheidungshilfe",
+      "body": "Sagen Sie Claude: \"Header = A, StatCard = A, FilterBar A+B, Companies mock looks good\". Danach fixiert er diese Auswahl und übergibt das Codex-Migrationsskript für Phase 2.",
+      "bulletHeader": "• Header · A (clean) / B (Kicker) / C (ohne KPIs)",
+      "bulletStatCards": "• StatCard · A (kompakt) / B (großzügig)",
+      "bulletFilterBar": "• Filterleiste · sowohl A als auch B verwenden (unterschiedliche Seitentypen)",
+      "bulletBanners": "• Banner · alle 4 Töne behalten, sie sind semantisch"
+    }
   },
   "errors": {
     "networkError": "Netzwerkfehler — bitte Verbindung prüfen",

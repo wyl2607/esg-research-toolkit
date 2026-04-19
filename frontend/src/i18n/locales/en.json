@@ -65,7 +65,14 @@
     "chartsEmptyBody": "Upload an ESG report to unlock trend charts and emission rankings.",
     "coverageSortDefault": "Default",
     "coverageSortDesc": "High → Low",
-    "coverageSortAsc": "Low → High"
+    "coverageSortAsc": "Low → High",
+    "backendOfflineTitle": "API server offline",
+    "backendOfflineBody": "Please start the backend server (uvicorn main:app) to load live data. The LCOE calculator and other static pages are still available.",
+    "coverageProgressLabel": "Coverage progress",
+    "coverageAverage": "{{pct}}% average coverage",
+    "coverageBandGood": "Strong (≥80%) {{count}} fields",
+    "coverageBandPartial": "Partial (50–79%) {{count}} fields",
+    "coverageBandWeak": "Weak (<50%) {{count}} fields"
   },
   "upload": {
     "kicker": "Document intake",
@@ -602,6 +609,152 @@
     "invalidJson": "Invalid JSON draft.",
     "previewTitle": "Payload preview",
     "viewCompanies": "View companies"
+  },
+  "coverageField": {
+    "unknownTitle": "Unknown field",
+    "unknownBody": "Field \"{{field}}\" does not exist",
+    "backToDashboard": "Back to dashboard",
+    "directionHigher": "Higher is better",
+    "directionLower": "Lower is better",
+    "subtitleWithTarget": "Unit: {{unit}} · {{direction}} · Target: {{target}}",
+    "subtitleWithoutTarget": "Unit: {{unit}} · {{direction}}",
+    "kpis": {
+      "withDataCompanies": "Companies with data",
+      "onTargetCompanies": "At or above target"
+    },
+    "states": {
+      "loadingTitle": "Loading…",
+      "loadingBody": "Loading company data",
+      "errorTitle": "Failed to load",
+      "errorBody": "Could not load company list"
+    },
+    "table": {
+      "valueWithUnit": "Value ({{unit}})",
+      "targetWithUnit": "Target ({{unit}})",
+      "achievement": "Achievement",
+      "noData": "No data"
+    },
+    "mobileTarget": "Target {{target}}",
+    "labels": {
+      "renewable_energy_pct": "Renewable %",
+      "taxonomy_aligned_revenue_pct": "Taxonomy %",
+      "taxonomy_aligned_capex_pct": "CapEx Align %",
+      "waste_recycled_pct": "Waste %",
+      "female_pct": "Female %",
+      "scope1_co2e_tonnes": "Scope 1",
+      "scope2_co2e_tonnes": "Scope 2",
+      "scope3_co2e_tonnes": "Scope 3",
+      "energy_consumption_mwh": "Energy",
+      "water_usage_m3": "Water"
+    }
+  },
+  "designPreview": {
+    "hero": {
+      "kicker": "Internal · Design Preview",
+      "title": "Design system · pick your variants",
+      "subtitle": "Scroll through each section and decide which variant (A / B / C) should lock in. The chosen set becomes the baseline for Phase 2 page migration."
+    },
+    "nav": {
+      "header": "Header",
+      "stat-cards": "Stat cards",
+      "banners": "Banners",
+      "filter-bar": "Filter bar",
+      "companies-mock": "Companies mock"
+    },
+    "sections": {
+      "header": {
+        "title": "Page header · 3 variants",
+        "subtitle": "Decide: kicker, KPIs, actions on the right or below?"
+      },
+      "statCards": {
+        "title": "Stat cards · 2 densities",
+        "subtitle": "Same component, choose the default size"
+      },
+      "banners": {
+        "title": "Notice banners · 4 semantic tones",
+        "subtitle": "Replaces the five different banner colors currently in use"
+      },
+      "filterBar": {
+        "title": "Filter bar",
+        "subtitle": "Unified pattern for selector and action rows"
+      },
+      "companiesMock": {
+        "title": "Full Companies page · new look (mock)",
+        "subtitle": "All six primitives composed into one page. This is what Phase 2 delivers."
+      }
+    },
+    "variants": {
+      "headerA": "A · clean (recommended)",
+      "headerB": "B · with kicker",
+      "headerC": "C · no KPIs, title plus actions",
+      "statCardsA": "A · compact (p-4, text-3xl) · recommended",
+      "statCardsB": "B · spacious (p-6, text-5xl) · current dashboard",
+      "filterBarA": "A · fields plus primary action",
+      "filterBarB": "B · search, sort chips, export cluster"
+    },
+    "samples": {
+      "companiesTitle": "Companies",
+      "companiesSubtitle": "Read saved company cases as reusable analysis objects.",
+      "companiesKicker": "Company intelligence",
+      "compareTitle": "Company comparison",
+      "compareSubtitle": "Place multiple company cases side by side."
+    },
+    "actions": {
+      "csvExport": "Export CSV",
+      "reset": "Reset",
+      "startCompare": "Start comparison",
+      "recalculateBenchmarks": "Recalculate benchmarks",
+      "sortByName": "Sort by name",
+      "sortByYear": "Sort by year",
+      "sortByTaxonomy": "Sort by taxonomy",
+      "csv": "CSV",
+      "json": "JSON"
+    },
+    "kpis": {
+      "companies": "Companies",
+      "years": "Years",
+      "datasets": "Datasets"
+    },
+    "statCards": {
+      "avgTaxonomy": "Avg taxonomy",
+      "avgRenewable": "Avg renewable",
+      "yearsHint": "2022–2024"
+    },
+    "banners": {
+      "infoTitle": "Note",
+      "infoBody": "This view mirrors what the company disclosed under the EU Taxonomy.",
+      "warningTitle": "Small sample",
+      "warningBody": "The current selection contains sample sizes down to 1. Interpret with care.",
+      "successTitle": "Key takeaway",
+      "successBody": "Renewable share rose by +6.0%, while Scope 1 emissions fell by 10,000 t.",
+      "modeTitle": "Project analysis mode",
+      "modeBody": "Inputs are user-provided technical parameters."
+    },
+    "filters": {
+      "industry": "Industry",
+      "industryPlaceholder": "Electricity generation",
+      "industryOption": "D35.11 — Electricity generation",
+      "year": "Year",
+      "search": "Search",
+      "searchPlaceholder": "Search companies…"
+    },
+    "companiesMock": {
+      "trendBanner": "3 of 36 companies have trend data for 2022–2024. The rest only have 2024.",
+      "cardDescription": "sustainability_report · 2024",
+      "scope1": "Scope 1",
+      "employeesShort": "Employees",
+      "people": "People",
+      "taxonomy": "Taxonomy",
+      "revenuePercent": "% revenue"
+    },
+    "footer": {
+      "title": "Decision cheatsheet",
+      "body": "Tell Claude: \"Header = A, StatCard = A, FilterBar A+B, Companies mock looks good\". He will lock these and hand off the Codex migration script for Phase 2.",
+      "bulletHeader": "• Header · A (clean) / B (kicker) / C (no KPIs)",
+      "bulletStatCards": "• StatCard · A (compact) / B (spacious)",
+      "bulletFilterBar": "• Filter bar · use both A and B (different page types)",
+      "bulletBanners": "• Banners · keep all 4 tones, they are semantic"
+    }
   },
   "errors": {
     "networkError": "Network error — please check your connection",
