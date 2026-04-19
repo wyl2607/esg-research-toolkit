@@ -100,6 +100,16 @@ if git diff "$RANGE" \
   FAILED=1
 fi
 
+# SSoT consistency guard (docs/policies/project-consistency-rules.md §1).
+# CONSISTENCY_GUARD=0 可临时关闭（不建议；违规意味着单一事实源被破坏）。
+if [ "${CONSISTENCY_GUARD:-1}" = "1" ] && [ -x scripts/consistency_check.sh ]; then
+  if ! scripts/consistency_check.sh >/tmp/review_push_guard_consistency.out 2>&1; then
+    echo "[guard][FAIL] SSoT consistency_check.sh reported violations"
+    cat /tmp/review_push_guard_consistency.out
+    FAILED=1
+  fi
+fi
+
 if [ "$FAILED" -ne 0 ]; then
   echo "[guard] push review failed"
   exit 1
