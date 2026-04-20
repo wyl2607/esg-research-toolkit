@@ -129,4 +129,29 @@ test.describe('frontend smoke routes', () => {
       await deleteSeededCompany(request, seeded)
     }
   })
+
+  test('manual case builder form panel keeps core fields interactive', async ({ page }, testInfo) => {
+    const issues = trackBrowserIssues(page)
+
+    await page.goto('/manual', { waitUntil: 'networkidle' })
+
+    const companyInput = page.locator('#company_name')
+    const yearInput = page.locator('#report_year')
+    const industrySelect = page.locator('#manual-industry-code')
+    const saveButton = page.getByRole('button', { name: /fall speichern|save case|保存案例/i })
+    const resetButton = page.getByRole('button', { name: /zurücksetzen|reset|重置/i })
+
+    await expect(companyInput).toBeVisible()
+    await expect(yearInput).toBeVisible()
+    await expect(industrySelect).toBeVisible()
+    await expect(page.locator('#primary_activities')).toBeVisible()
+    await expect(saveButton).toBeDisabled()
+    await expect(resetButton).toBeEnabled()
+
+    await companyInput.fill('Smoke Manual Case')
+    await yearInput.fill('2025')
+    await expect(saveButton).toBeEnabled()
+
+    await expectNoTrackedBrowserIssues(testInfo, 'manual-case-form-panel', issues)
+  })
 })
