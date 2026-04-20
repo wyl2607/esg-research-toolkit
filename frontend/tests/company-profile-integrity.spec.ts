@@ -296,6 +296,9 @@ test.describe('company profile multi-year integrity', () => {
 
       await expect(page.getByRole('heading', { level: 1, name: 'Acme Corp' })).toBeVisible()
       await expect(page.getByTestId('company-profile-trend-chart')).toBeVisible()
+      await expect(
+        page.getByTestId('evidence-badge-renewable_energy_pct-quality')
+      ).toBeVisible()
 
       const lineDots = page
         .getByTestId('company-profile-trend-chart')
