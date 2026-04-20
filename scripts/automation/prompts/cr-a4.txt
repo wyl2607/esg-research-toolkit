@@ -1,0 +1,27 @@
+你是该仓库的维护 agent。请完成 CR-A4：从 CompanyProfilePage.tsx 抽出 Framework Results Panel 到独立组件。
+
+先读 `scripts/automation/prompts/cr-a-section-sop.txt`（本 CR 的通用规则与验证门槛，全部适用）。
+
+本 CR specifics:
+- 目标 Panel 锚点: `t('profile.detailTitle')`。Panel 起始为该 title 所在 `<Panel>`；结束为该 Panel 的 closing `</Panel>`。
+- 新组件路径: `frontend/src/components/company-profile/FrameworkResultsCard.tsx`
+- 组件名: `FrameworkResultsCard`
+- 依赖数据: 该 Panel 内实际使用的变量（通常包括 `frameworkScores`、`frameworkMetaMap`、`locale`）。
+- helpers: 若用到 `asDate` 等 helper，保持从 `@/pages/company-profile/utils` import。
+- UI 约束: 保持 `<details>` 结构、Badge、dimension bars、gaps/recommendations、frameworkVersion/analyzedAt 显示逻辑完全一致。
+
+边界约束:
+- 只抽 `profile.detailTitle` 这个 Panel。
+- 不要改动前后的 YoY / period / narrative 区域。
+- 不要改动测试文件。
+
+提交: `refactor(frontend): extract FrameworkResultsCard from CompanyProfilePage (CR-A4)`
+
+验证:
+- `cd frontend && npm run lint`
+- `cd frontend && npm run build`
+- `cd frontend && npx tsc --noEmit`
+- `cd frontend && npm run test:smoke`（如果是仓库既有无关失败，可保留 commit 但要明确记录失败原因）
+
+完成后输出:
+CR-A4_RESULT: section=FrameworkResultsCard new_file=frontend/src/components/company-profile/FrameworkResultsCard.tsx page_loc_delta=<before>-><after> lint=<pass/fail> build=<pass/fail> smoke=<pass/fail> commit=<sha>

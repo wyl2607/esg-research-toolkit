@@ -1,0 +1,26 @@
+你是该仓库的维护 agent。请完成 CR-A6：从 CompanyProfilePage.tsx 抽出 Narrative Panel 到独立组件。
+
+先读 `scripts/automation/prompts/cr-a-section-sop.txt`（本 CR 的通用规则与验证门槛，全部适用）。
+
+本 CR specifics:
+- 目标 Panel 锚点: `t('profile.narrativeTitle')`。Panel 起始为该 title 所在 `<Panel>`；结束为 closing `</Panel>`。
+- 新组件路径: `frontend/src/components/company-profile/NarrativeCard.tsx`
+- 组件名: `NarrativeCard`
+- 依赖数据: 本 Panel 实际使用的变量全部由 props 传入（典型含 `narrativeSummary`、`improvedMetricLabels`、`weakenedMetricLabels`、`strengthMetricLabels`、`gapMetricLabels`）。
+- 图标和文案: 保持 `FileText` / `CheckCircle2` / `TriangleAlert` 与各 narrative i18n key 不变。
+
+边界约束:
+- 只抽 narrative panel。
+- 不改动其它 panel。
+- 不要改动测试文件。
+
+提交: `refactor(frontend): extract NarrativeCard from CompanyProfilePage (CR-A6)`
+
+验证:
+- `cd frontend && npm run lint`
+- `cd frontend && npm run build`
+- `cd frontend && npx tsc --noEmit`
+- `cd frontend && npm run test:smoke`（如果是仓库既有无关失败，可保留 commit 但要明确记录失败原因）
+
+完成后输出:
+CR-A6_RESULT: section=NarrativeCard new_file=frontend/src/components/company-profile/NarrativeCard.tsx page_loc_delta=<before>-><after> lint=<pass/fail> build=<pass/fail> smoke=<pass/fail> commit=<sha>
