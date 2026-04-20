@@ -1,20 +1,19 @@
 import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, Download, FileText, Sparkles, TrendingUp } from 'lucide-react'
+import { ArrowLeft, Download, Sparkles } from 'lucide-react'
 
+import { CoreMetricsSection } from '@/components/company-profile/CoreMetricsSection'
 import { DataQualityCard } from '@/components/company-profile/DataQualityCard'
 import { FrameworkResultsCard } from '@/components/company-profile/FrameworkResultsCard'
 import { IdentityCard } from '@/components/company-profile/IdentityCard'
 import { NarrativeCard } from '@/components/company-profile/NarrativeCard'
 import { PeriodHistoryCard } from '@/components/company-profile/PeriodHistoryCard'
-import { EvidenceBadge } from '@/components/EvidenceBadge'
-import { MetricCard } from '@/components/MetricCard'
+import { ProvenanceCard } from '@/components/company-profile/ProvenanceCard'
+import { YoyDeltaCard } from '@/components/company-profile/YoyDeltaCard'
 import { NoticeBanner } from '@/components/NoticeBanner'
-import { PeerComparisonCard } from '@/components/company-profile/PeerComparisonCard'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
-import { Panel } from '@/components/layout/Panel'
 import { QueryStateCard } from '@/components/QueryStateCard'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -30,16 +29,11 @@ import { useTranslation } from 'react-i18next'
 import { localizeErrorMessage } from '@/lib/error-utils'
 import { exportCompanyProfileCSV, exportToJSON } from '@/lib/export'
 import {
-  asDate,
-  asNum,
-  asPct,
   buildCompanyTrendData,
   compactList,
   deltaNumber,
   deltaPctLabel,
   deltaPercent,
-  deltaPercentLabel,
-  deltaToneClass,
   evidenceRichness,
   frameworkRunKey,
   mergeEvidenceAnchor,
@@ -358,7 +352,6 @@ export function CompanyProfilePage() {
     )
   }
 
-  const m = profile.latest_metrics
   const latestSources = profile.latest_sources ?? []
   const latestSourceTypes = compactList(
     latestSources.map((source) => prettifyToken(source.source_document_type))
@@ -505,182 +498,24 @@ export function CompanyProfilePage() {
         identitySummary={identitySummary}
       />
 
-      <Panel
-        title={(
-          <span className="flex items-center gap-2 text-base">
-            <FileText size={16} className="text-indigo-600" />
-            {t('profile.provenanceTitle')}
-          </span>
-        )}
-      >
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-lg border bg-slate-50 px-4 py-3">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-              {t('profile.provenancePeriodLabel')}
-            </p>
-            <p className="mt-2 text-sm font-semibold text-slate-900">
-              {profile.latest_period.period?.label ??
-                profile.latest_period.reporting_period_label}
-            </p>
-            <p className="mt-1 text-xs text-slate-500">
-              {t('profile.provenancePeriodSummary', {
-                type:
-                  profile.latest_period.period?.type ??
-                  profile.latest_period.reporting_period_type ??
-                  '—',
-                year:
-                  profile.latest_period.period?.legacy_report_year ??
-                  profile.latest_period.report_year,
-              })}
-            </p>
-          </div>
+      <ProvenanceCard
+        latestPeriod={profile.latest_period}
+        latestSources={latestSources}
+        mergeSourceCount={profile.latest_merged_result?.source_count ?? latestSources.length}
+        latestSourceTypes={latestSourceTypes}
+        latestSourceOrigin={latestSourceOrigin}
+        latestMergeCue={latestMergeCue}
+        frameworkScores={frameworkScores}
+        locale={locale}
+      />
 
-          <div className="rounded-lg border bg-slate-50 px-4 py-3">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-              {t('profile.provenanceSourcesLabel')}
-            </p>
-            <p
-              className="mt-2 text-sm font-semibold text-slate-900"
-              data-testid="profile-provenance-source-summary"
-            >
-              {t('profile.provenanceSourceSummary', { count: latestSources.length })}
-            </p>
-            <p
-              className="mt-1 text-xs text-slate-500"
-              data-testid="profile-provenance-source-types"
-            >
-              {[latestSourceTypes, latestSourceOrigin].filter(Boolean).join(' · ') || '—'}
-            </p>
-          </div>
-
-          <div className="rounded-lg border bg-slate-50 px-4 py-3">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-              {t('profile.provenanceMergeLabel')}
-            </p>
-            <p
-              className="mt-2 text-sm font-semibold text-slate-900"
-              data-testid="profile-provenance-merge-summary"
-            >
-              {t('profile.provenanceMergeSummary', {
-                count:
-                  profile.latest_merged_result?.source_count ?? latestSources.length,
-              })}
-            </p>
-            <p className="mt-1 text-xs text-slate-500">
-              {latestMergeCue
-                ? t('profile.provenanceMergeMetricCue', {
-                    metric: metricDisclosureLabel(t, latestMergeCue.metricKey),
-                    sourceType: prettifyToken(latestMergeCue.chosenSourceDocumentType),
-                    reason: prettifyToken(latestMergeCue.mergeReason),
-                  })
-                : '—'}
-            </p>
-          </div>
-
-          <div className="rounded-lg border bg-slate-50 px-4 py-3">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-              {t('profile.provenanceFrameworkLabel')}
-            </p>
-            {frameworkScores.length === 0 ? (
-              <p className="mt-2 text-sm text-slate-500">{t('profile.noFrameworkResults')}</p>
-            ) : (
-              <div className="mt-2 space-y-2">
-                {frameworkScores.slice(0, 2).map((framework) => (
-                  <div key={`${framework.framework_id}-${framework.framework_version ?? 'unknown'}-${framework.analyzed_at ?? framework.stored_at ?? 'none'}`}>
-                    <p className="text-sm font-semibold text-slate-900">
-                      {t('profile.provenanceFrameworkVersion', {
-                        framework: framework.framework,
-                        version: framework.framework_version ?? '—',
-                      })}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      {t('profile.provenanceFrameworkTimestamp', {
-                        date: asDate(
-                          framework.analyzed_at ?? framework.stored_at ?? null,
-                          locale
-                        ),
-                      })}
-                    </p>
-                  </div>
-                ))}
-                {frameworkScores.length > 2 ? (
-                  <p className="text-xs text-slate-500">
-                    {t('profile.provenanceFrameworkMore', {
-                      count: frameworkScores.length - 2,
-                    })}
-                  </p>
-                ) : null}
-              </div>
-            )}
-          </div>
-        </div>
-      </Panel>
-
-      <div className="grid gap-4 md:grid-cols-4">
-        <MetricCard
-          label={t('companies.scope1')}
-          value={asNum(m.scope1_co2e_tonnes, locale)}
-          unit="tCO2e"
-          footer={
-            <EvidenceBadge
-              evidence={evidenceByMetric.get('scope1_co2e_tonnes')}
-              metricLabel={metricDisclosureLabel(t, 'scope1_co2e_tonnes')}
-              fallbackFramework={profile.latest_period.source_document_type}
-              fallbackPeriodLabel={profile.latest_period.reporting_period_label}
-              testId="evidence-badge-scope1_co2e_tonnes"
-            />
-          }
-        />
-        <MetricCard
-          label={t('companies.scope2')}
-          value={asNum(m.scope2_co2e_tonnes, locale)}
-          unit="tCO2e"
-          footer={
-            <EvidenceBadge
-              evidence={evidenceByMetric.get('scope2_co2e_tonnes')}
-              metricLabel={metricDisclosureLabel(t, 'scope2_co2e_tonnes')}
-              fallbackFramework={profile.latest_period.source_document_type}
-              fallbackPeriodLabel={profile.latest_period.reporting_period_label}
-              testId="evidence-badge-scope2_co2e_tonnes"
-            />
-          }
-        />
-        <MetricCard
-          label={t('companies.employees')}
-          value={asNum(m.total_employees, locale)}
-          unit={t('companies.unitPeople')}
-          footer={
-            <EvidenceBadge
-              evidence={evidenceByMetric.get('total_employees')}
-              metricLabel={metricDisclosureLabel(t, 'total_employees')}
-              fallbackFramework={profile.latest_period.source_document_type}
-              fallbackPeriodLabel={profile.latest_period.reporting_period_label}
-              testId="evidence-badge-total_employees"
-            />
-          }
-        />
-        <MetricCard
-          label={t('companies.renewable')}
-          value={asPct(m.renewable_energy_pct)}
-          unit={t('companies.unitPercent')}
-          color="green"
-          footer={
-            <EvidenceBadge
-              evidence={evidenceByMetric.get('renewable_energy_pct')}
-              metricLabel={metricDisclosureLabel(t, 'renewable_energy_pct')}
-              fallbackFramework={profile.latest_period.source_document_type}
-              fallbackPeriodLabel={profile.latest_period.reporting_period_label}
-              testId="evidence-badge-renewable_energy_pct"
-            />
-          }
-        />
-      </div>
-
-      <PeerComparisonCard
-        companyReportId={latestCompanyReportId}
-        industryCode={profile.latest_period?.industry_code ?? null}
-        reportYear={profile.latest_year}
-        metrics={profile.latest_metrics}
+      <CoreMetricsSection
+        latestMetrics={profile.latest_metrics}
+        locale={locale}
+        evidenceByMetric={evidenceByMetric}
+        latestPeriod={profile.latest_period}
+        latestCompanyReportId={latestCompanyReportId}
+        latestYear={profile.latest_year}
       />
 
       <DataQualityCard
@@ -717,65 +552,10 @@ export function CompanyProfilePage() {
         </Suspense>
       </DeferredHeavyCharts>
 
-      {yoyDeltaCard && (
-        <div data-testid="yoy-delta-card">
-          <Panel
-            title={(
-              <span className="flex items-center gap-2 text-base">
-                <TrendingUp size={16} className="text-indigo-600" />
-                {t('profile.yoyTitle')}
-              </span>
-            )}
-          >
-            <div className="grid gap-4 md:grid-cols-3">
-              <div className="rounded-lg border bg-slate-50 px-4 py-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                  YoY CO2e
-                </p>
-                <p className={`mt-2 text-2xl font-semibold ${deltaToneClass(yoyDeltaCard.co2eDeltaPct)}`}>
-                  {deltaPercentLabel(yoyDeltaCard.co2eDeltaPct)}
-                </p>
-                <p className="mt-1 text-xs text-slate-500">
-                  {t('profile.yoyComparedTo', { year: yoyDeltaCard.previousYear ?? '—' })}
-                </p>
-              </div>
-              <div className="rounded-lg border bg-slate-50 px-4 py-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                  YoY Revenue
-                </p>
-                <p className={`mt-2 text-2xl font-semibold ${deltaToneClass(yoyDeltaCard.revenueDeltaPct)}`}>
-                  {deltaPercentLabel(yoyDeltaCard.revenueDeltaPct)}
-                </p>
-                <p className="mt-1 text-xs text-slate-500">
-                  {t('profile.yoyComparedTo', { year: yoyDeltaCard.previousYear ?? '—' })}
-                </p>
-              </div>
-              <div className="rounded-lg border bg-slate-50 px-4 py-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                  YoY Alignment
-                </p>
-                <p className={`mt-2 text-2xl font-semibold ${deltaToneClass(yoyDeltaCard.alignmentDeltaPct)}`}>
-                  {deltaPercentLabel(yoyDeltaCard.alignmentDeltaPct)}
-                </p>
-                <p className="mt-1 text-xs text-slate-500">
-                  {t('profile.yoyComparedTo', { year: yoyDeltaCard.previousYear ?? '—' })}
-                </p>
-              </div>
-              <div className="rounded-lg border bg-white px-4 py-4 md:col-span-3">
-                <p className="text-sm leading-6 text-slate-700">
-                  {yoySummary?.hasAnyDelta
-                    ? t('profile.yoyNarrativeReady', {
-                        year: yoySummary.previousYear ?? '—',
-                        renewableDelta: yoySummary.renewableDelta != null ? `${yoySummary.renewableDelta >= 0 ? '+' : ''}${yoySummary.renewableDelta.toFixed(1)}%` : '—',
-                        taxonomyDelta: yoySummary.taxonomyDelta != null ? `${yoySummary.taxonomyDelta >= 0 ? '+' : ''}${yoySummary.taxonomyDelta.toFixed(1)}%` : '—',
-                      })
-                    : t('profile.yoyNarrativeMissing')}
-                </p>
-              </div>
-            </div>
-          </Panel>
-        </div>
-      )}
+      <YoyDeltaCard
+        yoyDeltaCard={yoyDeltaCard}
+        yoySummary={yoySummary}
+      />
 
       <FrameworkResultsCard
         frameworkScores={frameworkScores}
