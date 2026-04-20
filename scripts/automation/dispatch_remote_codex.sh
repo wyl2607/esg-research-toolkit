@@ -66,12 +66,15 @@ echo "[$HOST] HEAD=$REMOTE_HEAD"
 
 if [[ "$REMOTE_HEAD" != "$LOCAL_HEAD" ]]; then
   echo "[gate] remote HEAD != local; attempting fast-forward pull on $HOST ..." >&2
-  ssh_exec "cd $REMOTE_REPO && git pull --ff-only origin main" || {
-    echo "[abort] $HOST cannot fast-forward to $LOCAL_HEAD" >&2
-    exit 3
-  }
+  if ! ssh_exec "cd $REMOTE_REPO && git pull --ff-only origin main"; then
+    echo "[gate] ff-pull failed; falling back to hard-reset origin/main on $HOST" >&2
+    ssh_exec "cd $REMOTE_REPO && git reset --hard origin/main" || {
+      echo "[abort] $HOST cannot reset to origin/main" >&2
+      exit 3
+    }
+  fi
   REMOTE_HEAD="$(ssh_exec "cd $REMOTE_REPO && git rev-parse HEAD")"
-  [[ "$REMOTE_HEAD" == "$LOCAL_HEAD" ]] || { echo "[abort] post-pull HEAD mismatch" >&2; exit 3; }
+  [[ "$REMOTE_HEAD" == "$LOCAL_HEAD" ]] || { echo "[abort] post-sync HEAD mismatch $REMOTE_HEAD vs $LOCAL_HEAD" >&2; exit 3; }
 fi
 
 # --- Dispatch prompt (base64 to survive quoting) ----------------------------
