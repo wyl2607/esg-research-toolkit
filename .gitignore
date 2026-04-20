@@ -51,6 +51,7 @@ reports/
 examples/companies/*.json
 *.db
 *.db.bak*
+!tests/fixtures/legacy_esg.db
 *.sqlite
 *.sqlite*.bak*
 *.sqlite3

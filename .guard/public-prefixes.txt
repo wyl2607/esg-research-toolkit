@@ -34,3 +34,5 @@ techno_economics/
 tests/
 workflows/
 migrations/
+alembic/
+alembic.ini

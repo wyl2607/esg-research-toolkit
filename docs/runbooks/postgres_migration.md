@@ -1,11 +1,8 @@
-# Postgres Migration Runbook (VPS-only)
+# Postgres Migration Runbook (VPS-only, Alembic-first)
 
-> **当前默认**：本地 + VPS 都跑 SQLite (`data/esg_toolkit.db`)。
-> **迁移目标**：当 VPS 公司数 > 50 或并发读 > 20 时，**只在 VPS** 切到 Postgres，
+> **当前默认**：本地 + VPS 都跑 SQLite (`data/esg_toolkit.db`)。  
+> **迁移目标**：当 VPS 公司数 > 50 或并发读 > 20 时，**只在 VPS** 切到 Postgres，  
 > 本地继续 SQLite 不变。
->
-> **阻塞条件**：必须先把所有 schema 改动通过 `report_parser.storage.ensure_storage_schema`
-> 用 `Base.metadata.create_all` 重建一遍——已经做了，所以 ExtractionRun 表会自动创建。
 
 ---
 
@@ -25,17 +22,17 @@
 ## 2. 准备 VPS
 
 ```bash
-# 1. 装 Postgres 16
+# 1) 装 Postgres 16
 apt-get update && apt-get install -y postgresql-16 postgresql-contrib
 
-# 2. 建库 + 用户
+# 2) 建库 + 用户
 sudo -u postgres psql <<SQL
 CREATE USER esg WITH PASSWORD '<change-me>';
 CREATE DATABASE esg_toolkit OWNER esg;
 GRANT ALL PRIVILEGES ON DATABASE esg_toolkit TO esg;
 SQL
 
-# 3. 装 psycopg
+# 3) 装 psycopg
 /opt/esg-toolkit/.venv/bin/pip install 'psycopg[binary]>=3.1'
 ```
 
@@ -43,64 +40,83 @@ SQL
 
 ## 3. 切换 DATABASE_URL
 
-代码已经 Postgres-ready（`core/database.py` 自动开 `pool_size=10, max_overflow=20, pool_recycle=1800`）。
-
 VPS `.env`：
 
-```
+```bash
 DATABASE_URL=postgresql+psycopg://esg:<change-me>@127.0.0.1:5432/esg_toolkit
 ```
 
-第一次启动会自动 `create_all` 所有表（`company_reports`, `extraction_runs`, `industry_benchmarks`）。
+---
+
+## 4. 初始化/升级 schema（Alembic）
+
+```bash
+# 推荐：项目脚本（幂等）
+./scripts/db_init.sh
+
+# 等价命令
+alembic upgrade head
+```
+
+如果是**已有生产库**（库里已存在历史表/数据），不要直接 upgrade，按：
+
+- `docs/runbooks/alembic_cutover.md`
+
+执行 `alembic stamp 0001_baseline` 后再 `alembic upgrade head`。
+
+兼容提示：
+
+- `scripts/migrate_db.py` 仅保留为 legacy shim，会打印 Alembic 指引并 `exit 0`，**不会写 schema**。
 
 ---
 
-## 4. 数据迁移（可选）
+## 5. 数据迁移（可选）
 
-如果 VPS 已经有 SQLite 数据要保留：
+如果 VPS 旧 SQLite 数据要保留：
 
 ```bash
-# 在 VPS 的旧 SQLite 模式下
+# 在旧 SQLite 模式导出
 .venv/bin/python scripts/export_verified.py --out /tmp/migrate
 
-# 切 DATABASE_URL 到 Postgres，重启 uvicorn
+# 切 DATABASE_URL 到 Postgres，执行第 4 步 Alembic 初始化后重启服务
 
-# 导入
+# 导入并重算
 .venv/bin/python scripts/import_verified.py /tmp/migrate/<timestamp>/
 curl -X POST http://127.0.0.1:8000/benchmarks/recompute
 ```
 
-如果 VPS 是新装的，跳过此步——下一次本地 `sync_to_vps.sh` 会自动灌数据。
-
 ---
 
-## 5. 验证
+## 6. 验证
 
 ```bash
+alembic current
+# 期望: head revision (当前为 0002_retire_runtime_helpers)
+
 psql -U esg -d esg_toolkit -c '\dt'
-# 期望：company_reports, extraction_runs, industry_benchmarks, ...
+# 期望: company_reports, extraction_runs, framework_analysis_results, pending_disclosures, ...
 
 curl http://127.0.0.1:8000/benchmarks/D35.11
-# 期望：返回 metric 列表
+# 期望: 返回 metric 列表
 ```
 
 ---
 
-## 6. 回退
+## 7. 回退
 
 ```bash
-# 改回 .env
+# 改回 SQLite
 DATABASE_URL=sqlite:///./data/esg_toolkit.db
-
-# 重启 uvicorn
-# Postgres 数据保留，下次启动重新生效
 ```
+
+重启服务后即可回退到 SQLite。  
+若 Postgres 侧 schema/数据异常，按变更前备份恢复（见 `alembic_cutover.md` 回退说明）。
 
 ---
 
-## 7. 不要做的事
+## 8. 不要做的事
 
-- ❌ 不要在本地切 Postgres——本地 SQLite 单文件够用，迁移没收益
-- ❌ 不要把 Postgres 端口 5432 开到公网，永远走 127.0.0.1
-- ❌ 不要把 DATABASE_URL 写进 git——只在 VPS 本地 `.env` 里
-- ❌ 不要在 Postgres 上跑 `ensure_storage_schema` 的 SQLite-only `ALTER TABLE`——已经被 dialect.name guard 保护
+- ❌ 不要在本地切 Postgres（本地 SQLite 单文件维护更轻）
+- ❌ 不要把 Postgres 5432 端口暴露公网（仅 127.0.0.1）
+- ❌ 不要把 `DATABASE_URL` 提交到 git
+- ❌ 不要把 `scripts/migrate_db.py` 当作真实迁移入口（它是 shim）

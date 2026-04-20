@@ -4,7 +4,7 @@ import hashlib
 import json
 from datetime import datetime, timezone
 
-from sqlalchemy import Column, DateTime, Float, Integer, String, Text, UniqueConstraint, text
+from sqlalchemy import Column, DateTime, Float, Integer, String, Text, UniqueConstraint, inspect, text
 from sqlalchemy.engine import Engine
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -164,6 +164,10 @@ def get_framework_result(db: Session, result_id: int) -> FrameworkAnalysisResult
 
 
 def ensure_framework_storage_schema(engine: Engine) -> None:
+    inspector = inspect(engine)
+    if "alembic_version" in inspector.get_table_names():
+        return
+
     if engine.dialect.name != "sqlite":
         return
 

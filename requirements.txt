@@ -8,6 +8,7 @@ slowapi>=0.1.9
 
 # Database
 sqlalchemy~=2.0.0
+alembic~=1.18.0
 
 # AI
 openai~=1.30.0

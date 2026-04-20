@@ -3,7 +3,19 @@ import logging
 from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import Boolean, Column, DateTime, Float, Integer, String, Text, UniqueConstraint, func, text
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+    inspect,
+    text,
+)
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
@@ -580,6 +592,10 @@ def ensure_storage_schema(engine: Engine) -> None:
     Lightweight SQLite-safe migration for additive columns on company_reports.
     We keep this minimal so existing deployments can evolve without alembic.
     """
+    inspector = inspect(engine)
+    if "alembic_version" in inspector.get_table_names():
+        return
+
     # Always create newly declared tables (extraction_runs, pending_disclosures, etc.) on any backend.
     Base.metadata.create_all(
         bind=engine,

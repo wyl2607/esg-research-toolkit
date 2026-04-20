@@ -191,6 +191,24 @@ Environment variables are loaded from `.env`.
 | `LOG_LEVEL` | `INFO` | Application logging verbosity. |
 | `BATCH_MAX_WORKERS` | `2` | Worker count for batch report processing. |
 
+## 🗄️ Database Initialization (Alembic-first)
+
+Apply database schema changes with Alembic:
+
+```bash
+./scripts/db_init.sh
+# or
+alembic upgrade head
+```
+
+For existing production databases that already contain schema/data, follow:
+
+- `docs/runbooks/alembic_cutover.md` (includes `alembic stamp 0001_baseline` + `alembic upgrade head` flow)
+
+Legacy note:
+
+- `scripts/migrate_db.py` is kept as a compatibility shim and prints Alembic guidance only (no schema writes).
+
 ## 🤝 Contributing
 
 1. Fork this repository and create a feature branch.
