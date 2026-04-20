@@ -15,9 +15,14 @@
 - 这些函数当前都是下划线开头的 module-private helper，没有被 api.py 外部 import（需要先 grep 验证），所以搬迁是安全的。
 
 任务:
-1. 先 grep 验证没有跨模块引用：
+1. 先 grep 跨模块引用情况：
      grep -rn "_parse_evidence_summary\|_normalize_evidence_anchor\|_evidence_anchors_for_record\|_manual_evidence_summary\|_upload_evidence_summary\|_metric_snippet\|_metric_anchor_from_record\|_structured_metric_evidence" --include='*.py' .
-   预期只命中 report_parser/api.py 自己（以及它们的定义）。如果发现任何外部 import / 测试直接 patch，**立即 abort 并报告**（本 CR 不做跨模块重构）。
+   已知：tests/test_report_parser.py 第 20 行 `from report_parser.api import (_upload_evidence_summary, ...)`，直接从 api.py import。**这是可以接受的** —— 只要 api.py 通过 `from ._evidence import _upload_evidence_summary` 重新导出该符号，测试照常通过，无需改测试。
+   仅当发现以下更严重的情况时才 abort：
+     - 有代码从 `report_parser.api` 以外的路径引用这些 helper（例如直接 `from report_parser._internal import ...`，不存在的话忽略）；
+     - 测试用 `monkeypatch.setattr("report_parser.api._xxx", ...)` 修改这些 helper（这种情况下搬迁后 patch 路径不变，也 OK，不要 abort）；
+     - helper 调用了 api.py 内部难以解耦的 SQLAlchemy/session 逻辑。
+   简言之：**test file 直接 import 这些下划线 helper 不是 abort 条件**，是常见模式。
 2. 创建 `report_parser/_evidence.py`：
    - 顶部放必要 import（typing, json, 其它被这些函数使用到的符号）。
    - 注意 `_manual_evidence_summary` 和 `_upload_evidence_summary` 引用 `DISCLOSURE_KEY_METRICS` / `UPLOAD_FALLBACK_METRICS`，这两个常量留在 api.py 作为 public SSoT，**用 from .api import ... 会造成循环 import**。解决办法二选一（优先 A）：
