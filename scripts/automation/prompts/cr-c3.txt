@@ -1,0 +1,19 @@
+你是该仓库的维护 agent。请完成 CR-C3：从 ComparePage.tsx 抽出比较表格 Panel 到独立组件。
+
+先读 `scripts/automation/prompts/cr-a-section-sop.txt`（通用 section 抽取规则 + 验证门槛，本 CR 全部适用）。
+
+本 CR specifics:
+- 目标文件: `frontend/src/pages/ComparePage.tsx`（约 521 行）。
+- 目标 Panel: 该文件中的 `<Panel title={t('compare.tableTitle')}>...</Panel>`（起始约 line 408，结束约 line 494）—— 公司比较的主表格。
+- 新组件路径: `frontend/src/components/compare/CompareTablePanel.tsx`
+- 组件名: `CompareTablePanel`
+- 依赖数据: 被比较的公司列表 (`companies` 或等价变量) + 用到的指标 helper (`intensityVal`, `fmtNum`, `RelativeBar`)。这些 helper 可以一起搬到新组件文件顶部或 `frontend/src/pages/compare/utils.ts`。
+- 不要动 FormCard 块（line 372-404，公司选择表单）和主组件 state / query。
+- 不改 backend、不改 `lib/api.ts`、不改 `types.ts`。
+
+硬约束: 与 SOP 一致。如果 `test:smoke` 基线已知存在 unrelated 失败（非本 CR 修改区域触发），可在最终输出中标记 `smoke=fail`，但提交必须保留（不要 revert），并在结果中说明受影响路由不是 `/compare`。
+
+提交: `refactor(frontend): extract CompareTablePanel from ComparePage (CR-C3)`
+
+完成后输出:
+  CR-C3_RESULT: section=CompareTablePanel new_file=<path> page_loc_delta=<before>-><after> lint=<pass/fail> build=<pass/fail> smoke=<pass/fail> commit=<sha>
