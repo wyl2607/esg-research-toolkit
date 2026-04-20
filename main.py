@@ -123,6 +123,23 @@ LCOE_INPUT_EXAMPLE = {
     "reference_fx_to_eur": 1.0,
 }
 
+SAF_INPUT_EXAMPLE = {
+    "pathway": "HEFA",
+    "region": "EU",
+    "production_capacity_tonnes_year": 50000,
+    "capex_eur_per_tonne_year": 1800.0,
+    "lifetime_years": 20,
+    "discount_rate": 0.08,
+    "feedstock_cost_eur_per_tonne": 600.0,
+    "feedstock_to_saf_ratio": 1.25,
+    "opex_eur_per_tonne": 250.0,
+    "policy_credit_eur_per_tonne": 0.0,
+    "jet_fuel_price_eur_per_litre": 0.60,
+    "saf_density_kg_per_litre": 0.800,
+    "currency": "EUR",
+    "reference_fx_to_eur": 1.0,
+}
+
 EXAMPLE_PARAMETERS = {
     "company_name": "Contract Demo AG",
     "report_year": 2024,
@@ -169,6 +186,7 @@ REQUEST_BODY_EXAMPLES = {
     ("/taxonomy/report/text", "post"): COMPANY_DATA_EXAMPLE,
     ("/techno/lcoe", "post"): LCOE_INPUT_EXAMPLE,
     ("/techno/sensitivity", "post"): LCOE_INPUT_EXAMPLE,
+    ("/techno/saf", "post"): SAF_INPUT_EXAMPLE,
     ("/frameworks/score/upload", "post"): COMPANY_DATA_EXAMPLE,
     ("/report/merge/preview", "post"): MERGE_PREVIEW_EXAMPLE,
 }

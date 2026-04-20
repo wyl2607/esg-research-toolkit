@@ -446,3 +446,112 @@ class SensitivityResult(BaseModel):
     values: list[float]
     lcoe_results: list[float]
     lcoe_change_pct: list[float]
+
+
+# ---------------------------------------------------------------------------
+# SAF (Sustainable Aviation Fuel) cost calculator schemas
+# ---------------------------------------------------------------------------
+
+SAFPathway: TypeAlias = Literal[
+    "HEFA",           # Hydroprocessed Esters and Fatty Acids (used cooking oil / tallow)
+    "FT-biomass",     # Fischer-Tropsch from biomass gasification
+    "ATJ",            # Alcohol-to-Jet (corn/sugarcane ethanol)
+    "PtL",            # Power-to-Liquid (electrofuels, green H2 + CO2)
+    "co-processing",  # Co-processing in conventional refinery
+]
+
+SAFRegion: TypeAlias = Literal[
+    "DE",   # Germany
+    "EU",   # EU average
+    "US",   # United States (with IRA credits)
+    "BR",   # Brazil (sugarcane)
+    "INTL", # International / other
+]
+
+
+class SAFInput(BaseModel):
+    """Input parameters for SAF levelized cost calculation."""
+
+    pathway: SAFPathway = "HEFA"
+    region: SAFRegion = "EU"
+
+    # Plant scale
+    production_capacity_tonnes_year: float = Field(
+        default=50_000.0, gt=0.0, le=10_000_000.0,
+        description="Annual SAF production capacity in tonnes",
+    )
+
+    # Capital cost
+    capex_eur_per_tonne_year: float = Field(
+        default=2_500.0, gt=0.0, le=100_000.0,
+        description="CAPEX per tonne of annual production capacity (€)",
+    )
+    lifetime_years: int = Field(default=20, gt=0, le=50)
+    discount_rate: float = Field(default=0.08, ge=0.0, lt=1.0)
+
+    # Feedstock
+    feedstock_cost_eur_per_tonne: float = Field(
+        default=400.0, ge=0.0, le=10_000.0,
+        description="Feedstock purchase price (€/tonne feedstock)",
+    )
+    feedstock_to_saf_ratio: float = Field(
+        default=3.5, gt=0.0, le=50.0,
+        description="Tonnes of feedstock required per tonne of SAF produced",
+    )
+
+    # Fixed + variable OPEX (excl. feedstock)
+    opex_eur_per_tonne: float = Field(
+        default=300.0, ge=0.0, le=10_000.0,
+        description="Fixed + variable operating costs per tonne SAF (excl. feedstock)",
+    )
+
+    # Policy incentives (negative = subsidy/credit)
+    policy_credit_eur_per_tonne: float = Field(
+        default=0.0, ge=-5_000.0, le=0.0,
+        description="Policy support per tonne SAF (negative = credit/subsidy, e.g. IRA = -200 €/t)",
+    )
+
+    # Reference market prices
+    jet_fuel_price_eur_per_litre: float = Field(
+        default=0.60, gt=0.0, le=10.0,
+        description="Current conventional Jet A-1 price (€/litre) for breakeven comparison",
+    )
+
+    # Physical constants (defaults match aviation fuel specs)
+    saf_density_kg_per_litre: float = Field(default=0.800, gt=0.5, le=1.0)
+
+    currency: Literal["EUR", "USD"] = "EUR"
+    reference_fx_to_eur: float = Field(default=1.0, gt=0.0, le=10.0)
+
+
+class SAFCostResult(BaseModel):
+    """Levelized cost of SAF production and breakeven analysis."""
+
+    pathway: str
+    region: str
+
+    # Production costs
+    levelized_cost_eur_per_tonne: float
+    levelized_cost_eur_per_litre: float
+    levelized_cost_local_per_litre: float
+
+    # Cost breakdown (€/tonne)
+    capex_component_eur_per_tonne: float
+    feedstock_component_eur_per_tonne: float
+    opex_component_eur_per_tonne: float
+    policy_credit_eur_per_tonne: float
+
+    # Comparison
+    jet_fuel_reference_eur_per_litre: float
+    premium_vs_conventional_pct: float
+    breakeven_jet_fuel_price_eur_per_litre: float
+    is_cost_competitive: bool
+
+    # Project financials
+    npv_eur: float
+    irr: float
+    payback_years: float | None
+
+    lifetime_years: int
+    currency: str
+    reference_fx_to_eur: float

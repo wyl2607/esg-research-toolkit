@@ -11,6 +11,7 @@ import {
   BarChart3,
   FilePenLine,
   ClipboardList,
+  Plane,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
@@ -39,6 +40,7 @@ export function Sidebar({ id, className, onNavigate }: SidebarProps) {
   const projectLinks = [
     { to: '/manual', label: t('nav.manual'), icon: FilePenLine },
     { to: '/lcoe', label: t('nav.lcoe'), icon: Zap },
+    { to: '/saf', label: t('nav.saf', 'SAF Calculator'), icon: Plane },
   ]
 
   const handleLinkClick = () => {

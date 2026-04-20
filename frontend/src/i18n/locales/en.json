@@ -16,7 +16,8 @@
     "openMenu": "Open navigation menu",
     "closeMenu": "Close navigation menu",
     "sectionDisclosure": "Disclosure Analysis",
-    "sectionProject": "Project Analysis"
+    "sectionProject": "Project Analysis",
+    "saf": "SAF Calculator"
   },
   "common": {
     "loading": "Loading…",

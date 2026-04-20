@@ -368,6 +368,56 @@ export const listLcoeResults = (): Promise<LCOEResult[]> =>
 export const compareLcoe = (inputs: LCOEInput[]): Promise<LCOEResult[]> =>
   req('/techno/compare', { method: 'POST', body: JSON.stringify(inputs) })
 
+// ── SAF (Sustainable Aviation Fuel) ───────────────────────────────────────
+
+export type SAFPathway = 'HEFA' | 'FT-biomass' | 'ATJ' | 'PtL' | 'co-processing'
+export type SAFRegion = 'DE' | 'EU' | 'US' | 'BR' | 'INTL'
+
+export interface SAFInput {
+  pathway: SAFPathway
+  region: SAFRegion
+  production_capacity_tonnes_year: number
+  capex_eur_per_tonne_year: number
+  lifetime_years: number
+  discount_rate: number
+  feedstock_cost_eur_per_tonne: number
+  feedstock_to_saf_ratio: number
+  opex_eur_per_tonne: number
+  policy_credit_eur_per_tonne: number
+  jet_fuel_price_eur_per_litre: number
+  saf_density_kg_per_litre?: number
+  currency?: 'EUR' | 'USD'
+  reference_fx_to_eur?: number
+}
+
+export interface SAFCostResult {
+  pathway: string
+  region: string
+  levelized_cost_eur_per_tonne: number
+  levelized_cost_eur_per_litre: number
+  levelized_cost_local_per_litre: number
+  capex_component_eur_per_tonne: number
+  feedstock_component_eur_per_tonne: number
+  opex_component_eur_per_tonne: number
+  policy_credit_eur_per_tonne: number
+  jet_fuel_reference_eur_per_litre: number
+  premium_vs_conventional_pct: number
+  breakeven_jet_fuel_price_eur_per_litre: number
+  is_cost_competitive: boolean
+  npv_eur: number
+  irr: number
+  payback_years: number | null
+  lifetime_years: number
+  currency: string
+  reference_fx_to_eur: number
+}
+
+export const calcSafCost = (input: SAFInput): Promise<SAFCostResult> =>
+  req('/techno/saf', { method: 'POST', body: JSON.stringify(input) })
+
+export const getSafBenchmarks = (): Promise<Record<string, SAFInput>> =>
+  req('/techno/saf-benchmarks')
+
 // ── Multi-Framework ESG ────────────────────────────────────────────────────
 
 export const getFrameworkComparison = (

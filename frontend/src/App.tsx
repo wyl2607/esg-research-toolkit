@@ -50,6 +50,10 @@ const DesignPreviewPage = lazy(() =>
   import('@/pages/DesignPreviewPage').then((module) => ({ default: module.DesignPreviewPage }))
 )
 
+const SafPage = lazy(() =>
+  import('@/pages/SafPage').then((module) => ({ default: module.SafPage }))
+)
+
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
 })
@@ -66,6 +70,7 @@ export default function App() {
               <Route path="disclosures" element={<PendingDisclosuresPage />} />
               <Route path="taxonomy" element={<TaxonomyPage />} />
               <Route path="lcoe" element={<LcoePage />} />
+              <Route path="saf" element={<SafPage />} />
               <Route path="companies" element={<CompaniesPage />} />
               <Route path="companies/:companyName" element={<CompanyProfilePage />} />
               <Route path="manual" element={<ManualCaseBuilderPage />} />
