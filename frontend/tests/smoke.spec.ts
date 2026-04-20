@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 import { expectHealthyPage, expectNoTrackedBrowserIssues, smokeRoutes, trackBrowserIssues } from './helpers'
+import { deleteSeededCompany, seedManualCompany } from './seeded-company'
 
 test.describe('frontend smoke routes', () => {
   for (const route of smokeRoutes) {
@@ -95,6 +96,37 @@ test.describe('frontend smoke routes', () => {
 
       const cleanupAfter = await request.delete(`/api/report/companies/${encodedCompany}/${reportYear}?hard=true`)
       expect([200, 404]).toContain(cleanupAfter.status())
+    }
+  })
+
+  test('company profile evidence summary badge renders for seeded evidence anchors', async ({
+    page,
+    request,
+  }, testInfo) => {
+    test.setTimeout(60_000)
+    const issues = trackBrowserIssues(page)
+    const seeded = await seedManualCompany(request, testInfo, {
+      evidence_summary: [
+        {
+          metric: 'renewable_energy_pct',
+          document_title: 'Annual sustainability annex',
+          page: 12,
+          source_type: 'manual_case',
+          reporting_period_label: 'FY 2025',
+        },
+      ],
+    })
+
+    try {
+      await page.goto(seeded.profilePath, { waitUntil: 'networkidle' })
+      await expect(
+        page.getByRole('heading', { level: 1, name: seeded.companyName })
+      ).toBeVisible()
+      await expect(page.getByTestId('evidence-summary-renewable_energy_pct')).toBeVisible()
+
+      await expectNoTrackedBrowserIssues(testInfo, 'company-profile-evidence-summary', issues)
+    } finally {
+      await deleteSeededCompany(request, seeded)
     }
   })
 })

@@ -1,11 +1,12 @@
 import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, CheckCircle2, Clock3, Download, FileText, Leaf, ShieldCheck, Sparkles, TrendingUp, TriangleAlert } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, Clock3, Download, FileText, ShieldCheck, Sparkles, TrendingUp, TriangleAlert } from 'lucide-react'
 
 import { IdentityCard } from '@/components/company-profile/IdentityCard'
 import { EvidenceBadge } from '@/components/EvidenceBadge'
 import { DataQualityCard } from '@/components/company-profile/DataQualityCard'
+import { EvidenceCard } from '@/components/company-profile/EvidenceCard'
 import { MetricCard } from '@/components/MetricCard'
 import { NoticeBanner } from '@/components/NoticeBanner'
 import { PeerComparisonCard } from '@/components/company-profile/PeerComparisonCard'
@@ -920,48 +921,11 @@ export function CompanyProfilePage() {
           </div>
         </Panel>
 
-        <Panel
-          title={(
-            <span className="flex items-center gap-2 text-base">
-              <Leaf size={16} className="text-indigo-600" />
-              {t('profile.evidenceTitle')}
-            </span>
-          )}
-        >
-          <div className="space-y-2">
-            {latestEvidenceSummary.length === 0 ? (
-              <p className="text-sm text-slate-400">{t('profile.noEvidence')}</p>
-            ) : (
-              latestEvidenceSummary.map((e, i) => (
-                <div
-                  key={`${e.metric ?? 'metric'}-${i}`}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-md border px-3 py-3 text-sm text-slate-700"
-                >
-                  <div className="min-w-0">
-                    <p className="font-medium text-slate-900">
-                      {e.metric ? metricDisclosureLabel(t, e.metric) : t('profile.metricFallback')}
-                    </p>
-                    <p className="mt-1 truncate text-xs text-slate-500">
-                      {[
-                        e.document_title ?? e.source ?? e.source_type ?? t('profile.sourceFallback'),
-                        e.page != null ? t('profile.evidencePageLabel', { page: e.page }) : null,
-                      ]
-                        .filter(Boolean)
-                        .join(' · ')}
-                    </p>
-                  </div>
-                  <EvidenceBadge
-                    evidence={e}
-                    metricLabel={e.metric ? metricDisclosureLabel(t, e.metric) : t('profile.metricFallback')}
-                    fallbackFramework={profile.latest_period.source_document_type}
-                    fallbackPeriodLabel={profile.latest_period.reporting_period_label}
-                    testId={`evidence-summary-${e.metric ?? i}`}
-                  />
-                </div>
-              ))
-            )}
-          </div>
-        </Panel>
+        <EvidenceCard
+          latestEvidenceSummary={latestEvidenceSummary}
+          fallbackFramework={profile.latest_period.source_document_type}
+          fallbackPeriodLabel={profile.latest_period.reporting_period_label}
+        />
       </div>
 
       <Panel
