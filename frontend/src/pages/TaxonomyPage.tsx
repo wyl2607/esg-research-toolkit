@@ -15,7 +15,6 @@ import { Button } from '@/components/ui/button'
 import { CheckCircle, XCircle, Download } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { localizeErrorMessage, isBackendOffline } from '@/lib/error-utils'
-import { BackendOfflineBanner } from '@/components/BackendOfflineBanner'
 
 export function TaxonomyPage() {
   const { t } = useTranslation()
@@ -74,7 +73,13 @@ export function TaxonomyPage() {
       <NoticeBanner tone="info">{t('taxonomy.disclaimer')}</NoticeBanner>
 
       {backendOffline ? (
-        <BackendOfflineBanner />
+        <NoticeBanner
+          tone="info"
+          title={t('dashboard.backendOfflineTitle')}
+          className="max-w-2xl"
+        >
+          {t('dashboard.backendOfflineBody')}
+        </NoticeBanner>
       ) : (companiesError || reportError) ? (
         <QueryStateCard
           tone="error"

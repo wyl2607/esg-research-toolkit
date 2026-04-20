@@ -15,7 +15,6 @@ import { listCompaniesWithYearCoverage, getRegionalComparison } from '@/lib/api'
 import { CompanyYearPicker, type CompanyYearSelection } from '@/components/CompanyYearPicker'
 import { QueryStateCard } from '@/components/QueryStateCard'
 import { localizeErrorMessage, isBackendOffline } from '@/lib/error-utils'
-import { BackendOfflineBanner } from '@/components/BackendOfflineBanner'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Panel } from '@/components/layout/Panel'
@@ -74,7 +73,13 @@ export function RegionalPage() {
       <PageHeader title={t('regional.title')} subtitle={t('regional.subtitle')} />
 
       {backendOffline ? (
-        <BackendOfflineBanner />
+        <NoticeBanner
+          tone="info"
+          title={t('dashboard.backendOfflineTitle')}
+          className="max-w-2xl"
+        >
+          {t('dashboard.backendOfflineBody')}
+        </NoticeBanner>
       ) : (companiesError || reportError) ? (
         <QueryStateCard
           tone="error"

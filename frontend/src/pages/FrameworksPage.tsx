@@ -20,7 +20,6 @@ import {
 } from 'recharts'
 import { useTranslation } from 'react-i18next'
 import { localizeErrorMessage, isBackendOffline } from '@/lib/error-utils'
-import { BackendOfflineBanner } from '@/components/BackendOfflineBanner'
 
 function GradeBadge({ grade }: { grade: string }) {
   const colors: Record<string, string> = {
@@ -192,7 +191,13 @@ export function FrameworksPage() {
       <PageHeader title={t('frameworks.title')} subtitle={t('frameworks.subtitle')} />
 
       {backendOffline ? (
-        <BackendOfflineBanner />
+        <NoticeBanner
+          tone="info"
+          title={t('dashboard.backendOfflineTitle')}
+          className="max-w-2xl"
+        >
+          {t('dashboard.backendOfflineBody')}
+        </NoticeBanner>
       ) : (companiesError || reportError) ? (
         <QueryStateCard
           tone="error"
