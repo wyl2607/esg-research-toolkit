@@ -186,13 +186,13 @@ function buildCompanyProfileFixture(): CompanyProfile {
       readiness_label: 'showcase-ready',
     },
     identity_provenance_summary: {
-      canonical_company_name: 'Acme Corp',
-      requested_company_name: 'Acme Corp',
-      has_alias_consolidation: false,
-      consolidated_aliases: [],
-      latest_source_document_type: 'annual_report',
-      source_priority_preview: null,
-      merge_priority_preview: null,
+      canonical_company_name: 'Acme Holdings AG',
+      requested_company_name: 'Acme Legacy GmbH',
+      has_alias_consolidation: true,
+      consolidated_aliases: ['Acme Corp', 'Acme Industrial'],
+      latest_source_document_type: 'sustainability_report',
+      source_priority_preview: 'Latest manual disclosure outranks crawler snapshots.',
+      merge_priority_preview: 'Manual uploads > audited filings > registry mirrors',
     },
     latest_sources: [
       {
@@ -295,6 +295,14 @@ test.describe('company profile multi-year integrity', () => {
       await page.goto('/companies/Acme%20Corp', { waitUntil: 'networkidle' })
 
       await expect(page.getByRole('heading', { level: 1, name: 'Acme Corp' })).toBeVisible()
+      await expect(page.getByText('Identity & Provenance')).toBeVisible()
+      await expect(page.getByText('Acme Legacy GmbH → Acme Holdings AG')).toBeVisible()
+      await expect(
+        page.getByText('Manual uploads > audited filings > registry mirrors')
+      ).toBeVisible()
+      await expect(
+        page.getByText('Latest manual disclosure outranks crawler snapshots.')
+      ).toBeVisible()
       await expect(page.getByTestId('company-profile-trend-chart')).toBeVisible()
 
       const lineDots = page
