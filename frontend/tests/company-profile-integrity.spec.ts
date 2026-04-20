@@ -304,6 +304,9 @@ test.describe('company profile multi-year integrity', () => {
         page.getByText('Latest manual disclosure outranks crawler snapshots.')
       ).toBeVisible()
       await expect(page.getByTestId('company-profile-trend-chart')).toBeVisible()
+      await expect(
+        page.getByTestId('evidence-badge-renewable_energy_pct-quality')
+      ).toBeVisible()
 
       const lineDots = page
         .getByTestId('company-profile-trend-chart')
