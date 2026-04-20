@@ -1,0 +1,21 @@
+你是该仓库的维护 agent。请完成 CR-C1：从 LcoePage.tsx 抽出 Input Form 到独立组件。
+
+先读 `scripts/automation/prompts/cr-a-section-sop.txt`（通用 section 抽取规则 + 验证门槛，本 CR 全部适用，只是目录/文件不同）。
+
+本 CR specifics:
+- 目标文件: `frontend/src/pages/LcoePage.tsx`（约 521 行）。
+- 目标块: 该文件里的 `<FormCard>...</FormCard>`（起始约 line 202，结束约 line 416）—— 这是 LCOE 输入表单部分。
+- 新组件路径: `frontend/src/components/lcoe/LcoeInputForm.tsx`
+- 组件名: `LcoeInputForm`
+- 依赖数据: 当前 form state（`input` + setter）+ `TECHNOLOGIES`、`buildDefaults`、`currencyForLanguage`、`defaultPriceForCurrency` 等常量/helper。
+  - 把 `input` state 和 `setInput` / 或 field-level handlers 作为 props 传入。
+  - 文件顶部的 helper（`TECHNOLOGIES`, `currencyForLanguage`, `defaultPriceForCurrency`, `buildDefaults`）可以一起搬到新组件文件（或 `frontend/src/pages/lcoe/utils.ts`，自行取舍），目标是 LcoePage.tsx 不再直接使用它们。
+- 不要动两个 `<Panel>`（结果展示 + sensitivity analysis），保持主组件拥有 mutation/query 调用。
+- 不改 backend、不改 `lib/api.ts`、不改 `types.ts`。
+
+硬约束: 与 SOP 一致。
+
+提交: `refactor(frontend): extract LcoeInputForm from LcoePage (CR-C1)`
+
+完成后输出:
+  CR-C1_RESULT: section=LcoeInputForm new_file=<path> page_loc_delta=<before>-><after> lint=<pass/fail> build=<pass/fail> smoke=<pass/fail> commit=<sha>

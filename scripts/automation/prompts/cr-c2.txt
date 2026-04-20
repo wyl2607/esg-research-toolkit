@@ -1,0 +1,20 @@
+你是该仓库的维护 agent。请完成 CR-C2：从 ManualCaseBuilderPage.tsx 抽出第一个（最大）Panel 到独立组件。
+
+先读 `scripts/automation/prompts/cr-a-section-sop.txt`（通用 section 抽取规则 + 验证门槛，本 CR 全部适用）。
+
+本 CR specifics:
+- 目标文件: `frontend/src/pages/ManualCaseBuilderPage.tsx`（约 510 行）。
+- 目标 Panel: 该文件里的第一个 `<Panel>`（起始约 line 250，结束约 line 419）—— 包含 manual case 输入表单的主要字段。
+- 新组件路径: `frontend/src/components/manual-case/ManualCaseFormPanel.tsx`
+- 组件名: `ManualCaseFormPanel`
+- 依赖数据: 当前 form state (`form`) + `setForm` / field-level handlers + submit/reset callbacks。把实际被用到的变量作为 props 传入。
+- Helper: `parseOptionalNumber`, `buildPayload`, `payloadToForm` 是 pure helper，如果第一个 Panel 会用，一并搬到新组件文件顶部或 `frontend/src/pages/manual-case/utils.ts`；否则保持在主文件。
+- 不要动另外 3 个 `<Panel>`（约 line 423/470/494 起），不改主组件的 mutation/query 调用。
+- 不改 backend、不改 `lib/api.ts`、不改 `types.ts`。
+
+硬约束: 与 SOP 一致。
+
+提交: `refactor(frontend): extract ManualCaseFormPanel from ManualCaseBuilderPage (CR-C2)`
+
+完成后输出:
+  CR-C2_RESULT: section=ManualCaseFormPanel new_file=<path> page_loc_delta=<before>-><after> lint=<pass/fail> build=<pass/fail> smoke=<pass/fail> commit=<sha>
