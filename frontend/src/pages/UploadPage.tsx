@@ -13,13 +13,19 @@ import {
   uploadReport,
   uploadReportsBatch,
 } from '@/lib/api'
-import { ApiError, type DisclosureMergeMetric, type DisclosureSourceHint } from '@/lib/api'
+import {
+  ApiError,
+  type DisclosureMergeMetric,
+  type DisclosureReviewRequest,
+  type DisclosureSourceHint,
+} from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { QueryStateCard } from '@/components/QueryStateCard'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Panel, FormCard, StatCard } from '@/components/layout/Panel'
+import { AutoFetchPanel } from '@/components/upload/AutoFetchPanel'
 import { NoticeBanner } from '@/components/NoticeBanner'
 import { FilterBar } from '@/components/FilterBar'
 import { UploadSuccessPanel } from '@/components/upload/UploadSuccessPanel'
@@ -29,40 +35,10 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { localizeErrorMessage } from '@/lib/error-utils'
 import { findNaceOption, NACE_OPTIONS } from '@/lib/nace-codes'
-import {
-  DISCLOSURE_REVIEW_METRICS,
-  areDisclosureReviewValuesEqual,
-  formatDisclosureReviewMetricValue,
-} from '@/lib/disclosure-review'
+import { DISCLOSURE_REVIEW_METRICS, areDisclosureReviewValuesEqual } from '@/lib/disclosure-review'
 
 const BATCH_STORAGE_KEY = 'esg_last_batch_id'
 const SOURCE_HINT_OPTIONS: DisclosureSourceHint[] = ['company_site', 'sec_edgar', 'hkex', 'csrc']
-
-function sourceHintLabelKey(hint: DisclosureSourceHint): string {
-  switch (hint) {
-    case 'sec_edgar':
-      return 'upload.autoFetchSourceHintSec'
-    case 'hkex':
-      return 'upload.autoFetchSourceHintHkex'
-    case 'csrc':
-      return 'upload.autoFetchSourceHintCsrc'
-    case 'company_site':
-    default:
-      return 'upload.autoFetchSourceHintCompanySite'
-  }
-}
-
-function latestAutoFetchEvidence(row: { extracted_payload: Record<string, unknown> }) {
-  const evidenceSummary = row.extracted_payload?.evidence_summary
-  if (!Array.isArray(evidenceSummary)) return null
-  for (let index = evidenceSummary.length - 1; index >= 0; index -= 1) {
-    const item = evidenceSummary[index]
-    if (!item || typeof item !== 'object') continue
-    if ((item as Record<string, unknown>).metric !== 'auto_disclosure_fetch') continue
-    return item as Record<string, unknown>
-  }
-  return null
-}
 
 export function UploadPage() {
   const { t, i18n } = useTranslation()
@@ -301,6 +277,26 @@ export function UploadPage() {
     setAutoFetchExtraHints(nextExtras)
   }
 
+  const handleAutoFetch = () => autoFetchMutation.mutate()
+
+  const handleAutoFetchSourceHintChange = (nextHint: DisclosureSourceHint) => {
+    setAutoFetchSourceHint(nextHint)
+    setAutoFetchExtraHints((prev) => prev.filter((hint) => hint !== nextHint))
+  }
+
+  const handleApprovePending = (pendingId: number, payload?: DisclosureReviewRequest) => {
+    approvePendingMutation.mutate({ pendingId, payload })
+  }
+
+  const handleRejectPending = (pendingId: number) => {
+    rejectPendingMutation.mutate(pendingId)
+  }
+
+  const handleCancelPendingReview = () => {
+    setReviewingPendingId(null)
+    setSelectedMergeMetrics([])
+  }
+
   const onDrop = useCallback(
     (files: File[]) => {
       if (!files.length) return
@@ -348,412 +344,53 @@ export function UploadPage() {
       ) : null}
 
       {hasPrefilledGapTarget ? (
-        <Panel
-          title={t('upload.autoFetchTitle')}
-          description={t('upload.autoFetchDescription')}
-          actions={
-            <Button
-              type="button"
-              onClick={() => autoFetchMutation.mutate()}
-              disabled={autoFetchMutation.isPending}
-              data-testid="auto-fetch-trigger"
-            >
-              {autoFetchMutation.isPending
-                ? t('upload.autoFetchRunning')
-                : t('upload.autoFetchButton')}
-            </Button>
-          }
-        >
-          <div className="space-y-3">
-            <label className="flex flex-col gap-1 text-sm text-slate-600" htmlFor="auto-fetch-source-hint">
-              <span>{t('upload.autoFetchSourceHintLabel')}</span>
-              <select
-                id="auto-fetch-source-hint"
-                className="h-10 rounded-lg border border-stone-300 bg-white px-3 text-sm text-stone-800 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-100"
-                value={autoFetchSourceHint}
-                onChange={(event) => {
-                  const nextHint = event.target.value as DisclosureSourceHint
-                  setAutoFetchSourceHint(nextHint)
-                  setAutoFetchExtraHints((prev) => prev.filter((hint) => hint !== nextHint))
-                }}
-              >
-                {sourceHintOptionsOrdered.map((hint) => (
-                  <option key={hint} value={hint}>
-                    {t(sourceHintLabelKey(hint))}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <div className="space-y-1 text-sm text-slate-600">
-              <span>{t('upload.autoFetchSourceHintsExtraLabel')}</span>
-              {laneStatsQuery.data?.lanes?.length ? (
-                <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-2 text-xs text-slate-600">
-                  <p>
-                    {t('upload.autoFetchRecommendedOrderLabel')}:{' '}
-                    {lanePriorityOrder.map((hint) => t(sourceHintLabelKey(hint))).join(' → ')}
-                  </p>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    className="mt-2"
-                    onClick={applyRecommendedLanes}
-                    data-testid="auto-fetch-apply-recommended"
-                  >
-                    {t('upload.autoFetchApplyRecommendedButton')}
-                  </Button>
-                </div>
-              ) : null}
-              <div className="grid gap-2 rounded-lg border border-stone-300 bg-white p-3 md:grid-cols-2">
-                {sourceHintOptionsOrdered.filter((hint) => hint !== autoFetchSourceHint).map((hint) => (
-                  <label key={hint} className="flex items-center gap-2 text-xs text-slate-700">
-                    <input
-                      type="checkbox"
-                      className="h-4 w-4 rounded border-stone-300"
-                      data-testid={`auto-fetch-extra-hint-${hint}`}
-                      checked={autoFetchExtraHints.includes(hint)}
-                      onChange={(event) => toggleExtraHint(hint, event.target.checked)}
-                    />
-                    <span>{t(sourceHintLabelKey(hint))}</span>
-                  </label>
-                ))}
-              </div>
-              <p className="text-xs text-slate-500">
-                {t('upload.autoFetchSourceHintsSelected', { count: selectedSourceHints.length })}
-              </p>
-            </div>
-
-            <label className="flex flex-col gap-1 text-sm text-slate-600" htmlFor="auto-fetch-source-type">
-              <span>{t('upload.autoFetchSourceTypeLabel')}</span>
-              <select
-                id="auto-fetch-source-type"
-                className="h-10 rounded-lg border border-stone-300 bg-white px-3 text-sm text-stone-800 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-100"
-                value={autoFetchSourceType}
-                onChange={(event) =>
-                  setAutoFetchSourceType(event.target.value as 'pdf' | 'html' | 'filing')
-                }
-              >
-                <option value="pdf">{t('upload.autoFetchSourceTypePdf')}</option>
-                <option value="html">{t('upload.autoFetchSourceTypeHtml')}</option>
-                <option value="filing">{t('upload.autoFetchSourceTypeFiling')}</option>
-              </select>
-            </label>
-
-            <label className="flex flex-col gap-1 text-sm text-slate-600" htmlFor="auto-fetch-source-url">
-              <span>{t('upload.autoFetchSourceLabel')}</span>
-              <input
-                id="auto-fetch-source-url"
-                data-testid="auto-fetch-source-url"
-                className="h-10 rounded-lg border border-stone-300 bg-white px-3 text-sm text-stone-800 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-100"
-                value={autoFetchSourceUrl}
-                onChange={(event) => setAutoFetchSourceUrl(event.target.value)}
-                placeholder={t('upload.autoFetchSourcePlaceholder')}
-              />
-            </label>
-
-            {autoFetchMutation.isError ? (
-              <NoticeBanner tone="warning" title={t('common.error')}>
-                {localizeErrorMessage(t, autoFetchMutation.error, 'upload.error')}
-              </NoticeBanner>
-            ) : null}
-
-            {approvePendingMutation.isError || rejectPendingMutation.isError ? (
-              <NoticeBanner tone="warning" title={t('common.error')}>
-                {localizeErrorMessage(
-                  t,
-                  (approvePendingMutation.error as Error | null) ??
-                    (rejectPendingMutation.error as Error | null),
-                  'upload.error'
-                )}
-              </NoticeBanner>
-            ) : null}
-
-            {autoFetchMutation.data ? (
-              <NoticeBanner tone="success" title={t('upload.autoFetchQueuedTitle')}>
-                {t('upload.autoFetchQueuedBody', {
-                  id: autoFetchMutation.data.pending.id,
-                  source: autoFetchMutation.data.pending.source_url,
-                })}
-              </NoticeBanner>
-            ) : null}
-
-            {pendingRows.length > 0 ? (
-              <div className="space-y-2">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                  {t('upload.pendingQueueTitle')}
-                </p>
-                {pendingRows.map((row) => (
-                  (() => {
-                    const evidence = latestAutoFetchEvidence(row)
-                    const attemptedUrlsRaw = evidence?.attempted_urls
-                    const attemptedUrls = Array.isArray(attemptedUrlsRaw)
-                      ? attemptedUrlsRaw.map((value) => String(value))
-                      : []
-                    const sourceHintsRaw = evidence?.source_hints
-                    const sourceHints = Array.isArray(sourceHintsRaw)
-                      ? sourceHintsRaw
-                          .map((hint) => String(hint))
-                          .filter((hint): hint is DisclosureSourceHint =>
-                            SOURCE_HINT_OPTIONS.includes(hint as DisclosureSourceHint)
-                          )
-                      : []
-                    const laneStatsRaw = evidence?.lane_stats
-                    const laneStats = Array.isArray(laneStatsRaw)
-                      ? laneStatsRaw
-                          .map((entry) => {
-                            if (!entry || typeof entry !== 'object') return null
-                            const value = entry as Record<string, unknown>
-                            const lane = String(value.lane ?? '')
-                            if (!SOURCE_HINT_OPTIONS.includes(lane as DisclosureSourceHint)) return null
-                            const attempted = Number(value.attempted ?? 0)
-                            const succeeded = Number(value.succeeded ?? 0)
-                            const failed = Number(value.failed ?? Math.max(attempted - succeeded, 0))
-                            return {
-                              lane: lane as DisclosureSourceHint,
-                              attempted: Number.isFinite(attempted) ? attempted : 0,
-                              succeeded: Number.isFinite(succeeded) ? succeeded : 0,
-                              failed: Number.isFinite(failed) ? failed : 0,
-                            }
-                          })
-                          .filter(
-                            (
-                              value
-                            ): value is {
-                              lane: DisclosureSourceHint
-                              attempted: number
-                              succeeded: number
-                              failed: number
-                            } => value != null
-                          )
-                      : []
-                    const successLaneRaw = evidence?.success_lane
-                    const successLane =
-                      typeof successLaneRaw === 'string' &&
-                      SOURCE_HINT_OPTIONS.includes(successLaneRaw as DisclosureSourceHint)
-                        ? (successLaneRaw as DisclosureSourceHint)
-                        : null
-
-                    return (
-                      <div
-                        key={row.id}
-                        data-testid="pending-disclosure-item"
-                        className="rounded-xl border border-stone-200 bg-white/80 px-3 py-2 text-sm"
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="font-medium text-slate-700">
-                            #{row.id} · {row.source_type.toUpperCase()}
-                          </span>
-                          <Badge variant="secondary">{row.status}</Badge>
-                        </div>
-                        <p className="mt-1 break-all text-xs text-slate-500">{row.source_url}</p>
-                        <p className="mt-1 text-xs text-slate-400">
-                          {new Date(row.fetched_at).toLocaleString(i18n.resolvedLanguage)}
-                        </p>
-                        {sourceHints.length > 0 ? (
-                          <p className="mt-1 text-xs text-slate-500">
-                            {t('upload.autoFetchLanesUsedLabel')}:{' '}
-                            {sourceHints.map((hint) => t(sourceHintLabelKey(hint))).join(', ')}
-                          </p>
-                        ) : null}
-                        {laneStats.length > 0 ? (
-                          <div className="mt-1 space-y-1 text-xs text-slate-500">
-                            <p>{t('upload.autoFetchLaneStatsLabel')}</p>
-                            <ul className="space-y-1 pl-3">
-                              {laneStats.map((stat) => (
-                                <li key={`${row.id}-${stat.lane}`} data-testid={`pending-lane-stat-${stat.lane}`}>
-                                  {t('upload.autoFetchLaneStatsLine', {
-                                    lane: t(sourceHintLabelKey(stat.lane)),
-                                    succeeded: stat.succeeded,
-                                    attempted: stat.attempted,
-                                    failed: stat.failed,
-                                  })}
-                                </li>
-                              ))}
-                            </ul>
-                            {successLane ? (
-                              <p className="text-emerald-700">
-                                {t('upload.autoFetchSuccessLaneLabel', {
-                                  lane: t(sourceHintLabelKey(successLane)),
-                                })}
-                              </p>
-                            ) : null}
-                          </div>
-                        ) : null}
-                        {row.review_note ? (
-                          <p className="mt-1 text-xs text-slate-500">{row.review_note}</p>
-                        ) : null}
-                        {attemptedUrls.length > 0 ? (
-                          <details className="mt-1 text-xs text-slate-500">
-                            <summary className="cursor-pointer select-none">
-                              {t('upload.autoFetchAttemptedUrlsToggle', {
-                                count: attemptedUrls.length,
-                              })}
-                            </summary>
-                            <ul className="mt-1 space-y-1 break-all pl-4">
-                              {attemptedUrls.map((url) => (
-                                <li key={`${row.id}-${url}`}>{url}</li>
-                              ))}
-                            </ul>
-                          </details>
-                        ) : null}
-                        {row.status === 'pending' ? (
-                          <div className="mt-2 flex gap-2">
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              onClick={() => openPendingReview(row.id)}
-                              data-testid={`pending-review-${row.id}`}
-                              disabled={approvePendingMutation.isPending || rejectPendingMutation.isPending}
-                            >
-                              {t('upload.reviewFieldsButton')}
-                            </Button>
-                            <Button
-                              type="button"
-                              size="sm"
-                              data-testid={`pending-approve-${row.id}`}
-                              onClick={() =>
-                                approvePendingMutation.mutate({
-                                  pendingId: row.id,
-                                  payload: { review_note: 'approved_from_upload_panel' },
-                                })
-                              }
-                              disabled={approvePendingMutation.isPending || rejectPendingMutation.isPending}
-                            >
-                              {t('upload.approveButton')}
-                            </Button>
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              data-testid={`pending-reject-${row.id}`}
-                              onClick={() => rejectPendingMutation.mutate(row.id)}
-                              disabled={approvePendingMutation.isPending || rejectPendingMutation.isPending}
-                            >
-                              {t('upload.rejectButton')}
-                            </Button>
-                          </div>
-                        ) : null}
-                      </div>
-                    )
-                  })()
-                ))}
-              </div>
-            ) : null}
-
-            {reviewingPending?.status === 'pending' ? (
-              <div className="space-y-3 rounded-xl border border-amber-200 bg-amber-50/50 p-3">
-                <div className="space-y-1">
-                  <p className="text-sm font-semibold text-slate-800">{t('upload.reviewDrawerTitle')}</p>
-                  <p className="text-xs text-slate-600">
-                    {t('upload.reviewDrawerDescription', { id: reviewingPending.id })}
-                  </p>
-                  {existingReportQuery.data == null ? (
-                    <p className="text-xs text-slate-500">{t('upload.reviewBaselineMissing')}</p>
-                  ) : null}
-                </div>
-                <div className="space-y-2">
-                  {DISCLOSURE_REVIEW_METRICS.map((metric) => {
-                    const extracted = reviewingPending.extracted_payload as Record<string, unknown>
-                    const nextValue = extracted[metric.key]
-                    const currentValue = (existingReportQuery.data as Record<string, unknown> | null)?.[
-                      metric.key
-                    ]
-                    const selectable = nextValue != null
-                    const changed = !areDisclosureReviewValuesEqual(
-                      currentValue,
-                      nextValue,
-                      metric.valueKind
-                    )
-                    if (!selectable && currentValue == null) return null
-                    return (
-                      <label
-                        key={metric.key}
-                        className="grid grid-cols-[auto_1fr] gap-3 rounded-lg border border-stone-200 bg-white/80 p-2 text-xs"
-                      >
-                        <input
-                          type="checkbox"
-                          className="mt-1 h-4 w-4 rounded border-stone-300"
-                          checked={selectedMergeMetrics.includes(metric.key)}
-                          disabled={!selectable}
-                          onChange={(event) => toggleMergeMetric(metric.key, event.target.checked)}
-                        />
-                        <div className="space-y-1">
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="font-medium text-slate-700">{t(metric.labelKey)}</span>
-                            {changed ? (
-                              <Badge variant="secondary" className="bg-amber-100 text-amber-900">
-                                {t('upload.reviewChangedBadge')}
-                              </Badge>
-                            ) : (
-                              <Badge variant="secondary">{t('upload.reviewUnchangedBadge')}</Badge>
-                            )}
-                          </div>
-                          <div className="grid gap-1 md:grid-cols-2">
-                            <div className="rounded border border-stone-200 bg-stone-50 p-2">
-                              <p className="text-[11px] uppercase tracking-wide text-slate-500">
-                                {t('upload.reviewCurrentValue')}
-                              </p>
-                              <p className="text-slate-700">
-                                {formatDisclosureReviewMetricValue(
-                                  currentValue,
-                                  metric.valueKind,
-                                  i18n.resolvedLanguage ?? 'en-US'
-                                )}
-                              </p>
-                            </div>
-                            <div className="rounded border border-stone-200 bg-stone-50 p-2">
-                              <p className="text-[11px] uppercase tracking-wide text-slate-500">
-                                {t('upload.reviewPendingValue')}
-                              </p>
-                              <p className="text-slate-700">
-                                {formatDisclosureReviewMetricValue(
-                                  nextValue,
-                                  metric.valueKind,
-                                  i18n.resolvedLanguage ?? 'en-US'
-                                )}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </label>
-                    )
-                  })}
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Button
-                    type="button"
-                    data-testid="pending-approve-selected"
-                    onClick={() =>
-                      approvePendingMutation.mutate({
-                        pendingId: reviewingPending.id,
-                        payload: {
-                          review_note: 'approved_with_selected_metrics',
-                          include_metrics:
-                            selectedMergeMetrics.length > 0 ? selectedMergeMetrics : undefined,
-                        },
-                      })
-                    }
-                    disabled={approvePendingMutation.isPending || selectedMergeMetrics.length === 0}
-                  >
-                    {t('upload.approveSelectedButton', { count: selectedMergeMetrics.length })}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setReviewingPendingId(null)
-                      setSelectedMergeMetrics([])
-                    }}
-                  >
-                    {t('common.cancel')}
-                  </Button>
-                </div>
-              </div>
-            ) : null}
-          </div>
-        </Panel>
+        <AutoFetchPanel
+          form={{
+            sourceHint: autoFetchSourceHint,
+            sourceType: autoFetchSourceType,
+            sourceUrl: autoFetchSourceUrl,
+            extraHints: autoFetchExtraHints,
+            selectedSourceHints,
+          }}
+          options={{
+            sourceHintOptions: SOURCE_HINT_OPTIONS,
+            sourceHintOptionsOrdered,
+            lanePriorityOrder,
+          }}
+          status={{
+            hasLaneStats: Boolean(laneStatsQuery.data?.lanes?.length),
+            isAutoFetchPending: autoFetchMutation.isPending,
+            isAutoFetchError: autoFetchMutation.isError,
+            autoFetchError: autoFetchMutation.error as Error | null,
+            autoFetchQueuedData: autoFetchMutation.data,
+            isApprovePendingError: approvePendingMutation.isError,
+            isRejectPendingError: rejectPendingMutation.isError,
+            approvePendingError: approvePendingMutation.error as Error | null,
+            rejectPendingError: rejectPendingMutation.error as Error | null,
+            isApprovePending: approvePendingMutation.isPending,
+            isRejectPending: rejectPendingMutation.isPending,
+          }}
+          review={{
+            pendingRows,
+            reviewingPending,
+            selectedMergeMetrics,
+            existingReport: existingReportQuery.data ?? null,
+          }}
+          actions={{
+            onAutoFetch: handleAutoFetch,
+            onSourceHintChange: handleAutoFetchSourceHintChange,
+            onSourceTypeChange: setAutoFetchSourceType,
+            onSourceUrlChange: setAutoFetchSourceUrl,
+            onApplyRecommendedLanes: applyRecommendedLanes,
+            onToggleExtraHint: toggleExtraHint,
+            onOpenPendingReview: openPendingReview,
+            onApprovePending: handleApprovePending,
+            onRejectPending: handleRejectPending,
+            onToggleMergeMetric: toggleMergeMetric,
+            onCancelPendingReview: handleCancelPendingReview,
+          }}
+          locale={i18n.resolvedLanguage}
+        />
       ) : null}
 
       <NoticeBanner tone="warning">{t('upload.supportedHint')}</NoticeBanner>
