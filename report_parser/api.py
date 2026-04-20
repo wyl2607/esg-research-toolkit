@@ -59,7 +59,7 @@ PDF_MAGIC_BYTES = b"%PDF-"
 MIN_REPORT_YEAR = 1900
 MAX_REPORT_YEAR = 2100
 
-_PROFILE_METRICS = [
+CORE_METRICS: tuple[str, ...] = (
     "scope1_co2e_tonnes",
     "scope2_co2e_tonnes",
     "scope3_co2e_tonnes",
@@ -67,12 +67,18 @@ _PROFILE_METRICS = [
     "renewable_energy_pct",
     "water_usage_m3",
     "waste_recycled_pct",
+    "total_revenue_eur",
     "taxonomy_aligned_revenue_pct",
+    "total_capex_eur",
     "taxonomy_aligned_capex_pct",
     "total_employees",
     "female_pct",
     "primary_activities",
-]
+)
+
+DISCLOSURE_KEY_METRICS = CORE_METRICS[:7] + CORE_METRICS[8:9] + CORE_METRICS[10:13]
+PROFILE_METRICS = DISCLOSURE_KEY_METRICS + CORE_METRICS[13:]
+UPLOAD_FALLBACK_METRICS = CORE_METRICS[:13]
 
 _PROFILE_METRIC_UNITS = {
     "scope1_co2e_tonnes": "tCO2e",
@@ -222,22 +228,9 @@ def _manual_evidence_summary(
     *,
     source_url: str | None = None,
 ) -> list[dict[str, Any]]:
-    metric_keys = [
-        "scope1_co2e_tonnes",
-        "scope2_co2e_tonnes",
-        "scope3_co2e_tonnes",
-        "energy_consumption_mwh",
-        "renewable_energy_pct",
-        "water_usage_m3",
-        "waste_recycled_pct",
-        "taxonomy_aligned_revenue_pct",
-        "taxonomy_aligned_capex_pct",
-        "total_employees",
-        "female_pct",
-    ]
     source = source_url or f"manual://{data.company_name}/{data.report_year}"
     evidence: list[dict[str, Any]] = []
-    for metric in metric_keys:
+    for metric in DISCLOSURE_KEY_METRICS:
         if getattr(data, metric, None) is None:
             continue
         evidence.append(
@@ -282,23 +275,8 @@ def _upload_evidence_summary(
     if data.evidence_summary:
         return data.evidence_summary
 
-    fallback_metrics = [
-        "scope1_co2e_tonnes",
-        "scope2_co2e_tonnes",
-        "scope3_co2e_tonnes",
-        "energy_consumption_mwh",
-        "renewable_energy_pct",
-        "water_usage_m3",
-        "waste_recycled_pct",
-        "total_revenue_eur",
-        "taxonomy_aligned_revenue_pct",
-        "total_capex_eur",
-        "taxonomy_aligned_capex_pct",
-        "total_employees",
-        "female_pct",
-    ]
     evidence: list[dict[str, Any]] = []
-    for metric in fallback_metrics:
+    for metric in UPLOAD_FALLBACK_METRICS:
         if getattr(data, metric, None) is None:
             continue
         evidence.append(
@@ -456,31 +434,16 @@ def _source_document_payload(record) -> dict[str, str | int | float | list[str] 
     }
 
 
-_KEY_DISCLOSURE_METRICS = [
-    "scope1_co2e_tonnes",
-    "scope2_co2e_tonnes",
-    "scope3_co2e_tonnes",
-    "energy_consumption_mwh",
-    "renewable_energy_pct",
-    "water_usage_m3",
-    "waste_recycled_pct",
-    "taxonomy_aligned_revenue_pct",
-    "taxonomy_aligned_capex_pct",
-    "total_employees",
-    "female_pct",
-]
-
-
 def _data_quality_summary(data: CompanyESGData) -> dict[str, int | float | str | list[str]]:
     present_metrics = [
         metric
-        for metric in _KEY_DISCLOSURE_METRICS
+        for metric in DISCLOSURE_KEY_METRICS
         if getattr(data, metric, None) is not None
     ]
     missing_metrics = [
-        metric for metric in _KEY_DISCLOSURE_METRICS if metric not in present_metrics
+        metric for metric in DISCLOSURE_KEY_METRICS if metric not in present_metrics
     ]
-    total_count = len(_KEY_DISCLOSURE_METRICS)
+    total_count = len(DISCLOSURE_KEY_METRICS)
     present_count = len(present_metrics)
     completion_percentage = round((present_count / total_count) * 100, 1) if total_count else 0.0
 
@@ -834,7 +797,7 @@ def _build_scored_metrics(
     evidence_anchors: list[dict[str, Any]] = []
     seen_evidence_keys: set[tuple[Any, ...]] = set()
 
-    for metric in _PROFILE_METRICS:
+    for metric in PROFILE_METRICS:
         merged_metric = latest_merged_result.metrics.get(metric)
         value = (
             merged_metric.chosen_value
