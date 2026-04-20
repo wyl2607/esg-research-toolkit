@@ -13,7 +13,6 @@ import { useNavigate } from 'react-router-dom'
 import { localizeErrorMessage, isBackendOffline } from '@/lib/error-utils'
 import { formatNumber, formatPercent } from '@/lib/format'
 import { exportCompaniesCSV, exportToJSON } from '@/lib/export'
-import { BackendOfflineBanner } from '@/components/BackendOfflineBanner'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Panel } from '@/components/layout/Panel'
@@ -95,7 +94,13 @@ export function CompaniesPage() {
         ]}
       />
       {isBackendOffline(error) ? (
-        <BackendOfflineBanner />
+        <NoticeBanner
+          tone="info"
+          title={t('dashboard.backendOfflineTitle')}
+          className="max-w-2xl"
+        >
+          {t('dashboard.backendOfflineBody')}
+        </NoticeBanner>
       ) : error ? (
         <QueryStateCard
           tone="error"
