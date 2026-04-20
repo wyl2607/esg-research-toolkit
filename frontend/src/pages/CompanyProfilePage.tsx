@@ -1,13 +1,13 @@
 import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, CheckCircle2, Clock3, Download, FileText, Sparkles, TrendingUp, TriangleAlert } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, Download, FileText, Sparkles, TrendingUp, TriangleAlert } from 'lucide-react'
 
-import { IdentityCard } from '@/components/company-profile/IdentityCard'
-import { EvidenceBadge } from '@/components/EvidenceBadge'
 import { DataQualityCard } from '@/components/company-profile/DataQualityCard'
-import { EvidenceCard } from '@/components/company-profile/EvidenceCard'
 import { FrameworkResultsCard } from '@/components/company-profile/FrameworkResultsCard'
+import { IdentityCard } from '@/components/company-profile/IdentityCard'
+import { PeriodHistoryCard } from '@/components/company-profile/PeriodHistoryCard'
+import { EvidenceBadge } from '@/components/EvidenceBadge'
 import { MetricCard } from '@/components/MetricCard'
 import { NoticeBanner } from '@/components/NoticeBanner'
 import { PeerComparisonCard } from '@/components/company-profile/PeerComparisonCard'
@@ -782,54 +782,12 @@ export function CompanyProfilePage() {
         locale={locale}
       />
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Panel
-          title={(
-            <span className="flex items-center gap-2 text-base">
-              <Clock3 size={16} className="text-indigo-600" />
-              {t('profile.periodTitle')}
-            </span>
-          )}
-        >
-          <div className="space-y-2">
-            {profile.periods.map((p) => (
-              <div
-                key={`${p.report_year}-${p.reporting_period_label}`}
-                className="flex items-center justify-between gap-3 rounded-md border px-3 py-2"
-              >
-                <div>
-                  <p className="text-sm font-medium text-slate-900">{p.reporting_period_label}</p>
-                  <p className="text-xs text-slate-500">
-                    {[
-                      prettifyToken(p.reporting_period_type),
-                      p.source_document_type ? prettifyToken(p.source_document_type) : null,
-                      t('profile.periodSourcesCount', {
-                        count: p.source_documents?.length ?? 0,
-                      }),
-                    ]
-                      .filter(Boolean)
-                      .join(' · ')}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <Badge variant="secondary">{p.report_year}</Badge>
-                  <p className="mt-1 text-xs text-slate-500">
-                    {t('profile.provenanceMergeSummary', {
-                      count: p.merged_result?.source_count ?? p.source_documents?.length ?? 0,
-                    })}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Panel>
-
-        <EvidenceCard
-          latestEvidenceSummary={latestEvidenceSummary}
-          fallbackFramework={profile.latest_period.source_document_type}
-          fallbackPeriodLabel={profile.latest_period.reporting_period_label}
-        />
-      </div>
+      <PeriodHistoryCard
+        periods={profile.periods}
+        latestEvidenceSummary={latestEvidenceSummary}
+        fallbackFramework={profile.latest_period.source_document_type}
+        fallbackPeriodLabel={profile.latest_period.reporting_period_label}
+      />
 
       <Panel
         title={(
