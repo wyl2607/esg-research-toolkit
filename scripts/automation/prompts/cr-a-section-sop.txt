@@ -1,0 +1,35 @@
+CR-A section extraction SOP（供 CR-A1..A6 共用，每个 section-specific prompt 会 include by reference）
+
+前置:
+- CR-A0 已把 19 个 helper 搬到 `frontend/src/pages/company-profile/utils.ts`。
+- CompanyProfilePage.tsx 主组件 `CompanyProfilePage()` 里有 8 个 `<Panel>` 顶级 section，每个 CR 负责其中一个/一组。
+- 新组件约定放到 `frontend/src/components/company-profile/<ComponentName>.tsx`（与现有 `PeerComparisonCard.tsx` 同目录）。
+
+通用规则（每个 section CR 都要遵守）:
+1. **只改你自己那一块**：主文件里除了被替换的 Panel 块 + 可能的 1-2 行 import，不要碰其它 section / hook / useMemo / useQuery / state。避免与并行运行的其它 CR 冲突。
+2. **新组件纯展示**：
+   - 所有需要的数据通过 props 传入（不要在 section 组件里 `useQuery` 重新拉 profile）。
+   - 需要调用 `t('...')` 的话，让主组件把 `t` 或具体 label 字符串作为 prop 传进去；或者在 section 组件内部 `useTranslation()`（这个是 OK 的，i18next 不会触发额外请求）。
+   - `useTranslation()` 在 section 组件内使用比 prop-drill `t` 更地道，优先这样做。
+3. **保持渲染完全一致**：jsx 结构、className、事件行为、aria、key 策略都不变。你是在"把一个块剪切到新文件"，不是重写。
+4. **Props 类型**：在 section 组件文件顶部定义 `interface <Name>Props { ... }`，字段类型复用 `@/lib/types`（不要自己造新的 domain type）。如果 props 太多（>10），用一个 aggregate type 包装（例如 `profile: CompanyProfileResponse`）。
+5. **Import 路径**：
+   - Helpers: `from '@/pages/company-profile/utils'`（或相对路径 `../../pages/company-profile/utils`，看项目习惯）
+   - Types: `from '@/lib/types'`
+   - UI: `from '@/components/layout/Panel'` 等保持和主文件一致
+6. **删掉主文件里的内联 Panel 块**：替换为一个 `<YourSection {...props} />` 调用。主文件这一块从几十上百行变成 1-2 行。
+7. **验证（硬性门槛，任何一项失败立刻 revert 整个 CR）**:
+   - `cd frontend && npm run lint`
+   - `cd frontend && npm run build`
+   - `cd frontend && npx tsc --noEmit`
+   - `cd frontend && npm run test:smoke`
+8. **不要做的事**:
+   - 不改 NoticeBanner / Panel / MetricCard / EvidenceBadge 的 API
+   - 不动 `DeferredHeavyCharts` 相关代码
+   - 不重命名任何 public 名字
+   - 不跳 hooks、不 push、不 --amend
+9. 如果 section 内部引用了**只在主组件 scope 里**定义的变量（useMemo 结果、useState 值），把这些作为 props 传入。不要把 useMemo 计算也搬到 section 里（那会改变 memo 依赖边界）。
+10. 提交信息格式: `refactor(frontend): extract <SectionName> from CompanyProfilePage (CR-A<n>)`
+11. 完成后输出: `CR-A<n>_RESULT: section=<Name> new_file=<path> page_loc_delta=<before>-><after> lint=<pass/fail> build=<pass/fail> smoke=<pass/fail> commit=<sha>`
+
+关于 Panel 定位: 你会拿到一个 section-specific prompt，里面给出"锚点 i18n key"（比如 `profile.identityTitle`）—— 在 CompanyProfilePage.tsx 里 grep 这个 key 就能精确定位 Panel 起点。Panel 结束就是下一个顶级 `<Panel>` 开始之前，或者特定的结束 jsx（prompt 会说清楚）。

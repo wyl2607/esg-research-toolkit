@@ -1,0 +1,13 @@
+你是该仓库的维护 agent。请完成 CR-A3：从 CompanyProfilePage.tsx 抽出 Evidence Panel 到独立组件。
+
+先读 `scripts/automation/prompts/cr-a-section-sop.txt`（本 CR 的通用规则与验证门槛，全部适用）。
+
+本 CR specifics:
+- 目标 Panel 锚点: `t('profile.evidenceTitle')`。Panel 起始为该 title 所在的 `<Panel` 标签；结束为它的 closing `</Panel>`。
+- 新组件路径: `frontend/src/components/company-profile/EvidenceCard.tsx`
+- 组件名: `EvidenceCard`
+- 依赖数据: 这个 Panel 展示 evidence anchors。依赖的变量通常是 evidence 列表 + normalize 之后的状态。完整列出实际被这个 Panel 用到的变量，作为 props 传入。
+- Helpers: `normalizeProfileEvidenceAnchor`, `evidenceRichness`, `sourceOriginLabel`, `mergeEvidenceAnchor` 等都已经在 CR-A0 搬到 `@/pages/company-profile/utils` 里，直接从那边 import。
+- 如果 Panel 内部渲染 `<EvidenceBadge>`，保持原样 import。
+
+提交: `refactor(frontend): extract EvidenceCard from CompanyProfilePage (CR-A3)`
