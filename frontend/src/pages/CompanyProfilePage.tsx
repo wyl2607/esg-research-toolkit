@@ -1,7 +1,6 @@
-import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, Download, Sparkles } from 'lucide-react'
+import { useParams } from 'react-router-dom'
 
 import { CoreMetricsSection } from '@/components/company-profile/CoreMetricsSection'
 import { DataQualityCard } from '@/components/company-profile/DataQualityCard'
@@ -9,14 +8,12 @@ import { FrameworkResultsCard } from '@/components/company-profile/FrameworkResu
 import { IdentityCard } from '@/components/company-profile/IdentityCard'
 import { NarrativeCard } from '@/components/company-profile/NarrativeCard'
 import { PeriodHistoryCard } from '@/components/company-profile/PeriodHistoryCard'
+import { ProfileHeroSection } from '@/components/company-profile/ProfileHeroSection'
 import { ProvenanceCard } from '@/components/company-profile/ProvenanceCard'
+import { TrendChartsSection } from '@/components/company-profile/TrendChartsSection'
 import { YoyDeltaCard } from '@/components/company-profile/YoyDeltaCard'
-import { NoticeBanner } from '@/components/NoticeBanner'
 import { PageContainer } from '@/components/layout/PageContainer'
-import { PageHeader } from '@/components/layout/PageHeader'
 import { QueryStateCard } from '@/components/QueryStateCard'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { getCompanyProfile } from '@/lib/api'
 import type {
   CompanyDataQualitySummary,
@@ -45,33 +42,6 @@ import {
   sourceOriginLabel,
   type FrameworkDisplayResult,
 } from './company-profile/utils'
-
-const CompanyProfileHeavyCharts = lazy(() =>
-  import('@/components/company-profile/CompanyProfileHeavyCharts').then((module) => ({
-    default: module.CompanyProfileHeavyCharts,
-  }))
-)
-
-function DeferredHeavyCharts({
-  ready,
-  fallback,
-  children,
-}: {
-  ready: boolean
-  fallback: ReactNode
-  children: ReactNode
-}) {
-  const [revealed, setRevealed] = useState(false)
-
-  useEffect(() => {
-    if (!ready || revealed) return
-
-    const timer = window.setTimeout(() => setRevealed(true), 180)
-    return () => window.clearTimeout(timer)
-  }, [ready, revealed])
-
-  return ready && revealed ? children : fallback
-}
 
 export function CompanyProfilePage() {
   const { t, i18n } = useTranslation()
@@ -417,81 +387,27 @@ export function CompanyProfilePage() {
     amber: 'warning' as const,
     indigo: 'info' as const,
   }[heroInsight.tone]
-  const chartFallback = (
-    <div className="grid gap-4 lg:grid-cols-2">
-      <div className="h-[360px] rounded-2xl border bg-stone-100/70 animate-pulse" />
-      <div className="h-[360px] rounded-2xl border bg-stone-100/70 animate-pulse" />
-    </div>
-  )
 
   return (
     <PageContainer>
-      <Link
-        to="/companies"
-        className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900"
-      >
-        <ArrowLeft size={14} />
-        {t('profile.backToCompanies')}
-      </Link>
-
-      <PageHeader
-        title={profile.company_name}
-        subtitle={`${profile.latest_period.source_document_type ?? '—'} · ${profile.latest_year}`}
-        actions={(
-          <div className="flex flex-col items-start gap-3">
-            <Badge variant="secondary" className="rounded-full">
-              {profile.latest_period.reporting_period_label}
-            </Badge>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => exportCompanyProfileCSV(profile)}
-                aria-label={t('profile.exportCSV')}
-              >
-                <Download size={14} className="mr-1 shrink-0" aria-hidden="true" />
-                {t('profile.exportCSV')}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  exportToJSON(
-                    profile,
-                    `${profile.company_name.replace(/[^a-z0-9]/gi, '_')}_esg_${profile.latest_year}.json`
-                  )
-                }
-                aria-label={t('profile.exportJSON')}
-              >
-                <Download size={14} className="mr-1 shrink-0" aria-hidden="true" />
-                {t('profile.exportJSON')}
-              </Button>
-            </div>
-          </div>
-        )}
-        kpis={[
-          {
-            label: t('profile.heroStatPeriods'),
-            value: profile.periods.length,
-          },
-          {
-            label: t('profile.heroStatFrameworks'),
-            value: frameworkScores.length,
-          },
-        ]}
+      <ProfileHeroSection
+        companyName={profile.company_name}
+        latestSourceDocumentType={profile.latest_period.source_document_type}
+        latestYear={profile.latest_year}
+        latestPeriodLabel={profile.latest_period.reporting_period_label}
+        periodsCount={profile.periods.length}
+        frameworksCount={frameworkScores.length}
+        heroInsightTone={heroInsightTone}
+        heroInsightTitle={heroInsight.title}
+        heroInsightBody={heroInsight.body}
+        onExportCsv={() => exportCompanyProfileCSV(profile)}
+        onExportJson={() =>
+          exportToJSON(
+            profile,
+            `${profile.company_name.replace(/[^a-z0-9]/gi, '_')}_esg_${profile.latest_year}.json`
+          )
+        }
       />
-
-      <NoticeBanner
-        tone={heroInsightTone}
-        title={(
-          <span className="inline-flex items-center gap-2">
-            <Sparkles size={14} />
-            {t('profile.heroLabel')} · {heroInsight.title}
-          </span>
-        )}
-      >
-        <p>{heroInsight.body}</p>
-      </NoticeBanner>
 
       <IdentityCard
         companyName={profile.company_name}
@@ -528,29 +444,12 @@ export function CompanyProfilePage() {
         latestPeriod={profile.latest_period}
       />
 
-      <DeferredHeavyCharts key={decodedName} ready={!isLoading} fallback={chartFallback}>
-        {trendData.length < 2 && (
-          <NoticeBanner tone="warning" title={t('profile.trendInsufficientDataTitle')}>
-            <p>{t('profile.trendInsufficientDataBody')}</p>
-          </NoticeBanner>
-        )}
-        <Suspense
-          fallback={chartFallback}
-        >
-          <CompanyProfileHeavyCharts
-            frameworkRadarData={frameworkRadarData}
-            trendData={trendData}
-            radarTitle={t('profile.radarTitle')}
-            trendTitle={t('profile.trendTitle')}
-            radarLegend={t('profile.radarLegend')}
-            trendLegend={t('profile.trendLegend')}
-            noFrameworkResultsLabel={t('profile.noFrameworkResults')}
-            scoreLabel={t('common.score')}
-            scope1Label={t('companies.scope1')}
-            renewableLabel={t('companies.renewable')}
-          />
-        </Suspense>
-      </DeferredHeavyCharts>
+      <TrendChartsSection
+        decodedName={decodedName}
+        isLoading={isLoading}
+        trendData={trendData}
+        frameworkRadarData={frameworkRadarData}
+      />
 
       <YoyDeltaCard
         yoyDeltaCard={yoyDeltaCard}
