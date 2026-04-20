@@ -1,17 +1,6 @@
 import { useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { calcLcoe, calcSensitivity, getBenchmarks } from '@/lib/api'
-import { QueryStateCard } from '@/components/QueryStateCard'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import {
   LineChart,
   Line,
@@ -24,116 +13,22 @@ import {
 } from 'recharts'
 import type { LCOEInput } from '@/lib/types'
 import { useTranslation } from 'react-i18next'
-import { localizeErrorMessage } from '@/lib/error-utils'
 import { Badge } from '@/components/ui/badge'
 import { FlaskConical, LineChart as LineChartIcon } from 'lucide-react'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
-import { Panel, FormCard } from '@/components/layout/Panel'
+import { Panel } from '@/components/layout/Panel'
 import { NoticeBanner } from '@/components/NoticeBanner'
-import { FilterBar } from '@/components/FilterBar'
 import { MetricCard } from '@/components/MetricCard'
-
-const TECHNOLOGIES = [
-  'solar_pv',
-  'wind_onshore',
-  'wind_offshore',
-  'battery_storage',
-]
-
-const TECH_LABEL_KEYS: Record<string, string> = {
-  solar_pv: 'lcoe.technologyOptions.solarPv',
-  wind_onshore: 'lcoe.technologyOptions.windOnshore',
-  wind_offshore: 'lcoe.technologyOptions.windOffshore',
-  battery_storage: 'lcoe.technologyOptions.batteryStorage',
-}
-
-const FX_PRESETS: Record<'EUR' | 'USD' | 'CNY', { label: string; fx: number }> = {
-  EUR: { label: '1 EUR = 1.000 EUR', fx: 1.0 },
-  USD: { label: '1 USD ≈ 0.920 EUR (2023 avg)', fx: 0.920 },
-  CNY: { label: '1 CNY ≈ 0.127 EUR (2023 avg)', fx: 0.127 },
-}
-
-// Prices are stored in the row's native currency (EUR for DE, USD for US,
-// CNY for CN) to stay readable — the LCOE input uses the same field name
-// (`electricity_price_eur_per_mwh`) because the backend treats the number as
-// "price in input currency" and converts via reference_fx_to_eur.
-const DE_MARKET_PRICES: { year: number; price: number; note?: string }[] = [
-  { year: 2021, price: 96 },
-  { year: 2022, price: 235, note: '⚡ energy crisis' },
-  { year: 2023, price: 95 },
-  { year: 2024, price: 65 },
-]
-
-const US_MARKET_PRICES: { year: number; price: number; note?: string }[] = [
-  { year: 2021, price: 39 },
-  { year: 2022, price: 67, note: '⚡ gas spike' },
-  { year: 2023, price: 40 },
-  { year: 2024, price: 38 },
-]
-
-const CN_MARKET_PRICES: { year: number; price: number }[] = [
-  { year: 2021, price: 346 },
-  { year: 2022, price: 382 },
-  { year: 2023, price: 363 },
-  { year: 2024, price: 370 },
-]
-
-// Language ↔ market defaults: en→US, zh→CN, de/fallback→EU
-function currencyForLanguage(lng: string): 'EUR' | 'USD' | 'CNY' {
-  const tag = lng.toLowerCase()
-  if (tag.startsWith('en')) return 'USD'
-  if (tag.startsWith('zh')) return 'CNY'
-  return 'EUR'
-}
-
-function defaultPriceForCurrency(currency: 'EUR' | 'USD' | 'CNY'): number {
-  if (currency === 'USD') return US_MARKET_PRICES[US_MARKET_PRICES.length - 1].price
-  if (currency === 'CNY') return CN_MARKET_PRICES[CN_MARKET_PRICES.length - 1].price
-  return DE_MARKET_PRICES[DE_MARKET_PRICES.length - 1].price
-}
-
-function buildDefaults(currency: 'EUR' | 'USD' | 'CNY'): LCOEInput {
-  return {
-    technology: 'solar_pv',
-    capacity_mw: 100,
-    capacity_factor: 0.22,
-    capex_eur_per_kw: 800,
-    opex_eur_per_kw_year: 16,
-    lifetime_years: 25,
-    discount_rate: 0.05,
-    electricity_price_eur_per_mwh: defaultPriceForCurrency(currency),
-    currency,
-    reference_fx_to_eur: FX_PRESETS[currency].fx,
-  }
-}
-
-const FIELD_CONFIG: [keyof LCOEInput, string, string][] = [
-  ['capacity_mw', 'capacity_mw', '0.1'],
-  ['capacity_factor', 'lcoe.capacityFactor', '0.01'],
-  ['capex_eur_per_kw', 'lcoe.capex', '1'],
-  ['opex_eur_per_kw_year', 'lcoe.opex', '0.1'],
-  ['lifetime_years', 'lcoe.lifetime', '1'],
-  ['discount_rate', 'lcoe.discountRate', '0.001'],
-  ['electricity_price_eur_per_mwh', 'lcoe.electricityPrice', '1'],
-]
+import { LcoeInputForm } from '@/components/lcoe/LcoeInputForm'
+import { createInitialLcoeInput } from '@/components/lcoe/utils'
 
 const COLORS = ['#6366f1', '#22c55e', '#f59e0b', '#ef4444']
-
-const FIELD_UNIT_KEYS: Partial<Record<keyof LCOEInput, string>> = {
-  capacity_mw: 'lcoe.unitMw',
-  capacity_factor: 'lcoe.unitRatio',
-  capex_eur_per_kw: 'lcoe.unitEurPerKw',
-  opex_eur_per_kw_year: 'lcoe.unitEurPerKwYear',
-  lifetime_years: 'lcoe.unitYears',
-  discount_rate: 'lcoe.unitPercentApprox',
-  electricity_price_eur_per_mwh: 'lcoe.unitEurPerMwh',
-}
 
 export function LcoePage() {
   const { t, i18n } = useTranslation()
   const [form, setForm] = useState<LCOEInput>(() =>
-    buildDefaults(currencyForLanguage(i18n.language || 'de'))
+    createInitialLcoeInput(i18n.language || 'de')
   )
 
   const lcoeMutation = useMutation({ mutationFn: calcLcoe })
@@ -199,221 +94,20 @@ export function LcoePage() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <FormCard>
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{t('lcoe.formTitle')}</h2>
-          <form onSubmit={handleSubmit} className="mt-5 space-y-5">
-            <FilterBar>
-              <FilterBar.Field label={t('lcoe.technology')} htmlFor="lcoe-technology">
-                <Select
-                  value={form.technology}
-                  onValueChange={(v) =>
-                    setForm((f) => ({
-                      ...f,
-                      technology: v as LCOEInput['technology'],
-                    }))
-                  }
-                >
-                  <SelectTrigger id="lcoe-technology">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TECHNOLOGIES.map((tech) => (
-                      <SelectItem key={tech} value={tech}>
-                        {t(TECH_LABEL_KEYS[tech] ?? tech)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FilterBar.Field>
-              <FilterBar.Actions>
-                <Button type="button" variant="outline" onClick={loadBenchmark}>
-                  {t('lcoe.loadBenchmark')}
-                </Button>
-              </FilterBar.Actions>
-            </FilterBar>
-
-            {benchmarksLoading ? (
-              <QueryStateCard
-                tone="loading"
-                title={t('common.loading')}
-                body={t('lcoe.subtitle')}
-              />
-            ) : benchmarksError ? (
-              <QueryStateCard
-                tone="error"
-                title={t('common.error')}
-                body={localizeErrorMessage(t, benchmarksError, 'common.error')}
-                actionLabel={t('errorBoundary.retry')}
-                onAction={() => void refetchBenchmarks()}
-              />
-            ) : null}
-
-            <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-700 dark:bg-slate-800/40">
-              <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                {t('lcoe.currencySection')}
-              </p>
-              <div className="grid gap-3 sm:grid-cols-[1fr_1fr]">
-                <div className="space-y-1.5">
-                  <Label className="text-sm">{t('lcoe.inputCurrency')}</Label>
-                  <Select
-                    value={form.currency}
-                    onValueChange={(v: 'EUR' | 'USD' | 'CNY') =>
-                      setForm((f) => ({ ...f, currency: v, reference_fx_to_eur: FX_PRESETS[v].fx }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="EUR">EUR — Euro</SelectItem>
-                      <SelectItem value="USD">USD — US Dollar</SelectItem>
-                      <SelectItem value="CNY">CNY — 人民币</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="lcoe-fx" className="text-sm">
-                    {t('lcoe.fxToEur')}
-                  </Label>
-                  <Input
-                    id="lcoe-fx"
-                    type="number"
-                    step="0.001"
-                    className="h-10 border-slate-200 bg-white dark:bg-slate-700"
-                    value={form.reference_fx_to_eur}
-                    onChange={(e) => setForm((f) => ({ ...f, reference_fx_to_eur: parseFloat(e.target.value) || 1 }))}
-                  />
-                </div>
-              </div>
-              <p className="text-[11px] text-slate-400 dark:text-slate-500">
-                {FX_PRESETS[form.currency]?.label} — {t('lcoe.fxNote')}
-              </p>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              {FIELD_CONFIG.map(([key, labelKey, step]) => (
-                <div key={key} className="space-y-2 rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
-                  <div className="flex items-center justify-between gap-2">
-                    <Label className="text-sm font-medium text-slate-700">
-                      {labelKey === 'capacity_mw' ? t('lcoe.capacityMw') : t(labelKey)}
-                    </Label>
-                    {FIELD_UNIT_KEYS[key] ? <span className="metric-unit">{t(FIELD_UNIT_KEYS[key]!)}</span> : null}
-                  </div>
-                  <Input
-                    type="number"
-                    step={step}
-                    className="h-11 rounded-xl border-slate-200 bg-white"
-                    value={form[key] as number}
-                    onChange={(e) =>
-                      setForm((f) => ({
-                        ...f,
-                        [key]: parseFloat(e.target.value) || 0,
-                      }))
-                    }
-                  />
-                  <p className="text-xs leading-5 text-slate-500">{t(`lcoe.fieldHelp.${key}`)}</p>
-                </div>
-              ))}
-            </div>
-
-            {form.currency === 'EUR' && (
-              <div className="space-y-2 rounded-2xl border border-slate-200 bg-slate-50/60 px-4 py-3 dark:border-slate-700 dark:bg-slate-800/40">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  {t('lcoe.deMarketRef')}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {DE_MARKET_PRICES.map(({ year, price, note }) => (
-                    <button
-                      key={year}
-                      type="button"
-                      onClick={() => setForm((f) => ({ ...f, electricity_price_eur_per_mwh: price }))}
-                      style={{ minHeight: 'unset', minWidth: 'unset' }}
-                      className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 ${
-                        form.electricity_price_eur_per_mwh === price
-                          ? 'border-amber-300 bg-amber-100 text-amber-900 dark:border-amber-600 dark:bg-amber-900/40 dark:text-amber-300'
-                          : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300'
-                      }`}
-                    >
-                      {year} — {price} €/MWh{note ? ` ${note}` : ''}
-                    </button>
-                  ))}
-                </div>
-                <p className="text-[11px] text-slate-400 dark:text-slate-500">{t('lcoe.deMarketRefNote')}</p>
-              </div>
-            )}
-
-            {form.currency === 'USD' && (
-              <div className="space-y-2 rounded-2xl border border-sky-100 bg-sky-50/60 px-4 py-3 dark:border-sky-900/40 dark:bg-sky-900/10">
-                <p className="text-xs font-medium uppercase tracking-wide text-sky-600 dark:text-sky-400">
-                  {t('lcoe.usMarketRef')}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {US_MARKET_PRICES.map(({ year, price, note }) => (
-                    <button
-                      key={year}
-                      type="button"
-                      onClick={() => setForm((f) => ({ ...f, electricity_price_eur_per_mwh: price }))}
-                      style={{ minHeight: 'unset', minWidth: 'unset' }}
-                      className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${
-                        form.electricity_price_eur_per_mwh === price
-                          ? 'border-sky-300 bg-sky-100 text-sky-900 dark:border-sky-600 dark:bg-sky-800/40 dark:text-sky-300'
-                          : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300'
-                      }`}
-                    >
-                      {year} — ${price}/MWh{note ? ` ${note}` : ''}
-                    </button>
-                  ))}
-                </div>
-                <p className="text-[11px] text-slate-400 dark:text-slate-500">{t('lcoe.usMarketRefNote')}</p>
-              </div>
-            )}
-
-            {form.currency === 'CNY' && (
-              <div className="space-y-2 rounded-2xl border border-red-100 bg-red-50/60 px-4 py-3 dark:border-red-900/40 dark:bg-red-900/10">
-                <p className="text-xs font-medium uppercase tracking-wide text-red-500 dark:text-red-400">
-                  {t('lcoe.cnMarketRef')}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {CN_MARKET_PRICES.map(({ year, price }: { year: number; price: number }) => (
-                    <button
-                      key={year}
-                      type="button"
-                      onClick={() => setForm((f) => ({ ...f, electricity_price_eur_per_mwh: price }))}
-                      style={{ minHeight: 'unset', minWidth: 'unset' }}
-                      className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 ${
-                        form.electricity_price_eur_per_mwh === price
-                          ? 'border-red-300 bg-red-100 text-red-900 dark:border-red-600 dark:bg-red-800/40 dark:text-red-300'
-                          : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300'
-                      }`}
-                    >
-                      {year} — ¥{price}/MWh
-                    </button>
-                  ))}
-                </div>
-                <p className="text-[11px] text-slate-400 dark:text-slate-500">{t('lcoe.cnMarketRefNote')}</p>
-              </div>
-            )}
-
-            {validationMessages.length > 0 ? (
-              <NoticeBanner tone="warning" title={t('lcoe.validationTitle')}>
-                <div className="space-y-1">
-                  {validationMessages.map((message) => (
-                    <p key={message}>{message}</p>
-                  ))}
-                </div>
-              </NoticeBanner>
-            ) : null}
-
-            <Button type="submit" disabled={lcoeMutation.isPending || !isValid} className="h-11 w-full rounded-xl">
-              {lcoeMutation.isPending ? t('lcoe.calculating') : t('lcoe.calculate')}
-            </Button>
-            {(lcoeMutation.error || sensitivityMutation.error) && (
-              <p className="text-sm text-red-500">
-                {localizeErrorMessage(t, lcoeMutation.error ?? sensitivityMutation.error, 'common.error')}
-              </p>
-            )}
-          </form>
-        </FormCard>
+        <LcoeInputForm
+          form={form}
+          setForm={setForm}
+          onSubmit={handleSubmit}
+          onLoadBenchmark={loadBenchmark}
+          benchmarksLoading={benchmarksLoading}
+          benchmarksError={benchmarksError}
+          onRefetchBenchmarks={refetchBenchmarks}
+          validationMessages={validationMessages}
+          isValid={isValid}
+          lcoePending={lcoeMutation.isPending}
+          lcoeError={lcoeMutation.error}
+          sensitivityError={sensitivityMutation.error}
+        />
 
         <div className="space-y-4">
           <Panel
