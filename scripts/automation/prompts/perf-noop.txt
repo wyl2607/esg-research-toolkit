@@ -1,0 +1,5 @@
+Run the smallest possible task and then stop.
+Requirements:
+- Do not edit any files.
+- Do not run tests.
+- Reply with exactly one line: PERF_OK
