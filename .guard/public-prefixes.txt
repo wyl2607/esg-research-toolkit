@@ -8,6 +8,7 @@
 .guard/ZONE_POLICY.md
 .gitignore
 .esg-deploy-config.example
+.env.example
 .dockerignore
 AGENTS.md
 Dockerfile
