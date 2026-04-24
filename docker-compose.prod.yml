@@ -14,6 +14,7 @@ services:
     volumes:
       - /opt/esg-data:/app/data
       - /opt/esg-reports:/app/reports
+      - ./.deploy-fingerprint.json:/app/.deploy-fingerprint.json:ro
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]

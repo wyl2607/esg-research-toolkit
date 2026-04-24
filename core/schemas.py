@@ -140,6 +140,20 @@ class HealthResponse(BaseModel):
     status: str
 
 
+class DeployHealthResponse(BaseModel):
+    status: str
+    version: str
+    fingerprint_error: str | None = None
+    environment: str | None = None
+    git_sha: str | None = None
+    git_branch: str | None = None
+    git_tag: str | None = None
+    deployed_at_utc: str | None = None
+    deployed_by: str | None = None
+    source: str | None = None
+    image: str | None = None
+
+
 class ModelHealthEntry(BaseModel):
     model: str
     max_tokens: int

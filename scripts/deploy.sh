@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# deploy.sh — One-shot deploy for ESG Research Toolkit on USA VPS
-# Run on VPS: bash /opt/esg-research-toolkit/scripts/deploy.sh
+# deploy.sh — One-shot deploy for ESG Research Toolkit on USA VPS.
+# Callers must fetch and checkout the intended revision before running.
 set -euo pipefail
 
 REPO_DIR="/opt/esg-research-toolkit"
@@ -27,9 +27,10 @@ fi
 
 echo "=== ESG Toolkit Deploy ==="
 
-# 1. Pull latest code
+# 1. Verify deployed revision. The workflow checks out the exact SHA before
+# calling this script; do not pull main here or deployments lose traceability.
 cd "$REPO_DIR"
-git pull origin main
+git rev-parse HEAD
 
 # 2. Build frontend
 echo "→ Building frontend..."
@@ -47,14 +48,24 @@ if [ ! -f "$REPO_DIR/.env.prod" ]; then
     exit 1
 fi
 
-# 5. Rebuild and restart Docker container
+# 5. Write deploy fingerprint before Compose sees the file bind mount.
+echo "→ Writing deploy fingerprint..."
+bash "$REPO_DIR/scripts/write_deploy_fingerprint.sh" \
+  --repo-dir "$REPO_DIR" \
+  --env "vps-prod" \
+  --source "deploy.sh" \
+  --image "pending-compose-build" \
+  --target "$FINGERPRINT_FILE" >/dev/null
+echo " Fingerprint: $FINGERPRINT_FILE"
+
+# 6. Rebuild and restart Docker container
 echo "→ Restarting API container..."
 cd "$REPO_DIR"
 $COMPOSE_CMD -f docker-compose.prod.yml down --remove-orphans || true
 $COMPOSE_CMD -f docker-compose.prod.yml build --no-cache
 $COMPOSE_CMD -f docker-compose.prod.yml up -d
 
-# 6. Install nginx config (first deploy only)
+# 7. Install nginx config (first deploy only)
 if [ ! -f "$NGINX_CONF" ]; then
     echo "→ Installing nginx config..."
     cp "$REPO_DIR/nginx/esg.conf" "$NGINX_CONF"
@@ -67,19 +78,20 @@ else
     nginx -t && systemctl reload nginx
 fi
 
-# 7. Health check
+# 8. Health check
 echo "→ Health check..."
-sleep 3
-curl -sf http://localhost:8001/health && echo " API OK" || echo " WARN: API not responding yet"
-
-# 8. Write deploy fingerprint (git sha/tag/time/source)
-echo "→ Writing deploy fingerprint..."
-bash "$REPO_DIR/scripts/write_deploy_fingerprint.sh" \
-  --repo-dir "$REPO_DIR" \
-  --env "vps-prod" \
-  --source "deploy.sh" \
-  --target "$FINGERPRINT_FILE" >/dev/null
-echo " Fingerprint: $FINGERPRINT_FILE"
+for i in $(seq 1 10); do
+    if curl -sf http://localhost:8001/health; then
+        echo " API OK"
+        break
+    fi
+    if [ "$i" = "10" ]; then
+        echo "ERROR: API health check failed"
+        exit 1
+    fi
+    echo " waiting... ($i/10)"
+    sleep 3
+done
 
 echo "=== Deploy complete ==="
 echo "URL: https://esg.meichen.beauty"

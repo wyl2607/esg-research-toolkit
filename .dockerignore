@@ -4,6 +4,7 @@ __pycache__/
 .pytest_cache/
 .git/
 .env
+.deploy-fingerprint.json
 .omx/
 .local/
 .guard/
