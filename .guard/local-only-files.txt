@@ -28,3 +28,13 @@ frontend/EXACT_FIXES.md
 frontend/README_AUDIT.md
 frontend/CODEX_FRONTEND_REVIEW_PROMPT.md
 scripts/codex_loop.sh
+ALEMBIC_CUTOVER_REPORT.md
+code-review-report.md
+_refactor_api.py
+report_parser/api.backup.py
+report_parser/api_audit.py
+report_parser/api_company.py
+report_parser/api_core.py
+scripts/esg-alembic-cutover.py
+scripts/esg-phase3-refactor.py
+scripts/publish-to-github.sh

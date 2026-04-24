@@ -123,6 +123,9 @@ docs/archive/
 docs/superpowers/
 docs/dev-tasks/
 docs/exec-plans/*autopolish*.md
+ALEMBIC_CUTOVER_REPORT.md
+code-review-report.md
+review-logs/
 frontend/AUDIT_*.md
 frontend/*_AUDIT.md
 frontend/CONSISTENCY_*.md
@@ -130,6 +133,16 @@ frontend/EXACT_FIXES.md
 frontend/CODEX_*.md
 frontend/README_AUDIT.md
 scripts/codex_loop.sh
+
+# Ad-hoc refactor/cutover generators and generated scratch modules (local only)
+_refactor_api.py
+report_parser/api.backup.py
+report_parser/api_audit.py
+report_parser/api_company.py
+report_parser/api_core.py
+scripts/esg-alembic-cutover.py
+scripts/esg-phase3-refactor.py
+scripts/publish-to-github.sh
 
 # Seed pipeline runtime artifacts
 scripts/seed_data/pdfs/**/*.pdf
@@ -148,6 +161,7 @@ scripts/automation/*.png
 # Remote dispatch runtime artifacts (shell logs + JSON roundtrip traces).
 # Traces contain remote absolute paths (other users' $HOME) — local-only by policy.
 runtime/ai-trace/
+runtime/perf/
 
 # Local-only phase completion / milestone snapshots
 PHASE_*.md
