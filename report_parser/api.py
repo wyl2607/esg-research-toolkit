@@ -58,6 +58,7 @@ MIN_PDF_BYTES = 1024                       # < 1 KB cannot be a real PDF
 PDF_MAGIC_BYTES = b"%PDF-"
 MIN_REPORT_YEAR = 1900
 MAX_REPORT_YEAR = 2100
+MAX_COMPANY_REPORT_ID = 9_223_372_036_854_775_807
 
 CORE_METRICS = _evidence.CORE_METRICS
 DISCLOSURE_KEY_METRICS = _evidence.DISCLOSURE_KEY_METRICS
@@ -688,7 +689,7 @@ def get_company_report(
 
 @router.get("/{company_report_id:int}/audit-trail", response_model=list[AuditTrailRow])
 def get_audit_trail(
-    company_report_id: int,
+    company_report_id: int = FastApiPath(..., ge=1, le=MAX_COMPANY_REPORT_ID),
     db: Session = Depends(get_db),
 ) -> list[AuditTrailRow]:
     report = db.query(CompanyReport).filter(CompanyReport.id == company_report_id).first()
