@@ -7,23 +7,6 @@
  */
 
 export interface paths {
-    "/report/companies/by-industry/{industry_code}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List Companies By Industry */
-        get: operations["list_companies_by_industry_report_companies_by_industry__industry_code__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/report/companies/{company_name}/{report_year}/request-deletion": {
         parameters: {
             query?: never;
@@ -184,6 +167,27 @@ export interface paths {
         put?: never;
         /** Preview Merge */
         post: operations["preview_merge_report_merge_preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/report/companies/by-industry/{industry_code}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Companies By Industry
+         * @description Return the latest report per company for a given NACE industry code,
+         *     plus the numeric metric values that feed benchmark aggregation.
+         */
+        get: operations["list_companies_by_industry_report_companies_by_industry__industry_code__get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -567,6 +571,53 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/techno/saf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Saf Cost
+         * @description 计算 SAF（可持续航空燃料）平准化生产成本及盈亏平衡分析。
+         */
+        post: operations["saf_cost_techno_saf_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/techno/saf-benchmarks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Saf Benchmarks
+         * @description 返回主要 SAF 生产路线的参考输入参数（2025 年市场数据）。
+         *
+         *     数据来源：
+         *     - IATA SAF Report 2024
+         *     - ICAO CORSIA SAF Eligibility Criteria
+         *     - EU ReFuelEU Aviation mandate (EU 2023/2405)
+         *     - IEA Aviation Technology Perspectives 2024
+         *     - BloombergNEF SAF Market Outlook 2025
+         */
+        get: operations["saf_benchmarks_techno_saf_benchmarks_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/frameworks/score": {
         parameters: {
             query?: never;
@@ -693,6 +744,26 @@ export interface paths {
          * @description 列出所有支持的框架及说明。
          */
         get: operations["list_frameworks_frameworks_list_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/frameworks/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Framework Versions
+         * @description 列出受支持框架的标准版本元数据。
+         */
+        get: operations["list_framework_versions_frameworks_versions_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -871,7 +942,10 @@ export interface components {
         };
         /** Body_upload_report_report_upload_post */
         Body_upload_report_report_upload_post: {
-            /** File */
+            /**
+             * File
+             * Format: binary
+             */
             file: string;
             /** Industry Code */
             industry_code?: string | null;
@@ -884,30 +958,6 @@ export interface components {
         Body_upload_reports_batch_report_upload_batch_post: {
             /** Files */
             files: string[];
-        };
-        /** CompanyByIndustryItem */
-        CompanyByIndustryItem: {
-            /** Company Name */
-            company_name: string;
-            /** Report Year */
-            report_year: number;
-            /** Industry Code */
-            industry_code?: string | null;
-            /** Industry Sector */
-            industry_sector?: string | null;
-            /** Metrics */
-            metrics?: {
-                [key: string]: number | null;
-            };
-        };
-        /** CompanyByIndustryResponse */
-        CompanyByIndustryResponse: {
-            /** Industry Code */
-            industry_code: string;
-            /** Company Count */
-            company_count: number;
-            /** Companies */
-            companies?: components["schemas"]["CompanyByIndustryItem"][];
         };
         /** CompanyESGData */
         CompanyESGData: {
@@ -954,26 +1004,18 @@ export interface components {
             /** Primary Activities */
             primary_activities?: string[];
             /** Evidence Summary */
-            evidence_summary?: {
-                [key: string]: unknown;
-            }[];
+            evidence_summary?: Record<string, never>[];
         };
         /** CompanyHistoryResponse */
         CompanyHistoryResponse: {
             /** Company Name */
             company_name: string;
             /** Periods */
-            periods?: {
-                [key: string]: unknown;
-            }[];
+            periods?: Record<string, never>[];
             /** Trend */
-            trend?: {
-                [key: string]: unknown;
-            }[];
+            trend?: Record<string, never>[];
             /** Framework Metadata */
-            framework_metadata?: {
-                [key: string]: unknown;
-            }[];
+            framework_metadata?: Record<string, never>[];
         };
         /** CompanyProfileLatestPeriod */
         CompanyProfileLatestPeriod: {
@@ -991,9 +1033,7 @@ export interface components {
             industry_sector?: string | null;
             period: components["schemas"]["CompanyProfilePeriodMetadata"];
             /** Framework Metadata */
-            framework_metadata?: {
-                [key: string]: unknown;
-            }[];
+            framework_metadata?: Record<string, never>[];
         };
         /** CompanyProfileMetric */
         CompanyProfileMetric: {
@@ -1051,21 +1091,13 @@ export interface components {
             /** Downloaded At */
             downloaded_at?: string | null;
             /** Evidence Anchors */
-            evidence_anchors?: {
-                [key: string]: unknown;
-            }[];
+            evidence_anchors?: Record<string, never>[];
             /** Framework Metadata */
-            framework_metadata?: {
-                [key: string]: unknown;
-            }[];
+            framework_metadata?: Record<string, never>[];
             /** Source Documents */
-            source_documents?: {
-                [key: string]: unknown;
-            }[];
+            source_documents?: Record<string, never>[];
             /** Merged Result */
-            merged_result: {
-                [key: string]: unknown;
-            };
+            merged_result: Record<string, never>;
         };
         /** CompanyProfileV1Response */
         CompanyProfileV1Response: {
@@ -1073,6 +1105,7 @@ export interface components {
              * Api Version
              * @default v1
              * @constant
+             * @enum {string}
              */
             api_version: "v1";
             /** Company Name */
@@ -1092,51 +1125,29 @@ export interface components {
                 [key: string]: components["schemas"]["CompanyProfileMetric"];
             };
             /** Trend */
-            trend?: {
-                [key: string]: unknown;
-            }[];
+            trend?: Record<string, never>[];
             /** Periods */
             periods?: components["schemas"]["CompanyProfilePeriodRecord"][];
             /** Framework Metadata */
-            framework_metadata?: {
-                [key: string]: unknown;
-            }[];
+            framework_metadata?: Record<string, never>[];
             /** Framework Scores */
-            framework_scores?: {
-                [key: string]: unknown;
-            }[];
+            framework_scores?: Record<string, never>[];
             /** Framework Results */
-            framework_results?: {
-                [key: string]: unknown;
-            }[];
+            framework_results?: Record<string, never>[];
             /** Evidence Summary */
-            evidence_summary?: {
-                [key: string]: unknown;
-            }[];
+            evidence_summary?: Record<string, never>[];
             /** Evidence Anchors */
-            evidence_anchors?: {
-                [key: string]: unknown;
-            }[];
+            evidence_anchors?: Record<string, never>[];
             /** Data Quality Summary */
-            data_quality_summary: {
-                [key: string]: unknown;
-            };
+            data_quality_summary: Record<string, never>;
             /** Narrative Summary */
-            narrative_summary: {
-                [key: string]: unknown;
-            };
+            narrative_summary: Record<string, never>;
             /** Identity Provenance Summary */
-            identity_provenance_summary: {
-                [key: string]: unknown;
-            };
+            identity_provenance_summary: Record<string, never>;
             /** Latest Sources */
-            latest_sources?: {
-                [key: string]: unknown;
-            }[];
+            latest_sources?: Record<string, never>[];
             /** Latest Merged Result */
-            latest_merged_result: {
-                [key: string]: unknown;
-            };
+            latest_merged_result: Record<string, never>;
         };
         /** CompanyReportListItem */
         CompanyReportListItem: {
@@ -1163,9 +1174,7 @@ export interface components {
             /** Industry Sector */
             industry_sector?: string | null;
             /** Period */
-            period: {
-                [key: string]: unknown;
-            };
+            period: Record<string, never>;
             /** Created At */
             created_at?: string | null;
             /** Scope1 Co2E Tonnes */
@@ -1197,9 +1206,7 @@ export interface components {
             /** Primary Activities */
             primary_activities?: string[];
             /** Evidence Summary */
-            evidence_summary?: {
-                [key: string]: unknown;
-            }[];
+            evidence_summary?: Record<string, never>[];
         };
         /** DashboardStatsResponse */
         DashboardStatsResponse: {
@@ -1210,17 +1217,11 @@ export interface components {
             /** Avg Renewable Pct */
             avg_renewable_pct: number;
             /** Yearly Trend */
-            yearly_trend?: {
-                [key: string]: unknown;
-            }[];
+            yearly_trend?: Record<string, never>[];
             /** Top Emitters */
-            top_emitters?: {
-                [key: string]: unknown;
-            }[];
+            top_emitters?: Record<string, never>[];
             /** Bottom Emitters */
-            bottom_emitters?: {
-                [key: string]: unknown;
-            }[];
+            bottom_emitters?: Record<string, never>[];
             /** Coverage Rates */
             coverage_rates?: {
                 [key: string]: number;
@@ -1288,6 +1289,7 @@ export interface components {
             /**
              * Status
              * @constant
+             * @enum {string}
              */
             status: "queued";
             /** Created */
@@ -1419,6 +1421,15 @@ export interface components {
             /** Coverage Pct */
             coverage_pct: number;
         };
+        /** FrameworkVersionInfo */
+        FrameworkVersionInfo: {
+            /** Framework Id */
+            framework_id: string;
+            /** Framework Version */
+            framework_version: string;
+            /** Display Name */
+            display_name: string;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -1542,9 +1553,7 @@ export interface components {
             /** Primary Activities */
             primary_activities?: string[];
             /** Evidence Summary */
-            evidence_summary?: {
-                [key: string]: unknown;
-            }[];
+            evidence_summary?: Record<string, never>[];
             /** Source Url */
             source_url?: string | null;
         };
@@ -1647,9 +1656,7 @@ export interface components {
             /** Primary Activities */
             primary_activities?: string[];
             /** Evidence Summary */
-            evidence_summary?: {
-                [key: string]: unknown;
-            }[];
+            evidence_summary?: Record<string, never>[];
             /** Source Url */
             source_url?: string | null;
             /** Source Id */
@@ -1720,9 +1727,7 @@ export interface components {
             /** Fetched At */
             fetched_at: string;
             /** Extracted Payload */
-            extracted_payload: {
-                [key: string]: unknown;
-            };
+            extracted_payload: Record<string, never>;
             /**
              * Status
              * @enum {string}
@@ -1730,6 +1735,136 @@ export interface components {
             status: "pending" | "approved" | "rejected";
             /** Review Note */
             review_note?: string | null;
+        };
+        /**
+         * SAFCostResult
+         * @description Levelized cost of SAF production and breakeven analysis.
+         */
+        SAFCostResult: {
+            /** Pathway */
+            pathway: string;
+            /** Region */
+            region: string;
+            /** Levelized Cost Eur Per Tonne */
+            levelized_cost_eur_per_tonne: number;
+            /** Levelized Cost Eur Per Litre */
+            levelized_cost_eur_per_litre: number;
+            /** Levelized Cost Local Per Litre */
+            levelized_cost_local_per_litre: number;
+            /** Capex Component Eur Per Tonne */
+            capex_component_eur_per_tonne: number;
+            /** Feedstock Component Eur Per Tonne */
+            feedstock_component_eur_per_tonne: number;
+            /** Opex Component Eur Per Tonne */
+            opex_component_eur_per_tonne: number;
+            /** Policy Credit Eur Per Tonne */
+            policy_credit_eur_per_tonne: number;
+            /** Jet Fuel Reference Eur Per Litre */
+            jet_fuel_reference_eur_per_litre: number;
+            /** Premium Vs Conventional Pct */
+            premium_vs_conventional_pct: number;
+            /** Breakeven Jet Fuel Price Eur Per Litre */
+            breakeven_jet_fuel_price_eur_per_litre: number;
+            /** Is Cost Competitive */
+            is_cost_competitive: boolean;
+            /** Npv Eur */
+            npv_eur: number;
+            /** Irr */
+            irr: number;
+            /** Payback Years */
+            payback_years: number | null;
+            /** Lifetime Years */
+            lifetime_years: number;
+            /** Currency */
+            currency: string;
+            /** Reference Fx To Eur */
+            reference_fx_to_eur: number;
+        };
+        /**
+         * SAFInput
+         * @description Input parameters for SAF levelized cost calculation.
+         */
+        SAFInput: {
+            /**
+             * Pathway
+             * @default HEFA
+             * @enum {string}
+             */
+            pathway: "HEFA" | "FT-biomass" | "ATJ" | "PtL" | "co-processing";
+            /**
+             * Region
+             * @default EU
+             * @enum {string}
+             */
+            region: "DE" | "EU" | "US" | "BR" | "INTL";
+            /**
+             * Production Capacity Tonnes Year
+             * @description Annual SAF production capacity in tonnes
+             * @default 50000
+             */
+            production_capacity_tonnes_year: number;
+            /**
+             * Capex Eur Per Tonne Year
+             * @description CAPEX per tonne of annual production capacity (€)
+             * @default 2500
+             */
+            capex_eur_per_tonne_year: number;
+            /**
+             * Lifetime Years
+             * @default 20
+             */
+            lifetime_years: number;
+            /**
+             * Discount Rate
+             * @default 0.08
+             */
+            discount_rate: number;
+            /**
+             * Feedstock Cost Eur Per Tonne
+             * @description Feedstock purchase price (€/tonne feedstock)
+             * @default 400
+             */
+            feedstock_cost_eur_per_tonne: number;
+            /**
+             * Feedstock To Saf Ratio
+             * @description Tonnes of feedstock required per tonne of SAF produced
+             * @default 3.5
+             */
+            feedstock_to_saf_ratio: number;
+            /**
+             * Opex Eur Per Tonne
+             * @description Fixed + variable operating costs per tonne SAF (excl. feedstock)
+             * @default 300
+             */
+            opex_eur_per_tonne: number;
+            /**
+             * Policy Credit Eur Per Tonne
+             * @description Policy support per tonne SAF (negative = credit/subsidy, e.g. IRA = -200 €/t)
+             * @default 0
+             */
+            policy_credit_eur_per_tonne: number;
+            /**
+             * Jet Fuel Price Eur Per Litre
+             * @description Current conventional Jet A-1 price (€/litre) for breakeven comparison
+             * @default 0.6
+             */
+            jet_fuel_price_eur_per_litre: number;
+            /**
+             * Saf Density Kg Per Litre
+             * @default 0.8
+             */
+            saf_density_kg_per_litre: number;
+            /**
+             * Currency
+             * @default EUR
+             * @enum {string}
+             */
+            currency: "EUR" | "USD";
+            /**
+             * Reference Fx To Eur
+             * @default 1
+             */
+            reference_fx_to_eur: number;
         };
         /** SensitivityResult */
         SensitivityResult: {
@@ -1780,10 +1915,6 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
-            /** Input */
-            input?: unknown;
-            /** Context */
-            ctx?: Record<string, never>;
         };
     };
     responses: never;
@@ -1794,37 +1925,6 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    list_companies_by_industry_report_companies_by_industry__industry_code__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                industry_code: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CompanyByIndustryResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     request_source_deletion_report_companies__company_name___report_year__request_deletion_post: {
         parameters: {
             query?: never;
@@ -2218,6 +2318,37 @@ export interface operations {
             };
         };
     };
+    list_companies_by_industry_report_companies_by_industry__industry_code__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                industry_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_audit_trail_report__company_report_id__audit_trail_get: {
         parameters: {
             query?: never;
@@ -2402,9 +2533,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    }[];
+                    "application/json": Record<string, never>[];
                 };
             };
             /** @description Validation Error */
@@ -2719,9 +2848,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Stored report not found. */
@@ -2761,9 +2888,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Validation Error */
@@ -2962,6 +3087,61 @@ export interface operations {
             };
         };
     };
+    saf_cost_techno_saf_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SAFInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SAFCostResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    saf_benchmarks_techno_saf_benchmarks_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: components["schemas"]["SAFInput"];
+                    };
+                };
+            };
+        };
+    };
     score_single_framework_frameworks_score_get: {
         parameters: {
             query: {
@@ -3067,9 +3247,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Stored report not found. */
@@ -3141,9 +3319,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    }[];
+                    "application/json": Record<string, never>[];
                 };
             };
             /** @description Validation Error */
@@ -3217,6 +3393,26 @@ export interface operations {
             };
         };
     };
+    list_framework_versions_frameworks_versions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FrameworkVersionInfo"][];
+                };
+            };
+        };
+    };
     clear_framework_cache_frameworks_cache_clear_post: {
         parameters: {
             query?: never;
@@ -3276,9 +3472,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Validation Error */
