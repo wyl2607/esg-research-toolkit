@@ -227,8 +227,3 @@ class LCOEResult(BaseModel):
 - [ ] pytest 覆盖率 ≥ 70%
 - [ ] 无 `literature_pipeline` 残留
 - [ ] GitHub repo 公开，cv.md 链接更新
-
-
-## 相关文件
-
-[[DEVELOPMENT_PLAN_DEV_ONLY_2026-04-14]]

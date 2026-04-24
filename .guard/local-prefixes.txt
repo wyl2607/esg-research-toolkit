@@ -15,3 +15,7 @@ reports/
 dev-local/
 scripts/omx_
 docs/codex-tasks/SELF_
+docs/superpowers/
+docs/dev-tasks/
+docs/exec-plans/ui_autopolish_tasks.md
+scripts/automation/prompts/
