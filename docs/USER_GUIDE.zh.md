@@ -341,8 +341,3 @@ curl -X POST http://localhost:8000/techno/lcoe \
   A: 这里的实现是简化版，适合分析和原型验证，不是法律意见。
 - Q: LCOE 计算使用什么公式？
   A: 使用折现后的 CAPEX 和 OPEX 除以折现后的发电量，单位为 EUR/MWh。
-
-
-## 相关文件
-
-[[USER_GUIDE.de]]
