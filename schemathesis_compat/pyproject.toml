@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "schemathesis-compat"
+version = "0.1.0"
+description = "Compatibility shim for schemathesis v3→v4 CLI migration"
+requires-python = ">=3.8"
+dependencies = ["schemathesis>=4.15.2,<5"]
+
+[project.scripts]
+schemathesis = "schemathesis_compat:main"
+
+[tool.setuptools]
+py-modules = ["schemathesis_compat"]

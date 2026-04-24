@@ -35,6 +35,7 @@ python-docx~=1.1.0
 pytest>=9.0.3,<10
 pytest-asyncio>=0.24.0
 schemathesis>=4.15.2,<5
+./schemathesis_compat
 
 # Utilities
 python-dotenv~=1.0.0
