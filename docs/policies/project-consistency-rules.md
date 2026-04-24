@@ -19,7 +19,7 @@
 | i18n key namespace | `frontend/src/i18n/locales/{en,de,zh}.json` | 组件内硬编码中文/英文/德文字符串 |
 | API response schema | `core/schemas.py` Pydantic 模型 | endpoint handler 内联 dict return（必须用 `response_model=`） |
 
-**违反检测**：`scripts/consistency_check.sh`（待建）grep 硬编码 framework_version 字面量，出现>1次即 fail。
+**违反检测**：`scripts/consistency_check.sh` grep 硬编码 framework_version 字面量，出现>1次即 fail。
 
 ---
 
@@ -27,10 +27,7 @@
 
 合并新 endpoint/模块时，**必须同时清理被替代的旧路径**。出现孤立/未 include 的 router 文件即违规。
 
-**当前违规清单**：
-- `report_parser/industry_routes.py` — T30F 把 `/companies/by-industry` 移到主 router 后未删除。
-
-**Action**: 下一轮任务必须清除或在 `main.py` 重新 include。
+**当前状态**：未发现孤立 `industry_routes.py`；当前 API 路由由 `main.py` 显式 include。
 
 ---
 
@@ -42,7 +39,7 @@
 - [ ] `en.json / de.json / zh.json` 三语全量 key 齐备
 - [ ] 不得在 JSX 字面硬编码中文/德文
 
-**当前覆盖**：14 pages 中 12 使用 i18n。缺口 2 页需补齐（扫描脚本待建）。
+**当前覆盖**：`scripts/consistency_check.sh` 会阻断未接入 `useTranslation()` 且含非 ASCII UI 字面量的页面，并校验 en/de/zh locale 顶层 key parity。
 
 ---
 
@@ -63,7 +60,7 @@
 - 任何存入 DB 的"分析结果"必须携带 `framework_version / analyzed_at / stored_at`（已实现）
 - Profile 页面每个 framework score 展示 **版本徽章 + 分析时间**（已实现）
 - 合并同 framework_id 多次评分时，渲染 key 必须包含 `analyzed_at` 防 React 重复 key（已修复）
-- 下一步：为 DB 迁移增加 Alembic 正式迁移（目前 additive runtime migration 是 tech-debt）
+- 生产启动必须走 Alembic 初始化路径；legacy runtime migration helper 仅保留给非生产环境
 
 ---
 
@@ -76,6 +73,7 @@
 3. **任务隔离**：每个远端节点在独立 worktree 下工作，不碰 main
 4. **回传路径**：commit SHA + test summary 打包写入 `runtime/ai-trace/remote-roundtrip-<ts>.json`
 5. **合并审核**：任何远端 commit 合并前由本地 Claude 做 review + 回归跑 `pytest -q + test:smoke`
+6. **守卫可执行性**：shell 守卫脚本必须以 LF 签出，避免 Windows worktree 下 Git Bash/WSL 因 CRLF 失效
 
 违反任何一条即不得分发。
 
@@ -90,9 +88,7 @@
 3. **CR-03 i18n 缺口**：SAF 页面已补齐 en/de/zh locale key，页面 copy 不再依赖 fallback 文案。
 4. **CR-04 Alembic 正式迁移引导**：生产启动要求 `USE_ALEMBIC_INIT=true`，并保留 migration gate 校验。
 
-待评估：
-
-1. **CR-05 consistency_check.sh 守卫**：仍可拆成独立小 PR；建议只做明确、低误报的 grep-based 规则，不做大而全的策略引擎。
+5. **CR-05 consistency_check.sh 守卫**：`scripts/review_push_guard.sh` 已接入 `scripts/consistency_check.sh`；本轮补充 `.gitattributes`，保证 shell 守卫脚本在 Windows worktree 下也以 LF 签出。
 
 ---
 
