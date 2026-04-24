@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     batch_max_workers: int = 2
     use_alembic_init: bool = False
-    enforce_migration_gate: bool = False
+    enforce_migration_gate: bool = True
     l0_fail_closed: bool = True
     l0_fail_open_bypass: bool = False
 

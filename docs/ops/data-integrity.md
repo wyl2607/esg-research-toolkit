@@ -49,12 +49,14 @@ API behavior:
 
 Environment flag:
 
-- `ENFORCE_MIGRATION_GATE` (default: `false`)
+- `ENFORCE_MIGRATION_GATE` (default: `true`)
+- `USE_ALEMBIC_INIT` (default: `false`)
 
 When enabled together with `APP_ENV=production`:
 
 - service startup requires `alembic_version` table to exist
 - `alembic_version.version_num` must be populated
+- startup requires `USE_ALEMBIC_INIT=true`; production no longer uses runtime `create_all` helpers
 
 This prevents startup against unmanaged production schemas.
 

@@ -247,3 +247,31 @@ def test_init_db_with_alembic_flag_falls_back_for_in_memory_sqlite(
     assert "company_reports" in tables
     assert "alembic_version" not in tables
     assert "falling back to legacy create_all path" in caplog.text
+
+
+def test_production_init_requires_alembic_init(monkeypatch: pytest.MonkeyPatch) -> None:
+    runtime_engine = create_engine("sqlite://", connect_args={"check_same_thread": False})
+    monkeypatch.setattr(database_runtime, "engine", runtime_engine)
+    monkeypatch.setattr(settings, "database_url", "sqlite://")
+    monkeypatch.setattr(settings, "use_alembic_init", False)
+    monkeypatch.setattr(settings, "enforce_migration_gate", True)
+    monkeypatch.setattr(settings, "app_env", "production")
+
+    with pytest.raises(RuntimeError, match="Production startup requires USE_ALEMBIC_INIT=true"):
+        database_runtime.init_db()
+
+    runtime_engine.dispose()
+
+
+def test_production_alembic_init_rejects_in_memory_sqlite(monkeypatch: pytest.MonkeyPatch) -> None:
+    runtime_engine = create_engine("sqlite://", connect_args={"check_same_thread": False})
+    monkeypatch.setattr(database_runtime, "engine", runtime_engine)
+    monkeypatch.setattr(settings, "database_url", "sqlite://")
+    monkeypatch.setattr(settings, "use_alembic_init", True)
+    monkeypatch.setattr(settings, "enforce_migration_gate", True)
+    monkeypatch.setattr(settings, "app_env", "production")
+
+    with pytest.raises(RuntimeError, match="cannot use in-memory sqlite in production"):
+        database_runtime.init_db()
+
+    runtime_engine.dispose()

@@ -15,9 +15,13 @@ Set these before exposing the service publicly:
 APP_ENV=production
 CORS_ALLOWED_ORIGINS=https://demo.example.com
 ADMIN_API_TOKEN=<long-random-token>
+USE_ALEMBIC_INIT=true
+ENFORCE_MIGRATION_GATE=true
 ```
 
 `CORS_ALLOWED_ORIGINS` must list deployed frontend origins explicitly. Destructive report management routes require `X-Admin-Token`; in production they return 503 when `ADMIN_API_TOKEN` is not configured.
+
+`USE_ALEMBIC_INIT=true` makes startup run `alembic upgrade head`; the migration gate then verifies `alembic_version` before the service finishes booting. Production startup intentionally refuses the legacy runtime `create_all` path.
 
 ### P0.1 Run uvicorn with multiple workers
 
