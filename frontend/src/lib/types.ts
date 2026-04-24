@@ -49,7 +49,9 @@ export interface paths {
     "/report/companies/export/csv": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "x-admin-token"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -66,7 +68,9 @@ export interface paths {
     "/report/companies/export/xlsx": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "x-admin-token"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
