@@ -354,6 +354,15 @@ def _apply_error_responses(schema: dict[str, Any]) -> None:
         if operation is not None:
             operation.setdefault("responses", {}).setdefault(status_code, response)
 
+    for path_item in schema.get("paths", {}).values():
+        for operation in path_item.values():
+            content = operation.get("requestBody", {}).get("content", {})
+            if "application/json" in content:
+                operation.setdefault("responses", {}).setdefault(
+                    "400",
+                    {"description": "Request body could not be parsed as JSON."},
+                )
+
 
 def _apply_examples(schema: dict[str, Any]) -> None:
     for path, path_item in schema.get("paths", {}).items():

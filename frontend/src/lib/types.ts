@@ -2271,6 +2271,13 @@ export interface operations {
                     "application/json": components["schemas"]["CompanyESGData"];
                 };
             };
+            /** @description Request body could not be parsed as JSON. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -2611,6 +2618,13 @@ export interface operations {
                     "application/json": components["schemas"]["DisclosureFetchResponse"];
                 };
             };
+            /** @description Request body could not be parsed as JSON. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -2823,6 +2837,13 @@ export interface operations {
                     "application/json": components["schemas"]["TaxonomyScoreResult"];
                 };
             };
+            /** @description Request body could not be parsed as JSON. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -2895,6 +2916,13 @@ export interface operations {
                     "application/json": Record<string, never>;
                 };
             };
+            /** @description Request body could not be parsed as JSON. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -2927,6 +2955,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["TaxonomyTextReportResponse"];
                 };
+            };
+            /** @description Request body could not be parsed as JSON. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -3022,6 +3057,13 @@ export interface operations {
                     "application/json": components["schemas"]["LCOEResult"];
                 };
             };
+            /** @description Request body could not be parsed as JSON. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -3057,6 +3099,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["SensitivityResult"][];
                 };
+            };
+            /** @description Request body could not be parsed as JSON. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -3112,6 +3161,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["SAFCostResult"];
                 };
+            };
+            /** @description Request body could not be parsed as JSON. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -3293,6 +3349,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["MultiFrameworkReport"];
                 };
+            };
+            /** @description Request body could not be parsed as JSON. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
