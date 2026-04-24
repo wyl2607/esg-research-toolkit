@@ -173,6 +173,22 @@ def _parse_scaled_value(number_str: str, context: str) -> float | None:
     return val
 
 
+def _scale_metric_value(value: float | None, context: str) -> float | None:
+    if value is None:
+        return None
+
+    lowered = context.lower()
+    if "万" in context:
+        return value * 1e4
+    if "10 thousand" in lowered:
+        return value * 1e4
+    if "million" in lowered:
+        return value * 1e6
+    if "billion" in lowered:
+        return value * 1e9
+    return value
+
+
 def _extract_metric(text: str, patterns: list[str]) -> float | None:
     for pat in patterns:
         match = re.search(pat, text, re.IGNORECASE)
@@ -192,6 +208,17 @@ def _extract_percentage(text: str, patterns: list[str]) -> float | None:
         return value
     if 0 <= value <= 1:
         return value * 100
+    return None
+
+
+def _extract_value_with_context(text: str, patterns: list[str]) -> tuple[float, str] | None:
+    for pat in patterns:
+        match = re.search(pat, text, re.IGNORECASE)
+        if not match:
+            continue
+        value = _parse_number(match.group(1))
+        if value is not None:
+            return value, match.group(0)
     return None
 
 
@@ -299,16 +326,20 @@ def _regex_fallback(text: str, filename: str = "") -> CompanyESGData:
     result["scope2_co2e_tonnes"] = _scope_extract(r"Scope\s*2|范围二|范围\s*2", text)
     result["scope3_co2e_tonnes"] = _scope_extract(r"Scope\s*3|范围三|范围\s*3", text)
 
-    result["energy_consumption_mwh"] = _extract_metric(
+    energy_match = _extract_value_with_context(
         text,
         [
             r"(?:energy consumption|energy used|能源消费总量|综合能耗|energieverbrauch|gesamtenergieverbrauch)[^\d]{0,40}([\d,.]+)\s*(?:mwh|兆瓦时|万千瓦时|kwh)",
         ],
     )
-    if result["energy_consumption_mwh"] and re.search(r"万千瓦时", text, re.IGNORECASE):
-        result["energy_consumption_mwh"] = result["energy_consumption_mwh"] * 10000 / 1000
-    if result["energy_consumption_mwh"] and re.search(r"\bkwh\b", text, re.IGNORECASE):
-        result["energy_consumption_mwh"] = result["energy_consumption_mwh"] / 1000
+    if energy_match is not None:
+        energy_value, energy_context = energy_match
+        if re.search(r"万千瓦时", energy_context, re.IGNORECASE):
+            result["energy_consumption_mwh"] = energy_value * 10000 / 1000
+        elif re.search(r"\bkwh\b", energy_context, re.IGNORECASE):
+            result["energy_consumption_mwh"] = energy_value / 1000
+        else:
+            result["energy_consumption_mwh"] = energy_value
 
     result["renewable_energy_pct"] = _extract_percentage(
         text,
@@ -317,14 +348,17 @@ def _regex_fallback(text: str, filename: str = "") -> CompanyESGData:
         ],
     )
 
-    result["water_usage_m3"] = _extract_metric(
+    water_match = _extract_value_with_context(
         text,
         [
-            r"(?:water (?:consumption|usage)|用水(?:总量|量)?|wasserverbrauch|wasserentnahme)[^\d]{0,40}([\d,.]+)\s*(?:m3|m³|立方米|万立方米|万m3)",
+            r"(?:water (?:consumption|usage)|用水(?:总量|量)?|wasserverbrauch|wasserentnahme)[^\d]{0,40}([\d,.]+)\s*(?:10 thousand m3|m3|m³|立方米|万立方米|万m3)",
         ],
     )
-    if result["water_usage_m3"] and re.search(r"(万立方米|万m3)", text, re.IGNORECASE):
-        result["water_usage_m3"] *= 10000
+    if water_match is not None:
+        water_value, water_context = water_match
+        if re.search(r"(10 thousand m3|万立方米|万m3)", water_context, re.IGNORECASE):
+            water_value *= 10000
+        result["water_usage_m3"] = water_value
 
     result["waste_recycled_pct"] = _extract_percentage(
         text,
@@ -345,6 +379,30 @@ def _regex_fallback(text: str, filename: str = "") -> CompanyESGData:
             r"(?:taxonomy[-\s]?aligned capex|taxonomy alignment(?: of)? capex|分类法对齐(?:资本开支|capex)占比|taxonomiekonformer(?:s)?\s+capex|capex(?:anteil)?\s+taxonomiekonform)[^\d]{0,40}([\d,.]+)\s*%",
         ],
     )
+
+    revenue_match = _extract_value_with_context(
+        text,
+        [
+            r"(?:total revenue|revenue|营业收入|营收|umsatz)[^\d]{0,40}([\d,.]+)\s*(?:rmb\s*10 thousand|eur\s*10 thousand|€\s*10 thousand|10 thousand eur|10 thousand rmb|亿元|万元|million eur|million rmb|billion eur|billion rmb|eur|rmb|€)?",
+        ],
+    )
+    if revenue_match is not None:
+        revenue_value, revenue_context = revenue_match
+        result["total_revenue_eur"] = _scale_metric_value(revenue_value, revenue_context)
+        if re.search(r"rmb|亿元|万元", revenue_context, re.IGNORECASE):
+            result["total_revenue_eur"] = result["total_revenue_eur"] / 7.8
+
+    capex_match = _extract_value_with_context(
+        text,
+        [
+            r"(?:total capex|capex|capital expenditure|资本开支|资本支出)[^\d]{0,40}([\d,.]+)\s*(?:rmb\s*10 thousand|eur\s*10 thousand|€\s*10 thousand|10 thousand eur|10 thousand rmb|亿元|万元|million eur|million rmb|billion eur|billion rmb|eur|rmb|€)?",
+        ],
+    )
+    if capex_match is not None:
+        capex_value, capex_context = capex_match
+        result["total_capex_eur"] = _scale_metric_value(capex_value, capex_context)
+        if re.search(r"rmb|亿元|万元", capex_context, re.IGNORECASE):
+            result["total_capex_eur"] = result["total_capex_eur"] / 7.8
 
     employees = _extract_metric(
         text,

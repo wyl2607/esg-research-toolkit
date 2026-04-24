@@ -216,6 +216,47 @@ def test_analyze_esg_data_regex_only_mode_extracts_extended_metrics() -> None:
     assert "solar_pv" in result.primary_activities
 
 
+def test_analyze_esg_data_regex_only_mode_converts_units_from_match_context() -> None:
+    text = (
+        "Example AG 2024 Sustainability Report\n"
+        "Scope 1 emissions: 1.5 kt CO2e\n"
+        "Scope 2 emissions: 2.3 million tonnes CO2e\n"
+        "Energy consumption: 750,000 kWh\n"
+        "Water usage: 12.5 10 thousand m3\n"
+        "Total revenue: 7.8 RMB 10 thousand\n"
+        "Total CapEx: 2.5 million EUR\n"
+    )
+
+    with patch.dict(os.environ, {"PARSER_REGEX_ONLY": "1"}), patch("report_parser.analyzer.complete") as mock_complete:
+        result = analyze_esg_data(text, filename="Example_2024.pdf")
+
+    mock_complete.assert_not_called()
+    assert result.scope1_co2e_tonnes == pytest.approx(1500.0)
+    assert result.scope2_co2e_tonnes == pytest.approx(2300000.0)
+    assert result.energy_consumption_mwh == pytest.approx(750.0)
+    assert result.water_usage_m3 == pytest.approx(125000.0)
+    assert result.total_revenue_eur == pytest.approx(10000.0)
+    assert result.total_capex_eur == pytest.approx(2500000.0)
+
+
+def test_analyze_esg_data_regex_only_mode_keeps_metric_units_independent() -> None:
+    text = (
+        "Mixed Units GmbH 2024 ESG Report\n"
+        "Energy consumption: 1,000 MWh\n"
+        "Additional note: procurement data also lists 99,000 kWh for office meters.\n"
+        "Water consumption: 3,000 m3\n"
+        "Additional note: another subsidiary reports 5 万立方米 in a separate annex.\n"
+        "Scope 1: 10 tCO2e\n"
+    )
+
+    with patch.dict(os.environ, {"PARSER_REGEX_ONLY": "1"}), patch("report_parser.analyzer.complete") as mock_complete:
+        result = analyze_esg_data(text, filename="Mixed_2024.pdf")
+
+    mock_complete.assert_not_called()
+    assert result.energy_consumption_mwh == pytest.approx(1000.0)
+    assert result.water_usage_m3 == pytest.approx(3000.0)
+
+
 def test_save_and_get_report(
     db_session: Session,
     make_company_data,
