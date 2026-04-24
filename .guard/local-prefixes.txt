@@ -12,6 +12,8 @@ tmp/
 logs/
 data/
 reports/
+runtime/
+review-logs/
 dev-local/
 scripts/omx_
 docs/codex-tasks/SELF_

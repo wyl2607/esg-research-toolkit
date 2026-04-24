@@ -69,6 +69,9 @@ done
 
 # --- Rule (d): orphan routers in report_parser ------------------------------
 for routerfile in $(grep -lE 'APIRouter\s*\(' report_parser/*.py 2>/dev/null || true); do
+  if git check-ignore -q -- "$routerfile"; then
+    continue
+  fi
   mod_basename="$(basename "$routerfile" .py)"
   # skip the canonical api.py (it's the main mounted one)
   [[ "$mod_basename" == "api" ]] && continue
