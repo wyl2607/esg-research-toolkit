@@ -6,7 +6,7 @@
 > Multi-Framework-Vergleiche (EU-Taxonomie 2020 · China CSRC 2023 · EU CSRD/ESRS)
 > sowie techno-ökonomische Analysen erneuerbarer Energien (LCOE/NPV/IRR).
 
-![Python](https://img.shields.io/badge/Python-3.12%2B-blue) ![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688) ![React](https://img.shields.io/badge/React-18%2B-61DAFB) ![License](https://img.shields.io/badge/License-MIT-green) ![Live Demo](https://img.shields.io/badge/Live-Demo-orange)
+![Python](https://img.shields.io/badge/Python-3.12%2B-blue) ![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688) ![React](https://img.shields.io/badge/React-19%2B-61DAFB) ![License](https://img.shields.io/badge/License-MIT-green)
 
 ## ✨ Funktionen
 

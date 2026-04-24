@@ -1,8 +1,23 @@
-# React + TypeScript + Vite
+# ESG Research Toolkit Frontend
 
-This frontend wraps the FastAPI backend with a React 19 + Vite application and now includes a repeatable browser validation stack for smoke, accessibility, and health checks.
+React 19 + Vite application for the FastAPI ESG Research Toolkit backend. The frontend covers report upload, company history, framework comparison, taxonomy scoring, benchmarking, and techno-economic analysis workflows.
 
-## Frontend Validation
+## Requirements
+
+- Node.js 20+
+- npm 10+
+- Backend available at `http://127.0.0.1:8000` for live API calls and type generation
+
+## Local Development
+
+```bash
+npm ci
+npm run dev
+```
+
+The Vite dev server runs on `http://127.0.0.1:5173` by default.
+
+## Validation
 
 Run the core checks from `frontend/`:
 
@@ -22,86 +37,25 @@ frontend/test-results/
 frontend/health-reports/latest/
 ```
 
-Notes:
+## API Types
 
-- Playwright defaults to the installed Google Chrome channel via `ESG_PW_CHANNEL=chrome`.
-- If you want a different browser channel, set `ESG_PW_CHANNEL` before running the tests.
-- If you already have backend and frontend servers running, set `ESG_PW_SKIP_WEBSERVER=1` for Playwright and `ESG_SKIP_SERVER_BOOT=1` for `npm run health:check`.
-- A reusable Codex prompt is stored in `frontend/CODEX_FRONTEND_REVIEW_PROMPT.md`.
+Generated API types live at `src/lib/types.ts` and are produced from the backend OpenAPI schema:
 
-## Frontend Localization Policy (German-first)
+```bash
+npm run gen:types
+```
+
+Start the backend first, or set `OPENAPI_URL` to a running schema endpoint. CI fails pull requests when generated types drift.
+
+## Localization Policy
 
 - Default UI language: `de` (Deutsch)
-- Translation priority for new UI text: `de` → `en` → `zh`
-- Do not hardcode visible UI strings in components; always use `t('...')` keys from `src/i18n/locales/*.json`
-- For dashboard/homepage and any new pages, add German keys first, then provide English and Chinese equivalents in the same change
+- Translation priority for new UI text: `de` -> `en` -> `zh`
+- Do not hardcode visible UI strings in components; use `t('...')` keys from `src/i18n/locales/*.json`
+- Add German keys first for new pages or dashboard copy, then provide English and Chinese equivalents in the same change
 
-Currently, two official plugins are available:
+## Browser Tests
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- Playwright defaults to the installed Google Chrome channel via `ESG_PW_CHANNEL=chrome`.
+- Set `ESG_PW_CHANNEL` to use another browser channel.
+- If backend and frontend servers are already running, set `ESG_PW_SKIP_WEBSERVER=1` for Playwright and `ESG_SKIP_SERVER_BOOT=1` for `npm run health:check`.
