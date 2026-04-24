@@ -1,9 +1,12 @@
 name: Deploy to VPS
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
+    inputs:
+      public_health_url:
+        description: "Optional public /health/deploy URL to verify after deploy"
+        required: false
+        default: ""
 
 jobs:
   deploy:
@@ -13,6 +16,9 @@ jobs:
     steps:
       - name: Checkout deployed revision
         uses: actions/checkout@v4
+
+      - name: Check version consistency
+        run: python scripts/check_version_consistency.py
 
       - name: Validate deploy secrets
         id: deploy_secrets
@@ -50,6 +56,26 @@ jobs:
               sleep 3
             done
             echo "✗ Health check failed" && exit 1
+
+      - name: Verify public deploy fingerprint
+        if: steps.deploy_secrets.outputs.ready == 'true' && inputs.public_health_url != ''
+        env:
+          PUBLIC_HEALTH_URL: ${{ inputs.public_health_url }}
+          EXPECTED_GITHUB_SHA: ${{ github.sha }}
+        run: |
+          payload="$(curl -fsS "$PUBLIC_HEALTH_URL")"
+          echo "$payload"
+          python - <<'PY' "$payload"
+          import json
+          import os
+          import sys
+
+          payload = json.loads(sys.argv[1])
+          expected = os.environ["EXPECTED_GITHUB_SHA"]
+          actual = payload.get("git_sha")
+          if actual != expected:
+              raise SystemExit(f"public deploy git_sha mismatch: expected {expected}, got {actual}")
+          PY
 
       - name: Deploy skipped (missing secrets)
         if: steps.deploy_secrets.outputs.ready != 'true'
