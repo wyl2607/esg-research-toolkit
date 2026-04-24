@@ -227,7 +227,7 @@ export function UploadPage() {
     if (!row) return
 
     const extracted = row.extracted_payload as Record<string, unknown>
-    const current = existingReportQuery.data as Record<string, unknown> | null
+    const current = existingReportQuery.data as unknown as Record<string, unknown> | null
     let defaults = DISCLOSURE_REVIEW_METRICS.filter((metric) => {
       const nextValue = extracted[metric.key]
       if (nextValue == null) return false

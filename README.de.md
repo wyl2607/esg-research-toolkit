@@ -6,7 +6,7 @@
 > Multi-Framework-Vergleiche (EU-Taxonomie 2020 · China CSRC 2023 · EU CSRD/ESRS)
 > sowie techno-ökonomische Analysen erneuerbarer Energien (LCOE/NPV/IRR).
 
-![Python](https://img.shields.io/badge/Python-3.12%2B-blue) ![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688) ![React](https://img.shields.io/badge/React-18%2B-61DAFB) ![License](https://img.shields.io/badge/License-MIT-green) ![Live Demo](https://img.shields.io/badge/Live-Demo-orange)
+![Python](https://img.shields.io/badge/Python-3.12%2B-blue) ![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688) ![React](https://img.shields.io/badge/React-19%2B-61DAFB) ![License](https://img.shields.io/badge/License-MIT-green)
 
 ## ✨ Funktionen
 
@@ -35,7 +35,7 @@
 1. Repository klonen und in das Projekt wechseln:
 
 ```bash
-git clone https://github.com/your-org/esg-research-toolkit.git
+git clone https://github.com/wyl2607/esg-research-toolkit.git
 cd esg-research-toolkit
 ```
 
@@ -55,6 +55,21 @@ uvicorn main:app --reload --port 8000
 cd frontend
 npm install
 npm run dev
+```
+
+### Frontend-Health-Check an Werktagen
+
+Vollständigen Frontend-Health-Pass ausführen (lint, build, Playwright smoke, axe, Lighthouse):
+
+```bash
+cd frontend
+npm run health:check
+```
+
+Wenn Fehler, Bundle-Regressionen, offensichtliche Layoutprobleme oder neue Console-/Network-Fehler erkannt werden, wird eine Zusammenfassung erzeugt unter:
+
+```text
+frontend/health-reports/latest/summary.md
 ```
 
 ### Docker
@@ -170,11 +185,31 @@ Umgebungsvariablen werden aus `.env` geladen.
 | `APP_ENV` | `development` | Laufzeitmodus, beeinflusst Logging und Feature-Toggles. |
 | `APP_HOST` | `0.0.0.0` | Bind-Host des Backends. |
 | `APP_PORT` | `8000` | Bind-Port des Backends. |
+| `CORS_ALLOWED_ORIGINS` | `http://localhost:5173,http://localhost:4173` | Kommagetrennte erlaubte Browser-Origins. In Produktion explizit auf Deployment-Domains setzen. |
+| `ADMIN_API_TOKEN` | leer | Optionales Token für destruktive Admin-Routen über `X-Admin-Token`; bei `APP_ENV=production` erforderlich. |
 | `DATABASE_URL` | `sqlite:///./data/esg_toolkit.db` | SQLAlchemy-Verbindungszeichenfolge zur Datenbank. |
 | `ARXIV_MAX_RESULTS` | `20` | Maximale Trefferzahl für Literaturabfragen. |
 | `ARXIV_DOWNLOAD_PDF` | `true` | Steuert PDF-Download im Literatur-Workflow. |
 | `LOG_LEVEL` | `INFO` | Detailgrad der Protokollausgabe. |
 | `BATCH_MAX_WORKERS` | `2` | Anzahl paralleler Worker im Batch-Processing. |
+
+## 🗄️ Datenbankinitialisierung (Alembic zuerst)
+
+Datenbankschema-Änderungen mit Alembic anwenden:
+
+```bash
+./scripts/db_init.sh
+# or
+alembic upgrade head
+```
+
+Für bestehende Produktionsdatenbanken mit vorhandenen Schemas oder Daten zuerst diesen Runbook befolgen:
+
+- `docs/runbooks/alembic_cutover.md` (enthält `alembic stamp 0001_baseline` + `alembic upgrade head`)
+
+Kompatibilitätshinweis:
+
+- `scripts/migrate_db.py` bleibt nur als Kompatibilitäts-Shim für alte Abläufe erhalten und gibt Alembic-Hinweise aus; es schreibt kein Schema mehr.
 
 ## 🤝 Beitrag leisten
 
@@ -186,17 +221,3 @@ Umgebungsvariablen werden aus `.env` geladen.
 ## 📄 Lizenz
 
 MIT
-
-
-## 相关文件
-
-[[001_README]]
-[[001_README__dup2]]
-[[002_README]]
-[[002_README__dup2]]
-[[FRANCE_VPS_README]]
-[[README]]
-[[README-2]]
-[[README-3]]
-[[README-4]]
-[[README-5]]

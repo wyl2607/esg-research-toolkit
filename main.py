@@ -16,6 +16,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
 from benchmark.api import router as benchmark_router
+from core.config import settings
 from core.database import SessionLocal, init_db
 from core.limiter import limiter
 from core.models import health_payload as model_health_payload
@@ -192,6 +193,11 @@ REQUEST_BODY_EXAMPLES = {
 }
 
 
+def _cors_allowed_origins() -> list[str]:
+    configured_origins = os.getenv("CORS_ALLOWED_ORIGINS", settings.cors_allowed_origins)
+    return [origin.strip() for origin in configured_origins.split(",") if origin.strip()]
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     init_db()
@@ -214,7 +220,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:4173"],
+    allow_origins=_cors_allowed_origins(),
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -347,6 +353,15 @@ def _apply_error_responses(schema: dict[str, Any]) -> None:
         operation = schema.get("paths", {}).get(path, {}).get(method)
         if operation is not None:
             operation.setdefault("responses", {}).setdefault(status_code, response)
+
+    for path_item in schema.get("paths", {}).values():
+        for operation in path_item.values():
+            content = operation.get("requestBody", {}).get("content", {})
+            if "application/json" in content:
+                operation.setdefault("responses", {}).setdefault(
+                    "400",
+                    {"description": "Request body could not be parsed as JSON."},
+                )
 
 
 def _apply_examples(schema: dict[str, Any]) -> None:

@@ -41,17 +41,3 @@ Default output folder:
 
 - Some websites block bots or require session headers. The URLs above are selected for stable CLI downloads.
 - If a source later returns a small HTML file instead of PDF, re-run with browser User-Agent and verify file size before ingestion.
-
-
-## 相关文件
-
-[[04-testing-adapters]]
-[[1962_Arrow_Economic welfare and___of resources for invention]]
-[[1962_Arrow_Economic welfare and___of resources for invention_1]]
-[[1962_Arrow_Economic welfare and___of resources for invention_2]]
-[[1962_Arrow_Economic welfare and___of resources for invention_3]]
-[[Exercise Unit 10 Optimal resource extraction Renewable Resources]]
-[[Exercise unit 9 Optimal resourc___action Non-Renewable Resources]]
-[[Exercise unit 9 Optimal resourc___action Non-Renewable Resources__dup2]]
-[[Knowledge Test]]
-[[Knowledge Test_1]]

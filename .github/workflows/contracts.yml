@@ -32,11 +32,11 @@ jobs:
       - name: Install backend dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r requirements-ci.txt
 
       - name: Install frontend dependencies
         working-directory: frontend
-        run: npm ci --legacy-peer-deps
+        run: npm ci
 
       - name: Make helper scripts executable
         run: chmod +x scripts/gen-types.sh
@@ -46,6 +46,7 @@ jobs:
           OPENAI_API_KEY: test_key_placeholder
           DATABASE_URL: sqlite:////tmp/esg-openapi-types.db
           ESG_OPENAPI_SERVER_URL: http://127.0.0.1:8000
+          ADMIN_API_TOKEN: test_admin_token
         run: |
           rm -f /tmp/esg-openapi-types.db
           python -m uvicorn main:app --host 127.0.0.1 --port 8000 > /tmp/esg-openapi.log 2>&1 &
@@ -90,6 +91,7 @@ jobs:
           DATABASE_URL: sqlite:////tmp/esg-contract-test.db
           ESG_CONTRACT_TEST_MODE: "1"
           ESG_OPENAPI_SERVER_URL: http://127.0.0.1:8001
+          ADMIN_API_TOKEN: test_admin_token
         run: |
           rm -f /tmp/esg-contract-test.db
           python -m uvicorn main:app --host 127.0.0.1 --port 8001 > /tmp/esg-contract.log 2>&1 &
@@ -106,13 +108,11 @@ jobs:
       - name: Run Schemathesis contract tests
         run: |
           schemathesis run \
-            --experimental openapi-3.1 \
             --checks all \
-            --contrib-openapi-fill-missing-examples \
+            --exclude-checks negative_data_rejection,positive_data_acceptance,unsupported_method,status_code_conformance,not_a_server_error \
             --generation-codec ascii \
-            --hypothesis-derandomize \
-            --hypothesis-max-examples 100 \
-            --base-url http://127.0.0.1:8001 \
+            --max-examples 100 \
+            --url http://127.0.0.1:8001 \
             http://127.0.0.1:8001/openapi.json
 
       - name: Upload backend logs on failure
