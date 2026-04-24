@@ -46,6 +46,7 @@ jobs:
           OPENAI_API_KEY: test_key_placeholder
           DATABASE_URL: sqlite:////tmp/esg-openapi-types.db
           ESG_OPENAPI_SERVER_URL: http://127.0.0.1:8000
+          ADMIN_API_TOKEN: test_admin_token
         run: |
           rm -f /tmp/esg-openapi-types.db
           python -m uvicorn main:app --host 127.0.0.1 --port 8000 > /tmp/esg-openapi.log 2>&1 &
@@ -90,6 +91,7 @@ jobs:
           DATABASE_URL: sqlite:////tmp/esg-contract-test.db
           ESG_CONTRACT_TEST_MODE: "1"
           ESG_OPENAPI_SERVER_URL: http://127.0.0.1:8001
+          ADMIN_API_TOKEN: test_admin_token
         run: |
           rm -f /tmp/esg-contract-test.db
           python -m uvicorn main:app --host 127.0.0.1 --port 8001 > /tmp/esg-contract.log 2>&1 &

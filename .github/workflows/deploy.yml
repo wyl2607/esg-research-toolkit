@@ -8,15 +8,18 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    needs: []
+    if: github.event_name == 'workflow_dispatch'
 
     steps:
+      - name: Checkout deployed revision
+        uses: actions/checkout@v4
+
       - name: Validate deploy secrets
         id: deploy_secrets
         run: |
-          if [ -z "${{ secrets.VPS_HOST }}" ] || [ -z "${{ secrets.VPS_DEPLOY_KEY }}" ]; then
+          if [ -z "${{ secrets.VPS_HOST }}" ] || [ -z "${{ secrets.VPS_DEPLOY_KEY }}" ] || [ -z "${{ secrets.VPS_DEPLOY_USER }}" ]; then
             echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::Skipping VPS deploy: set VPS_HOST and VPS_DEPLOY_KEY repository secrets."
+            echo "::warning::Skipping VPS deploy: set VPS_HOST, VPS_DEPLOY_USER, and VPS_DEPLOY_KEY repository secrets."
           else
             echo "ready=true" >> "$GITHUB_OUTPUT"
           fi
@@ -26,14 +29,16 @@ jobs:
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
-          username: root
+          username: ${{ secrets.VPS_DEPLOY_USER }}
           key: ${{ secrets.VPS_DEPLOY_KEY }}
+          envs: GITHUB_SHA
           script: |
             set -e
             cd /opt/esg-research-toolkit
 
-            echo "→ Pull latest code"
-            git pull origin main
+            echo "→ Fetch requested revision"
+            git fetch --depth=1 origin "$GITHUB_SHA"
+            git checkout --detach "$GITHUB_SHA"
 
             echo "→ Run unified deploy script"
             bash scripts/deploy.sh

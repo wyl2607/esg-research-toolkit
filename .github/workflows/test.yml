@@ -29,6 +29,7 @@ jobs:
         env:
           OPENAI_API_KEY: test_key_placeholder
           DATABASE_URL: "sqlite://"
+          ADMIN_API_TOKEN: test_admin_token
         run: |
           pytest tests/ -v --tb=short
 
@@ -74,6 +75,7 @@ jobs:
         env:
           OPENAI_API_KEY: test_key_placeholder
           DATABASE_URL: sqlite:////tmp/esg-fullstack-smoke.db
+          ADMIN_API_TOKEN: test_admin_token
         run: |
           chmod +x scripts/automation/run_fullstack.sh
           scripts/automation/run_fullstack.sh --detach

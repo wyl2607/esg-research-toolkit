@@ -1928,7 +1928,9 @@ export interface operations {
     request_source_deletion_report_companies__company_name___report_year__request_deletion_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "x-admin-token"?: string | null;
+            };
             path: {
                 company_name: string;
                 report_year: number;
@@ -2009,7 +2011,9 @@ export interface operations {
                 /** @description 彻底删除所有数据（管理员操作） */
                 hard?: boolean;
             };
-            header?: never;
+            header?: {
+                "x-admin-token"?: string | null;
+            };
             path: {
                 company_name: string;
                 report_year: number;
