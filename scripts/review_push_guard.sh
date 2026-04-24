@@ -44,7 +44,8 @@ fi
 
 LOCAL_ONLY_LIST=".guard/local-only-files.txt"
 if [ -f "$LOCAL_ONLY_LIST" ]; then
-  while IFS= read -r local_only; do
+  while IFS= read -r local_only || [ -n "$local_only" ]; do
+    local_only="${local_only%$'\r'}"
     [ -z "$local_only" ] && continue
     case "$local_only" in
       \#*) continue ;;

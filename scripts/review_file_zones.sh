@@ -78,7 +78,8 @@ get_changes() {
 is_exact_in_file() {
   local needle="$1"
   local list_file="$2"
-  while IFS= read -r item; do
+  while IFS= read -r item || [ -n "$item" ]; do
+    item="${item%$'\r'}"
     [ -z "$item" ] && continue
     case "$item" in
       \#*) continue ;;
@@ -93,7 +94,8 @@ is_exact_in_file() {
 match_prefix() {
   local path="$1"
   local list_file="$2"
-  while IFS= read -r prefix; do
+  while IFS= read -r prefix || [ -n "$prefix" ]; do
+    prefix="${prefix%$'\r'}"
     [ -z "$prefix" ] && continue
     case "$prefix" in
       \#*) continue ;;
