@@ -21,20 +21,20 @@ import { Panel } from '@/components/layout/Panel'
 import { MetricCard } from '@/components/MetricCard'
 import { NoticeBanner } from '@/components/NoticeBanner'
 
-const PATHWAY_LABELS: Record<string, string> = {
-  HEFA: 'HEFA (Used Cooking Oil)',
-  'FT-biomass': 'FT-Biomass (Gasification)',
-  ATJ: 'ATJ (Alcohol-to-Jet)',
-  PtL: 'Power-to-Liquid (e-fuel)',
-  'co-processing': 'Co-processing (Refinery)',
+const PATHWAY_KEYS: Record<string, string> = {
+  HEFA: 'saf.pathways.HEFA',
+  'FT-biomass': 'saf.pathways.FTBiomass',
+  ATJ: 'saf.pathways.ATJ',
+  PtL: 'saf.pathways.PtL',
+  'co-processing': 'saf.pathways.coProcessing',
 }
 
-const REGION_LABELS: Record<string, string> = {
-  DE: '🇩🇪 Germany',
-  EU: '🇪🇺 European Union',
-  US: '🇺🇸 United States',
-  BR: '🇧🇷 Brazil',
-  INTL: '🌐 International',
+const REGION_KEYS: Record<string, string> = {
+  DE: 'saf.regions.DE',
+  EU: 'saf.regions.EU',
+  US: 'saf.regions.US',
+  BR: 'saf.regions.BR',
+  INTL: 'saf.regions.INTL',
 }
 
 const DEFAULT_INPUT: SAFInput = {
@@ -161,21 +161,21 @@ export function SafPage() {
   return (
     <PageContainer>
       <div className="space-y-2">
-        <p className="section-kicker">{t('saf.kicker', 'Sustainable Aviation Fuel')}</p>
+        <p className="section-kicker">{t('saf.kicker')}</p>
         <PageHeader
-          title={t('saf.title', 'SAF Cost Calculator')}
-          subtitle={t('saf.subtitle', 'Compute the levelized cost of SAF production vs conventional jet fuel — and assess breakeven economics for export to Germany.')}
+          title={t('saf.title')}
+          subtitle={t('saf.subtitle')}
         />
       </div>
 
       <NoticeBanner tone="warning">
-        {t('saf.notice', '2025 market data: Jet A-1 ≈ €0.55–0.65/L. No SAF pathway is yet cost-competitive without blending mandates or subsidies (EU ReFuelEU: 2% by 2025, 6% by 2030).')}
+        {t('saf.notice')}
       </NoticeBanner>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[380px_1fr]">
         {/* Input panel */}
         <div className="space-y-4">
-          <Panel title={t('saf.benchmarkPresets', 'Benchmark Presets')}>
+          <Panel title={t('saf.benchmarkPresets')}>
             <div className="grid grid-cols-2 gap-2">
               {benchmarksLoading && (
                 <p className="col-span-2 text-sm text-stone-500">{t('common.loading')}</p>
@@ -193,54 +193,54 @@ export function SafPage() {
             </div>
           </Panel>
 
-          <Panel title={t('saf.inputParams', 'Input Parameters')}>
+          <Panel title={t('saf.inputParams')}>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-1">
                 <label className="block text-xs font-medium text-stone-600 dark:text-slate-400">
-                  {t('saf.pathway', 'SAF Pathway')}
+                  {t('saf.pathway')}
                 </label>
                 <select
                   value={form.pathway}
                   onChange={(e) => setForm((f) => ({ ...f, pathway: e.target.value as SAFInput['pathway'] }))}
                   className="w-full rounded-md border border-stone-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                 >
-                  {Object.entries(PATHWAY_LABELS).map(([k, v]) => (
-                    <option key={k} value={k}>{v}</option>
+                  {Object.entries(PATHWAY_KEYS).map(([k, translationKey]) => (
+                    <option key={k} value={k}>{t(translationKey)}</option>
                   ))}
                 </select>
               </div>
 
               <div className="space-y-1">
                 <label className="block text-xs font-medium text-stone-600 dark:text-slate-400">
-                  {t('saf.region', 'Production Region')}
+                  {t('saf.region')}
                 </label>
                 <select
                   value={form.region}
                   onChange={(e) => setForm((f) => ({ ...f, region: e.target.value as SAFInput['region'] }))}
                   className="w-full rounded-md border border-stone-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                 >
-                  {Object.entries(REGION_LABELS).map(([k, v]) => (
-                    <option key={k} value={k}>{v}</option>
+                  {Object.entries(REGION_KEYS).map(([k, translationKey]) => (
+                    <option key={k} value={k}>{t(translationKey)}</option>
                   ))}
                 </select>
               </div>
 
-              {numField(t('saf.capacity', 'Production Capacity'), 'production_capacity_tonnes_year', { unit: 't/yr', step: 1000 })}
-              {numField(t('saf.capex', 'CAPEX'), 'capex_eur_per_tonne_year', { unit: '€/t/yr', step: 100 })}
-              {numField(t('saf.lifetime', 'Plant Lifetime'), 'lifetime_years', { unit: 'years', step: 1, min: 5, max: 40 })}
-              {numField(t('saf.discountRate', 'Discount Rate'), 'discount_rate', { unit: 'e.g. 0.08', step: 0.01, min: 0.01, max: 0.30 })}
-              {numField(t('saf.feedstockCost', 'Feedstock Cost'), 'feedstock_cost_eur_per_tonne', { unit: '€/t feedstock', step: 10 })}
-              {numField(t('saf.feedstockRatio', 'Feedstock-to-SAF Ratio'), 'feedstock_to_saf_ratio', { unit: 't/t', step: 0.05, min: 1 })}
-              {numField(t('saf.opex', 'OPEX'), 'opex_eur_per_tonne', { unit: '€/t SAF', step: 10 })}
-              {numField(t('saf.policyCredit', 'Policy Credit (≤ 0)'), 'policy_credit_eur_per_tonne', { unit: '€/t (negative)', step: 10, max: 0 })}
-              {numField(t('saf.jetFuelRef', 'Jet Fuel Reference Price'), 'jet_fuel_price_eur_per_litre', { unit: '€/L', step: 0.01 })}
+              {numField(t('saf.capacity'), 'production_capacity_tonnes_year', { unit: 't/yr', step: 1000 })}
+              {numField(t('saf.capex'), 'capex_eur_per_tonne_year', { unit: '€/t/yr', step: 100 })}
+              {numField(t('saf.lifetime'), 'lifetime_years', { unit: t('saf.unitYears'), step: 1, min: 5, max: 40 })}
+              {numField(t('saf.discountRate'), 'discount_rate', { unit: t('saf.unitDiscountRateExample'), step: 0.01, min: 0.01, max: 0.30 })}
+              {numField(t('saf.feedstockCost'), 'feedstock_cost_eur_per_tonne', { unit: '€/t feedstock', step: 10 })}
+              {numField(t('saf.feedstockRatio'), 'feedstock_to_saf_ratio', { unit: 't/t', step: 0.05, min: 1 })}
+              {numField(t('saf.opex'), 'opex_eur_per_tonne', { unit: '€/t SAF', step: 10 })}
+              {numField(t('saf.policyCredit'), 'policy_credit_eur_per_tonne', { unit: t('saf.unitEurPerTonneNegative'), step: 10, max: 0 })}
+              {numField(t('saf.jetFuelRef'), 'jet_fuel_price_eur_per_litre', { unit: '€/L', step: 0.01 })}
 
               <button
                 type="submit"
                 disabled={safMutation.isPending}
                 className="w-full rounded-md bg-amber-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-amber-800 disabled:opacity-60 transition-colors"
               >
-                {safMutation.isPending ? t('common.loading') : t('saf.calculate', 'Calculate LCOS')}
+                {safMutation.isPending ? t('common.loading') : t('saf.calculate')}
               </button>
 
               {safMutation.isError && (
@@ -256,7 +256,7 @@ export function SafPage() {
             <div className="flex h-48 items-center justify-center rounded-xl border border-dashed border-stone-200 dark:border-slate-700 text-sm text-stone-400">
               <div className="text-center space-y-2">
                 <Fuel size={32} className="mx-auto text-stone-300" />
-                <p>{t('saf.emptyState', 'Configure parameters and click Calculate LCOS')}</p>
+                <p>{t('saf.emptyState')}</p>
               </div>
             </div>
           )}
@@ -265,75 +265,78 @@ export function SafPage() {
             <>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <MetricCard
-                  label={t('saf.lcosTonne', 'LCOS (€/tonne)')}
+                  label={t('saf.lcosTonne')}
                   value={`€${fmt(result.levelized_cost_eur_per_tonne, 0)}`}
                   color="blue"
                 />
                 <MetricCard
-                  label={t('saf.lcosLitre', 'LCOS (€/litre)')}
+                  label={t('saf.lcosLitre')}
                   value={`€${fmt(result.levelized_cost_eur_per_litre, 3)}/L`}
                   color="blue"
                 />
                 <MetricCard
-                  label={t('saf.premium', 'Premium vs Kerosene')}
+                  label={t('saf.premium')}
                   value={`+${fmt(result.premium_vs_conventional_pct, 1)}%`}
                   color={result.is_cost_competitive ? 'green' : 'default'}
                 />
                 <MetricCard
-                  label={t('saf.breakeven', 'Breakeven Jet Price')}
+                  label={t('saf.breakeven')}
                   value={`€${fmt(result.breakeven_jet_fuel_price_eur_per_litre, 3)}/L`}
                 />
               </div>
 
-              <Panel title={t('saf.competitiveness', 'Cost Competitiveness vs Jet A-1')}>
+              <Panel title={t('saf.competitiveness')}>
                 {result.is_cost_competitive ? (
                   <div className="mb-3 flex items-center gap-2 rounded-lg bg-green-50 dark:bg-green-900/20 px-4 py-2 text-sm text-green-700 dark:text-green-300">
                     <TrendingDown size={16} />
-                    {t('saf.competitive', '✅ SAF is cost-competitive at current jet fuel prices!')}
+                    {t('saf.competitive')}
                   </div>
                 ) : (
                   <div className="mb-3 flex items-center gap-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 px-4 py-2 text-sm text-amber-700 dark:text-amber-300">
                     <TrendingUp size={16} />
-                    {`⚠️ SAF costs ${fmt(result.premium_vs_conventional_pct, 1)}% more than conventional jet fuel. Breakeven requires jet prices ≥ €${fmt(result.breakeven_jet_fuel_price_eur_per_litre, 3)}/L or equivalent subsidies.`}
+                    {t('saf.notCompetitive', {
+                      premium: fmt(result.premium_vs_conventional_pct, 1),
+                      breakeven: fmt(result.breakeven_jet_fuel_price_eur_per_litre, 3),
+                    })}
                   </div>
                 )}
                 <CompetitivenessBar result={result} />
               </Panel>
 
-              <Panel title={t('saf.costBreakdown', 'Cost Breakdown (€/tonne)')}>
+              <Panel title={t('saf.costBreakdown')}>
                 <CostBreakdownChart result={result} />
               </Panel>
 
-              <Panel title={t('saf.projectFinance', 'Project Finance (Plant Operator)')}>
+              <Panel title={t('saf.projectFinance')}>
                 <div className="grid grid-cols-3 gap-4">
                   <MetricCard
-                    label="NPV"
+                    label={t('saf.npv')}
                     value={`${result.npv_eur >= 0 ? '+' : ''}€${fmt(result.npv_eur / 1_000_000, 1)}M`}
                     color={result.npv_eur >= 0 ? 'green' : 'red'}
                   />
                   <MetricCard
-                    label="IRR"
-                    value={result.irr > 0 ? `${fmt(result.irr * 100, 1)}%` : 'N/A'}
+                    label={t('saf.irr')}
+                    value={result.irr > 0 ? `${fmt(result.irr * 100, 1)}%` : t('saf.notAvailable')}
                     color="blue"
                   />
                   <MetricCard
-                    label={t('saf.payback', 'Payback (yrs)')}
-                    value={result.payback_years != null ? fmt(result.payback_years, 1) : '> lifetime'}
+                    label={t('saf.payback')}
+                    value={result.payback_years != null ? fmt(result.payback_years, 1) : t('saf.greaterThanLifetime')}
                   />
                 </div>
                 <p className="mt-3 text-xs text-stone-400 dark:text-slate-500">
-                  {t('saf.financeNote', 'NPV/IRR assumes SAF sold at conventional jet fuel reference price (conservative). Positive NPV requires subsidy or higher jet prices.')}
+                  {t('saf.financeNote')}
                 </p>
               </Panel>
 
-              <Panel title={t('saf.marketContext', 'Germany / EU Market Context (2025)')}>
+              <Panel title={t('saf.marketContext')}>
                 <ul className="space-y-2 text-sm text-stone-600 dark:text-slate-300">
-                  <li>🇩🇪 <strong>ReFuelEU Aviation mandate:</strong> 2% SAF blend 2025 → 6% by 2030 → 70% by 2050 (35% PtL)</li>
-                  <li>💶 <strong>Current Jet A-1 price:</strong> €0.55–0.65/L (excl. ETS cost)</li>
-                  <li>🌿 <strong>HEFA maturity:</strong> ~80% of current global SAF supply; UCO feedstock constrained</li>
-                  <li>🇧🇷 <strong>Brazil ATJ potential:</strong> Sugarcane ethanol cheapest feedstock globally; export to DE viable 2027+</li>
-                  <li>⚡ <strong>PtL trajectory:</strong> €2.50–5.00/L (2025) → €1.00–1.50/L (2035) with cheap renewable electricity</li>
-                  <li>🏭 <strong>German production:</strong> Limited by renewable electricity cost; PtL pilot plants online 2024–2026</li>
+                  <li>{t('saf.marketContextItems.refuelEu')}</li>
+                  <li>{t('saf.marketContextItems.jetFuelPrice')}</li>
+                  <li>{t('saf.marketContextItems.hefaMaturity')}</li>
+                  <li>{t('saf.marketContextItems.brazilAtj')}</li>
+                  <li>{t('saf.marketContextItems.ptlTrajectory')}</li>
+                  <li>{t('saf.marketContextItems.germanProduction')}</li>
                 </ul>
               </Panel>
             </>
