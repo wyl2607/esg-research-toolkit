@@ -120,6 +120,9 @@ scripts/omx_*
 
 # AI audit/planning artifacts (local only)
 docs/archive/
+docs/superpowers/
+docs/dev-tasks/
+docs/exec-plans/*autopolish*.md
 frontend/AUDIT_*.md
 frontend/*_AUDIT.md
 frontend/CONSISTENCY_*.md
@@ -139,6 +142,7 @@ nightly/
 scripts/automation/screenshots/
 scripts/automation/ui_reports/
 scripts/automation/state/
+scripts/automation/prompts/
 scripts/automation/*.png
 
 # Remote dispatch runtime artifacts (shell logs + JSON roundtrip traces).
