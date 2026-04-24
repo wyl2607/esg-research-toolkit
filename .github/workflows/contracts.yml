@@ -106,7 +106,6 @@ jobs:
       - name: Run Schemathesis contract tests
         run: |
           schemathesis run \
-            --experimental openapi-3.1 \
             --checks all \
             --contrib-openapi-fill-missing-examples \
             --generation-codec ascii \
