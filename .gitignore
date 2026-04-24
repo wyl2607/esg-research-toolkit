@@ -138,6 +138,7 @@ nightly/
 # Automation runtime artifacts (screenshots, critique reports, ad-hoc captures)
 scripts/automation/screenshots/
 scripts/automation/ui_reports/
+scripts/automation/state/
 scripts/automation/*.png
 
 # Remote dispatch runtime artifacts (shell logs + JSON roundtrip traces).
