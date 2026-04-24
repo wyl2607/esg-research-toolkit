@@ -30,7 +30,10 @@ import sys
 
 path = Path(sys.argv[1])
 content = path.read_text()
-path.write_text(content.replace("Record<string, never>", "Record<string, unknown>"))
+content = content.replace("Record<string, never>", "Record<string, unknown>")
+content = content.replace("{\n                [key: string]: unknown;\n            }", "Record<string, unknown>")
+content = content.replace("{\n                        [key: string]: unknown;\n                    }", "Record<string, unknown>")
+path.write_text(content)
 PY
 
 cat >"$OUTPUT_FILE" <<'EOF'

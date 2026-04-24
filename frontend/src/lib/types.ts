@@ -942,7 +942,10 @@ export interface components {
         };
         /** Body_upload_report_report_upload_post */
         Body_upload_report_report_upload_post: {
-            /** File */
+            /**
+             * File
+             * Format: binary
+             */
             file: string;
             /** Industry Code */
             industry_code?: string | null;
@@ -1001,26 +1004,18 @@ export interface components {
             /** Primary Activities */
             primary_activities?: string[];
             /** Evidence Summary */
-            evidence_summary?: {
-                [key: string]: unknown;
-            }[];
+            evidence_summary?: Record<string, unknown>[];
         };
         /** CompanyHistoryResponse */
         CompanyHistoryResponse: {
             /** Company Name */
             company_name: string;
             /** Periods */
-            periods?: {
-                [key: string]: unknown;
-            }[];
+            periods?: Record<string, unknown>[];
             /** Trend */
-            trend?: {
-                [key: string]: unknown;
-            }[];
+            trend?: Record<string, unknown>[];
             /** Framework Metadata */
-            framework_metadata?: {
-                [key: string]: unknown;
-            }[];
+            framework_metadata?: Record<string, unknown>[];
         };
         /** CompanyProfileLatestPeriod */
         CompanyProfileLatestPeriod: {
@@ -1038,9 +1033,7 @@ export interface components {
             industry_sector?: string | null;
             period: components["schemas"]["CompanyProfilePeriodMetadata"];
             /** Framework Metadata */
-            framework_metadata?: {
-                [key: string]: unknown;
-            }[];
+            framework_metadata?: Record<string, unknown>[];
         };
         /** CompanyProfileMetric */
         CompanyProfileMetric: {
@@ -1098,21 +1091,13 @@ export interface components {
             /** Downloaded At */
             downloaded_at?: string | null;
             /** Evidence Anchors */
-            evidence_anchors?: {
-                [key: string]: unknown;
-            }[];
+            evidence_anchors?: Record<string, unknown>[];
             /** Framework Metadata */
-            framework_metadata?: {
-                [key: string]: unknown;
-            }[];
+            framework_metadata?: Record<string, unknown>[];
             /** Source Documents */
-            source_documents?: {
-                [key: string]: unknown;
-            }[];
+            source_documents?: Record<string, unknown>[];
             /** Merged Result */
-            merged_result: {
-                [key: string]: unknown;
-            };
+            merged_result: Record<string, unknown>;
         };
         /** CompanyProfileV1Response */
         CompanyProfileV1Response: {
@@ -1139,51 +1124,29 @@ export interface components {
                 [key: string]: components["schemas"]["CompanyProfileMetric"];
             };
             /** Trend */
-            trend?: {
-                [key: string]: unknown;
-            }[];
+            trend?: Record<string, unknown>[];
             /** Periods */
             periods?: components["schemas"]["CompanyProfilePeriodRecord"][];
             /** Framework Metadata */
-            framework_metadata?: {
-                [key: string]: unknown;
-            }[];
+            framework_metadata?: Record<string, unknown>[];
             /** Framework Scores */
-            framework_scores?: {
-                [key: string]: unknown;
-            }[];
+            framework_scores?: Record<string, unknown>[];
             /** Framework Results */
-            framework_results?: {
-                [key: string]: unknown;
-            }[];
+            framework_results?: Record<string, unknown>[];
             /** Evidence Summary */
-            evidence_summary?: {
-                [key: string]: unknown;
-            }[];
+            evidence_summary?: Record<string, unknown>[];
             /** Evidence Anchors */
-            evidence_anchors?: {
-                [key: string]: unknown;
-            }[];
+            evidence_anchors?: Record<string, unknown>[];
             /** Data Quality Summary */
-            data_quality_summary: {
-                [key: string]: unknown;
-            };
+            data_quality_summary: Record<string, unknown>;
             /** Narrative Summary */
-            narrative_summary: {
-                [key: string]: unknown;
-            };
+            narrative_summary: Record<string, unknown>;
             /** Identity Provenance Summary */
-            identity_provenance_summary: {
-                [key: string]: unknown;
-            };
+            identity_provenance_summary: Record<string, unknown>;
             /** Latest Sources */
-            latest_sources?: {
-                [key: string]: unknown;
-            }[];
+            latest_sources?: Record<string, unknown>[];
             /** Latest Merged Result */
-            latest_merged_result: {
-                [key: string]: unknown;
-            };
+            latest_merged_result: Record<string, unknown>;
         };
         /** CompanyReportListItem */
         CompanyReportListItem: {
@@ -1210,9 +1173,7 @@ export interface components {
             /** Industry Sector */
             industry_sector?: string | null;
             /** Period */
-            period: {
-                [key: string]: unknown;
-            };
+            period: Record<string, unknown>;
             /** Created At */
             created_at?: string | null;
             /** Scope1 Co2E Tonnes */
@@ -1244,9 +1205,7 @@ export interface components {
             /** Primary Activities */
             primary_activities?: string[];
             /** Evidence Summary */
-            evidence_summary?: {
-                [key: string]: unknown;
-            }[];
+            evidence_summary?: Record<string, unknown>[];
         };
         /** DashboardStatsResponse */
         DashboardStatsResponse: {
@@ -1257,17 +1216,11 @@ export interface components {
             /** Avg Renewable Pct */
             avg_renewable_pct: number;
             /** Yearly Trend */
-            yearly_trend?: {
-                [key: string]: unknown;
-            }[];
+            yearly_trend?: Record<string, unknown>[];
             /** Top Emitters */
-            top_emitters?: {
-                [key: string]: unknown;
-            }[];
+            top_emitters?: Record<string, unknown>[];
             /** Bottom Emitters */
-            bottom_emitters?: {
-                [key: string]: unknown;
-            }[];
+            bottom_emitters?: Record<string, unknown>[];
             /** Coverage Rates */
             coverage_rates?: {
                 [key: string]: number;
@@ -1598,9 +1551,7 @@ export interface components {
             /** Primary Activities */
             primary_activities?: string[];
             /** Evidence Summary */
-            evidence_summary?: {
-                [key: string]: unknown;
-            }[];
+            evidence_summary?: Record<string, unknown>[];
             /** Source Url */
             source_url?: string | null;
         };
@@ -1703,9 +1654,7 @@ export interface components {
             /** Primary Activities */
             primary_activities?: string[];
             /** Evidence Summary */
-            evidence_summary?: {
-                [key: string]: unknown;
-            }[];
+            evidence_summary?: Record<string, unknown>[];
             /** Source Url */
             source_url?: string | null;
             /** Source Id */
@@ -1776,9 +1725,7 @@ export interface components {
             /** Fetched At */
             fetched_at: string;
             /** Extracted Payload */
-            extracted_payload: {
-                [key: string]: unknown;
-            };
+            extracted_payload: Record<string, unknown>;
             /**
              * Status
              * @enum {string}
@@ -1966,10 +1913,6 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
-            /** Input */
-            input?: unknown;
-            /** Context */
-            ctx?: Record<string, unknown>;
         };
     };
     responses: never;
@@ -2390,9 +2333,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": Record<string, unknown>;
                 };
             };
             /** @description Validation Error */
@@ -2590,9 +2531,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    }[];
+                    "application/json": Record<string, unknown>[];
                 };
             };
             /** @description Validation Error */
@@ -2907,9 +2846,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": Record<string, unknown>;
                 };
             };
             /** @description Stored report not found. */
@@ -2949,9 +2886,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": Record<string, unknown>;
                 };
             };
             /** @description Validation Error */
@@ -3310,9 +3245,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": Record<string, unknown>;
                 };
             };
             /** @description Stored report not found. */
@@ -3384,9 +3317,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    }[];
+                    "application/json": Record<string, unknown>[];
                 };
             };
             /** @description Validation Error */
@@ -3539,9 +3470,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": Record<string, unknown>;
                 };
             };
             /** @description Validation Error */
