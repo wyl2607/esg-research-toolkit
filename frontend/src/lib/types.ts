@@ -10,7 +10,9 @@ export interface paths {
     "/report/companies/{company_name}/{report_year}/request-deletion": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "x-admin-token"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -27,7 +29,9 @@ export interface paths {
     "/report/companies/{company_name}/{report_year}": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "x-admin-token"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
