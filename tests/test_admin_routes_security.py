@@ -17,7 +17,7 @@ def test_admin_delete_requires_token_when_configured(monkeypatch) -> None:
 
 def test_admin_delete_disabled_in_production_without_token(monkeypatch) -> None:
     monkeypatch.setenv("APP_ENV", "production")
-    monkeypatch.delenv("ADMIN_API_TOKEN", raising=False)
+    monkeypatch.setenv("ADMIN_API_TOKEN", "")
 
     try:
         require_admin_token(x_admin_token=None)
