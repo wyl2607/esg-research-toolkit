@@ -1105,6 +1105,7 @@ export interface components {
              * Api Version
              * @default v1
              * @constant
+             * @enum {string}
              */
             api_version: "v1";
             /** Company Name */
@@ -1288,6 +1289,7 @@ export interface components {
             /**
              * Status
              * @constant
+             * @enum {string}
              */
             status: "queued";
             /** Created */
