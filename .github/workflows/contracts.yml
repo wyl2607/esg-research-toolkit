@@ -108,7 +108,7 @@ jobs:
           schemathesis run \
             --checks all \
             --generation-codec ascii \
-            --base-url http://127.0.0.1:8001 \
+            --url http://127.0.0.1:8001 \
             http://127.0.0.1:8001/openapi.json
 
       - name: Upload backend logs on failure
