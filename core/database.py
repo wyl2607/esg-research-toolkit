@@ -102,8 +102,15 @@ def _legacy_runtime_init() -> None:
 
 
 def init_db() -> None:
+    production = settings.app_env == "production"
+
     if settings.use_alembic_init:
         if _is_in_memory_sqlite_url(settings.database_url):
+            if production:
+                raise RuntimeError(
+                    "USE_ALEMBIC_INIT=true cannot use in-memory sqlite in production. "
+                    "Set DATABASE_URL to a persistent database and run Alembic migrations."
+                )
             _logger.warning(
                 "USE_ALEMBIC_INIT=true with in-memory sqlite URL (%s); "
                 "falling back to legacy create_all path.",
@@ -113,9 +120,14 @@ def init_db() -> None:
         else:
             _run_alembic_upgrade_head()
     else:
-        if settings.enforce_migration_gate and settings.app_env == "production":
+        if production:
+            raise RuntimeError(
+                "Production startup requires USE_ALEMBIC_INIT=true so schema changes are "
+                "managed by Alembic instead of runtime create_all helpers."
+            )
+        if settings.enforce_migration_gate and production:
             _assert_migration_gate()
         _legacy_runtime_init()
 
-    if settings.enforce_migration_gate and settings.app_env == "production":
+    if settings.enforce_migration_gate and production:
         _assert_migration_gate()
