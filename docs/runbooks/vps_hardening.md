@@ -62,31 +62,9 @@ curl -i -F file=@/tmp/big.pdf http://127.0.0.1:8000/report/upload
 
 ## P1 — Add within first week of public exposure
 
-### P1.1 Rate limiting via slowapi
+### P1.1 Rate limiting via slowapi (DONE in code)
 
-Install:
-
-```bash
-.venv/bin/pip install 'slowapi>=0.1.9'
-```
-
-Patch `main.py` (apply on VPS deploy branch — keep the in-repo version
-clean because local dev doesn't need this):
-
-```python
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
-from slowapi.errors import RateLimitExceeded
-
-limiter = Limiter(key_func=get_remote_address, default_limits=["60/minute"])
-app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
-
-# Tighter limit on upload routes:
-# (in report_parser/api.py)
-# @router.post("/upload")
-# @limiter.limit("5/minute")
-```
+`core/limiter.py` defines the shared `slowapi` limiter, `main.py` registers the middleware and exception handler, and upload routes in `report_parser/api.py` use a tighter `5/minute` limit. `tests/test_rate_limit.py` covers the upload limit.
 
 ### P1.2 Connection pool (DONE in code)
 

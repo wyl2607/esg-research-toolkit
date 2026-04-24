@@ -81,21 +81,18 @@
 
 ---
 
-## 7. 下一步整改任务（自动生成 Codex prompt 种子）
+## 7. 整改任务状态
 
-优先级排序（P0 必做）：
+已完成：
 
-1. **CR-01 framework_version 去重**：scorer 文件全部改为从 `schemas.FRAMEWORK_VERSIONS` 读取
-2. **CR-02 清理 industry_routes.py**：确认无外部引用后 `git rm`，或恢复 include
-3. **CR-03 i18n 缺口**：识别未 i18n 的两页并补齐三语 key
-4. **CR-04 Alembic 正式迁移引导**：移除 runtime additive migration，改 `alembic upgrade head`
-5. **CR-05 consistency_check.sh 守卫**：把本文件的 SSoT 规则变成 grep-based gate 脚本
+1. **CR-01 framework_version 去重**：scorer 已从 `schemas.FRAMEWORK_VERSIONS` 读取，并由 `tests/test_framework_versioning.py` 覆盖。
+2. **CR-02 清理 industry_routes.py**：仓库中已无 `industry_routes.py`，当前 API 路由由 `main.py` 显式 include。
+3. **CR-03 i18n 缺口**：SAF 页面已补齐 en/de/zh locale key，页面 copy 不再依赖 fallback 文案。
+4. **CR-04 Alembic 正式迁移引导**：生产启动要求 `USE_ALEMBIC_INIT=true`，并保留 migration gate 校验。
 
-每项均可独立分发到一台远端 Codex 节点。建议分配：
-- mac-mini → CR-01（熟悉 python scorer 路径）
-- coco → CR-02 + CR-03（前端 + python 清理，coco 算力最足）
-- usa-vps → CR-05（脚本编写，与运行时解耦）
-- CR-04 由本地 Claude 领衔（高风险 DB 迁移，不外包）
+待评估：
+
+1. **CR-05 consistency_check.sh 守卫**：仍可拆成独立小 PR；建议只做明确、低误报的 grep-based 规则，不做大而全的策略引擎。
 
 ---
 
