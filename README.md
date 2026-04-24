@@ -6,7 +6,7 @@
 > multi-framework comparison (EU Taxonomy · CSRC 2023 · CSRD/ESRS), and renewable energy
 > techno-economic analysis (LCOE/NPV/IRR).
 
-![Python](https://img.shields.io/badge/Python-3.12%2B-blue) ![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688) ![React](https://img.shields.io/badge/React-18%2B-61DAFB) ![License](https://img.shields.io/badge/License-MIT-green) ![Live Demo](https://img.shields.io/badge/Live-Demo-orange)
+![Python](https://img.shields.io/badge/Python-3.12%2B-blue) ![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688) ![React](https://img.shields.io/badge/React-19%2B-61DAFB) ![License](https://img.shields.io/badge/License-MIT-green)
 
 ## ✨ Features
 
@@ -185,6 +185,8 @@ Environment variables are loaded from `.env`.
 | `APP_ENV` | `development` | Runtime mode, affects logging and runtime toggles. |
 | `APP_HOST` | `0.0.0.0` | Backend bind host. |
 | `APP_PORT` | `8000` | Backend bind port. |
+| `CORS_ALLOWED_ORIGINS` | `http://localhost:5173,http://localhost:4173` | Comma-separated allowed browser origins. Set deployed origins explicitly in production. |
+| `ADMIN_API_TOKEN` | empty | Optional token required in `X-Admin-Token` for destructive admin routes; required when `APP_ENV=production`. |
 | `DATABASE_URL` | `sqlite:///./data/esg_toolkit.db` | SQLAlchemy database connection string. |
 | `ARXIV_MAX_RESULTS` | `20` | Max papers fetched for literature helper tasks. |
 | `ARXIV_DOWNLOAD_PDF` | `true` | Whether to download PDFs in literature pipeline. |

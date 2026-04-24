@@ -48,3 +48,13 @@ def test_contract_test_mode_prunes_unstable_operations(monkeypatch) -> None:
     assert "delete" not in schema["paths"]["/report/companies/{company_name}/{report_year}"]
     assert "/taxonomy/report/pdf" not in schema["paths"]
     assert "get" in schema["paths"]["/report/companies/{company_name}/profile"]
+
+
+def test_cors_origins_are_configurable(monkeypatch) -> None:
+    monkeypatch.setenv("OPENAI_API_KEY", "dummy")
+    monkeypatch.setenv("DATABASE_URL", "sqlite://")
+    monkeypatch.setenv("CORS_ALLOWED_ORIGINS", "https://app.example.com, https://admin.example.com")
+
+    main = _load_main(contract_mode=False)
+
+    assert main._cors_allowed_origins() == ["https://app.example.com", "https://admin.example.com"]

@@ -1928,7 +1928,9 @@ export interface operations {
     request_source_deletion_report_companies__company_name___report_year__request_deletion_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "x-admin-token"?: string | null;
+            };
             path: {
                 company_name: string;
                 report_year: number;
@@ -2009,7 +2011,9 @@ export interface operations {
                 /** @description 彻底删除所有数据（管理员操作） */
                 hard?: boolean;
             };
-            header?: never;
+            header?: {
+                "x-admin-token"?: string | null;
+            };
             path: {
                 company_name: string;
                 report_year: number;
@@ -2266,6 +2270,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["CompanyESGData"];
                 };
+            };
+            /** @description Request body could not be parsed as JSON. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -2607,6 +2618,13 @@ export interface operations {
                     "application/json": components["schemas"]["DisclosureFetchResponse"];
                 };
             };
+            /** @description Request body could not be parsed as JSON. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -2819,6 +2837,13 @@ export interface operations {
                     "application/json": components["schemas"]["TaxonomyScoreResult"];
                 };
             };
+            /** @description Request body could not be parsed as JSON. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -2891,6 +2916,13 @@ export interface operations {
                     "application/json": Record<string, never>;
                 };
             };
+            /** @description Request body could not be parsed as JSON. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -2923,6 +2955,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["TaxonomyTextReportResponse"];
                 };
+            };
+            /** @description Request body could not be parsed as JSON. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -3018,6 +3057,13 @@ export interface operations {
                     "application/json": components["schemas"]["LCOEResult"];
                 };
             };
+            /** @description Request body could not be parsed as JSON. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -3053,6 +3099,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["SensitivityResult"][];
                 };
+            };
+            /** @description Request body could not be parsed as JSON. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -3108,6 +3161,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["SAFCostResult"];
                 };
+            };
+            /** @description Request body could not be parsed as JSON. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -3289,6 +3349,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["MultiFrameworkReport"];
                 };
+            };
+            /** @description Request body could not be parsed as JSON. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

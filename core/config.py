@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     app_env: str = "development"
     app_host: str = "0.0.0.0"
     app_port: int = 8000
+    cors_allowed_origins: str = "http://localhost:5173,http://localhost:4173"
+    admin_api_token: str = ""
     database_url: str = "sqlite:///./data/esg_toolkit.db"
     arxiv_max_results: int = 20
     arxiv_download_pdf: bool = True

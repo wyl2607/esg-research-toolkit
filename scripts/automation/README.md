@@ -49,7 +49,7 @@ scripts/automation/converge_worktrees.sh --assert-no-lanes --assert-no-lane-arti
 | `run_fullstack.sh` | 启动/停止 uvicorn + vite，含健康检查 | `logs/backend.log`, `logs/frontend.log` |
 | `auto_fix_smoke.sh` | 跑完整验证套件，失败生成 Claude/Codex 可直接粘的 fix-prompt | `logs/autofix_prompt_*.md` |
 | `interactive_dev.py` | 交互式菜单：DB summary、API health、pytest、trend peek 等 | `logs/interactive_log.md` |
-| `ui_autopolish.py` | Playwright 截图 + 视觉 LLM 美学评审 + 生成任务清单 | `screenshots/<ts>/`, `ui_reports/<ts>/critique.md`, `docs/exec-plans/ui_autopolish_tasks.md` |
+| `ui_autopolish.py` | Playwright 截图 + 视觉 LLM 美学评审 + 生成任务清单 | `screenshots/<ts>/`, `ui_reports/<ts>/critique.md` |
 | `stress_test.sh` | API 并发 + 前端页面可达性扫描 + 限流探测 | `logs/stress_<ts>.md` |
 | `converge_worktrees.sh` | lane worktree 体检、产物清理、worktree 回收、分支收敛（默认 dry-run），支持守卫断言防止 lane 膨胀复发 | 终端收敛报告（ahead/behind、dirty、唯一提交） |
 
@@ -97,8 +97,7 @@ scripts/automation/auto_fix_smoke.sh --max-rounds 2
 scripts/automation/run_fullstack.sh --detach
 .venv/bin/python scripts/automation/ui_autopolish.py
 # 看 scripts/automation/ui_reports/<ts>/critique.md
-# 任务清单自动追加到 docs/exec-plans/ui_autopolish_tasks.md
-# 把 top_3_quick_wins 贴给 Claude 直接改
+# 把 top_3_quick_wins 转成独立 issue 或小 PR
 ```
 
 ### "发版前最后一遍验证"

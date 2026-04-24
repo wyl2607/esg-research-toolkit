@@ -341,8 +341,3 @@ curl -X POST http://localhost:8000/techno/lcoe \
   A: Die Implementierung ist bewusst vereinfacht und eignet sich für Analyse und Prototyping, nicht als Rechtsberatung.
 - F: Welche Formel verwendet LCOE?
   A: Diskontierte CAPEX und OPEX geteilt durch die diskontierte Stromerzeugung, angegeben in EUR/MWh.
-
-
-## 相关文件
-
-[[USER_GUIDE.zh]]
