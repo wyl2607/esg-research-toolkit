@@ -2,6 +2,7 @@
 # One prefix per line, repo-root relative.
 
 .github/
+.gitattributes
 .guard/local-only-files.txt
 .guard/local-prefixes.txt
 .guard/public-prefixes.txt
