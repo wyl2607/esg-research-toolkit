@@ -185,6 +185,8 @@ Umgebungsvariablen werden aus `.env` geladen.
 | `APP_ENV` | `development` | Laufzeitmodus, beeinflusst Logging und Feature-Toggles. |
 | `APP_HOST` | `0.0.0.0` | Bind-Host des Backends. |
 | `APP_PORT` | `8000` | Bind-Port des Backends. |
+| `CORS_ALLOWED_ORIGINS` | `http://localhost:5173,http://localhost:4173` | Kommagetrennte erlaubte Browser-Origins. In Produktion explizit auf Deployment-Domains setzen. |
+| `ADMIN_API_TOKEN` | leer | Optionales Token für destruktive Admin-Routen über `X-Admin-Token`; bei `APP_ENV=production` erforderlich. |
 | `DATABASE_URL` | `sqlite:///./data/esg_toolkit.db` | SQLAlchemy-Verbindungszeichenfolge zur Datenbank. |
 | `ARXIV_MAX_RESULTS` | `20` | Maximale Trefferzahl für Literaturabfragen. |
 | `ARXIV_DOWNLOAD_PDF` | `true` | Steuert PDF-Download im Literatur-Workflow. |

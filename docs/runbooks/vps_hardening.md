@@ -7,6 +7,18 @@
 
 ## P0 — Required before any public link is shared
 
+### P0.0 Production environment gates
+
+Set these before exposing the service publicly:
+
+```bash
+APP_ENV=production
+CORS_ALLOWED_ORIGINS=https://demo.example.com
+ADMIN_API_TOKEN=<long-random-token>
+```
+
+`CORS_ALLOWED_ORIGINS` must list deployed frontend origins explicitly. Destructive report management routes require `X-Admin-Token`; in production they return 503 when `ADMIN_API_TOKEN` is not configured.
+
 ### P0.1 Run uvicorn with multiple workers
 
 **Symptom**: single-worker p50 went from 48ms → 299ms under burst-200 concurrency.

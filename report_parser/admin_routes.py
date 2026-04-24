@@ -2,17 +2,31 @@ from __future__ import annotations
 
 import csv
 import io
+import os
 
 import openpyxl
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
+from core.config import settings
 from core.database import get_db
 from core.schemas import DeletionStatusResponse
 from report_parser.storage import hard_delete_report, list_reports_grouped, request_deletion
 
 router = APIRouter(tags=["report_parser_admin"])
+
+
+def require_admin_token(x_admin_token: str | None = Header(default=None)) -> None:
+    configured_token = os.getenv("ADMIN_API_TOKEN", settings.admin_api_token).strip()
+    if configured_token:
+        if x_admin_token != configured_token:
+            raise HTTPException(403, "Admin token required")
+        return
+
+    app_env = os.getenv("APP_ENV", settings.app_env)
+    if app_env.lower() == "production":
+        raise HTTPException(503, "Admin operations require ADMIN_API_TOKEN in production")
 
 
 @router.post(
@@ -22,6 +36,7 @@ router = APIRouter(tags=["report_parser_admin"])
 def request_source_deletion(
     company_name: str,
     report_year: int,
+    _: None = Depends(require_admin_token),
     db: Session = Depends(get_db),
 ) -> dict[str, str | int | bool]:
     record = request_deletion(db, company_name, report_year)
@@ -44,6 +59,7 @@ def delete_company_report(
     company_name: str,
     report_year: int,
     hard: bool = Query(default=False, description="彻底删除所有数据（管理员操作）"),
+    _: None = Depends(require_admin_token),
     db: Session = Depends(get_db),
 ) -> dict[str, str | int]:
     if hard:
