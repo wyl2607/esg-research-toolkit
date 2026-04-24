@@ -13,6 +13,7 @@ def _fake_pdf_bytes() -> bytes:
 
 def test_upload_rate_limit(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr("main.init_db", lambda: None)
     monkeypatch.setattr(
         "report_parser.api.extract_text_from_pdf",
         lambda _path: "Example Corp sustainability report",
@@ -79,6 +80,7 @@ def test_upload_override_company_name_takes_precedence(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr("main.init_db", lambda: None)
     monkeypatch.setattr(
         "report_parser.api.extract_text_from_pdf",
         lambda _path: "Volkswagen sustainability report",
