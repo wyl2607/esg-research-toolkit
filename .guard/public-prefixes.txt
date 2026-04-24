@@ -28,6 +28,7 @@ main.py
 nginx/
 report_parser/
 requirements.txt
+requirements-ci.txt
 scripts/
 taxonomy_scorer/
 techno_economics/

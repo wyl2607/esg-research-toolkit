@@ -6,7 +6,7 @@
 > 多框架对比（EU Taxonomy 2020 · 中国证监会 CSRC 2023 · 欧盟 CSRD/ESRS），
 > 以及可再生能源技术经济分析（LCOE/NPV/IRR）。
 
-![Python](https://img.shields.io/badge/Python-3.12%2B-blue) ![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688) ![React](https://img.shields.io/badge/React-18%2B-61DAFB) ![License](https://img.shields.io/badge/License-MIT-green) ![Live Demo](https://img.shields.io/badge/Live-Demo-orange)
+![Python](https://img.shields.io/badge/Python-3.12%2B-blue) ![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688) ![React](https://img.shields.io/badge/React-19%2B-61DAFB) ![License](https://img.shields.io/badge/License-MIT-green)
 
 ## ✨ 功能特性
 

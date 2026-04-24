@@ -1,0 +1,8 @@
+-r requirements.txt
+
+# CI/runtime toolchain constraints. Keep this file tighter than requirements.txt so
+# pull requests are tested against a reproducible dependency floor.
+pytest==9.0.3
+pytest-asyncio==1.3.0
+schemathesis==4.15.2
+ruff==0.14.8
