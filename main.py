@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import json
 import os
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI
@@ -21,7 +23,8 @@ from core.database import SessionLocal, init_db
 from core.limiter import limiter
 from core.models import health_payload as model_health_payload
 from core.models import validate_models_startup
-from core.schemas import CompanyESGData, HealthResponse, ModelsHealthResponse
+from core.schemas import CompanyESGData, DeployHealthResponse, HealthResponse, ModelsHealthResponse
+from core.version import app_version
 from esg_frameworks.api import _SCORERS, router as frameworks_router
 from esg_frameworks.storage import list_framework_results, save_framework_result
 from report_parser.api import router as report_router
@@ -31,7 +34,8 @@ from report_parser.storage import get_report, save_report
 from taxonomy_scorer.api import router as taxonomy_router
 from techno_economics.api import router as techno_router
 
-APP_VERSION = "0.3.0"
+APP_VERSION = app_version()
+DEPLOY_FINGERPRINT_PATH = Path(os.getenv("DEPLOY_FINGERPRINT_PATH", "/app/.deploy-fingerprint.json"))
 CONTRACT_TEST_MODE = os.getenv("ESG_CONTRACT_TEST_MODE") == "1"
 DEFAULT_OPENAPI_SERVER_URL = os.getenv(
     "ESG_OPENAPI_SERVER_URL",
@@ -438,6 +442,24 @@ def root() -> dict[str, str | list[str]]:
 @app.get("/health", response_model=HealthResponse)
 def health() -> HealthResponse:
     return {"status": "ok"}
+
+
+@app.get("/health/deploy", response_model=DeployHealthResponse)
+def health_deploy() -> dict[str, object]:
+    payload: dict[str, object] = {"status": "ok", "version": APP_VERSION}
+    if DEPLOY_FINGERPRINT_PATH.exists():
+        try:
+            fingerprint = json.loads(DEPLOY_FINGERPRINT_PATH.read_text(encoding="utf-8"))
+            if not isinstance(fingerprint, dict):
+                raise ValueError("deploy fingerprint must be a JSON object")
+            for key in DeployHealthResponse.model_fields:
+                if key in {"status", "version", "fingerprint_error"}:
+                    continue
+                if key in fingerprint:
+                    payload[key] = fingerprint[key]
+        except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
+            payload["fingerprint_error"] = str(exc)
+    return payload
 
 
 @app.get("/health/models", response_model=ModelsHealthResponse)

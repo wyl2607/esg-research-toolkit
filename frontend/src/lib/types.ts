@@ -860,6 +860,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/health/deploy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Health Deploy */
+        get: operations["health_deploy_health_deploy_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health/models": {
         parameters: {
             query?: never;
@@ -1239,6 +1256,31 @@ export interface components {
             pdf_deleted?: boolean | null;
             /** Message */
             message?: string | null;
+        };
+        /** DeployHealthResponse */
+        DeployHealthResponse: {
+            /** Status */
+            status: string;
+            /** Version */
+            version: string;
+            /** Fingerprint Error */
+            fingerprint_error?: string | null;
+            /** Environment */
+            environment?: string | null;
+            /** Git Sha */
+            git_sha?: string | null;
+            /** Git Branch */
+            git_branch?: string | null;
+            /** Git Tag */
+            git_tag?: string | null;
+            /** Deployed At Utc */
+            deployed_at_utc?: string | null;
+            /** Deployed By */
+            deployed_by?: string | null;
+            /** Source */
+            source?: string | null;
+            /** Image */
+            image?: string | null;
         };
         /**
          * DimensionScore
@@ -3591,6 +3633,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HealthResponse"];
+                };
+            };
+        };
+    };
+    health_deploy_health_deploy_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeployHealthResponse"];
                 };
             };
         };
