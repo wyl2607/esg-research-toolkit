@@ -33,6 +33,9 @@ jobs:
         run: |
           pytest tests/ -v --tb=short
 
+      - name: Check version consistency
+        run: python scripts/check_version_consistency.py
+
       - name: Check import health
         env:
           OPENAI_API_KEY: test_key_placeholder
