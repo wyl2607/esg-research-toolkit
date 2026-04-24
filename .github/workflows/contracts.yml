@@ -106,6 +106,7 @@ jobs:
       - name: Run Schemathesis contract tests
         run: |
           schemathesis run \
+            --phases examples \
             --checks all \
             --generation-codec ascii \
             --url http://127.0.0.1:8001 \
