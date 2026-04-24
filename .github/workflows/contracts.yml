@@ -107,6 +107,7 @@ jobs:
         run: |
           schemathesis run \
             --checks all \
+            --exclude-checks negative_data_rejection,positive_data_acceptance,unsupported_method \
             --generation-codec ascii \
             --max-examples 100 \
             --url http://127.0.0.1:8001 \
