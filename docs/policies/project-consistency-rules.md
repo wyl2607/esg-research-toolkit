@@ -12,7 +12,7 @@
 
 | 概念 | Canonical 位置 | 禁止重复定义的位置 |
 |------|---------------|------------------|
-| Framework version 字符串 | `esg_frameworks/schemas.py::FRAMEWORK_VERSIONS` | scorer 文件内的字面量（当前违规：`eu_taxonomy.py` `csrd.py` `csrc_2023.py` `gri_standards.py` `sec_climate.py` `sasb_standards.py`）→ **必须改为 `from .schemas import FRAMEWORK_VERSIONS; framework_version=FRAMEWORK_VERSIONS["<id>"]`** |
+| Framework version 字符串 | `esg_frameworks/schemas.py::FRAMEWORK_VERSIONS` | scorer 文件内的版本字面量；必须改为 `from .schemas import FRAMEWORK_VERSIONS; framework_version=FRAMEWORK_VERSIONS["<id>"]` |
 | Framework display name | `esg_frameworks/schemas.py::FRAMEWORK_DISPLAY_NAMES` | scorer 文件内的字面量 |
 | Benchmark 指标清单 | `benchmark/compute.py::BENCHMARK_METRICS` | 任何重复列表（api/by-industry endpoint 已正确引用） |
 | NACE 行业映射 | `frontend/src/lib/nace-codes.ts` | 后端硬编码列表 |
