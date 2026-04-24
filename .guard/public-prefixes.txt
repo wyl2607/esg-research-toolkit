@@ -36,3 +36,4 @@ workflows/
 migrations/
 alembic/
 alembic.ini
+schemathesis_compat/
