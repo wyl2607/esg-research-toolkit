@@ -8,6 +8,34 @@
 - 在本文件追加版本摘要
 - 在 `docs/releases/` 下新增同日详细日报
 
+## [0.3.1] - 2026-04-24
+
+### Added
+
+- Production startup guardrails now require the Alembic-managed path for production-oriented startup checks.
+- Core module unit tests were expanded for AI client behavior and limiter isolation.
+- Additional OpenAPI contract assertions cover request parse failures and production-safety surfaces.
+
+### Changed
+
+- Deployment and CI workflows were tightened around production safety defaults.
+- Repository hygiene classification was strengthened so local-only artifacts remain outside the public GitHub surface.
+- Generated frontend API types were aligned with the CI dependency set to avoid local/CI OpenAPI drift.
+- Dependabot postcss update was merged into the frontend dev dependency set.
+
+### Fixed
+
+- JSON request parse errors are documented as `400` API responses.
+- Regex fallback unit conversion normalization was corrected.
+- GitHub branch protection now requires the real Actions check run name `leak-guard`, avoiding mismatch with legacy context naming.
+- Schemathesis v4 contract workflow and generated type drift blockers were resolved.
+
+### Verified
+
+- Latest `main` head: `e650838f3ac629715dbb94d414b03634a9de2d9f`.
+- GitHub Actions on latest `main`: `security-guard`, `Lint`, `API Contracts`, and `Tests` all succeeded.
+- Open PR queue drained after PRs #14, #16, #19, #22, #24, and #25 merged or were superseded.
+
 ## [0.3.0] - 2026-04-19
 
 ### Added
