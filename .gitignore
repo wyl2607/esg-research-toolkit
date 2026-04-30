@@ -35,6 +35,9 @@ secrets.json
 .claude/
 .cursor/
 .gemini/
+.opencode/
+.github/copilot-instructions.md
+.graphifyignore
 
 # Data (not committed)
 data/*.pdf
@@ -113,6 +116,8 @@ SUMMARY.md
 
 # 本地开发约束/流程资产（不进入 GitHub）
 AGENTS.md
+CLAUDE.md
+GEMINI.md
 docs/repo-sync-policy.md
 .guard/ENGINEERING_MEMORY.md
 docs/codex-tasks/
@@ -170,3 +175,23 @@ PHASE_*.md
 docs/notion-opus-*.md
 docs/notion-opus-*.txt
 *-notion-handoff-*.tar.gz
+
+# Graphify local-only outputs. Keep graphify-out/GRAPH_REPORT.md and graph.json shareable if reclassified.
+graphify-out/cache/
+graphify-out/manifest.json
+graphify-out/cost.json
+graphify-out/GRAPH_REPORT.md
+graphify-out/graph.html
+graphify-out/graph.json
+
+# Obsidian vaults and local-only bridge artifacts
+Obsidian/
+Documents/Obsidian*/
+.obsidian/
+obsidian-*.md
+obsidian-*.json
+obsidian-*.log
+obsidian-*.txt
+Obsidian_*.md
+30-AI-Ingest/
+workspace-project-index.md
