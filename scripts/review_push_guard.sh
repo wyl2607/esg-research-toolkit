@@ -42,6 +42,14 @@ if ! scripts/review_file_zones.sh --range "$RANGE" --block-local; then
   FAILED=1
 fi
 
+if [ -x scripts/secret_guard.sh ] && ! scripts/secret_guard.sh --range "$RANGE"; then
+  FAILED=1
+fi
+
+if [ -x scripts/local_boundary_guard.sh ] && ! scripts/local_boundary_guard.sh --range "$RANGE" --skip-zone-review; then
+  FAILED=1
+fi
+
 LOCAL_ONLY_LIST=".guard/local-only-files.txt"
 if [ -f "$LOCAL_ONLY_LIST" ]; then
   while IFS= read -r local_only; do
