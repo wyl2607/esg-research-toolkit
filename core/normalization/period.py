@@ -13,22 +13,28 @@ class NormalizedPeriod(BaseModel):
     period_end: date | None = None
 
 
-def _quarter_bounds(fiscal_year: int, quarter: int) -> tuple[date, date]:
-    bounds = {
-        1: (date(fiscal_year, 1, 1), date(fiscal_year, 3, 31)),
-        2: (date(fiscal_year, 4, 1), date(fiscal_year, 6, 30)),
-        3: (date(fiscal_year, 7, 1), date(fiscal_year, 9, 30)),
-        4: (date(fiscal_year, 10, 1), date(fiscal_year, 12, 31)),
-    }
-    return bounds[quarter]
+QUARTER_BOUNDS = {
+    1: ((1, 1), (3, 31)),
+    2: ((4, 1), (6, 30)),
+    3: ((7, 1), (9, 30)),
+    4: ((10, 1), (12, 31)),
+}
+
+HALF_YEAR_BOUNDS = {
+    1: ((1, 1), (6, 30)),
+    2: ((7, 1), (12, 31)),
+}
+
+ANNUAL_PERIOD_TYPES = {"annual", "yearly"}
 
 
-def _half_year_bounds(fiscal_year: int, half: int) -> tuple[date, date]:
-    bounds = {
-        1: (date(fiscal_year, 1, 1), date(fiscal_year, 6, 30)),
-        2: (date(fiscal_year, 7, 1), date(fiscal_year, 12, 31)),
-    }
-    return bounds[half]
+def _resolve_period_bounds(
+    fiscal_year: int,
+    bounds: dict[int, tuple[tuple[int, int], tuple[int, int]]],
+    key: int,
+) -> tuple[date, date]:
+    (start_month, start_day), (end_month, end_day) = bounds[key]
+    return date(fiscal_year, start_month, start_day), date(fiscal_year, end_month, end_day)
 
 
 def normalize_reporting_period(
@@ -49,11 +55,15 @@ def normalize_reporting_period(
 
     if period_type == "quarterly" or quarter_match:
         quarter = int(quarter_match.group(1)) if quarter_match else 4
-        period_start, period_end = _quarter_bounds(fiscal_year, quarter)
+        period_start, period_end = _resolve_period_bounds(fiscal_year, QUARTER_BOUNDS, quarter)
     elif period_type in {"semiannual", "half_year"} or half_match:
         half_token = half_match.group(1) or half_match.group(2) or "1"
-        period_start, period_end = _half_year_bounds(fiscal_year, int(half_token))
-    elif period_type in {"annual", "yearly"}:
+        period_start, period_end = _resolve_period_bounds(
+            fiscal_year,
+            HALF_YEAR_BOUNDS,
+            int(half_token),
+        )
+    elif period_type in ANNUAL_PERIOD_TYPES:
         period_start = date(fiscal_year, 1, 1)
         period_end = date(fiscal_year, 12, 31)
 

@@ -22,6 +22,18 @@ BENCHMARK_METRICS: list[str] = [
 ]
 
 
+def _coerce_benchmark_value(value: object) -> float | None:
+    if value is None:
+        return None
+    try:
+        numeric_value = float(value)
+    except (TypeError, ValueError):
+        return None
+    if numeric_value != numeric_value:  # NaN guard
+        return None
+    return numeric_value
+
+
 def recompute_industry_benchmarks(db: Session) -> dict[str, int]:
     """
     Reads all CompanyReport rows with a non-null industry_code,
@@ -41,14 +53,8 @@ def recompute_industry_benchmarks(db: Session) -> dict[str, int]:
         if row.report_year is None:
             continue
         for metric in BENCHMARK_METRICS:
-            val = getattr(row, metric, None)
-            if val is None:
-                continue
-            try:
-                numeric_val = float(val)
-            except (TypeError, ValueError):
-                continue
-            if numeric_val != numeric_val:  # NaN guard
+            numeric_val = _coerce_benchmark_value(getattr(row, metric, None))
+            if numeric_val is None:
                 continue
             buckets[(row.industry_code, row.report_year, metric)].append(numeric_val)
 
