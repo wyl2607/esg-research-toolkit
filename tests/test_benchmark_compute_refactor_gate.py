@@ -83,12 +83,12 @@ def test_recompute_benchmark_behavior_gate_filters_invalid_metric_values() -> No
     assert row.p50 == 150.0
 
 
-def test_recompute_benchmark_quality_gate_extracts_metric_coercion_helper() -> None:
+def test_recompute_benchmark_quality_gate_reuses_percentile_numeric_cleaning() -> None:
     source = Path("benchmark/compute.py").read_text()
     tree = ast.parse(source)
 
     function_names = {node.name for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)}
-    assert "_coerce_benchmark_value" in function_names
+    assert "_coerce_benchmark_value" not in function_names
 
     recompute = next(
         node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef) and node.name == "recompute_industry_benchmarks"
@@ -98,5 +98,5 @@ def test_recompute_benchmark_quality_gate_extracts_metric_coercion_helper() -> N
         for node in ast.walk(recompute)
         if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
     }
-    assert "_coerce_benchmark_value" in recompute_calls
+    assert "coerce_numeric_value" in recompute_calls
     assert "float" not in recompute_calls

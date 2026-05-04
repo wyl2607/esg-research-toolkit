@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 from sqlalchemy.orm import Session
 
 from benchmark.models import IndustryBenchmark
-from benchmark.percentiles import five_point_summary
+from benchmark.percentiles import coerce_numeric_value, five_point_summary
 from report_parser.storage import CompanyReport
 
 # The list of CompanyESGData numeric fields we benchmark.
@@ -20,18 +20,6 @@ BENCHMARK_METRICS: list[str] = [
     "taxonomy_aligned_revenue_pct",
     "female_pct",
 ]
-
-
-def _coerce_benchmark_value(value: object) -> float | None:
-    if value is None:
-        return None
-    try:
-        numeric_value = float(value)
-    except (TypeError, ValueError):
-        return None
-    if numeric_value != numeric_value:  # NaN guard
-        return None
-    return numeric_value
 
 
 def recompute_industry_benchmarks(db: Session) -> dict[str, int]:
@@ -53,7 +41,7 @@ def recompute_industry_benchmarks(db: Session) -> dict[str, int]:
         if row.report_year is None:
             continue
         for metric in BENCHMARK_METRICS:
-            numeric_val = _coerce_benchmark_value(getattr(row, metric, None))
+            numeric_val = coerce_numeric_value(getattr(row, metric, None))
             if numeric_val is None:
                 continue
             buckets[(row.industry_code, row.report_year, metric)].append(numeric_val)
