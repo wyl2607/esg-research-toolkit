@@ -19,6 +19,18 @@ if ! scripts/review_file_zones.sh --staged --block-local >/tmp/security_zone_che
   FOUND_SENSITIVE=1
 fi
 
+if ! scripts/secret_guard.sh --staged >/tmp/security_secret_guard.out 2>&1; then
+  echo "❌ Secret guard 失败"
+  cat /tmp/security_secret_guard.out
+  FOUND_SENSITIVE=1
+fi
+
+if ! scripts/local_boundary_guard.sh --staged --skip-zone-review >/tmp/security_boundary_guard.out 2>&1; then
+  echo "❌ 本地边界 guard 失败"
+  cat /tmp/security_boundary_guard.out
+  FOUND_SENSITIVE=1
+fi
+
 # 检查是否有敏感文件被暂存
 SENSITIVE_PATTERNS=(
   "\.env$"
