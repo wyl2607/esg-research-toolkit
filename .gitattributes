@@ -1,2 +1,3 @@
 # Keep shell guards runnable from Windows worktrees via Git Bash/WSL.
+.gitattributes text eol=lf
 *.sh text eol=lf
