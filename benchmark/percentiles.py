@@ -1,3 +1,32 @@
+SUMMARY_QUANTILES = (
+    ("p10", 0.10),
+    ("p25", 0.25),
+    ("p50", 0.50),
+    ("p75", 0.75),
+    ("p90", 0.90),
+)
+
+
+def coerce_numeric_value(value: object) -> float | None:
+    if value is None:
+        return None
+    try:
+        numeric_value = float(value)
+    except (TypeError, ValueError):
+        return None
+    if numeric_value != numeric_value:  # NaN guard
+        return None
+    return numeric_value
+
+
+def clean_numeric_values(values: list[object]) -> list[float]:
+    return [
+        numeric_value
+        for value in values
+        if (numeric_value := coerce_numeric_value(value)) is not None
+    ]
+
+
 def percentile(sorted_values: list[float], q: float) -> float | None:
     """
     q in [0.0, 1.0]. Returns None if sorted_values is empty.
@@ -17,12 +46,5 @@ def percentile(sorted_values: list[float], q: float) -> float | None:
 
 def five_point_summary(values: list[float | None]) -> dict[str, float | None]:
     """Returns p10, p25, p50, p75, p90. Skips None/NaN inputs."""
-    clean = sorted([v for v in values if v is not None and v == v])  # v == v rejects NaN
-    return {
-        "p10": percentile(clean, 0.10),
-        "p25": percentile(clean, 0.25),
-        "p50": percentile(clean, 0.50),
-        "p75": percentile(clean, 0.75),
-        "p90": percentile(clean, 0.90),
-    }
-
+    clean = sorted(clean_numeric_values(values))
+    return {name: percentile(clean, quantile) for name, quantile in SUMMARY_QUANTILES}
