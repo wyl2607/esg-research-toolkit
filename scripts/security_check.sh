@@ -152,13 +152,18 @@ if git diff --cached \
 fi
 
 # 检查是否有绝对路径（可能泄露用户名）
+MAC_HOME_PREFIX="/Users"
+LINUX_HOME_PREFIX="/home"
+WINDOWS_HOME_PREFIX='C:\\Users\\'
+LOCAL_PATH_REGEX="(${MAC_HOME_PREFIX}/[^/]+/|${LINUX_HOME_PREFIX}/[^/]+/|${WINDOWS_HOME_PREFIX}[^\\\\]+\\\\)"
+
 if git diff --cached \
   | grep -E '^\+' | grep -vE '^\+\+\+' \
-  | grep -E "/Users/[^/]+/" | grep -v "/Users/yumei/" > /dev/null 2>&1; then
-  echo "⚠️  发现其他用户的绝对路径"
+  | grep -E "$LOCAL_PATH_REGEX" > /dev/null 2>&1; then
+  echo "⚠️  发现本机绝对路径，请改用占位符、相对路径或环境变量"
   git diff --cached \
     | grep -E '^\+' | grep -vE '^\+\+\+' \
-    | grep -E "/Users/[^/]+/" | grep -v "/Users/yumei/" | head -3
+    | grep -E "$LOCAL_PATH_REGEX" | head -3
 fi
 
 if [ $FOUND_SENSITIVE -eq 1 ]; then

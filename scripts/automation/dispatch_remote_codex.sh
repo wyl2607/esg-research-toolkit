@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # dispatch_remote_codex.sh — ESG-Research-Toolkit 远端 Codex 单任务分发器
 #
-# 用途：把一个 CR 级整改 prompt 发到指定内网节点（mac-mini / coco / usa-vps），
+# 用途：把一个 CR 级整改 prompt 发到指定内网节点，
 #      等 Codex 执行完后回收 commit SHA + test summary，写入 runtime/ai-trace/。
 #
 # 遵循 docs/policies/project-consistency-rules.md §6 远程分发前置准则：
@@ -12,16 +12,16 @@
 #
 # Env:
 #   REMOTE_REPO=<path>        远端仓库绝对路径。默认 ~/projects/esg-research-toolkit
-#   REMOTE_SHELL_WRAP=<cmd>   远端 shell 包装（windows-pc 需 "wsl bash -lc"）。默认空。
+#   REMOTE_SHELL_WRAP=<cmd>   远端 shell 包装（WSL 节点通常需 "wsl bash -lc"）。默认空。
 #
 # Example (Linux/macOS):
-#   REMOTE_REPO=/Users/X/projects/esg-research-toolkit \
-#     ./scripts/automation/dispatch_remote_codex.sh mac-mini CR-01 prompts/cr-01.txt
+#   REMOTE_REPO=~/projects/esg-research-toolkit \
+#     ./scripts/automation/dispatch_remote_codex.sh mac-node CR-01 prompts/cr-01.txt
 #
 # Example (Windows via WSL):
-#   REMOTE_REPO=/home/wyl26/projects/esg-research-toolkit \
+#   REMOTE_REPO=~/projects/esg-research-toolkit \
 #   REMOTE_SHELL_WRAP="wsl bash -lc" \
-#     ./scripts/automation/dispatch_remote_codex.sh windows-pc CR-01 prompts/cr-01.txt
+#     ./scripts/automation/dispatch_remote_codex.sh wsl-node CR-01 prompts/cr-01.txt
 #
 set -euo pipefail
 

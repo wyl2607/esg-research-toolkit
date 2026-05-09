@@ -6,15 +6,15 @@ set -euo pipefail
 cd ~/projects/esg-research-toolkit
 
 echo "=== ESG Toolkit 三层部署 ==="
-echo "架构: 本地 → coco (构建) → VPS (生产)"
+echo "架构: 本地 → 构建节点 → VPS (生产)"
 echo "开始时间: $(date)"
 echo ""
 
 # 任务列表
 TASKS=(
-  "10:配置 coco 环境:task_10_setup_coco.md"
-  "11:推送代码到 coco:task_11_push_to_coco.md"
-  "12:coco 构建:task_12_build_on_coco.md"
+  "10:配置构建节点环境:task_10_setup_coco.md"
+  "11:推送代码到构建节点:task_11_push_to_coco.md"
+  "12:构建节点构建:task_12_build_on_coco.md"
   "13:推送到 VPS:task_13_push_to_vps.md"
   "14:启动 VPS 服务:task_14_start_vps_service.md"
 )
@@ -45,7 +45,7 @@ for task_info in "${TASKS[@]}"; do
 并发策略：
 - Task 10: 可以并发检查环境、安装 Docker、安装 Node.js、配置 SSH
 - Task 11: 串行执行（rsync 不适合并发）
-- Task 12: 可以并发构建 Docker 镜像和前端（如果 coco 资源足够）
+- Task 12: 可以并发构建 Docker 镜像和前端（如果构建节点资源足够）
 - Task 13: 可以并发推送 Docker 镜像、前端文件、配置文件
 - Task 14: 可以并发测试多个 API 端点、配置 Nginx、检查资源
 
@@ -75,7 +75,8 @@ echo ""
 
 # 最终验证
 echo "=== 最终验证 ==="
-ssh usa-vps "/opt/esg-research-toolkit/scripts/status.sh"
+: "${ESG_VPS_HOST:?set ESG_VPS_HOST to the deployment host}"
+ssh "$ESG_VPS_HOST" "/opt/esg-research-toolkit/scripts/status.sh"
 
 echo ""
 echo "=== 访问地址 ==="

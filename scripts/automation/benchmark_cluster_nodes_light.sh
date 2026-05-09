@@ -13,15 +13,15 @@ OUT_JSON="$OUT_DIR/node-compare-light-$TS.json"
 OUT_MD="$OUT_DIR/node-compare-light-$TS.md"
 
 python3 - "$OUT_JSON" "$OUT_MD" "$ROUNDS" <<'PY'
-import json, math, statistics, subprocess, sys, time
+import json, math, os, statistics, subprocess, sys, time
 from datetime import datetime, timezone
 
 out_json, out_md, rounds = sys.argv[1], sys.argv[2], int(sys.argv[3])
 
 nodes = [
-    {"name": "mac-mini", "host": "mac-mini", "repo": "/Users/yilinwang/projects/esg-research-toolkit", "wrap": None},
-    {"name": "coco", "host": "coco", "repo": "~/projects/esg-research-toolkit", "wrap": None},
-    {"name": "windows", "host": "windows-pc", "repo": "/home/wyl26/projects/esg-research-toolkit", "wrap": "wsl bash -lc"},
+    {"name": "mac-node", "host": os.environ.get("ESG_MAC_NODE_HOST", "mac-node"), "repo": os.environ.get("ESG_MAC_NODE_REPO", "~/projects/esg-research-toolkit"), "wrap": None},
+    {"name": "build-node", "host": os.environ.get("ESG_BUILD_NODE_HOST", "build-node"), "repo": os.environ.get("ESG_BUILD_NODE_REPO", "~/projects/esg-research-toolkit"), "wrap": None},
+    {"name": "wsl-node", "host": os.environ.get("ESG_WSL_NODE_HOST", "wsl-node"), "repo": os.environ.get("ESG_WSL_NODE_REPO", "~/projects/esg-research-toolkit"), "wrap": "wsl bash -lc"},
 ]
 
 

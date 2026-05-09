@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# benchmark_windows_node.sh — windows-pc (WSL) 节点性能基线采集
+# benchmark_windows_node.sh — WSL 节点性能基线采集
 # 输出: runtime/perf/windows-node-baseline-<ts>.md + .json
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
 
-HOST="windows-pc"
-REMOTE_REPO="/home/wyl26/projects/esg-research-toolkit"
+HOST="${ESG_WSL_NODE_HOST:-wsl-node}"
+REMOTE_REPO="${ESG_WSL_NODE_REPO:-~/projects/esg-research-toolkit}"
 REMOTE_WRAP="wsl bash -lc"
 ROUNDS="${ROUNDS:-3}"
 
@@ -29,7 +29,7 @@ ssh_exec "cd $REMOTE_REPO && git fetch origin && git checkout main && git reset 
 
 echo "[info] running rounds=$ROUNDS"
 python3 - "$OUT_JSON" "$OUT_MD" "$ROUNDS" <<'PY'
-import json, statistics, subprocess, sys, time
+import json, os, statistics, subprocess, sys, time
 from datetime import datetime, timezone
 
 out_json, out_md, rounds = sys.argv[1], sys.argv[2], int(sys.argv[3])
@@ -51,11 +51,13 @@ records = []
 
 for i in range(1, rounds + 1):
     batch = {"round": i, "steps": []}
-    batch["steps"].append(run("ssh windows-pc 'echo ping'"))
-    batch["steps"].append(run("ssh windows-pc 'wsl bash -lc \"echo wsl-ping\"'"))
-    batch["steps"].append(run("ssh windows-pc 'wsl bash -lc \"cd /home/wyl26/projects/esg-research-toolkit && git status -sb\"'"))
-    batch["steps"].append(run("ssh windows-pc 'wsl bash -lc \"codex --version\"'"))
-    batch["steps"].append(run("REMOTE_REPO=/home/wyl26/projects/esg-research-toolkit REMOTE_SHELL_WRAP='wsl bash -lc' ./scripts/automation/dispatch_remote_codex.sh windows-pc PERF-NOOP scripts/automation/prompts/cr-a4.txt"))
+    host = os.environ.get("ESG_WSL_NODE_HOST", "wsl-node")
+    repo = os.environ.get("ESG_WSL_NODE_REPO", "~/projects/esg-research-toolkit")
+    batch["steps"].append(run(f"ssh {host} 'echo ping'"))
+    batch["steps"].append(run(f"ssh {host} 'wsl bash -lc \"echo wsl-ping\"'"))
+    batch["steps"].append(run(f"ssh {host} 'wsl bash -lc \"cd {repo} && git status -sb\"'"))
+    batch["steps"].append(run(f"ssh {host} 'wsl bash -lc \"codex --version\"'"))
+    batch["steps"].append(run(f"REMOTE_REPO={repo} REMOTE_SHELL_WRAP='wsl bash -lc' ./scripts/automation/dispatch_remote_codex.sh {host} PERF-NOOP scripts/automation/prompts/cr-a4.txt"))
 
     names = ["ssh_ping", "wsl_ping", "git_status", "codex_version", "dispatch_noop"]
     for n, step in zip(names, batch["steps"]):

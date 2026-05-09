@@ -66,7 +66,7 @@
 
 ## 6. 远程分发前置准则（多节点 Codex）
 
-分发任务到 mac-mini / coco / usa-vps 之前 **必须**：
+分发任务到远程执行节点之前 **必须**：
 
 1. **同步 HEAD**：远端 repo 落后任何提交即 abort（`git fetch && git rev-parse HEAD` 校验）
 2. **依赖一致**：`requirements.txt` / `package.json` 的 lockfile 与远端 .venv / node_modules 对齐
@@ -96,4 +96,4 @@
 
 - 本文件修改必须在 `PROJECT_PROGRESS.md` 留一行
 - 每次远程分发的 SHA + 结果追加到 `INCIDENT_LOG.md`（若失败）或 `PROJECT_PROGRESS.md` 近期完成表（若成功）
-- 跨 AI 账本：`/Users/yumei/tools/automation/runtime/ai-trace/`（遵循 `ai-collaboration-traceability-standard.md`）
+- 跨 AI 账本：`<workspace-automation-root>/runtime/ai-trace/`（遵循 `ai-collaboration-traceability-standard.md`）
