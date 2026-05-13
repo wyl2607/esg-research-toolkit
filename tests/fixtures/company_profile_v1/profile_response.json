@@ -1029,7 +1029,19 @@
         }
       ],
       "file_hash": "hash-v1-contract-2024",
+      "framework_metadata": [],
       "pdf_filename": "v1-contract-2024.pdf",
+      "period": {
+        "fiscal_year": 2024,
+        "label": "FY2024",
+        "legacy_report_year": 2024,
+        "period_end": "2024-12-31",
+        "period_id": "V1 Contract Corp:2024:annual:FY2024",
+        "period_start": "2024-01-01",
+        "reporting_standard": "sustainability_report",
+        "source_document_type": "sustainability_report",
+        "type": "annual"
+      },
       "reporting_period_label": "FY2024",
       "reporting_period_type": "annual",
       "source_document_type": "sustainability_report",
@@ -1295,7 +1307,19 @@
             }
           ],
           "file_hash": "hash-v1-contract-2023",
+          "framework_metadata": [],
           "pdf_filename": "v1-contract-2023.pdf",
+          "period": {
+            "fiscal_year": 2023,
+            "label": "FY2023",
+            "legacy_report_year": 2023,
+            "period_end": "2023-12-31",
+            "period_id": "V1 Contract Corp:2023:annual:FY2023",
+            "period_start": "2023-01-01",
+            "reporting_standard": "annual_report",
+            "source_document_type": "annual_report",
+            "type": "annual"
+          },
           "reporting_period_label": "FY2023",
           "reporting_period_type": "annual",
           "source_document_type": "annual_report",
@@ -1694,7 +1718,19 @@
             }
           ],
           "file_hash": "hash-v1-contract-2024",
+          "framework_metadata": [],
           "pdf_filename": "v1-contract-2024.pdf",
+          "period": {
+            "fiscal_year": 2024,
+            "label": "FY2024",
+            "legacy_report_year": 2024,
+            "period_end": "2024-12-31",
+            "period_id": "V1 Contract Corp:2024:annual:FY2024",
+            "period_start": "2024-01-01",
+            "reporting_standard": "sustainability_report",
+            "source_document_type": "sustainability_report",
+            "type": "annual"
+          },
           "reporting_period_label": "FY2024",
           "reporting_period_type": "annual",
           "source_document_type": "sustainability_report",

@@ -154,6 +154,24 @@ def _framework_metadata_item(row) -> dict[str, str | int | None]:
         "report_year": row.report_year,
         "stored_at": row.created_at.isoformat() if row.created_at else None,
     }
+
+
+def _ensure_evidence_anchor_shape(anchor: dict[str, Any]) -> dict[str, Any]:
+    normalized = dict(anchor)
+    normalized.setdefault("source_doc_id", None)
+    normalized.setdefault("page", None)
+    normalized.setdefault("char_range", None)
+    normalized.setdefault("snippet", None)
+    normalized.setdefault("extraction_method", None)
+    normalized.setdefault("confidence", None)
+    return normalized
+
+
+def _record_evidence_anchors(record) -> list[dict[str, Any]]:
+    anchors = _evidence_anchors_for_record(record)
+    return [_ensure_evidence_anchor_shape(anchor) for anchor in anchors]
+
+
 def _record_to_merge_source_input(
     record,
     *,
@@ -189,17 +207,20 @@ def _record_to_merge_source_input(
     )
 
 
-def _source_document_payload(record) -> dict[str, str | int | float | list[str] | None]:
+def _source_document_payload(record) -> dict[str, Any]:
+    period = _period_metadata(record)
     return {
         "source_id": f"db:{record.id}",
-        "source_document_type": record.source_document_type,
-        "reporting_period_label": record.reporting_period_label,
-        "reporting_period_type": record.reporting_period_type,
+        "source_document_type": period["source_document_type"],
+        "reporting_period_label": period["label"],
+        "reporting_period_type": period["type"],
         "source_url": record.source_url,
         "file_hash": record.file_hash,
         "pdf_filename": record.pdf_filename,
         "downloaded_at": record.downloaded_at.isoformat() if record.downloaded_at else None,
-        "evidence_anchors": _evidence_anchors_for_record(record),
+        "period": period,
+        "framework_metadata": [],
+        "evidence_anchors": _record_evidence_anchors(record),
     }
 
 
@@ -527,7 +548,7 @@ def preview_merge(payload: MergePreviewRequest) -> MergePreviewResponse:
 
 
 def _record_to_company_data(record) -> CompanyESGData:
-    evidence_summary = _evidence_anchors_for_record(record)
+    evidence_summary = _record_evidence_anchors(record)
     return CompanyESGData(
         company_name=record.company_name,
         report_year=record.report_year,
@@ -760,7 +781,7 @@ def get_company_history(
         ]
         merged_result = build_merged_result(merge_documents)
         merged_metrics = merged_result.merged_metrics
-        anchors = _evidence_anchors_for_record(record)
+        anchors = _record_evidence_anchors(record)
         period = _period_metadata(record)
         framework_rows = list_framework_results(
             db,
@@ -853,7 +874,7 @@ def get_company_profile(
         latest_source_records=latest_source_records,
         latest_period=latest_period,
     )
-    latest_evidence_anchors = scored_metric_evidence or _evidence_anchors_for_record(latest)
+    latest_evidence_anchors = scored_metric_evidence or _record_evidence_anchors(latest)
     profile_evidence_summary = latest_data.evidence_summary or latest_evidence_anchors
 
     framework_rows = list_framework_results(
