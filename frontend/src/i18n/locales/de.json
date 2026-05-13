@@ -432,6 +432,7 @@
     "empty": "Für diese Branche liegen noch keine Benchmark-Daten vor. Auf der Seite Branchenbenchmarks neu berechnen.",
     "disclaimer": "Die Position wird nur berechnet, wenn Unternehmens- und Benchmark-Jahr exakt übereinstimmen. Buckets mit Stichprobe < 5 sind nur Richtwerte.",
     "yearMismatch": "Für {{companyYear}} gibt es kein exaktes Benchmark-Jahr. Verfügbare Benchmark-Jahre: {{benchmarkYears}}. Der Vergleich wird erst angezeigt, wenn dasselbe Jahr vorliegt.",
+    "tableRegionLabel": "Peer-Vergleichstabelle",
     "col": {
       "metric": "Metrik",
       "company": "Unternehmen",
@@ -537,6 +538,9 @@
     "provenanceFrameworkVersion": "{{framework}} · v{{version}}",
     "provenanceFrameworkTimestamp": "Erfasst am {{date}}",
     "provenanceFrameworkMore": "+{{count}} weitere Framework-Läufe",
+    "provenanceSourceDocumentsLabel": "Quelldokument-Details",
+    "provenanceSourceEvidenceLabel": "Evidenz",
+    "provenanceSourceFrameworkLabel": "Frameworks",
     "radarTitle": "Radar der Framework-Scores",
     "radarLegend": "Das Radar vergleicht den aktuellen Gesamtscore je Framework",
     "trendTitle": "Historischer Trend",

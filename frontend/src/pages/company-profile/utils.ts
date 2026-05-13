@@ -116,17 +116,34 @@ export function normalizeProfileEvidenceAnchor(
   const matchedSource =
     latestSources.find(
       (source) =>
+        (evidence.source_doc_id &&
+          (source.source_id === evidence.source_doc_id ||
+            source.file_hash === evidence.source_doc_id)) ||
         (evidence.file_hash && source.file_hash === evidence.file_hash) ||
         (evidence.source_url && source.source_url === evidence.source_url) ||
         (evidence.source_type &&
-          source.source_document_type === evidence.source_type)
+          (source.source_document_type === evidence.source_type ||
+            source.period?.source_document_type === evidence.source_type))
     ) ?? latestSources[0]
+  const matchedSourceType =
+    matchedSource?.period?.source_document_type ??
+    matchedSource?.source_document_type ??
+    fallbackFramework ??
+    null
+  const matchedPeriodLabel =
+    matchedSource?.period?.label ??
+    matchedSource?.reporting_period_label ??
+    fallbackPeriodLabel ??
+    null
+  const matchedFramework =
+    matchedSource?.framework_metadata?.[0]?.framework ??
+    matchedSource?.framework_metadata?.[0]?.framework_id ??
+    null
 
   return {
     ...evidence,
     page: evidence.page ?? evidence.page_number ?? null,
-    source_type:
-      evidence.source_type ?? matchedSource?.source_document_type ?? fallbackFramework ?? null,
+    source_type: matchedSourceType ?? evidence.source_type ?? null,
     source_url: evidence.source_url ?? matchedSource?.source_url ?? null,
     file_hash: evidence.file_hash ?? matchedSource?.file_hash ?? null,
     document_title:
@@ -136,13 +153,12 @@ export function normalizeProfileEvidenceAnchor(
       matchedSource?.source_url ??
       null,
     reporting_period_label:
-      evidence.reporting_period_label ?? evidence.period_label ?? fallbackPeriodLabel ?? null,
+      matchedPeriodLabel ?? evidence.reporting_period_label ?? evidence.period_label ?? null,
     framework:
       evidence.framework ??
+      matchedFramework ??
       evidence.source_type ??
-      matchedSource?.source_document_type ??
-      fallbackFramework ??
-      null,
+      matchedSourceType,
   }
 }
 

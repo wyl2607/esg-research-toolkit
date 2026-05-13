@@ -50,6 +50,10 @@ function buildCompanyProfileFixture(): CompanyProfile {
         type: 'annual',
         source_document_type: 'annual_report',
         legacy_report_year: 2024,
+        fiscal_year: 2024,
+        reporting_standard: 'annual_report',
+        period_start: '2024-01-01',
+        period_end: '2024-12-31',
       },
       framework_metadata: [],
     },
@@ -100,6 +104,10 @@ function buildCompanyProfileFixture(): CompanyProfile {
           type: 'annual',
           source_document_type: 'annual_report',
           legacy_report_year: 2022,
+          fiscal_year: 2022,
+          reporting_standard: 'annual_report',
+          period_start: '2022-01-01',
+          period_end: '2022-12-31',
         },
         source_url: 'https://example.com/2022.pdf',
         downloaded_at: '2026-04-16T10:00:00Z',
@@ -127,6 +135,10 @@ function buildCompanyProfileFixture(): CompanyProfile {
           type: 'annual',
           source_document_type: 'annual_report',
           legacy_report_year: 2023,
+          fiscal_year: 2023,
+          reporting_standard: 'annual_report',
+          period_start: '2023-01-01',
+          period_end: '2023-12-31',
         },
         source_url: 'https://example.com/2023.pdf',
         downloaded_at: '2026-04-16T10:00:00Z',
@@ -154,6 +166,10 @@ function buildCompanyProfileFixture(): CompanyProfile {
           type: 'annual',
           source_document_type: 'annual_report',
           legacy_report_year: 2024,
+          fiscal_year: 2024,
+          reporting_standard: 'annual_report',
+          period_start: '2024-01-01',
+          period_end: '2024-12-31',
         },
         source_url: 'https://example.com/2024.pdf',
         downloaded_at: '2026-04-16T10:00:00Z',
@@ -204,7 +220,39 @@ function buildCompanyProfileFixture(): CompanyProfile {
         file_hash: 'fixture-hash',
         pdf_filename: 'acme-2024.pdf',
         downloaded_at: '2026-04-16T10:00:00Z',
-        evidence_anchors: [],
+        period: {
+          period_id: 'period-2024-source',
+          label: 'FY 2024',
+          type: 'annual',
+          source_document_type: 'annual_report',
+          legacy_report_year: 2024,
+          fiscal_year: 2024,
+          reporting_standard: 'annual_report',
+          period_start: '2024-01-01',
+          period_end: '2024-12-31',
+        },
+        evidence_anchors: [
+          {
+            metric: 'renewable_energy_pct',
+            source: 'Acme Annual Report 2024',
+            source_doc_id: 'fixture-hash',
+            page: 14,
+            char_range: [40, 55],
+            snippet: 'Renewable electricity reached 42.5%.',
+            extraction_method: 'regex',
+            confidence: 0.82,
+          },
+        ],
+        framework_metadata: [
+          {
+            analysis_result_id: 11,
+            framework_id: 'eu_taxonomy',
+            framework: 'EU Taxonomy',
+            framework_version: '2020/852',
+            report_year: 2024,
+            stored_at: '2026-04-16T10:30:00Z',
+          },
+        ],
       },
     ],
     latest_merged_result: {
@@ -295,7 +343,6 @@ test.describe('company profile multi-year integrity', () => {
       await page.goto('/companies/Acme%20Corp', { waitUntil: 'networkidle' })
 
       await expect(page.getByRole('heading', { level: 1, name: 'Acme Corp' })).toBeVisible()
-      await expect(page.getByText('Identity & Provenance')).toBeVisible()
       await expect(page.getByText('Acme Legacy GmbH → Acme Holdings AG')).toBeVisible()
       await expect(
         page.getByText('Manual uploads > audited filings > registry mirrors')
@@ -303,6 +350,19 @@ test.describe('company profile multi-year integrity', () => {
       await expect(
         page.getByText('Latest manual disclosure outranks crawler snapshots.')
       ).toBeVisible()
+      await expect(
+        page.getByTestId('profile-provenance-source-documents')
+      ).toBeVisible()
+      const sourceDocumentRow = page.getByTestId('profile-provenance-source-document-0')
+      await expect(sourceDocumentRow).toContainText('annual report')
+      await expect(sourceDocumentRow).toContainText('FY 2024')
+      await expect(sourceDocumentRow).toContainText('example.com')
+      await expect(
+        page.getByTestId('profile-provenance-source-document-0-evidence-count')
+      ).toHaveText('1')
+      await expect(
+        page.getByTestId('profile-provenance-source-document-0-framework-count')
+      ).toHaveText('1')
       await expect(page.getByTestId('company-profile-trend-chart')).toBeVisible()
       await expect(
         page.getByTestId('evidence-badge-renewable_energy_pct-quality')

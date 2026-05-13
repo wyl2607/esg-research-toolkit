@@ -432,6 +432,7 @@
     "empty": "No benchmark data available for this industry yet. Use the Industry Benchmarks page to recompute.",
     "disclaimer": "Position is computed only when the company year and benchmark year match exactly. Buckets with sample size < 5 are directional only.",
     "yearMismatch": "No exact benchmark year matches {{companyYear}}. Available benchmark years: {{benchmarkYears}}. No comparison is shown until the same year exists.",
+    "tableRegionLabel": "Peer comparison table",
     "col": {
       "metric": "Metric",
       "company": "Company",
@@ -537,6 +538,9 @@
     "provenanceFrameworkVersion": "{{framework}} · v{{version}}",
     "provenanceFrameworkTimestamp": "Captured {{date}}",
     "provenanceFrameworkMore": "+{{count}} more framework runs",
+    "provenanceSourceDocumentsLabel": "Source document details",
+    "provenanceSourceEvidenceLabel": "Evidence",
+    "provenanceSourceFrameworkLabel": "Frameworks",
     "radarTitle": "Framework Score Radar",
     "radarLegend": "Radar compares current overall score by framework",
     "trendTitle": "Historical Trend",

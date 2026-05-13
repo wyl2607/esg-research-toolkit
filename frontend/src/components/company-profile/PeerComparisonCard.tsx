@@ -366,7 +366,12 @@ export function PeerComparisonCard(props: PeerComparisonCardProps) {
 
         {peerRows.length > 0 ? (
           <>
-            <div className="overflow-x-auto">
+            <div
+              aria-label={t('peer.tableRegionLabel')}
+              className="overflow-x-auto"
+              role="region"
+              tabIndex={0}
+            >
               <table className="min-w-full text-sm" data-testid="peer-comparison-table">
                 <thead>
                   <tr className="border-b border-stone-200 text-left text-xs uppercase text-stone-500 dark:border-slate-700 dark:text-slate-400">
