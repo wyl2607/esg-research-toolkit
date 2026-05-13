@@ -390,6 +390,9 @@
     "bestLabel": "最优",
     "worstLabel": "最差",
     "scope1Intensity": "范围1 / 员工",
+    "sourceContextLabel": "来源上下文",
+    "evidenceCountLabel": "证据锚点",
+    "tableRegionLabel": "公司对比指标表",
     "tooltips": {
       "scope1": "范围1（Scope 1）— 企业直接拥有或控制的排放源产生的温室气体（如锅炉燃烧、公司车辆）。数值越低越好。",
       "scope2": "范围2（Scope 2）— 购买电力、热力或蒸汽产生的间接排放。减少此项通常意味着使用更多可再生能源。数值越低越好。",

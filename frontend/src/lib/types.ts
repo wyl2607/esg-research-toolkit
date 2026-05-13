@@ -3710,6 +3710,13 @@ export interface CompanyESGData {
   reporting_period_label?: string | null
   reporting_period_type?: string | null
   source_document_type?: string | null
+  source_url?: string | null
+  file_hash?: string | null
+  pdf_filename?: string | null
+  downloaded_at?: string | null
+  period?: CompanyNormalizedPeriod | null
+  framework_metadata?: FrameworkMetadata[]
+  source_documents?: CompanySourceDocument[]
   industry_code?: string | null
   industry_sector?: string | null
   scope1_co2e_tonnes: number | null

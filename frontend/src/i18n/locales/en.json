@@ -390,6 +390,9 @@
     "bestLabel": "Best",
     "worstLabel": "Worst",
     "scope1Intensity": "Scope 1 / Employee",
+    "sourceContextLabel": "Source context",
+    "evidenceCountLabel": "Evidence anchors",
+    "tableRegionLabel": "Comparison metrics table",
     "tooltips": {
       "scope1": "Scope 1 — Direct greenhouse gas emissions from sources owned or controlled by the company (e.g. fuel combustion in boilers, company vehicles). Lower is better.",
       "scope2": "Scope 2 — Indirect emissions from purchased electricity, heat, or steam. Reducing this typically means switching to renewable energy. Lower is better.",

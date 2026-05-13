@@ -390,6 +390,9 @@
     "bestLabel": "Bester",
     "worstLabel": "Schlechtester",
     "scope1Intensity": "Scope 1 / Mitarbeiter",
+    "sourceContextLabel": "Quellenkontext",
+    "evidenceCountLabel": "Evidenzanker",
+    "tableRegionLabel": "Vergleichstabelle mit Kennzahlen",
     "tooltips": {
       "scope1": "Scope 1 — Direkte Treibhausgasemissionen aus Quellen, die das Unternehmen besitzt oder kontrolliert (z. B. Verbrennungsanlagen, Firmenfahrzeuge). Niedriger ist besser.",
       "scope2": "Scope 2 — Indirekte Emissionen aus dem Bezug von Strom, Wärme oder Dampf. Eine Reduzierung bedeutet meist den Umstieg auf erneuerbare Energien. Niedriger ist besser.",

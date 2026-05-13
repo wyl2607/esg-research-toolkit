@@ -15,6 +15,11 @@ import type { CompanyESGData } from '@/lib/types'
 import { useTranslation } from 'react-i18next'
 import { localizeErrorMessage } from '@/lib/error-utils'
 import { cn } from '@/lib/utils'
+import {
+  compareEvidenceCount,
+  comparePeriodLabel,
+  compareSourceDocumentType,
+} from '@/pages/compare/utils'
 
 type ViewMode = 'absolute' | 'intensity' | 'rank'
 type SelectedEntry = { name: string; year: number }
@@ -204,41 +209,67 @@ export function ComparePage() {
           </FilterBar>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {selectedCompanies.map((company) => (
-              <FormCard key={`${company.company_name}-${company.report_year}`} className="space-y-3">
-                <div className="space-y-2">
-                  <p className="section-kicker">{t('common.company')}</p>
-                  <h2 className="text-lg leading-snug text-slate-900 dark:text-slate-100 break-words">{company.company_name}</h2>
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant="secondary" className="bg-stone-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200">
-                      {company.report_year}
-                    </Badge>
-                    {company.source_document_type && (
-                      <Badge variant="secondary" className="bg-amber-100 text-amber-900 dark:bg-amber-900/30 dark:text-amber-300">
-                        {company.source_document_type}
+            {selectedCompanies.map((company, index) => {
+              const periodLabel = comparePeriodLabel(company)
+              const sourceTypeLabel = compareSourceDocumentType(company)
+              const evidenceCount = compareEvidenceCount(company)
+
+              return (
+                <FormCard key={`${company.company_name}-${company.report_year}`} className="space-y-3">
+                  <div className="space-y-2">
+                    <p className="section-kicker">{t('common.company')}</p>
+                    <h2 className="text-lg leading-snug text-slate-900 dark:text-slate-100 break-words">{company.company_name}</h2>
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant="secondary" className="bg-stone-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200">
+                        {periodLabel}
                       </Badge>
-                    )}
-                  </div>
-                </div>
-                <div className="grid gap-2 text-sm">
-                  {[
-                    { key: 'scope1', val: company.scope1_co2e_tonnes, unit: 'tCO₂e', tooltipKey: 'scope1' },
-                    { key: 'renewable', val: company.renewable_energy_pct != null ? `${company.renewable_energy_pct.toFixed(1)}%` : null, unit: '', tooltipKey: 'renewable' },
-                  ].map(({ key, val, unit, tooltipKey }) => (
-                    <div key={key} className="rounded-xl border border-stone-200 dark:border-slate-600 bg-white/80 dark:bg-slate-700/60 px-3 py-2 min-w-0">
-                      <div className="flex items-center gap-1 text-xs uppercase tracking-wide text-stone-500 dark:text-slate-400">
-                        {key === 'scope1' ? t('companies.metricScope1Short') : t('compare.renewable')}
-                        <InfoTooltip content={t(`compare.tooltips.${tooltipKey}`)} />
-                      </div>
-                      <div className="mt-1 numeric-mono text-base font-semibold text-slate-900 dark:text-slate-100 break-all leading-tight">
-                        {val != null ? `${typeof val === 'number' ? val.toLocaleString(locale) : val}` : '—'}
-                        {unit && val != null && <span className="ml-1 text-xs font-normal text-stone-500 dark:text-slate-400">{unit}</span>}
-                      </div>
+                      {sourceTypeLabel && (
+                        <Badge variant="secondary" className="bg-amber-100 text-amber-900 dark:bg-amber-900/30 dark:text-amber-300">
+                          {sourceTypeLabel}
+                        </Badge>
+                      )}
                     </div>
-                  ))}
-                </div>
-              </FormCard>
-            ))}
+                    <div
+                      className="rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                      data-testid={`compare-source-summary-${index}`}
+                    >
+                      <p className="font-medium uppercase tracking-wide text-stone-500 dark:text-slate-400">
+                        {t('compare.sourceContextLabel')}
+                      </p>
+                      <p className="mt-1">
+                        {[periodLabel, sourceTypeLabel].filter(Boolean).join(' · ')}
+                      </p>
+                      <p className="mt-1">
+                        {t('compare.evidenceCountLabel')}:{' '}
+                        <span
+                          className="font-semibold text-slate-900 dark:text-slate-100"
+                          data-testid={`compare-source-evidence-count-${index}`}
+                        >
+                          {evidenceCount}
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                  <div className="grid gap-2 text-sm">
+                    {[
+                      { key: 'scope1', val: company.scope1_co2e_tonnes, unit: 'tCO₂e', tooltipKey: 'scope1' },
+                      { key: 'renewable', val: company.renewable_energy_pct != null ? `${company.renewable_energy_pct.toFixed(1)}%` : null, unit: '', tooltipKey: 'renewable' },
+                    ].map(({ key, val, unit, tooltipKey }) => (
+                      <div key={key} className="rounded-xl border border-stone-200 dark:border-slate-600 bg-white/80 dark:bg-slate-700/60 px-3 py-2 min-w-0">
+                        <div className="flex items-center gap-1 text-xs uppercase tracking-wide text-stone-500 dark:text-slate-400">
+                          {key === 'scope1' ? t('companies.metricScope1Short') : t('compare.renewable')}
+                          <InfoTooltip content={t(`compare.tooltips.${tooltipKey}`)} />
+                        </div>
+                        <div className="mt-1 numeric-mono text-base font-semibold text-slate-900 dark:text-slate-100 break-all leading-tight">
+                          {val != null ? `${typeof val === 'number' ? val.toLocaleString(locale) : val}` : '—'}
+                          {unit && val != null && <span className="ml-1 text-xs font-normal text-stone-500 dark:text-slate-400">{unit}</span>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </FormCard>
+              )
+            })}
           </div>
 
           <CompareTablePanel
