@@ -15,8 +15,8 @@
     "main": "主导航",
     "openMenu": "打开导航菜单",
     "closeMenu": "关闭导航菜单",
-    "sectionDisclosure": "披露分析",
-    "sectionProject": "项目分析",
+    "sectionDisclosure": "分析员工作流",
+    "sectionProject": "可选工具",
     "saf": "可持续航空燃油"
   },
   "common": {

@@ -134,8 +134,9 @@ function shouldIgnoreFailedRequest(url: string, failure: string) {
       parsed.pathname.startsWith('/node_modules/.vite/deps/') ||
       parsed.pathname.startsWith('/src/') ||
       /\.(js|ts|tsx|css)$/.test(parsed.pathname)
+    const isApiNavigationAbort = isLocalPreview && parsed.pathname.startsWith('/api/')
 
-    return (isLocalPreview && isModuleAsset) || isGoogleFontsStylesheet
+    return (isLocalPreview && (isModuleAsset || isApiNavigationAbort)) || isGoogleFontsStylesheet
   } catch {
     return false
   }

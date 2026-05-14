@@ -1,6 +1,6 @@
+import { lazy, Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { PeerComparisonCard } from '@/components/company-profile/PeerComparisonCard'
 import { EvidenceBadge } from '@/components/EvidenceBadge'
 import { MetricCard } from '@/components/MetricCard'
 import type {
@@ -9,6 +9,12 @@ import type {
   EvidenceAnchor,
 } from '@/lib/types'
 import { asNum, asPct, metricDisclosureLabel } from '@/pages/company-profile/utils'
+
+const PeerComparisonCard = lazy(() =>
+  import('@/components/company-profile/PeerComparisonCard').then((module) => ({
+    default: module.PeerComparisonCard,
+  }))
+)
 
 interface CoreMetricsSectionProps {
   latestMetrics: CompanyESGData
@@ -91,12 +97,20 @@ export function CoreMetricsSection({
         />
       </div>
 
-      <PeerComparisonCard
-        companyReportId={latestCompanyReportId}
-        industryCode={latestPeriod?.industry_code ?? null}
-        reportYear={latestYear}
-        metrics={latestMetrics}
-      />
+      <Suspense
+        fallback={(
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500 shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+            {t('common.loading')}
+          </div>
+        )}
+      >
+        <PeerComparisonCard
+          companyReportId={latestCompanyReportId}
+          industryCode={latestPeriod?.industry_code ?? null}
+          reportYear={latestYear}
+          metrics={latestMetrics}
+        />
+      </Suspense>
     </>
   )
 }

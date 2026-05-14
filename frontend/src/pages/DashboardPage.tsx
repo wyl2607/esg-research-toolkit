@@ -1,7 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getDashboardStats, listCompanies } from '@/lib/api'
-import { SortableMetricList, type MetricItem } from '@/components/SortableMetricList'
 import { QueryStateCard } from '@/components/QueryStateCard'
 import { Badge } from '@/components/ui/badge'
 import { PageContainer } from '@/components/layout/PageContainer'
@@ -13,6 +12,14 @@ import { Button } from '@/components/ui/button'
 import { useTranslation } from 'react-i18next'
 import { ArrowDownUp, ArrowRight, ArrowUpDown } from 'lucide-react'
 import { localizeErrorMessage, isBackendOffline } from '@/lib/error-utils'
+
+import type { MetricItem } from '@/components/SortableMetricList'
+
+const SortableMetricList = lazy(() =>
+  import('@/components/SortableMetricList').then((module) => ({
+    default: module.SortableMetricList,
+  }))
+)
 
 const DashboardHeavyCharts = lazy(() =>
   import('@/components/dashboard/DashboardHeavyCharts').then((module) => ({
@@ -125,31 +132,41 @@ export function DashboardPage() {
         )}
       />
 
-      <SortableMetricList
-        loading={statsLoading}
-        storageKey="dashboard-metric-order"
-        direction="horizontal"
-        items={[
-          {
-            id: 'companies',
-            label: t('dashboard.companiesAnalyzed'),
-            value: stats?.total_companies ?? 0,
-            color: 'default',
-          } satisfies MetricItem,
-          {
-            id: 'taxonomy',
-            label: t('dashboard.avgTaxonomy'),
-            value: `${stats?.avg_taxonomy_aligned ?? 0}%`,
-            color: 'blue',
-          } satisfies MetricItem,
-          {
-            id: 'renewable',
-            label: t('dashboard.avgRenewable'),
-            value: `${stats?.avg_renewable_pct ?? 0}%`,
-            color: 'blue',
-          } satisfies MetricItem,
-        ]}
-      />
+      <Suspense
+        fallback={(
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div className="h-32 rounded-2xl border border-slate-200 bg-white shadow-sm" />
+            <div className="h-32 rounded-2xl border border-slate-200 bg-white shadow-sm" />
+            <div className="h-32 rounded-2xl border border-slate-200 bg-white shadow-sm" />
+          </div>
+        )}
+      >
+        <SortableMetricList
+          loading={statsLoading}
+          storageKey="dashboard-metric-order"
+          direction="horizontal"
+          items={[
+            {
+              id: 'companies',
+              label: t('dashboard.companiesAnalyzed'),
+              value: stats?.total_companies ?? 0,
+              color: 'default',
+            } satisfies MetricItem,
+            {
+              id: 'taxonomy',
+              label: t('dashboard.avgTaxonomy'),
+              value: `${stats?.avg_taxonomy_aligned ?? 0}%`,
+              color: 'blue',
+            } satisfies MetricItem,
+            {
+              id: 'renewable',
+              label: t('dashboard.avgRenewable'),
+              value: `${stats?.avg_renewable_pct ?? 0}%`,
+              color: 'blue',
+            } satisfies MetricItem,
+          ]}
+        />
+      </Suspense>
 
       {backendOffline ? (
         <NoticeBanner tone="info" title={t('dashboard.backendOfflineTitle')}>

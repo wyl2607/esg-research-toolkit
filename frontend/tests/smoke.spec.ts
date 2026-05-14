@@ -65,13 +65,46 @@ test.describe('frontend smoke routes', () => {
           if (!res.ok()) return ['request-failed']
           const body = (await res.json()) as Array<{ id: number }>
           return body.map((row) => row.id)
-        })
+        }, { timeout: 20_000 })
         .toEqual([])
 
+      await page.waitForLoadState('networkidle')
       await page.goto('/companies', { waitUntil: 'networkidle' })
       const searchInput = page.getByRole('textbox').first()
       await searchInput.fill(companyName)
       await expect(page.getByRole('heading', { level: 2, name: companyName })).toBeVisible()
+
+      await expect
+        .poll(async () => {
+          const profileResponse = await request.get(`/api/report/companies/${encodedCompany}/profile`)
+          if (!profileResponse.ok()) return false
+          const profileBody = (await profileResponse.json()) as {
+            evidence_summary?: Array<{ metric?: string; source_url?: string }>
+            latest_sources?: Array<{ source_url?: string | null }>
+          }
+          const hasSource = profileBody.latest_sources?.some(
+            (source) => source.source_url === sourceUrl
+          )
+          const hasReviewEvidence = profileBody.evidence_summary?.some(
+            (entry) =>
+              entry.metric === 'auto_disclosure_review' &&
+              entry.source_url === sourceUrl
+          )
+          return Boolean(hasSource && hasReviewEvidence)
+        }, { timeout: 20_000 })
+        .toBe(true)
+
+      await page.waitForLoadState('networkidle')
+      await page.goto(`/companies/${encodedCompany}`, { waitUntil: 'networkidle' })
+      await expect(page.getByRole('heading', { level: 1, name: companyName })).toBeVisible()
+      await expect(page.getByTestId('profile-provenance-source-summary')).toContainText('1')
+      const sourceDocument = page
+        .locator('[data-testid^="profile-provenance-source-document-"]')
+        .filter({ hasText: sourceUrl })
+        .filter({ has: page.locator('[data-testid$="-evidence-count"]') })
+        .first()
+      await expect(sourceDocument).toBeVisible()
+      await expect(sourceDocument.locator('[data-testid$="-evidence-count"]')).not.toHaveText('0')
 
       await expectNoTrackedBrowserIssues(testInfo, 'pending-disclosures-approve-smoke', issues)
     } finally {
@@ -131,6 +164,7 @@ test.describe('frontend smoke routes', () => {
   })
 
   test('manual case builder form panel keeps core fields interactive', async ({ page }, testInfo) => {
+    test.setTimeout(60_000)
     const issues = trackBrowserIssues(page)
 
     await page.goto('/manual', { waitUntil: 'networkidle' })
@@ -153,5 +187,38 @@ test.describe('frontend smoke routes', () => {
     await expect(saveButton).toBeEnabled()
 
     await expectNoTrackedBrowserIssues(testInfo, 'manual-case-form-panel', issues)
+  })
+
+  test('navigation prioritizes the disclosure analyst workflow before optional tools', async ({
+    page,
+  }, testInfo) => {
+    test.skip(
+      testInfo.project.name !== 'desktop-chrome',
+      'Navigation grouping is viewport-independent and is covered once to keep smoke stable.'
+    )
+    test.setTimeout(60_000)
+    const issues = trackBrowserIssues(page)
+
+    await page.goto('/', { waitUntil: 'networkidle' })
+    const mobileMenuButton = page.getByRole('button', {
+      name: /open navigation menu|navigationsmenü öffnen|打开导航菜单/i,
+    })
+    if (await mobileMenuButton.isVisible()) {
+      await mobileMenuButton.click()
+    }
+
+    const primaryWorkflow = page.getByTestId('primary-workflow-nav')
+    await expect(primaryWorkflow.getByRole('link', { name: /companies|unternehmen|公司列表/i })).toBeVisible()
+    await expect(primaryWorkflow.getByRole('link', { name: /pending disclosures|ausstehende offenlegungen|待审核披露/i })).toBeVisible()
+    await expect(primaryWorkflow.getByRole('link', { name: /compare|vergleich|对比分析/i })).toBeVisible()
+    await expect(primaryWorkflow.getByRole('link', { name: /frameworks|rahmenwerke|多框架/i })).toBeVisible()
+    await expect(primaryWorkflow.getByRole('link', { name: /lcoe|度电成本/i })).toHaveCount(0)
+    await expect(primaryWorkflow.getByRole('link', { name: /saf|可持续航空燃油/i })).toHaveCount(0)
+
+    const optionalTools = page.getByTestId('optional-tools-nav')
+    await expect(optionalTools.getByRole('link', { name: /lcoe|度电成本/i })).toBeVisible()
+    await expect(optionalTools.getByRole('link', { name: /saf|可持续航空燃油/i })).toBeVisible()
+
+    await expectNoTrackedBrowserIssues(testInfo, 'navigation-workflow-priority', issues)
   })
 })

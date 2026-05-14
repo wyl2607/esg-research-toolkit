@@ -35,10 +35,10 @@ export function EvidenceCard({
           latestEvidenceSummary.map((e, i) => (
             <div
               key={`${e.metric ?? 'metric'}-${i}`}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-md border px-3 py-3 text-sm text-slate-700"
+              className="flex min-w-0 flex-wrap items-center justify-between gap-3 rounded-md border px-3 py-3 text-sm text-slate-700"
             >
               <div className="min-w-0">
-                <p className="font-medium text-slate-900">
+                <p className="break-words font-medium text-slate-900 [overflow-wrap:anywhere]">
                   {e.metric ? metricDisclosureLabel(t, e.metric) : t('profile.metricFallback')}
                 </p>
                 <p className="mt-1 truncate text-xs text-slate-500">

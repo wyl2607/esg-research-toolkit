@@ -15,8 +15,8 @@
     "main": "Hauptnavigation",
     "openMenu": "Navigationsmenü öffnen",
     "closeMenu": "Navigationsmenü schließen",
-    "sectionDisclosure": "Offenlegungsanalyse",
-    "sectionProject": "Projektanalyse",
+    "sectionDisclosure": "Analysten-Workflow",
+    "sectionProject": "Optionale Werkzeuge",
     "saf": "SAF Kalkulator"
   },
   "common": {
