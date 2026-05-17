@@ -24,8 +24,8 @@ const knownErrorsPath = path.join(frontendDir, 'health', 'known-errors.json')
 const manifestPath = path.join(frontendDir, 'dist', '.vite', 'manifest.json')
 
 const FRONTEND_PORT = process.env.ESG_FRONTEND_PORT || '4175'
-const BACKEND_PORT = process.env.ESG_API_PORT || '8000'
-const BACKEND_BASE_URL = process.env.ESG_API_BASE_URL || `http://127.0.0.1:${BACKEND_PORT}`
+let BACKEND_PORT = process.env.ESG_API_PORT || '8000'
+let BACKEND_BASE_URL = process.env.ESG_API_BASE_URL || `http://127.0.0.1:${BACKEND_PORT}`
 let APP_URL = process.env.ESG_FRONTEND_URL || `http://127.0.0.1:${FRONTEND_PORT}`
 let API_URL = process.env.ESG_API_URL || `http://127.0.0.1:${BACKEND_PORT}/health`
 const IS_CI = process.argv.includes('--ci') || process.env.CI === 'true'
@@ -605,6 +605,15 @@ async function main() {
     : await pickAvailablePort(FRONTEND_PORT)
   if (runtimeFrontendPort) {
     APP_URL = `http://127.0.0.1:${runtimeFrontendPort}`
+  }
+  const runtimeBackendPort =
+    process.env.ESG_API_BASE_URL || process.env.ESG_API_URL
+      ? null
+      : await pickAvailablePort(process.env.ESG_API_PORT ? BACKEND_PORT : '0')
+  if (runtimeBackendPort) {
+    BACKEND_PORT = runtimeBackendPort
+    BACKEND_BASE_URL = `http://127.0.0.1:${runtimeBackendPort}`
+    process.env.ESG_API_PORT = runtimeBackendPort
   }
   if (!process.env.ESG_API_URL) {
     API_URL = `http://127.0.0.1:${BACKEND_PORT}/health`
