@@ -46,7 +46,8 @@ jobs:
         working-directory: frontend
         env:
           OPENAI_API_KEY: test_key_placeholder
-          DATABASE_URL: "sqlite://"
+          # File-backed SQLite keeps FastAPI startup-created tables visible to request handlers.
+          DATABASE_URL: "sqlite:///${{ runner.temp }}/frontend-health-check.db"
         run: npm run health:check:ci
 
       - name: Attach summary to job

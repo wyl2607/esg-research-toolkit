@@ -78,7 +78,7 @@ export function EvidenceBadge({
       <span
         data-testid={testId}
         className={cn(
-          'inline-flex rounded-full border border-slate-300 bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700',
+          'inline-flex max-w-full rounded-full border border-slate-300 bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700',
           className
         )}
       >
@@ -94,7 +94,7 @@ export function EvidenceBadge({
         type="button"
         data-testid={testId}
         className={cn(
-          'inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-left text-xs font-medium text-indigo-800 transition hover:border-indigo-300 hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500',
+          'inline-flex max-w-full items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-left text-xs font-medium text-indigo-800 transition hover:border-indigo-300 hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500',
           className
         )}
         aria-haspopup="dialog"
@@ -105,7 +105,7 @@ export function EvidenceBadge({
           setOpen(true)
         }}
       >
-        <span className="truncate">{badgeLabel}</span>
+        <span className="min-w-0 truncate">{badgeLabel}</span>
         <ChevronRight size={13} className="shrink-0" />
       </button>
 

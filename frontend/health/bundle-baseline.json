@@ -1,25 +1,25 @@
 {
-  "totalBytes": 1148127,
-  "jsBytes": 1107468,
-  "cssBytes": 40659,
+  "totalBytes": 1342172,
+  "jsBytes": 1282441,
+  "cssBytes": 59731,
   "routes": {
     "dashboard": {
       "id": "dashboard",
       "page": "Dashboard",
       "manifestKey": "src/pages/DashboardPage.tsx",
-      "chunkBytes": 7621,
-      "initialJsBytes": 127781,
-      "asyncJsBytes": 533867,
-      "asyncChunkCount": 7
+      "chunkBytes": 12965,
+      "initialJsBytes": 142319,
+      "asyncJsBytes": 536520,
+      "asyncChunkCount": 8
     },
     "company-profile": {
       "id": "company-profile",
       "page": "Company Profile",
       "manifestKey": "src/pages/CompanyProfilePage.tsx",
-      "chunkBytes": 29463,
-      "initialJsBytes": 148142,
-      "asyncJsBytes": 563868,
-      "asyncChunkCount": 11
+      "chunkBytes": 56027,
+      "initialJsBytes": 374125,
+      "asyncJsBytes": 382871,
+      "asyncChunkCount": 10
     }
   }
 }
