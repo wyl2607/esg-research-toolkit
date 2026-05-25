@@ -607,7 +607,7 @@ async function main() {
     APP_URL = `http://127.0.0.1:${runtimeFrontendPort}`
   }
   const runtimeBackendPort =
-    process.env.ESG_API_BASE_URL || process.env.ESG_API_URL
+    process.env.ESG_API_BASE_URL || process.env.ESG_API_URL || SKIP_SERVER_BOOT
       ? null
       : await pickAvailablePort(process.env.ESG_API_PORT ? BACKEND_PORT : '0')
   if (runtimeBackendPort) {
