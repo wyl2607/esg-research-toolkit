@@ -2,23 +2,12 @@ from __future__ import annotations
 
 from typing import Any, Literal, TypeAlias
 
-from datetime import datetime
-from typing import Annotated
-from pydantic import BaseModel, Field, BeforeValidator
+from pydantic import BaseModel, Field
 
 from core.evidence import Evidence
 from core.normalization.period import NormalizedPeriod
 
 
-
-
-def _coerce_datetime_to_str(v):
-    if isinstance(v, datetime):
-        return v.isoformat()
-    return v
-
-
-DatetimeStr = Annotated[str | None, BeforeValidator(_coerce_datetime_to_str)]
 SourceDocumentType: TypeAlias = Literal[
     "annual_report",
     "sustainability_report",
@@ -30,43 +19,7 @@ SourceDocumentType: TypeAlias = Literal[
 ]
 
 
-
-
-class CompanyNormalizedPeriodSchema(BaseModel):
-    period_id: str
-    label: str
-    type: str
-    source_document_type: str | None = None
-    legacy_report_year: int
-    fiscal_year: int
-    reporting_standard: str
-    period_start: str | None = None
-    period_end: str | None = None
-
-
-class FrameworkMetadataSchema(BaseModel):
-    framework_id: str | None = None
-    framework_name: str | None = None
-    report_year: int | None = None
-    stored_at: str | None = None
-
-
-class CompanySourceDocumentSchema(BaseModel):
-    source_id: str
-    source_document_type: str | None = None
-    reporting_period_label: str | None = None
-    reporting_period_type: str | None = None
-    source_url: str | None = None
-    file_hash: str | None = None
-    pdf_filename: str | None = None
-    downloaded_at: DatetimeStr = None
-    period: CompanyNormalizedPeriodSchema | None = None
-    framework_metadata: list[FrameworkMetadataSchema] = Field(default_factory=list)
-    evidence_anchors: list[dict[str, Any]] = Field(default_factory=list)
-
-
 class CompanyESGData(BaseModel):
-    model_config = {"json_encoders": {"datetime": lambda v: v.isoformat() if v else None}}
     company_name: str
     report_year: int
     reporting_period_label: str | None = None
@@ -88,13 +41,6 @@ class CompanyESGData(BaseModel):
     total_employees: int | None = None
     female_pct: float | None = None
     primary_activities: list[str] = Field(default_factory=list)
-    source_url: str | None = None
-    file_hash: str | None = None
-    pdf_filename: str | None = None
-    downloaded_at: str | None = None
-    period: CompanyNormalizedPeriodSchema | None = None
-    framework_metadata: list[FrameworkMetadataSchema] = Field(default_factory=list)
-    source_documents: list[CompanySourceDocumentSchema] = Field(default_factory=list)
     evidence_summary: list[dict[str, Any]] = Field(default_factory=list)
 
 
@@ -287,7 +233,7 @@ class CompanyProfilePeriodRecord(BaseModel):
     downloaded_at: str | None = None
     evidence_anchors: list[dict[str, Any]] = Field(default_factory=list)
     framework_metadata: list[dict[str, Any]] = Field(default_factory=list)
-    source_documents: list[CompanySourceDocumentSchema] = Field(default_factory=list)
+    source_documents: list[dict[str, Any]] = Field(default_factory=list)
     merged_result: dict[str, Any]
 
 
@@ -623,6 +569,3 @@ class SAFCostResult(BaseModel):
     lifetime_years: int
     currency: str
     reference_fx_to_eur: float
-
-# --- Blueprint additions: optional fields for source document enrichment ---
-CompanyESGData.model_rebuild()
