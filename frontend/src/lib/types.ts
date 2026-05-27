@@ -3686,10 +3686,8 @@ export interface operations {
 export interface EvidenceAnchor {
   metric: string | null
   source: string | null
-  source_doc_id?: string | null
   page: string | number | null
   page_number?: number | null
-  char_range?: [number, number] | number[] | null
   snippet: string | null
   document_short_ref?: string | null
   document_title?: string | null
@@ -3697,7 +3695,7 @@ export interface EvidenceAnchor {
   reporting_period_label?: string | null
   period_label?: string | null
   extraction_method?: string | null
-  confidence?: string | number | null
+  confidence?: string | null
   confidence_score?: number | null
   source_type?: string | null
   source_url?: string | null
@@ -3710,13 +3708,6 @@ export interface CompanyESGData {
   reporting_period_label?: string | null
   reporting_period_type?: string | null
   source_document_type?: string | null
-  source_url?: string | null
-  file_hash?: string | null
-  pdf_filename?: string | null
-  downloaded_at?: string | null
-  period?: CompanyNormalizedPeriod | null
-  framework_metadata?: FrameworkMetadata[]
-  source_documents?: CompanySourceDocument[]
   industry_code?: string | null
   industry_sector?: string | null
   scope1_co2e_tonnes: number | null
@@ -3835,10 +3826,6 @@ export interface CompanyNormalizedPeriod {
   type: string
   source_document_type: string | null
   legacy_report_year: number
-  fiscal_year: number
-  reporting_standard: string
-  period_start: string | null
-  period_end: string | null
 }
 
 export interface CompanySourceDocument {
@@ -3850,8 +3837,6 @@ export interface CompanySourceDocument {
   file_hash: string | null
   pdf_filename: string | null
   downloaded_at: string | null
-  period: CompanyNormalizedPeriod
-  framework_metadata: FrameworkMetadata[]
   evidence_anchors: EvidenceAnchor[]
 }
 
