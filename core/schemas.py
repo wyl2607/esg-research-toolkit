@@ -3,12 +3,22 @@ from __future__ import annotations
 from typing import Any, Literal, TypeAlias
 
 from datetime import datetime
-from pydantic import BaseModel, Field, field_validator
+from typing import Annotated
+from pydantic import BaseModel, Field, BeforeValidator
 
 from core.evidence import Evidence
 from core.normalization.period import NormalizedPeriod
 
 
+
+
+def _coerce_datetime_to_str(v):
+    if isinstance(v, datetime):
+        return v.isoformat()
+    return v
+
+
+DatetimeStr = Annotated[str | None, BeforeValidator(_coerce_datetime_to_str)]
 SourceDocumentType: TypeAlias = Literal[
     "annual_report",
     "sustainability_report",
@@ -49,7 +59,7 @@ class CompanySourceDocumentSchema(BaseModel):
     source_url: str | None = None
     file_hash: str | None = None
     pdf_filename: str | None = None
-    downloaded_at: str | datetime | None = None
+    downloaded_at: DatetimeStr = None
     period: CompanyNormalizedPeriodSchema | None = None
     framework_metadata: list[FrameworkMetadataSchema] = Field(default_factory=list)
     evidence_anchors: list[dict[str, Any]] = Field(default_factory=list)
