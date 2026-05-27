@@ -3850,7 +3850,7 @@ export interface CompanySourceDocument {
   file_hash: string | null
   pdf_filename: string | null
   downloaded_at: string | null
-  period: CompanyNormalizedPeriod
+  period: CompanyNormalizedPeriod | null
   framework_metadata: FrameworkMetadata[]
   evidence_anchors: EvidenceAnchor[]
 }
