@@ -10,6 +10,7 @@ import {
   asDate,
   metricDisclosureLabel,
   prettifyToken,
+  sourceOriginLabel,
   type FrameworkDisplayResult,
 } from '@/pages/company-profile/utils'
 
@@ -51,15 +52,15 @@ export function ProvenanceCard({
         </span>
       )}
     >
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-lg border bg-slate-50 px-4 py-3">
+      <div className="grid min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="min-w-0 rounded-lg border bg-slate-50 px-4 py-3">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
             {t('profile.provenancePeriodLabel')}
           </p>
-          <p className="mt-2 text-sm font-semibold text-slate-900">
+          <p className="mt-2 break-words text-sm font-semibold text-slate-900 [overflow-wrap:anywhere]">
             {latestPeriod.period?.label ?? latestPeriod.reporting_period_label}
           </p>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 break-words text-xs text-slate-500 [overflow-wrap:anywhere]">
             {t('profile.provenancePeriodSummary', {
               type: latestPeriod.period?.type ?? latestPeriod.reporting_period_type ?? '—',
               year: latestPeriod.period?.legacy_report_year ?? latestPeriod.report_year,
@@ -67,37 +68,37 @@ export function ProvenanceCard({
           </p>
         </div>
 
-        <div className="rounded-lg border bg-slate-50 px-4 py-3">
+        <div className="min-w-0 rounded-lg border bg-slate-50 px-4 py-3">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
             {t('profile.provenanceSourcesLabel')}
           </p>
           <p
-            className="mt-2 text-sm font-semibold text-slate-900"
+            className="mt-2 break-words text-sm font-semibold text-slate-900 [overflow-wrap:anywhere]"
             data-testid="profile-provenance-source-summary"
           >
             {t('profile.provenanceSourceSummary', { count: latestSources.length })}
           </p>
           <p
-            className="mt-1 text-xs text-slate-500"
+            className="mt-1 break-words text-xs text-slate-500 [overflow-wrap:anywhere]"
             data-testid="profile-provenance-source-types"
           >
             {[latestSourceTypes, latestSourceOrigin].filter(Boolean).join(' · ') || '—'}
           </p>
         </div>
 
-        <div className="rounded-lg border bg-slate-50 px-4 py-3">
+        <div className="min-w-0 rounded-lg border bg-slate-50 px-4 py-3">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
             {t('profile.provenanceMergeLabel')}
           </p>
           <p
-            className="mt-2 text-sm font-semibold text-slate-900"
+            className="mt-2 break-words text-sm font-semibold text-slate-900 [overflow-wrap:anywhere]"
             data-testid="profile-provenance-merge-summary"
           >
             {t('profile.provenanceMergeSummary', {
               count: mergeSourceCount,
             })}
           </p>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 break-words text-xs text-slate-500 [overflow-wrap:anywhere]">
             {latestMergeCue
               ? t('profile.provenanceMergeMetricCue', {
                   metric: metricDisclosureLabel(t, latestMergeCue.metricKey),
@@ -108,7 +109,7 @@ export function ProvenanceCard({
           </p>
         </div>
 
-        <div className="rounded-lg border bg-slate-50 px-4 py-3">
+        <div className="min-w-0 rounded-lg border bg-slate-50 px-4 py-3">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
             {t('profile.provenanceFrameworkLabel')}
           </p>
@@ -124,7 +125,7 @@ export function ProvenanceCard({
                       version: framework.framework_version ?? '—',
                     })}
                   </p>
-                  <p className="text-xs text-slate-500">
+                  <p className="break-words text-xs text-slate-500 [overflow-wrap:anywhere]">
                     {t('profile.provenanceFrameworkTimestamp', {
                       date: asDate(framework.analyzed_at ?? framework.stored_at ?? null, locale),
                     })}
@@ -142,6 +143,83 @@ export function ProvenanceCard({
           )}
         </div>
       </div>
+
+      {latestSources.length > 0 ? (
+        <div
+          className="mt-4 border-t pt-4"
+          data-testid="profile-provenance-source-documents"
+        >
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            {t('profile.provenanceSourceDocumentsLabel')}
+          </p>
+          <div className="mt-2 grid min-w-0 gap-2">
+            {latestSources.map((source, index) => {
+              const period = source.period ?? latestPeriod.period
+              const sourceType =
+                period?.source_document_type ?? source.source_document_type
+              const sourcePeriodLabel =
+                period?.label ?? source.reporting_period_label ?? latestPeriod.reporting_period_label
+              const sourcePeriodSummary = t('profile.provenancePeriodSummary', {
+                type: period?.type ?? source.reporting_period_type ?? '—',
+                year: period?.legacy_report_year ?? latestPeriod.report_year,
+              })
+              const evidenceCount = source.evidence_anchors?.length ?? 0
+              const frameworkCount = source.framework_metadata?.length ?? 0
+
+              return (
+                <div
+                  key={`${source.source_id}-${index}`}
+                  className="grid min-w-0 gap-3 rounded-md border bg-white px-3 py-2 sm:grid-cols-[minmax(0,1fr)_minmax(7rem,auto)]"
+                  data-testid={`profile-provenance-source-document-${index}`}
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-slate-900">
+                      {prettifyToken(sourceType)}
+                    </p>
+                    <p className="mt-1 break-words text-xs text-slate-500 [overflow-wrap:anywhere]">
+                      {[sourcePeriodLabel, sourcePeriodSummary, sourceOriginLabel(source)]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </p>
+                    {source.source_url ? (
+                      <p
+                        className="mt-1 break-all text-xs text-slate-500"
+                        data-testid={`profile-provenance-source-document-${index}-url`}
+                      >
+                        {source.source_url}
+                      </p>
+                    ) : null}
+                  </div>
+                  <dl className="grid min-w-0 grid-cols-2 gap-3 text-right text-xs">
+                    <div>
+                      <dt className="text-slate-500">
+                        {t('profile.provenanceSourceEvidenceLabel')}
+                      </dt>
+                      <dd
+                        className="font-semibold text-slate-900"
+                        data-testid={`profile-provenance-source-document-${index}-evidence-count`}
+                      >
+                        {evidenceCount}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-slate-500">
+                        {t('profile.provenanceSourceFrameworkLabel')}
+                      </dt>
+                      <dd
+                        className="font-semibold text-slate-900"
+                        data-testid={`profile-provenance-source-document-${index}-framework-count`}
+                      >
+                        {frameworkCount}
+                      </dd>
+                    </div>
+                  </dl>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      ) : null}
     </Panel>
   )
 }

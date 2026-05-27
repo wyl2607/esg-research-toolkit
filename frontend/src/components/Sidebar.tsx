@@ -28,16 +28,16 @@ export function Sidebar({ id, className, onNavigate }: SidebarProps) {
 
   const disclosureLinks = [
     { to: '/', label: t('nav.dashboard'), icon: LayoutDashboard },
+    { to: '/companies', label: t('nav.companies'), icon: Building2 },
     { to: '/upload', label: t('nav.upload'), icon: Upload },
     { to: '/disclosures', label: t('nav.pendingDisclosures'), icon: ClipboardList },
-    { to: '/companies', label: t('nav.companies'), icon: Building2 },
     { to: '/compare', label: t('nav.compare'), icon: GitCompare },
-    { to: '/benchmarks', label: t('nav.benchmarks'), icon: BarChart3 },
     { to: '/frameworks', label: t('nav.frameworks'), icon: Globe },
     { to: '/taxonomy', label: t('nav.taxonomy'), icon: Tag },
   ]
 
   const projectLinks = [
+    { to: '/benchmarks', label: t('nav.benchmarks'), icon: BarChart3 },
     { to: '/manual', label: t('nav.manual'), icon: FilePenLine },
     { to: '/lcoe', label: t('nav.lcoe'), icon: Zap },
     { to: '/saf', label: t('nav.saf', 'SAF Calculator'), icon: Plane },
@@ -73,7 +73,7 @@ export function Sidebar({ id, className, onNavigate }: SidebarProps) {
           </div>
         </div>
         <nav aria-label={t('nav.main')} className="flex-1 space-y-4 px-3 py-4">
-          <div className="space-y-1">
+          <div className="space-y-1" data-testid="primary-workflow-nav">
             <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500 dark:text-slate-400">
               {t('nav.sectionDisclosure')}
             </p>
@@ -97,7 +97,7 @@ export function Sidebar({ id, className, onNavigate }: SidebarProps) {
               </NavLink>
             ))}
           </div>
-          <div className="space-y-1">
+          <div className="space-y-1" data-testid="optional-tools-nav">
             <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500 dark:text-slate-400">
               {t('nav.sectionProject')}
             </p>

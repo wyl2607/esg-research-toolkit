@@ -15,8 +15,8 @@
     "main": "Hauptnavigation",
     "openMenu": "Navigationsmenü öffnen",
     "closeMenu": "Navigationsmenü schließen",
-    "sectionDisclosure": "Offenlegungsanalyse",
-    "sectionProject": "Projektanalyse",
+    "sectionDisclosure": "Analysten-Workflow",
+    "sectionProject": "Optionale Werkzeuge",
     "saf": "SAF Kalkulator"
   },
   "common": {
@@ -390,6 +390,9 @@
     "bestLabel": "Bester",
     "worstLabel": "Schlechtester",
     "scope1Intensity": "Scope 1 / Mitarbeiter",
+    "sourceContextLabel": "Quellenkontext",
+    "evidenceCountLabel": "Evidenzanker",
+    "tableRegionLabel": "Vergleichstabelle mit Kennzahlen",
     "tooltips": {
       "scope1": "Scope 1 — Direkte Treibhausgasemissionen aus Quellen, die das Unternehmen besitzt oder kontrolliert (z. B. Verbrennungsanlagen, Firmenfahrzeuge). Niedriger ist besser.",
       "scope2": "Scope 2 — Indirekte Emissionen aus dem Bezug von Strom, Wärme oder Dampf. Eine Reduzierung bedeutet meist den Umstieg auf erneuerbare Energien. Niedriger ist besser.",
@@ -432,6 +435,7 @@
     "empty": "Für diese Branche liegen noch keine Benchmark-Daten vor. Auf der Seite Branchenbenchmarks neu berechnen.",
     "disclaimer": "Die Position wird nur berechnet, wenn Unternehmens- und Benchmark-Jahr exakt übereinstimmen. Buckets mit Stichprobe < 5 sind nur Richtwerte.",
     "yearMismatch": "Für {{companyYear}} gibt es kein exaktes Benchmark-Jahr. Verfügbare Benchmark-Jahre: {{benchmarkYears}}. Der Vergleich wird erst angezeigt, wenn dasselbe Jahr vorliegt.",
+    "tableRegionLabel": "Peer-Vergleichstabelle",
     "col": {
       "metric": "Metrik",
       "company": "Unternehmen",
@@ -537,6 +541,9 @@
     "provenanceFrameworkVersion": "{{framework}} · v{{version}}",
     "provenanceFrameworkTimestamp": "Erfasst am {{date}}",
     "provenanceFrameworkMore": "+{{count}} weitere Framework-Läufe",
+    "provenanceSourceDocumentsLabel": "Quelldokument-Details",
+    "provenanceSourceEvidenceLabel": "Evidenz",
+    "provenanceSourceFrameworkLabel": "Frameworks",
     "radarTitle": "Radar der Framework-Scores",
     "radarLegend": "Das Radar vergleicht den aktuellen Gesamtscore je Framework",
     "trendTitle": "Historischer Trend",

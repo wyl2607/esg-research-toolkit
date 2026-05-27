@@ -15,8 +15,8 @@
     "main": "主导航",
     "openMenu": "打开导航菜单",
     "closeMenu": "关闭导航菜单",
-    "sectionDisclosure": "披露分析",
-    "sectionProject": "项目分析",
+    "sectionDisclosure": "分析员工作流",
+    "sectionProject": "可选工具",
     "saf": "可持续航空燃油"
   },
   "common": {
@@ -390,6 +390,9 @@
     "bestLabel": "最优",
     "worstLabel": "最差",
     "scope1Intensity": "范围1 / 员工",
+    "sourceContextLabel": "来源上下文",
+    "evidenceCountLabel": "证据锚点",
+    "tableRegionLabel": "公司对比指标表",
     "tooltips": {
       "scope1": "范围1（Scope 1）— 企业直接拥有或控制的排放源产生的温室气体（如锅炉燃烧、公司车辆）。数值越低越好。",
       "scope2": "范围2（Scope 2）— 购买电力、热力或蒸汽产生的间接排放。减少此项通常意味着使用更多可再生能源。数值越低越好。",
@@ -432,6 +435,7 @@
     "empty": "该行业暂无基准数据。请到“行业基准”页面重新计算。",
     "disclaimer": "只有公司年份与基准年份完全一致时才会计算位置。样本量 < 5 的分组仅作参考。",
     "yearMismatch": "没有与 {{companyYear}} 完全匹配的基准年份。可用的基准年份：{{benchmarkYears}}。只有存在相同年份时才会显示对比。",
+    "tableRegionLabel": "同业对比表格",
     "col": {
       "metric": "指标",
       "company": "公司",
@@ -537,6 +541,9 @@
     "provenanceFrameworkVersion": "{{framework}} · v{{version}}",
     "provenanceFrameworkTimestamp": "记录于 {{date}}",
     "provenanceFrameworkMore": "+{{count}} 个更多框架运行记录",
+    "provenanceSourceDocumentsLabel": "来源文档明细",
+    "provenanceSourceEvidenceLabel": "证据",
+    "provenanceSourceFrameworkLabel": "框架",
     "radarTitle": "框架评分雷达图",
     "radarLegend": "雷达图展示各框架当前综合得分",
     "trendTitle": "历史趋势",

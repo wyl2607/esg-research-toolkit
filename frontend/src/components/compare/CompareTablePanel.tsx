@@ -4,6 +4,7 @@ import { InfoTooltip } from '@/components/InfoTooltip'
 import { Panel } from '@/components/layout/Panel'
 import type { CompanyESGData } from '@/lib/types'
 import { cn } from '@/lib/utils'
+import { compareSourceContext } from '@/pages/compare/utils'
 
 type ViewMode = 'absolute' | 'intensity' | 'rank'
 
@@ -186,20 +187,30 @@ export function CompareTablePanel({
 
   return (
     <Panel title={t('compare.tableTitle')} className="overflow-hidden">
-      <div className="overflow-x-auto">
+      <div
+        aria-label={t('compare.tableRegionLabel')}
+        className="overflow-x-auto"
+        role="region"
+        tabIndex={0}
+      >
         <table className="w-full text-sm">
           <thead className="editorial-table-header">
             <tr>
               <th className="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-300 min-w-[160px]">
                 {t('common.summary')}
               </th>
-              {selectedCompanies.map((c) => (
+              {selectedCompanies.map((c, index) => (
                 <th
                   key={`${c.company_name}${c.report_year}`}
                   className="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-300 min-w-[140px]"
                 >
                   <div className="break-words leading-snug">{c.company_name}</div>
-                  <div className="text-xs font-normal text-stone-400 dark:text-slate-500">{c.report_year}</div>
+                  <div
+                    className="text-xs font-normal text-stone-400 dark:text-slate-500"
+                    data-testid={`compare-table-source-context-${index}`}
+                  >
+                    {compareSourceContext(c)}
+                  </div>
                 </th>
               ))}
             </tr>

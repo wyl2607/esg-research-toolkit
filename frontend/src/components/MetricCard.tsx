@@ -30,7 +30,7 @@ export function MetricCard({
   const titleId = `metric-title-${label.replace(/\s+/g, '-').toLowerCase()}`
 
   return (
-    <Card className="surface-card h-full" role="region" aria-labelledby={titleId}>
+    <Card className="surface-card h-full min-w-0" role="region" aria-labelledby={titleId}>
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-3">
           <CardTitle 
@@ -44,12 +44,12 @@ export function MetricCard({
       </CardHeader>
       <CardContent>
         <div
-          className={`numeric-mono text-[1.85rem] font-semibold leading-none ${valueColor}`}
+          className={`numeric-mono break-words text-[1.85rem] font-semibold leading-none ${valueColor}`}
         >
           {value}
         </div>
         {sub && <p className="mt-2 text-xs leading-5 text-slate-500">{sub}</p>}
-        {footer ? <div className="mt-3">{footer}</div> : null}
+        {footer ? <div className="mt-3 min-w-0 max-w-full">{footer}</div> : null}
       </CardContent>
     </Card>
   )

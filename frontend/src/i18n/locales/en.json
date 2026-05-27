@@ -15,8 +15,8 @@
     "main": "Main navigation",
     "openMenu": "Open navigation menu",
     "closeMenu": "Close navigation menu",
-    "sectionDisclosure": "Disclosure Analysis",
-    "sectionProject": "Project Analysis",
+    "sectionDisclosure": "Analyst Workflow",
+    "sectionProject": "Optional Tools",
     "saf": "SAF Calculator"
   },
   "common": {
@@ -390,6 +390,9 @@
     "bestLabel": "Best",
     "worstLabel": "Worst",
     "scope1Intensity": "Scope 1 / Employee",
+    "sourceContextLabel": "Source context",
+    "evidenceCountLabel": "Evidence anchors",
+    "tableRegionLabel": "Comparison metrics table",
     "tooltips": {
       "scope1": "Scope 1 — Direct greenhouse gas emissions from sources owned or controlled by the company (e.g. fuel combustion in boilers, company vehicles). Lower is better.",
       "scope2": "Scope 2 — Indirect emissions from purchased electricity, heat, or steam. Reducing this typically means switching to renewable energy. Lower is better.",
@@ -432,6 +435,7 @@
     "empty": "No benchmark data available for this industry yet. Use the Industry Benchmarks page to recompute.",
     "disclaimer": "Position is computed only when the company year and benchmark year match exactly. Buckets with sample size < 5 are directional only.",
     "yearMismatch": "No exact benchmark year matches {{companyYear}}. Available benchmark years: {{benchmarkYears}}. No comparison is shown until the same year exists.",
+    "tableRegionLabel": "Peer comparison table",
     "col": {
       "metric": "Metric",
       "company": "Company",
@@ -537,6 +541,9 @@
     "provenanceFrameworkVersion": "{{framework}} · v{{version}}",
     "provenanceFrameworkTimestamp": "Captured {{date}}",
     "provenanceFrameworkMore": "+{{count}} more framework runs",
+    "provenanceSourceDocumentsLabel": "Source document details",
+    "provenanceSourceEvidenceLabel": "Evidence",
+    "provenanceSourceFrameworkLabel": "Frameworks",
     "radarTitle": "Framework Score Radar",
     "radarLegend": "Radar compares current overall score by framework",
     "trendTitle": "Historical Trend",

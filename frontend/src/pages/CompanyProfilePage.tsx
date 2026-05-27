@@ -1,17 +1,10 @@
-import { useMemo } from 'react'
+import { lazy, Suspense, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useParams } from 'react-router-dom'
 
-import { CoreMetricsSection } from '@/components/company-profile/CoreMetricsSection'
-import { DataQualityCard } from '@/components/company-profile/DataQualityCard'
-import { FrameworkResultsCard } from '@/components/company-profile/FrameworkResultsCard'
 import { IdentityCard } from '@/components/company-profile/IdentityCard'
-import { NarrativeCard } from '@/components/company-profile/NarrativeCard'
-import { PeriodHistoryCard } from '@/components/company-profile/PeriodHistoryCard'
 import { ProfileHeroSection } from '@/components/company-profile/ProfileHeroSection'
 import { ProvenanceCard } from '@/components/company-profile/ProvenanceCard'
-import { TrendChartsSection } from '@/components/company-profile/TrendChartsSection'
-import { YoyDeltaCard } from '@/components/company-profile/YoyDeltaCard'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { QueryStateCard } from '@/components/QueryStateCard'
 import { getCompanyProfile } from '@/lib/api'
@@ -42,6 +35,42 @@ import {
   sourceOriginLabel,
   type FrameworkDisplayResult,
 } from './company-profile/utils'
+
+const CoreMetricsSection = lazy(() =>
+  import('@/components/company-profile/CoreMetricsSection').then((module) => ({
+    default: module.CoreMetricsSection,
+  }))
+)
+const DataQualityCard = lazy(() =>
+  import('@/components/company-profile/DataQualityCard').then((module) => ({
+    default: module.DataQualityCard,
+  }))
+)
+const TrendChartsSection = lazy(() =>
+  import('@/components/company-profile/TrendChartsSection').then((module) => ({
+    default: module.TrendChartsSection,
+  }))
+)
+const YoyDeltaCard = lazy(() =>
+  import('@/components/company-profile/YoyDeltaCard').then((module) => ({
+    default: module.YoyDeltaCard,
+  }))
+)
+const FrameworkResultsCard = lazy(() =>
+  import('@/components/company-profile/FrameworkResultsCard').then((module) => ({
+    default: module.FrameworkResultsCard,
+  }))
+)
+const PeriodHistoryCard = lazy(() =>
+  import('@/components/company-profile/PeriodHistoryCard').then((module) => ({
+    default: module.PeriodHistoryCard,
+  }))
+)
+const NarrativeCard = lazy(() =>
+  import('@/components/company-profile/NarrativeCard').then((module) => ({
+    default: module.NarrativeCard,
+  }))
+)
 
 export function CompanyProfilePage() {
   const { t, i18n } = useTranslation()
@@ -387,6 +416,11 @@ export function CompanyProfilePage() {
     amber: 'warning' as const,
     indigo: 'info' as const,
   }[heroInsight.tone]
+  const profileSectionFallback = (
+    <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500 shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+      {t('common.loading')}
+    </div>
+  )
 
   return (
     <PageContainer>
@@ -425,57 +459,71 @@ export function CompanyProfilePage() {
         locale={locale}
       />
 
-      <CoreMetricsSection
-        latestMetrics={profile.latest_metrics}
-        locale={locale}
-        evidenceByMetric={evidenceByMetric}
-        latestPeriod={profile.latest_period}
-        latestCompanyReportId={latestCompanyReportId}
-        latestYear={profile.latest_year}
-      />
+      <Suspense fallback={profileSectionFallback}>
+        <CoreMetricsSection
+          latestMetrics={profile.latest_metrics}
+          locale={locale}
+          evidenceByMetric={evidenceByMetric}
+          latestPeriod={profile.latest_period}
+          latestCompanyReportId={latestCompanyReportId}
+          latestYear={profile.latest_year}
+        />
+      </Suspense>
 
-      <DataQualityCard
-        dataQualitySummary={dataQualitySummary}
-        readinessLabel={readinessLabel}
-        readinessToneClass={readinessToneClass}
-        presentDisclosureLabels={presentDisclosureLabels}
-        missingDisclosureLabels={missingDisclosureLabels}
-        evidenceByMetric={evidenceByMetric}
-        latestPeriod={profile.latest_period}
-      />
+      <Suspense fallback={profileSectionFallback}>
+        <DataQualityCard
+          dataQualitySummary={dataQualitySummary}
+          readinessLabel={readinessLabel}
+          readinessToneClass={readinessToneClass}
+          presentDisclosureLabels={presentDisclosureLabels}
+          missingDisclosureLabels={missingDisclosureLabels}
+          evidenceByMetric={evidenceByMetric}
+          latestPeriod={profile.latest_period}
+        />
+      </Suspense>
 
-      <TrendChartsSection
-        decodedName={decodedName}
-        isLoading={isLoading}
-        trendData={trendData}
-        frameworkRadarData={frameworkRadarData}
-      />
+      <Suspense fallback={profileSectionFallback}>
+        <TrendChartsSection
+          decodedName={decodedName}
+          isLoading={isLoading}
+          trendData={trendData}
+          frameworkRadarData={frameworkRadarData}
+        />
+      </Suspense>
 
-      <YoyDeltaCard
-        yoyDeltaCard={yoyDeltaCard}
-        yoySummary={yoySummary}
-      />
+      <Suspense fallback={profileSectionFallback}>
+        <YoyDeltaCard
+          yoyDeltaCard={yoyDeltaCard}
+          yoySummary={yoySummary}
+        />
+      </Suspense>
 
-      <FrameworkResultsCard
-        frameworkScores={frameworkScores}
-        frameworkMetaMap={frameworkMetaMap}
-        locale={locale}
-      />
+      <Suspense fallback={profileSectionFallback}>
+        <FrameworkResultsCard
+          frameworkScores={frameworkScores}
+          frameworkMetaMap={frameworkMetaMap}
+          locale={locale}
+        />
+      </Suspense>
 
-      <PeriodHistoryCard
-        periods={profile.periods}
-        latestEvidenceSummary={latestEvidenceSummary}
-        fallbackFramework={profile.latest_period.source_document_type}
-        fallbackPeriodLabel={profile.latest_period.reporting_period_label}
-      />
+      <Suspense fallback={profileSectionFallback}>
+        <PeriodHistoryCard
+          periods={profile.periods}
+          latestEvidenceSummary={latestEvidenceSummary}
+          fallbackFramework={profile.latest_period.source_document_type}
+          fallbackPeriodLabel={profile.latest_period.reporting_period_label}
+        />
+      </Suspense>
 
-      <NarrativeCard
-        narrativeSummary={narrativeSummary}
-        improvedMetricLabels={improvedMetricLabels}
-        weakenedMetricLabels={weakenedMetricLabels}
-        strengthMetricLabels={strengthMetricLabels}
-        gapMetricLabels={gapMetricLabels}
-      />
+      <Suspense fallback={profileSectionFallback}>
+        <NarrativeCard
+          narrativeSummary={narrativeSummary}
+          improvedMetricLabels={improvedMetricLabels}
+          weakenedMetricLabels={weakenedMetricLabels}
+          strengthMetricLabels={strengthMetricLabels}
+          gapMetricLabels={gapMetricLabels}
+        />
+      </Suspense>
     </PageContainer>
   )
 }

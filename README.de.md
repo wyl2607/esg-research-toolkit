@@ -2,25 +2,41 @@
 
 🌐 [English](README.md) · [中文](README.zh.md) · [Deutsch](README.de.md)
 
-> Open-Source-Plattform zur Analyse von Unternehmens-ESG-Berichten, für EU-Taxonomie-Compliance-Scoring,
-> Multi-Framework-Vergleiche (EU-Taxonomie 2020 · China CSRC 2023 · EU CSRD/ESRS)
-> sowie techno-ökonomische Analysen erneuerbarer Energien (LCOE/NPV/IRR).
+> Evidenzgestützte Analysten-Workbench für öffentliche
+> Nachhaltigkeits-Disclosures: offizielle Berichte ingestieren, extrahierte
+> Evidenz prüfen, Unternehmenshistorien über Perioden verfolgen,
+> Framework-Interpretationen vergleichen und ein belastbares Analysepaket exportieren.
 
 ![Python](https://img.shields.io/badge/Python-3.12%2B-blue) ![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688) ![React](https://img.shields.io/badge/React-19%2B-61DAFB) ![License](https://img.shields.io/badge/License-MIT-green)
 
 ## ✨ Funktionen
 
-- 📄 ESG-Berichte werden aus Uploads geparst und als strukturierte Nachhaltigkeitsdaten extrahiert.
-- 🧮 Die EU-Taxonomie-Ausrichtung für Umsatz, CapEx und OpEx wird regelbasiert berechnet.
-- 🧠 Multi-Framework-Scoring über EU-Taxonomie 2020, China CSRC 2023 und EU CSRD/ESRS.
-- ⚡ Compliance-Lückenanalyse mit konkreten, priorisierbaren Handlungsempfehlungen.
-- 📊 Export von Unternehmensdatensätzen als CSV/XLSX sowie PDF-Report-Erstellung.
-- 🔬 Berechnung von LCOE und Sensitivitätsanalysen für Energieprojekte.
-- 🖥️ React-Frontend für Upload, Dashboard, Vergleich und Historie.
+- 📄 Jährliche Nachhaltigkeits- und Unternehmensberichte aus öffentlichen Disclosures parsen.
 - 🎯 **Lücken-bewusster Unternehmen+Jahr-Picker**: zeigt bereits importierte vs. fehlende Berichtsjahre und springt per Deep-Link direkt in den Upload- bzw. Auto-Fetch-Workflow.
 - 📥 **Pending-Disclosures-Workbench**: Analyst:innen-Review für automatisch geholte Berichte aus offiziellen Quellen (Unternehmensseite, SEC EDGAR, HKEX, CSRC/CNINFO) mit feldweiser Freigabe und Lane-Zuverlässigkeits-Ranking.
+- 🔎 Quellendokument-Kontext, Periodenmetadaten und Evidenzanker für wichtige Kennzahlen bewahren.
+- 🧠 Multi-Framework-Scoring über EU-Taxonomie, China CSRC und EU CSRD/ESRS-nahe Oberflächen mit versionsbewusstem Kontext.
+- 📈 Unternehmen und Perioden mit normalisierten Quellen-/Perioden-/Evidenzzusammenfassungen vergleichen.
+- 📊 Unternehmensdatensätze als CSV/XLSX exportieren und PDF-Berichte für externe Prüfung erzeugen.
+- 🔬 LCOE, SAF und erneuerbare Energieökonomie als optionale Analysewerkzeuge beibehalten, nicht als ersten Demo-Pfad.
+- 🖥️ React-Frontend für Unternehmenshistorie, Disclosure-Review, Vergleich, Framework-Analyse und Export-Workflows.
 - 💱 Regionsabhängige LCOE-Defaults (EUR / USD) inkl. EIA-Referenzpreisen für die englische Oberfläche.
 - 🐳 Docker-basierter Start mit persistenter Speicherung in `data/` und `reports/`.
+
+## Analyst Workflow
+
+Der primäre Workflow ist bewusst eng und wiederholbar:
+
+```text
+Unternehmen mit fehlendem Jahr
+  -> Upload oder Auto Fetch
+  -> Pending-Disclosures-Review
+  -> Company-Profile-Trends und Evidenz
+  -> Framework Compare
+  -> CSV/XLSX/PDF-Lieferpaket
+```
+
+Das erste starke MVP soll zeigen, dass Analyst:innen erklären können, wie sich Offenlegungsqualität und regulatorische Bereitschaft eines Unternehmens über die Zeit verändert haben, wobei jede wichtige Aussage auf eine Berichtsperiode und ein Quellendokument zurückführbar bleibt. Werkzeuge für erneuerbare Energieökonomie bleiben für tiefere Projektanalysen verfügbar, sind aber nicht die Standard-Produktnarrative.
 
 ## 🚀 Schnellstart
 
@@ -148,7 +164,7 @@ React Frontend (Vite)
  SQLite (data/esg_toolkit.db) + File Reports (reports/)
 ```
 
-Das Frontend steuert Upload-, Bewertungs- und Auswertungsabläufe. FastAPI stellt die Rechen- und Reporting-Endpunkte bereit. Persistenz erfolgt über SQLite, Artefakte liegen im Verzeichnis `reports/`.
+Das Frontend steuert den Analysten-Workflow: Unternehmen/Jahr-Abdeckung, Upload, Review offizieller Disclosures, Company-Profile-Trends, Framework-Vergleich und Exporte. FastAPI stellt die Ingestion-, Scoring-, Review- und Reporting-APIs bereit. Persistenz erfolgt über SQLite, Artefakte liegen im Verzeichnis `reports/`.
 
 ## 🌍 Multi-Framework ESG
 
@@ -166,14 +182,16 @@ CSRD/ESRS erweitert die Berichtsanforderungen über Umwelt-, Sozial- und Governa
 
 ## 📊 Frontend-Seiten
 
-- `DashboardPage.tsx`: KPI-Überblick und zusammenfassende Ergebnisdarstellung.
+- `DashboardPage.tsx`: KPI-Übersicht mit High-Level-Scoring und Trendblöcken.
 - `UploadPage.tsx`: Upload-Prozess für Einzel- und Batch-Dateien (erkennt `?company=&year=` Deep-Links aus dem Gap-Picker).
 - `PendingDisclosuresPage.tsx`: Analystenfreigabe für automatisch geholte offizielle Disclosures (`/disclosures`).
+- `CompanyProfilePage.tsx`: Multi-Perioden-Unternehmensprofil mit normalisiertem Perioden-, Quellendokument-, Framework- und Evidenzkontext.
+- `ComparePage.tsx`: Nebeneinandervergleich von Unternehmen mit normalisierten Quellen-/Perioden-/Evidenzzusammenfassungen.
+- `FrameworksPage.tsx`: Framework-spezifisches Scoring und Standardsicht.
 - `TaxonomyPage.tsx`: Arbeitsfläche für EU-Taxonomie-Scoring und Berichte.
-- `FrameworksPage.tsx`: Framework-orientierte Bewertung und Standardsicht.
-- `ComparePage.tsx`: Nebeneinandervergleich unterschiedlicher Framework-Ergebnisse.
-- `LcoePage.tsx`: Berechnung von LCOE und Sensitivitätsvarianten.
-- `CompaniesPage.tsx`: Historie, Suche und Export gespeicherter Unternehmensdaten.
+- `LcoePage.tsx`: Optionaler techno-ökonomischer Rechner mit LCOE- und Sensitivitätsausgaben.
+- `SafPage.tsx`: Optionaler Kostenrechner für Sustainable Aviation Fuel.
+- `CompaniesPage.tsx`: Gespeicherte Unternehmensdatensätze, Suche und Exportaktionen.
 
 ## 🔧 Konfiguration
 

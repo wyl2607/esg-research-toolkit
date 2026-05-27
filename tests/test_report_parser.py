@@ -2335,6 +2335,95 @@ def test_evidence_anchors_stay_stable_for_empty_and_legacy_records(
     assert len(profile["framework_scores"]) == len(_SCORERS)
 
 
+def test_profile_history_contract_stable_period_and_evidence_shapes_for_legacy_rows(
+    db_session: Session,
+    make_company_data,
+) -> None:
+    anchored = save_report(
+        db_session,
+        make_company_data(company_name="Contract Corp", report_year=2023, renewable_energy_pct=30.0),
+        source_url="https://example.com/contract-2023.pdf",
+        reporting_period_label=None,
+        reporting_period_type=None,
+        source_document_type=None,
+        evidence_summary=[{"metric": "renewable_energy_pct", "source": "legacy doc"}],
+    )
+    legacy = save_report(
+        db_session,
+        make_company_data(company_name="Contract Corp", report_year=2024, renewable_energy_pct=35.0),
+        source_url="https://example.com/contract-2024.pdf",
+        reporting_period_label=None,
+        reporting_period_type=None,
+        source_document_type=None,
+        evidence_summary=[{"metric": "renewable_energy_pct", "source": "legacy doc"}],
+    )
+    # Simulate legacy rows with missing period fields and one malformed anchor payload.
+    anchored.reporting_period_label = None
+    anchored.reporting_period_type = None
+    anchored.source_document_type = None
+    legacy.reporting_period_label = None
+    legacy.reporting_period_type = None
+    legacy.source_document_type = None
+    legacy.evidence_summary = "{legacy-bad-json}"
+    db_session.commit()
+    db_session.refresh(anchored)
+    db_session.refresh(legacy)
+
+    profile = get_company_profile(company_name="Contract Corp", db=db_session)
+    history = get_company_history(company_name="Contract Corp", db=db_session)
+
+    expected_period_keys = {
+        "period_id",
+        "label",
+        "type",
+        "source_document_type",
+        "legacy_report_year",
+        "fiscal_year",
+        "reporting_standard",
+        "period_start",
+        "period_end",
+    }
+    assert set(profile["latest_period"]["period"].keys()) == expected_period_keys
+    assert set(profile["periods"][0]["period"].keys()) == expected_period_keys
+    assert set(history["periods"][0]["period"].keys()) == expected_period_keys
+    assert profile["latest_period"]["period"]["legacy_report_year"] == 2024
+    assert profile["latest_period"]["reporting_period_type"] == "annual"
+    assert profile["latest_period"]["source_document_type"] == "sustainability_report"
+
+    assert isinstance(profile["framework_metadata"], list)
+    assert isinstance(profile["latest_period"]["framework_metadata"], list)
+    assert isinstance(profile["periods"][0]["framework_metadata"], list)
+    assert isinstance(history["framework_metadata"], list)
+    assert isinstance(history["periods"][0]["framework_metadata"], list)
+
+    anchored_source_doc = history["periods"][0]["source_documents"][0]
+    legacy_source_doc = history["periods"][1]["source_documents"][0]
+    assert isinstance(anchored_source_doc.get("framework_metadata"), list)
+    assert isinstance(anchored_source_doc.get("period"), dict)
+    assert anchored_source_doc["period"]["legacy_report_year"] == 2023
+    assert isinstance(legacy_source_doc.get("framework_metadata"), list)
+    assert isinstance(legacy_source_doc.get("period"), dict)
+    assert legacy_source_doc["period"]["legacy_report_year"] == 2024
+
+    evidence_keys = {
+        "source_doc_id",
+        "page",
+        "char_range",
+        "snippet",
+        "extraction_method",
+        "confidence",
+    }
+    for anchor in profile["evidence_anchors"]:
+        assert evidence_keys.issubset(set(anchor.keys()))
+    for anchor in history["periods"][0]["evidence_anchors"]:
+        assert evidence_keys.issubset(set(anchor.keys()))
+    assert anchored_source_doc["evidence_anchors"]
+    for anchor in anchored_source_doc["evidence_anchors"]:
+        assert evidence_keys.issubset(set(anchor.keys()))
+    for anchor in legacy_source_doc["evidence_anchors"]:
+        assert evidence_keys.issubset(set(anchor.keys()))
+
+
 def test_get_dashboard_stats_returns_empty_payload_for_no_records(db_session: Session) -> None:
     payload = get_dashboard_stats(db=db_session)
     assert payload["total_companies"] == 0

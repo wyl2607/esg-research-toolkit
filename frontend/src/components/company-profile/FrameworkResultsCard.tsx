@@ -49,15 +49,15 @@ export function FrameworkResultsCard({
                   className="rounded-md border p-3 open:bg-slate-50"
                 >
                   <summary className="cursor-pointer list-none">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="font-medium text-slate-900">{framework.framework}</p>
+                    <div className="flex min-w-0 items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate font-medium text-slate-900">{framework.framework}</p>
                         <p className="text-xs text-slate-500">
                           {t('common.score')}: {(framework.total_score * 100).toFixed(1)}% · {t('profile.detailCoverage')}:{' '}
                           {framework.coverage_pct.toFixed(1)}%
                         </p>
                       </div>
-                      <Badge>{framework.grade}</Badge>
+                      <Badge className="shrink-0">{framework.grade}</Badge>
                     </div>
                   </summary>
                   <div className="mt-3 space-y-3">

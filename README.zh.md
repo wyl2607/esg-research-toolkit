@@ -2,25 +2,40 @@
 
 🌐 [English](README.md) · [中文](README.zh.md) · [Deutsch](README.de.md)
 
-> 面向企业 ESG 报告分析的开源平台，支持 EU Taxonomy 合规评分、
-> 多框架对比（EU Taxonomy 2020 · 中国证监会 CSRC 2023 · 欧盟 CSRD/ESRS），
-> 以及可再生能源技术经济分析（LCOE/NPV/IRR）。
+> 面向公开企业可持续发展披露的证据型分析师工作台：
+> 导入官方报告，审核抽取证据，按期间追踪公司历史，
+> 对比不同框架解释，并导出可辩护的分析包。
 
 ![Python](https://img.shields.io/badge/Python-3.12%2B-blue) ![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688) ![React](https://img.shields.io/badge/React-19%2B-61DAFB) ![License](https://img.shields.io/badge/License-MIT-green)
 
 ## ✨ 功能特性
 
-- 📄 解析上传的 ESG 报告，并抽取结构化可持续发展指标。
-- 🧮 基于后端规则计算 EU Taxonomy 的收入、CapEx、OpEx 对齐度。
-- 🧠 在 EU Taxonomy 2020、中国证监会 CSRC 2023、欧盟 CSRD/ESRS 之间做多框架评分对比。
-- ⚡ 输出合规缺口分析，并给出可执行改进建议。
-- 📊 支持公司记录导出为 CSV/XLSX，并生成 PDF 报告。
-- 🔬 计算 LCOE，并执行新能源项目敏感性分析。
-- 🖥️ 提供 React 前端，覆盖上传、看板、对比、公司记录等核心流程。
+- 📄 解析上传的年度可持续发展报告与公司披露，并抽取结构化指标。
 - 🎯 **公司+年份缺口选择器**：高亮已导入/缺失年份，点击缺失年份直接深链到上传 / 自动抓取流程。
 - 📥 **Pending Disclosures 审核台**：对官方来源（公司官网、SEC EDGAR、HKEX、中国证监会/CNINFO）自动抓取的披露做字段级审批，按来源通道可靠性排序推荐。
+- 🔎 保留来源文件上下文、期间元数据，以及关键指标的证据锚点。
+- 🧠 在 EU Taxonomy 2020、中国证监会 CSRC 2023、欧盟 CSRD/ESRS 风格界面之间做带版本上下文的多框架评分。
+- 📈 通过标准化的来源/期间/证据摘要对比公司与期间。
+- 📊 支持公司记录导出为 CSV/XLSX，并生成 PDF 报告供外部审阅。
+- 🔬 将 LCOE、SAF 和可再生能源经济性保留为可选分析工具，而不是首要演示路径。
+- 🖥️ 提供 React 前端，覆盖公司历史、披露审核、对比、框架分析与导出流程。
 - 💱 LCOE 区域化默认值（EUR / USD），英文 UI 下附带 EIA 美国批发电价参考面板。
 - 🐳 支持 Docker 本地部署，持久化 `data/` 与 `reports/`。
+
+## Analyst Workflow
+
+主流程刻意保持窄而可重复：
+
+```text
+缺失年份的公司
+  -> 上传或自动抓取
+  -> Pending Disclosures 审核
+  -> Company Profile 趋势与证据
+  -> Framework Compare
+  -> CSV/XLSX/PDF 交付包
+```
+
+第一个强 MVP 应证明：分析师能够解释一家公司的披露质量与监管准备度如何随时间变化，并且每个重要判断都能回到对应报告期间与来源文件。可再生能源经济性工具仍可用于更深入的项目分析，但不是默认产品叙事。
 
 ## 🚀 快速开始
 
@@ -148,7 +163,7 @@ React Frontend (Vite)
  SQLite (data/esg_toolkit.db) + File Reports (reports/)
 ```
 
-前端负责上传、评分、看板与结果展示流程；FastAPI 提供计算与报告 API。持久化数据存储在 SQLite，生成文件输出到 `reports/`。
+前端负责分析师工作流：公司/年份覆盖、上传、官方来源披露审核、公司档案趋势、框架对比与导出。FastAPI 提供导入、评分、审核与报告 API。持久化数据存储在 SQLite，生成文件输出到 `reports/`。
 
 ## 🌍 多框架 ESG
 
@@ -166,14 +181,16 @@ CSRD/ESRS 对环境、社会与治理提出更广泛披露要求。平台支持�
 
 ## 📊 前端页面
 
-- `DashboardPage.tsx`：展示核心评分指标与总览信息。
+- `DashboardPage.tsx`：展示整体 KPI 看板与高层评分、趋势区块。
 - `UploadPage.tsx`：单文件/批量文件上传与解析入口（识别 `?company=&year=` 深链并提示缺口补录）。
 - `PendingDisclosuresPage.tsx`：官方来源自动抓取披露的 analyst 审核工作台（`/disclosures`）。
+- `CompanyProfilePage.tsx`：多期间公司档案，包含标准化期间、来源文件、框架与证据上下文。
+- `ComparePage.tsx`：公司并排对比，包含标准化来源/期间/证据摘要。
+- `FrameworksPage.tsx`：框架导向评分与标准视图。
 - `TaxonomyPage.tsx`：EU Taxonomy 评分与报告生成工作区。
-- `FrameworksPage.tsx`：多框架评分视图与标准说明。
-- `ComparePage.tsx`：不同框架结果并排对比。
-- `LcoePage.tsx`：LCOE 与敏感性分析计算页面。
-- `CompaniesPage.tsx`：公司历史记录查询与导出管理。
+- `LcoePage.tsx`：可选技术经济计算器，输出 LCOE 与敏感性分析。
+- `SafPage.tsx`：可选可持续航空燃料成本计算器。
+- `CompaniesPage.tsx`：已保存公司记录、查询与导出操作。
 
 ## 🔧 配置说明
 
