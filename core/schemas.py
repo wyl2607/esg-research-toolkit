@@ -41,6 +41,13 @@ class CompanyESGData(BaseModel):
     total_employees: int | None = None
     female_pct: float | None = None
     primary_activities: list[str] = Field(default_factory=list)
+    source_url: str | None = None
+    file_hash: str | None = None
+    pdf_filename: str | None = None
+    downloaded_at: str | None = None
+    period: dict[str, Any] | None = None
+    framework_metadata: list[dict[str, Any]] = Field(default_factory=list)
+    source_documents: list[dict[str, Any]] = Field(default_factory=list)
     evidence_summary: list[dict[str, Any]] = Field(default_factory=list)
 
 
@@ -569,3 +576,6 @@ class SAFCostResult(BaseModel):
     lifetime_years: int
     currency: str
     reference_fx_to_eur: float
+
+# --- Blueprint additions: optional fields for source document enrichment ---
+CompanyESGData.model_rebuild()
