@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { EvidenceBadge } from '@/components/EvidenceBadge'
@@ -34,6 +34,23 @@ export function CoreMetricsSection({
   latestYear,
 }: CoreMetricsSectionProps) {
   const { t } = useTranslation()
+  const [peerReady, setPeerReady] = useState(false)
+
+  useEffect(() => {
+    let idleId: number | undefined
+    let timeoutId: ReturnType<typeof setTimeout> | undefined
+
+    if (typeof window.requestIdleCallback === 'function') {
+      idleId = window.requestIdleCallback(() => setPeerReady(true))
+    } else {
+      timeoutId = setTimeout(() => setPeerReady(true), 200)
+    }
+
+    return () => {
+      if (idleId !== undefined) window.cancelIdleCallback(idleId)
+      if (timeoutId !== undefined) clearTimeout(timeoutId)
+    }
+  }, [])
 
   return (
     <>
@@ -97,20 +114,22 @@ export function CoreMetricsSection({
         />
       </div>
 
-      <Suspense
-        fallback={(
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500 shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-            {t('common.loading')}
-          </div>
-        )}
-      >
-        <PeerComparisonCard
-          companyReportId={latestCompanyReportId}
-          industryCode={latestPeriod?.industry_code ?? null}
-          reportYear={latestYear}
-          metrics={latestMetrics}
-        />
-      </Suspense>
+      {peerReady && (
+        <Suspense
+          fallback={(
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500 shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+              {t('common.loading')}
+            </div>
+          )}
+        >
+          <PeerComparisonCard
+            companyReportId={latestCompanyReportId}
+            industryCode={latestPeriod?.industry_code ?? null}
+            reportYear={latestYear}
+            metrics={latestMetrics}
+          />
+        </Suspense>
+      )}
     </>
   )
 }
