@@ -278,7 +278,8 @@ def test_taxonomy_report_get_uses_cache(monkeypatch) -> None:
     sample_record = SimpleNamespace(
         company_name="CATL",
         report_year=2024,
-        primary_activities='["solar_pv"]',
+        primary_activities=None,
+        evidence_summary=None,
     )
     score_calls = {"count": 0}
 
