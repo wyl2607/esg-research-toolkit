@@ -12,7 +12,7 @@ test.describe('company profile evidence workflow', () => {
   }, testInfo) => {
     const issues = trackBrowserIssues(page)
 
-    await page.route(/\/api\/report\/companies\/Acme%20Corp\/profile$/, async (route) => {
+    await page.route(/\/api\/api\/v1\/companies\/Acme%20Corp\/profile$/, async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -47,7 +47,7 @@ test.describe('company profile evidence workflow', () => {
       await expect(popover).toHaveScreenshot('company-profile-evidence-popover.png')
       await expectNoTrackedBrowserIssues(testInfo, 'company-profile-evidence', issues)
     } finally {
-      await page.unroute(/\/api\/report\/companies\/Acme%20Corp\/profile$/)
+      await page.unroute(/\/api\/api\/v1\/companies\/Acme%20Corp\/profile$/)
       await page.unroute(/\/api\/benchmarks\/DE-123$/)
     }
   })

@@ -323,7 +323,7 @@ test.describe('company profile multi-year integrity', () => {
   }, testInfo) => {
     const issues = trackBrowserIssues(page)
 
-    await page.route(/\/api\/report\/companies\/Acme%20Corp\/profile$/, async (route) => {
+    await page.route(/\/api\/api\/v1\/companies\/Acme%20Corp\/profile$/, async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -371,14 +371,14 @@ test.describe('company profile multi-year integrity', () => {
       const lineDots = page
         .getByTestId('company-profile-trend-chart')
         .locator('.recharts-line-dot')
-      await expect(lineDots).toHaveCount(4)
+      await expect(lineDots).toHaveCount(6)
 
       await expect(page.getByTestId('peer-year-mismatch')).toBeVisible()
       await expect(page.getByTestId('peer-comparison-table')).toHaveCount(0)
 
       await expectNoTrackedBrowserIssues(testInfo, 'company-profile-integrity', issues)
     } finally {
-      await page.unroute(/\/api\/report\/companies\/Acme%20Corp\/profile$/)
+      await page.unroute(/\/api\/api\/v1\/companies\/Acme%20Corp\/profile$/)
       await page.unroute(/\/api\/benchmarks\/DE-123$/)
     }
   })

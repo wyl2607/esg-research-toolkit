@@ -265,7 +265,7 @@ export const getCompany = (
   req(`/report/companies/${encodeURIComponent(name)}/${year}`)
 
 export const getCompanyProfile = (name: string): Promise<CompanyProfile> =>
-  req(`/report/companies/${encodeURIComponent(name)}/profile`)
+  req(`/api/v1/companies/${encodeURIComponent(name)}/profile`)
 
 export const getAuditTrail = (
   companyReportId: number
@@ -361,12 +361,6 @@ export const calcSensitivity = (
 
 export const getBenchmarks = (): Promise<Record<string, LCOEInput>> =>
   req('/techno/benchmarks')
-
-export const listLcoeResults = (): Promise<LCOEResult[]> =>
-  req('/techno/results')
-
-export const compareLcoe = (inputs: LCOEInput[]): Promise<LCOEResult[]> =>
-  req('/techno/compare', { method: 'POST', body: JSON.stringify(inputs) })
 
 // ── SAF (Sustainable Aviation Fuel) ───────────────────────────────────────
 

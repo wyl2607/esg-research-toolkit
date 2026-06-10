@@ -80,7 +80,9 @@ export default function App() {
               <Route path="regional" element={<RegionalPage />} />
               <Route path="coverage/:field" element={<CoverageFieldPage />} />
               <Route path="frameworks/regional" element={<RegionalPage />} />
-              <Route path="design-preview" element={<DesignPreviewPage />} />
+              {import.meta.env.DEV && (
+                <Route path="design-preview" element={<DesignPreviewPage />} />
+              )}
             </Route>
           </Routes>
         </Suspense>
