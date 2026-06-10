@@ -41,7 +41,7 @@ test.describe('frontend accessibility', () => {
   test('company profile evidence popover has no serious axe violations', async ({
     page,
   }, testInfo) => {
-    await page.route(/\/api\/report\/companies\/Acme%20Corp\/profile$/, async (route) => {
+    await page.route(/\/api\/api\/v1\/companies\/Acme%20Corp\/profile$/, async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -85,7 +85,7 @@ test.describe('frontend accessibility', () => {
         'company profile evidence popover should not have serious or critical axe violations'
       ).toEqual([])
     } finally {
-      await page.unroute(/\/api\/report\/companies\/Acme%20Corp\/profile$/)
+      await page.unroute(/\/api\/api\/v1\/companies\/Acme%20Corp\/profile$/)
       await page.unroute(/\/api\/benchmarks\/DE-123$/)
     }
   })
