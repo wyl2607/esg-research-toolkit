@@ -2502,6 +2502,91 @@ def test_get_dashboard_stats_returns_aggregates_rankings_and_coverage(
     assert payload["coverage_rates"]["female_pct"] == pytest.approx(66.7)
 
 
+def test_get_dashboard_stats_counts_distinct_companies_across_years(
+    db_session: Session,
+    make_company_data,
+) -> None:
+    save_report(
+        db_session,
+        make_company_data(
+            company_name="A Corp",
+            report_year=2023,
+            scope1_co2e_tonnes=100.0,
+        ),
+        pdf_filename="a-2023.pdf",
+    )
+    save_report(
+        db_session,
+        make_company_data(
+            company_name="A Corp",
+            report_year=2024,
+            scope1_co2e_tonnes=200.0,
+        ),
+        pdf_filename="a-2024.pdf",
+    )
+    save_report(
+        db_session,
+        make_company_data(
+            company_name="B Corp",
+            report_year=2024,
+            scope1_co2e_tonnes=50.0,
+        ),
+        pdf_filename="b-2024.pdf",
+    )
+
+    payload = get_dashboard_stats(db=db_session)
+
+    assert payload["total_companies"] == 2
+    assert payload["yearly_trend"] == [
+        {"year": 2023, "count": 1},
+        {"year": 2024, "count": 2},
+    ]
+
+
+def test_get_dashboard_stats_deduplicates_emitters_by_company(
+    db_session: Session,
+    make_company_data,
+) -> None:
+    save_report(
+        db_session,
+        make_company_data(
+            company_name="A Corp",
+            report_year=2023,
+            scope1_co2e_tonnes=100.0,
+        ),
+        pdf_filename="a-2023.pdf",
+    )
+    save_report(
+        db_session,
+        make_company_data(
+            company_name="A Corp",
+            report_year=2024,
+            scope1_co2e_tonnes=300.0,
+        ),
+        pdf_filename="a-2024.pdf",
+    )
+    save_report(
+        db_session,
+        make_company_data(
+            company_name="B Corp",
+            report_year=2024,
+            scope1_co2e_tonnes=200.0,
+        ),
+        pdf_filename="b-2024.pdf",
+    )
+
+    payload = get_dashboard_stats(db=db_session)
+
+    assert payload["top_emitters"] == [
+        {"company": "A Corp", "year": 2024, "scope1": 300.0},
+        {"company": "B Corp", "year": 2024, "scope1": 200.0},
+    ]
+    assert payload["bottom_emitters"] == [
+        {"company": "A Corp", "year": 2023, "scope1": 100.0},
+        {"company": "B Corp", "year": 2024, "scope1": 200.0},
+    ]
+
+
 def test_dashboard_stats_do_not_double_count_alias_duplicates(
     db_session: Session,
     make_company_data,

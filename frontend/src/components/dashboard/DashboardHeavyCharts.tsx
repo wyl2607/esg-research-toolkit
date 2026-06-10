@@ -12,6 +12,7 @@ import { UploadCloud } from 'lucide-react'
 
 type YearlyTrendItem = { year: number; count: number }
 type TopEmitterItem = { company: string; year: number; scope1: number }
+type TopEmitterChartItem = TopEmitterItem & { label: string }
 
 interface DashboardHeavyChartsProps {
   yearlyTrend: YearlyTrendItem[]
@@ -44,7 +45,19 @@ function coerceNumericLabel(
 }
 
 function truncateCompanyLabel(value: string) {
+  const yearSuffix = value.match(/(.*)( ·\d{2})$/)
+  if (yearSuffix) {
+    const [, company, suffix] = yearSuffix
+    const maxCompanyLength = 13
+    const companyLabel =
+      company.length > maxCompanyLength ? `${company.slice(0, maxCompanyLength)}…` : company
+    return `${companyLabel}${suffix}`
+  }
   return value.length > 18 ? `${value.slice(0, 17)}…` : value
+}
+
+function formatEmitterLabel(item: TopEmitterItem) {
+  return `${item.company} ·${String(item.year).slice(-2)}`
 }
 
 function ChartEmptyState({ title, body }: { title: string; body: string }) {
@@ -67,6 +80,10 @@ export function DashboardHeavyCharts({
   chartsEmptyBody,
 }: DashboardHeavyChartsProps) {
   const locale = typeof navigator !== 'undefined' ? navigator.language : 'en-US'
+  const topEmitterChartData: TopEmitterChartItem[] = topEmitters.map((item) => ({
+    ...item,
+    label: formatEmitterLabel(item),
+  }))
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -101,13 +118,13 @@ export function DashboardHeavyCharts({
           </h2>
           <p className="text-sm text-stone-500 dark:text-slate-400">tCO₂e</p>
         </div>
-        {topEmitters.length === 0 ? (
+        {topEmitterChartData.length === 0 ? (
           <ChartEmptyState title={chartsEmptyTitle} body={chartsEmptyBody} />
         ) : (
           <div className="h-56 md:h-64">
             <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <BarChart
-                data={topEmitters}
+                data={topEmitterChartData}
                 layout="vertical"
                 margin={{ top: 8, right: 16, left: 8, bottom: 8 }}
                 role="img"
@@ -123,7 +140,7 @@ export function DashboardHeavyCharts({
                 />
                 <YAxis
                   type="category"
-                  dataKey="company"
+                  dataKey="label"
                   width={140}
                   tickFormatter={truncateCompanyLabel}
                   tick={{ fill: '#334155', fontSize: 12 }}
@@ -139,7 +156,7 @@ export function DashboardHeavyCharts({
                   contentStyle={{ borderRadius: 16, borderColor: '#e7e5e4' }}
                 />
                 <Bar dataKey="scope1" name="Scope 1 (tCO₂e)" radius={[0, 6, 6, 0]}>
-                  {topEmitters.map((entry) => (
+                  {topEmitterChartData.map((entry) => (
                     <Cell key={`${entry.company}-${entry.year}`} fill="#ef4444" />
                   ))}
                 </Bar>
