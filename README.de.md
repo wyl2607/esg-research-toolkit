@@ -38,6 +38,24 @@ Unternehmen mit fehlendem Jahr
 
 Das erste starke MVP soll zeigen, dass Analyst:innen erklären können, wie sich Offenlegungsqualität und regulatorische Bereitschaft eines Unternehmens über die Zeit verändert haben, wobei jede wichtige Aussage auf eine Berichtsperiode und ein Quellendokument zurückführbar bleibt. Werkzeuge für erneuerbare Energieökonomie bleiben für tiefere Projektanalysen verfügbar, sind aber nicht die Standard-Produktnarrative.
 
+## ✅ Validierung mit Realdaten
+
+Die Extraktionsgenauigkeit wurde gegen **35 echte Unternehmensberichte
+(21 europäische Emittenten, 2022–2024, 719 MB Quell-PDFs)** validiert —
+mit einem deterministischen Offline-Matcher plus manueller Evidenzprüfung:
+
+| Kennzahl | Ergebnis |
+|---|---|
+| Extrahierte Werte gegen Quell-PDF als korrekt bestätigt | **96,1 %** (146/152) |
+| Im Quelltext nachweisbar | 99,3 % |
+| Bestätigte Extraktionsfehler | 1 (Einheiten-Skalierungsfehler, mit Audit-Trail korrigiert) |
+| Offene `needs_review`-Fälle | 5 |
+
+Bekannte Fehlermodi: Einheiten-Skalierung („thousand m³"), restatete Basisjahre,
+PDF-Tabellen-Verwürfelung, in Grafiken eingebettete Werte. Vollständiger Bericht:
+[`docs/audits/stage6-real-data-validation-2026-06-10.md`](docs/audits/stage6-real-data-validation-2026-06-10.md) ·
+Reproduzierbar mit `scripts/verify_extractions_offline.py`.
+
 ## 🚀 Schnellstart
 
 ### Voraussetzungen

@@ -41,6 +41,24 @@ important claim tied back to a reporting period and source document. Renewable
 economics tools remain available for deeper project analysis, but they are not
 the default product narrative.
 
+## ✅ Real-World Validation
+
+Extraction accuracy has been validated against **35 real corporate reports
+(21 European issuers, 2022–2024, 719 MB of source PDFs)** using a deterministic
+offline matcher plus manual evidence review:
+
+| Metric | Result |
+|---|---|
+| Extracted values verified correct against source PDF | **96.1 %** (146/152) |
+| Traceable to the source text layer | 99.3 % |
+| Confirmed extraction errors | 1 (unit-scale error, corrected with audit trail) |
+| Open `needs_review` items | 5 |
+
+Known failure modes: unit-scale confusion ("thousand m³"), restated baselines,
+PDF table garbling, and chart-embedded values. Full report:
+[`docs/audits/stage6-real-data-validation-2026-06-10.md`](docs/audits/stage6-real-data-validation-2026-06-10.md) ·
+Reproduce with `scripts/verify_extractions_offline.py`.
+
 ## 🚀 Quick Start
 
 ### Prerequisites
