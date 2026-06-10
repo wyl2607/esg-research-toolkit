@@ -6,6 +6,8 @@
 > 导入官方报告，审核抽取证据，按期间追踪公司历史，
 > 对比不同框架解释，并导出可辩护的分析包。
 
+**🔗 在线演示：** [esg.meichen.beauty](https://esg.meichen.beauty) — 已载入经验证的真实报告数据集（21 家欧洲上市公司，2022–2024）。
+
 ![Python](https://img.shields.io/badge/Python-3.12%2B-blue) ![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688) ![React](https://img.shields.io/badge/React-19%2B-61DAFB) ![License](https://img.shields.io/badge/License-MIT-green)
 
 ## ✨ 功能特性
@@ -37,6 +39,12 @@
 
 第一个强 MVP 应证明：分析师能够解释一家公司的披露质量与监管准备度如何随时间变化，并且每个重要判断都能回到对应报告期间与来源文件。可再生能源经济性工具仍可用于更深入的项目分析，但不是默认产品叙事。
 
+## 📸 界面截图
+
+| 仪表盘 | 公司档案 | 公司对比 |
+|---|---|---|
+| ![仪表盘：组合级 KPI 与最大排放者](docs/screenshots/dashboard.png) | ![SAP SE 公司档案与数据溯源](docs/screenshots/company-profile.png) | ![BASF、RWE、SAP 并排对比](docs/screenshots/compare.png) |
+
 ## ✅ 真实数据验证
 
 抽取精确率（precision）已用 **35 份真实企业报告（34 份已验证；1 份 PDF 缺失；21 家欧洲上市公司，2022–2024，719 MB 原始 PDF）** 验证，方法为确定性离线匹配器 + 人工证据复核；这里衡量的是已抽取值的 precision，recall 尚未量化（见 audit 报告第 6 节）：
@@ -47,6 +55,12 @@
 | 扩展数值字段可追溯到原文 PDF 文本层 | **98.3 %**（237/241） |
 | 确认的抽取错误 | 1 处（单位缩放错误，已修正并保留审计轨迹） |
 | 待复核（needs_review） | 5 处 |
+
+> **案例——抓出一个 10 倍单位错误。** SAP 2022 年用水量被抽取为 8,780,000 m³。
+> 离线校验器在任何用水相关页面都找不到这个数字；人工对照原报告（第 290 页）
+> 发现原文是 *"878 thousand cubic meters"*——单位缩放误读。该值已修正为
+> 878,000 m³，并保留只追加的审计轨迹。确定性匹配器标记 → 人工裁定 →
+> 带证据修正记录，正是本工具要支撑的核心工作流。
 
 已知失败模式：单位缩放混淆（"thousand m³"）、基线重述、PDF 表格乱序、数值嵌入图表。完整报告见
 [`docs/audits/stage6-real-data-validation-2026-06-10.md`](docs/audits/stage6-real-data-validation-2026-06-10.md)，

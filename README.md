@@ -6,6 +6,8 @@
 > ingest official reports, review extracted evidence, track company history across
 > periods, compare framework interpretations, and export a defensible analysis pack.
 
+**🔗 Live demo:** [esg.meichen.beauty](https://esg.meichen.beauty) — seeded with the validated real-report dataset (21 European issuers, 2022–2024).
+
 ![Python](https://img.shields.io/badge/Python-3.12%2B-blue) ![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688) ![React](https://img.shields.io/badge/React-19%2B-61DAFB) ![License](https://img.shields.io/badge/License-MIT-green)
 
 ## ✨ Features
@@ -41,6 +43,12 @@ important claim tied back to a reporting period and source document. Renewable
 economics tools remain available for deeper project analysis, but they are not
 the default product narrative.
 
+## 📸 Screenshots
+
+| Dashboard | Company Profile | Compare |
+|---|---|---|
+| ![Dashboard with portfolio KPIs and top emitters](docs/screenshots/dashboard.png) | ![SAP SE company profile with provenance](docs/screenshots/company-profile.png) | ![Side-by-side comparison of BASF, RWE and SAP](docs/screenshots/compare.png) |
+
 ## ✅ Real-World Validation
 
 Extraction precision has been validated against **35 real corporate reports
@@ -54,6 +62,14 @@ precision of extracted values; recall is not yet quantified.
 | Expanded numeric-field traceability to source PDF text layer | **98.3 %** (237/241) |
 | Confirmed extraction errors | 1 (unit-scale error, corrected with audit trail) |
 | Open `needs_review` items | 5 |
+
+> **Case study — catching a 10× unit error.** SAP's 2022 water usage was extracted as
+> 8,780,000 m³. The offline verifier could not locate that figure on any water-context
+> page; manual adjudication against the report (p. 290) found the source text
+> *"878 thousand cubic meters"* — a unit-scale misread. The value was corrected to
+> 878,000 m³ with an append-only audit trail. That loop — deterministic matcher flags,
+> human adjudicates, record corrected with evidence — is the core workflow this
+> toolkit exists to support.
 
 Known failure modes: unit-scale confusion ("thousand m³"), restated baselines,
 PDF table garbling, and chart-embedded values. Full report:

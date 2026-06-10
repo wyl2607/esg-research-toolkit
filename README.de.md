@@ -7,6 +7,8 @@
 > Evidenz prüfen, Unternehmenshistorien über Perioden verfolgen,
 > Framework-Interpretationen vergleichen und ein belastbares Analysepaket exportieren.
 
+**🔗 Live-Demo:** [esg.meichen.beauty](https://esg.meichen.beauty) — vorbefüllt mit dem validierten Realdaten-Datensatz (21 europäische Emittenten, 2022–2024).
+
 ![Python](https://img.shields.io/badge/Python-3.12%2B-blue) ![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688) ![React](https://img.shields.io/badge/React-19%2B-61DAFB) ![License](https://img.shields.io/badge/License-MIT-green)
 
 ## ✨ Funktionen
@@ -38,6 +40,12 @@ Unternehmen mit fehlendem Jahr
 
 Das erste starke MVP soll zeigen, dass Analyst:innen erklären können, wie sich Offenlegungsqualität und regulatorische Bereitschaft eines Unternehmens über die Zeit verändert haben, wobei jede wichtige Aussage auf eine Berichtsperiode und ein Quellendokument zurückführbar bleibt. Werkzeuge für erneuerbare Energieökonomie bleiben für tiefere Projektanalysen verfügbar, sind aber nicht die Standard-Produktnarrative.
 
+## 📸 Screenshots
+
+| Dashboard | Unternehmensprofil | Vergleich |
+|---|---|---|
+| ![Dashboard mit Portfolio-KPIs und Top-Emittenten](docs/screenshots/dashboard.png) | ![SAP-SE-Profil mit Provenienz](docs/screenshots/company-profile.png) | ![Direktvergleich BASF, RWE und SAP](docs/screenshots/compare.png) |
+
 ## ✅ Validierung mit Realdaten (Präzision)
 
 Die Extraktionspräzision wurde gegen **35 echte Unternehmensberichte
@@ -52,6 +60,14 @@ Werte, nicht den Gesamt-Recall.
 | Erweiterte numerische Felder im PDF-Text nachweisbar | **98,3 %** (237/241) |
 | Bestätigte Extraktionsfehler | 1 (Einheiten-Skalierungsfehler, mit Audit-Trail korrigiert) |
 | Offene `needs_review`-Fälle | 5 |
+
+> **Fallstudie — ein 10×-Einheitenfehler, gefunden und korrigiert.** Der Wasserverbrauch
+> von SAP 2022 wurde als 8.780.000 m³ extrahiert. Der Offline-Verifier fand diese Zahl
+> auf keiner Wasser-Kontextseite; die manuelle Prüfung gegen den Bericht (S. 290) ergab
+> den Quelltext *„878 thousand cubic meters"* — ein Einheiten-Lesefehler. Der Wert wurde
+> mit append-only Audit-Trail auf 878.000 m³ korrigiert. Genau dieser Ablauf —
+> deterministischer Matcher meldet, Mensch adjudiziert, Datensatz wird mit Evidenz
+> korrigiert — ist der Kern-Workflow dieses Toolkits.
 
 Bekannte Fehlermodi: Einheiten-Skalierung („thousand m³"), restatete Basisjahre,
 PDF-Tabellen-Verwürfelung, in Grafiken eingebettete Werte. Vollständiger Bericht:
