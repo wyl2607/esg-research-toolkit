@@ -195,3 +195,6 @@ obsidian-*.txt
 Obsidian_*.md
 30-AI-Ingest/
 workspace-project-index.md
+
+# QA runtime artifacts (local-only)
+runtime/
