@@ -25,7 +25,9 @@ def _record_to_company_esg(record) -> CompanyESGData:
     payload = record.__dict__.copy()
     for json_field in ("primary_activities", "evidence_summary"):
         raw = payload.get(json_field)
-        if isinstance(raw, str):
+        if raw is None:
+            payload[json_field] = []
+        elif isinstance(raw, str):
             try:
                 payload[json_field] = json.loads(raw) if raw else []
             except json.JSONDecodeError:
