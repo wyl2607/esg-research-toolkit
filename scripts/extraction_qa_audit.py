@@ -29,7 +29,9 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from core.config import settings  # noqa: E402
 from core.database import SessionLocal  # noqa: E402
+from report_parser.storage import CompanyReport  # noqa: E402
 from scripts.seed_german_demo import PDF_CACHE_DIR  # noqa: E402
 
 # ─── Types ──────────────────────────────────────────────────────────────
@@ -83,8 +85,9 @@ METRIC_KEYWORDS: dict[str, list[str]] = {
 }
 
 DEFAULT_API_BASE = os.environ.get("API_BASE", "http://localhost:8000")
-DEFAULT_L1_MODEL = "gpt-5.4-mini"  # fast + cheap for screening
-DEFAULT_L2_MODEL = "gpt-4o"       # accurate for detailed audit
+DEFAULT_L1_MODEL = settings.openai_validation_model  # fast + cheap for screening
+DEFAULT_L2_MODEL = settings.openai_audit_model       # accurate for detailed audit
+CHAT_COMPLETIONS_URL = settings.openai_base_url.rstrip("/") + "/chat/completions"
 
 
 # ─── PDF Context Extraction ─────────────────────────────────────────────
@@ -133,6 +136,15 @@ def find_metric_pages(pdf_context: PDFContext, field: str, top_n: int = 3) -> li
 
     scored_pages.sort(key=lambda x: x[1], reverse=True)
     return [(page_num, text) for page_num, _, text in scored_pages[:top_n]]
+
+
+def _parse_verdict_json(content: str) -> dict:
+    """Parse model JSON output, tolerating markdown code fences."""
+    text = content.strip()
+    if text.startswith("```"):
+        text = text.split("\n", 1)[1] if "\n" in text else text
+        text = text.rsplit("```", 1)[0]
+    return json.loads(text)
 
 
 def _truncate_snippet(text: str, max_chars: int = 1500) -> str:
@@ -228,8 +240,8 @@ Respond ONLY with JSON:
     try:
         client = httpx.Client(timeout=30)
         response = client.post(
-            "https://api.openai.com/v1/chat/completions",
-            headers={"Authorization": f"Bearer {os.environ.get('OPENAI_API_KEY')}"},
+            CHAT_COMPLETIONS_URL,
+            headers={"Authorization": f"Bearer {settings.openai_api_key}"},
             json={
                 "model": model,
                 "messages": [{"role": "user", "content": prompt}],
@@ -241,7 +253,7 @@ Respond ONLY with JSON:
         
         data = response.json()
         content = data["choices"][0]["message"]["content"]
-        verdict_obj = json.loads(content)
+        verdict_obj = _parse_verdict_json(content)
         
         return AuditResult(
             company_name=company_name,
@@ -323,8 +335,8 @@ Respond with JSON:
     try:
         client = httpx.Client(timeout=60)
         response = client.post(
-            "https://api.openai.com/v1/chat/completions",
-            headers={"Authorization": f"Bearer {os.environ.get('OPENAI_API_KEY')}"},
+            CHAT_COMPLETIONS_URL,
+            headers={"Authorization": f"Bearer {settings.openai_api_key}"},
             json={
                 "model": model,
                 "messages": [{"role": "user", "content": prompt}],
@@ -336,7 +348,7 @@ Respond with JSON:
         
         data = response.json()
         content = data["choices"][0]["message"]["content"]
-        verdict_obj = json.loads(content)
+        verdict_obj = _parse_verdict_json(content)
         
         return AuditResult(
             company_name=company_name,
@@ -382,14 +394,14 @@ def main():
     # fetch companies
     db = SessionLocal()
     
-    from core.schemas import CompanyESGData
     query = (
-        db.query(CompanyESGData)
-        .order_by(CompanyESGData.company_name.asc(), CompanyESGData.report_year.desc())
+        db.query(CompanyReport)
+        .filter(CompanyReport.pdf_filename.isnot(None))
+        .order_by(CompanyReport.company_name.asc(), CompanyReport.report_year.desc())
     )
-    
+
     if args.company:
-        query = query.filter(CompanyESGData.company_name == args.company)
+        query = query.filter(CompanyReport.company_name == args.company)
     
     companies = query.all()
     print(f"Found {len(companies)} company records to audit.\n")
@@ -404,18 +416,20 @@ def main():
     for company in companies:
         print(f"[{company.company_name} {company.report_year}]", flush=True)
         
-        # find PDF
-        pdf_path = PDF_CACHE_DIR / f"{company.company_name}_{company.report_year}.pdf"
+        # find PDF: canonical location is data/reports/<pdf_filename>, seed cache as fallback
+        pdf_path = ROOT / "data" / "reports" / (company.pdf_filename or "")
+        if not pdf_path.exists():
+            pdf_path = PDF_CACHE_DIR / f"{company.company_name}_{company.report_year}.pdf"
         if not pdf_path.exists():
             errors.append(f"PDF not found: {pdf_path}")
-            print(f"  ⚠️  PDF not found\n")
+            print("  ⚠️  PDF not found\n")
             continue
 
         # extract PDF pages
         pdf_context = extract_pdf_pages(pdf_path)
         if not pdf_context:
             errors.append(f"Failed to parse PDF: {pdf_path}")
-            print(f"  ⚠️  Failed to parse PDF\n")
+            print("  ⚠️  Failed to parse PDF\n")
             continue
 
         print(f"  PDF: {pdf_context.total_pages} pages, {pdf_context.total_chars} chars")
@@ -454,10 +468,11 @@ def main():
                 )
 
             if result:
+                result.doc_hash = company.file_hash or ""
                 audit_results.append(result)
                 print(f"    ✓ {result.verdict} (confidence={result.confidence:.1%})")
             else:
-                print(f"    ⚠️  Audit failed or timed out")
+                print("    ⚠️  Audit failed or timed out")
 
         print()
 
