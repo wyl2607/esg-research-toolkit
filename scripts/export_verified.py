@@ -71,6 +71,8 @@ def _row_to_dict(row: CompanyReport) -> dict:
         "pdf_filename": row.pdf_filename,
         "source_url": row.source_url,
         "file_hash": row.file_hash,
+        "source_doc_key": row.source_doc_key,
+        "evidence_summary": row.evidence_summary,
     }
     for field in METRIC_FIELDS:
         out[field] = getattr(row, field)
