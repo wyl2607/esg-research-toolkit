@@ -52,10 +52,18 @@ def _load_company(db: Session, company_name: str, report_year: int) -> CompanyES
         raise HTTPException(404, f"No report found for {company_name} ({report_year})")
 
     raw = record.__dict__.copy()
-    if isinstance(raw.get("primary_activities"), str):
-        raw["primary_activities"] = json.loads(raw["primary_activities"])
-    if isinstance(raw.get("evidence_summary"), str):
-        raw["evidence_summary"] = json.loads(raw["evidence_summary"])
+    for json_field in ("primary_activities", "evidence_summary"):
+        value = raw.get(json_field)
+        if value is None:
+            raw[json_field] = []
+        elif isinstance(value, str):
+            try:
+                parsed = json.loads(value) if value else []
+            except json.JSONDecodeError:
+                parsed = []
+            raw[json_field] = parsed if isinstance(parsed, list) else []
+        elif not isinstance(value, list):
+            raw[json_field] = []
 
     return CompanyESGData.model_validate(raw)
 

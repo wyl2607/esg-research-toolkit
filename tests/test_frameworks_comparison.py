@@ -69,6 +69,32 @@ def _seed_company_report(session: Session) -> None:
     )
 
 
+def test_framework_load_company_normalizes_null_list_fields(monkeypatch) -> None:
+    import esg_frameworks.api as frameworks_api
+    import report_parser.storage as report_storage
+
+    class _DummyDb:
+        pass
+
+    sample_record = SimpleNamespace(
+        company_name="SAP SE",
+        report_year=2024,
+        primary_activities=None,
+        evidence_summary=None,
+    )
+
+    monkeypatch.setattr(
+        report_storage,
+        "get_report",
+        lambda db, company_name, report_year: sample_record,
+    )
+
+    data = frameworks_api._load_company(_DummyDb(), "SAP SE", 2024)
+
+    assert data.primary_activities == []
+    assert data.evidence_summary == []
+
+
 def test_build_comparison_keeps_eu_cn_us_groups() -> None:
     data = CompanyESGData(
         company_name="Example Corp",
