@@ -78,11 +78,12 @@ else
     nginx -t && systemctl reload nginx
 fi
 
-# 8. Health check
-echo "→ Health check..."
+# 8. Smoke check. /health stays green even when the DB schema has drifted
+# (2026-06-10 incident: stamped-but-unmigrated SQLite 500'd every core route),
+# so also hit endpoints that actually query the main tables.
+echo "→ Smoke check..."
 for i in $(seq 1 10); do
-    if curl -sf http://localhost:8001/health; then
-        echo " API OK"
+    if curl -sf http://localhost:8001/health >/dev/null; then
         break
     fi
     if [ "$i" = "10" ]; then
@@ -91,6 +92,13 @@ for i in $(seq 1 10); do
     fi
     echo " waiting... ($i/10)"
     sleep 3
+done
+for endpoint in /health /report/companies /disclosures/pending; do
+    if ! curl -sf "http://localhost:8001$endpoint" >/dev/null; then
+        echo "ERROR: smoke check failed on $endpoint"
+        exit 1
+    fi
+    echo " OK $endpoint"
 done
 
 echo "=== Deploy complete ==="

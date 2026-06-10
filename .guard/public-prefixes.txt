@@ -58,3 +58,4 @@ workflows/
 migrations/
 alembic/
 alembic.ini
+docs/screenshots/

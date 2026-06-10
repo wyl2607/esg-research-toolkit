@@ -79,7 +79,18 @@ if [ ! -d "$REPO_DIR/.git" ]; then
 fi
 
 GIT_SHA="$(git -C "$REPO_DIR" rev-parse HEAD)"
+# A hard reset leaves the stale local branch name on HEAD; prefer a remote
+# branch that actually contains this commit (main first) so the fingerprint
+# reflects what was really deployed.
 GIT_BRANCH="$(git -C "$REPO_DIR" rev-parse --abbrev-ref HEAD)"
+if git -C "$REPO_DIR" merge-base --is-ancestor HEAD origin/main 2>/dev/null; then
+  GIT_BRANCH="main"
+else
+  CONTAINING_BRANCH="$(git -C "$REPO_DIR" branch -r --contains HEAD 2>/dev/null | grep -v -- '->' | head -n1 | sed 's|^ *origin/||')"
+  if [ -n "$CONTAINING_BRANCH" ]; then
+    GIT_BRANCH="$CONTAINING_BRANCH"
+  fi
+fi
 GIT_TAG="$(git -C "$REPO_DIR" describe --tags --exact-match 2>/dev/null || true)"
 DEPLOYED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 DEPLOYED_BY="$(whoami)@$(hostname)"
