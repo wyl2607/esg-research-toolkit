@@ -43,14 +43,15 @@ the default product narrative.
 
 ## ✅ Real-World Validation
 
-Extraction accuracy has been validated against **35 real corporate reports
-(21 European issuers, 2022–2024, 719 MB of source PDFs)** using a deterministic
-offline matcher plus manual evidence review:
+Extraction precision has been validated against **35 real corporate reports
+(34 validated; 1 PDF missing; 21 European issuers, 2022–2024, 719 MB of source PDFs)**
+using a deterministic offline matcher plus manual evidence review. This measures
+precision of extracted values; recall is not yet quantified.
 
 | Metric | Result |
 |---|---|
-| Extracted values verified correct against source PDF | **96.1 %** (146/152) |
-| Traceable to the source text layer | 99.3 % |
+| Extracted values verified correct against source PDF (precision) | **96.1 %** (146/152) |
+| Expanded numeric-field traceability to source PDF text layer | **98.3 %** (237/241) |
 | Confirmed extraction errors | 1 (unit-scale error, corrected with audit trail) |
 | Open `needs_review` items | 5 |
 

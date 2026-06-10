@@ -57,13 +57,19 @@ PCT_FIELDS = {
     "female_pct",
 }
 
+EXPLICIT_NUMERIC_FIELDS = {
+    "total_employees",
+}
+
+VERIFIABLE_FIELDS = sorted(set(METRIC_KEYWORDS) | set(SCALED_FIELDS) | PCT_FIELDS | EXPLICIT_NUMERIC_FIELDS)
+
 
 def _number_variants(value: float, field: str) -> set[str]:
     """Render value into the formats corporate reports actually print."""
     variants: set[str] = set()
 
     def render(v: float) -> None:
-        if v <= 0:
+        if v < 0:
             return
         forms = []
         if abs(v - round(v)) < 1e-9:
@@ -103,10 +109,11 @@ def verify_record(record: CompanyReport, pages: list[str]) -> list[dict]:
     lower_pages = [p.lower() for p in norm_pages]
     results = []
 
-    for field, keywords in METRIC_KEYWORDS.items():
+    for field in VERIFIABLE_FIELDS:
+        keywords = METRIC_KEYWORDS.get(field, field.split("_"))
         value = getattr(record, field, None)
         keyword_pages = [
-            i for i, p in enumerate(lower_pages)
+            i for i, p in enumerate(lower_pages, start=1)
             if sum(p.count(kw.lower()) for kw in keywords) >= 2
         ]
 
@@ -124,7 +131,7 @@ def verify_record(record: CompanyReport, pages: list[str]) -> list[dict]:
 
         variants = _number_variants(float(value), field)
         hit_pages = [
-            i for i, p in enumerate(norm_pages)
+            i for i, p in enumerate(norm_pages, start=1)
             if any(v in p for v in variants)
         ]
         on_keyword_page = sorted(set(hit_pages) & set(keyword_pages))

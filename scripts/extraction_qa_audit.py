@@ -147,6 +147,17 @@ def _parse_verdict_json(content: str) -> dict:
     return json.loads(text)
 
 
+def _audit_verdict(value: object) -> AuditVerdict:
+    """Normalize model verdicts before persisting them."""
+    verdict = str(value or "needs_review").strip().lower()
+    if verdict == "not_disclosed":
+        return "missing"
+    allowed: set[AuditVerdict] = {"ok", "missing", "incorrect", "context_mismatch", "needs_review"}
+    if verdict in allowed:
+        return verdict  # type: ignore[return-value]
+    return "needs_review"
+
+
 def _truncate_snippet(text: str, max_chars: int = 1500) -> str:
     """Truncate to max_chars, trying to keep word boundaries."""
     if len(text) <= max_chars:
@@ -260,7 +271,7 @@ Respond ONLY with JSON:
             report_year=report_year,
             field=field,
             extracted_value=extracted_value,
-            verdict=verdict_obj.get("verdict", "needs_review"),
+            verdict=_audit_verdict(verdict_obj.get("verdict")),
             confidence=verdict_obj.get("confidence", 0.5),
             evidence_quote=verdict_obj.get("quote"),
             evidence_page=pages_with_metric[0][0] if pages_with_metric else None,
@@ -329,7 +340,7 @@ Task:
 4. If you find the value but extraction seems plausible, say "ok".
 
 Respond with JSON:
-{{"verdict": "<ok|missing|incorrect|not_disclosed>", "confidence": 0.0–1.0, "correct_value": "...", "exact_quote": "...", "issue": "...", "suggested_fix": "..."}}
+{{"verdict": "<ok|missing|incorrect|context_mismatch|needs_review>", "confidence": 0.0–1.0, "correct_value": "...", "exact_quote": "...", "issue": "...", "suggested_fix": "..."}}
 """
 
     try:
@@ -355,7 +366,7 @@ Respond with JSON:
             report_year=report_year,
             field=field,
             extracted_value=extracted_value,
-            verdict=verdict_obj.get("verdict", "needs_review"),
+            verdict=_audit_verdict(verdict_obj.get("verdict")),
             confidence=verdict_obj.get("confidence", 0.5),
             evidence_quote=verdict_obj.get("exact_quote"),
             evidence_page=pages_with_metric[0][0] if pages_with_metric else None,
@@ -455,8 +466,9 @@ def main():
                     model=DEFAULT_L1_MODEL,
                 )
             
-            if result and args.level == 2 and result.verdict != "ok":
-                print(f"    L1 flagged as {result.verdict}, running L2...")
+            if args.level == 2 and (result is None or result.verdict != "ok"):
+                l1_status = result.verdict if result else "failed"
+                print(f"    L1 flagged as {l1_status}, running L2...")
                 result = audit_level_2(
                     company.company_name,
                     company.report_year,

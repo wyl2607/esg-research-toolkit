@@ -1,7 +1,7 @@
 # Stage 6 — Real-World Data Validation Report
 
 Date: 2026-06-10
-Scope: extraction accuracy of ESG metrics against original corporate report PDFs
+Scope: extraction precision and source traceability of stored ESG/numeric metrics against original corporate report PDFs
 Status: **completed** (precision validated; recall quantification deferred, see §6)
 
 ## 1. Dataset
@@ -12,7 +12,7 @@ Status: **completed** (precision validated; recall quantification deferred, see 
 | Reports | 35 PDF-sourced company reports (34 auditable; 1 PDF missing on disk: RWE AG 2024) |
 | Years | 2022 ×7 · 2023 ×9 · 2024 ×19 |
 | Source PDFs | 719 MB under `data/reports/`, SHA-256 provenance in `company_reports.file_hash` |
-| Metrics audited | 9 fields: Scope 1/2/3 CO2e, energy, renewable %, water, waste recycled %, taxonomy-aligned revenue %, female % |
+| Fields audited | Manual precision subset: 9 ESG fields. Offline traceability scope: 13 numeric fields, including revenue, capex, taxonomy capex %, and employees. |
 
 ## 2. Method (three layers)
 
@@ -30,7 +30,7 @@ Status: **completed** (precision validated; recall quantification deferred, see 
 
 ## 3. Results (precision of extracted values)
 
-152 non-null extracted values across 34 reports:
+Manual review subset: 152 non-null extracted ESG values across 34 reports:
 
 | Outcome | n | share |
 |---|---|---|
@@ -40,7 +40,19 @@ Status: **completed** (precision validated; recall quantification deferred, see 
 | Confirmed incorrect | 1 | 0.7 % |
 | Needs review (unresolved) | 5 | 3.3 % |
 
-99.3 % of values were at least traceable to the source PDF text layer.
+Expanded offline verifier scope (after including all stored numeric fields on `CompanyReport`):
+
+| Outcome | n | share |
+|---|---|---|
+| Non-null numeric fields checked | 241 | 100.0 % |
+| Found on metric/field-context pages | 222 | 92.1 % |
+| Found elsewhere in PDF text layer | 15 | 6.2 % |
+| Not found in PDF text layer | 4 | 1.7 % |
+| **Traceable to source PDF text layer** | **237** | **98.3 %** |
+
+The 96.1 % figure is the manually adjudicated precision of extracted ESG values,
+not recall. The 98.3 % figure is deterministic text-layer traceability for the
+expanded numeric field set.
 
 **Confirmed error (corrected):** SAP SE 2022 `water_usage_m3` was stored as 8,780,000 m³;
 the report (p. 290) states *878 thousand cubic meters* → corrected to 878,000 m³.
@@ -62,10 +74,11 @@ Audit trail: `audit_qa_results` (verdict `incorrect`, human_review `approved`).
 
 ## 5. Null-field characterization
 
-154 of 306 field slots are NULL. Spot checks (PUMA, Henkel, Munich Re, Porsche 2024)
-show the dominant causes are genuine non-disclosure in the ingested document type
-(annual report vs separate ESG data sheet) and graphic-embedded data points —
-not silent extraction crashes. Recall (missed-but-present rate) is **not yet quantified**.
+201 field slots in the expanded 13-field verifier scope are NULL. Spot checks
+(PUMA, Henkel, Munich Re, Porsche 2024) show the dominant causes are genuine
+non-disclosure in the ingested document type (annual report vs separate ESG data
+sheet) and graphic-embedded data points — not silent extraction crashes. Recall
+(missed-but-present rate) is **not yet quantified**.
 
 ## 6. Deferred / future work
 
