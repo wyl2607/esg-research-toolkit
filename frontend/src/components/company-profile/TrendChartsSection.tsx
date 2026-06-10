@@ -78,6 +78,7 @@ export function TrendChartsSection({
           scoreLabel={t('common.score')}
           scope1Label={t('companies.scope1')}
           renewableLabel={t('companies.renewable')}
+          taxonomyLabel={t('dashboard.taxonomyPct')}
         />
       </Suspense>
     </DeferredHeavyCharts>

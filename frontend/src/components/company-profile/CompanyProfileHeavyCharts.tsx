@@ -39,6 +39,7 @@ interface CompanyProfileHeavyChartsProps {
   scoreLabel: string
   scope1Label: string
   renewableLabel: string
+  taxonomyLabel: string
 }
 
 export function CompanyProfileHeavyCharts({
@@ -52,7 +53,10 @@ export function CompanyProfileHeavyCharts({
   scoreLabel,
   scope1Label,
   renewableLabel,
+  taxonomyLabel,
 }: CompanyProfileHeavyChartsProps) {
+  const trendYearTicks = trendData.map((point) => point.year)
+
   const tooltipValueLabel = (value: unknown) => {
     if (Array.isArray(value)) return value.map((item) => String(item)).join(', ')
     if (value == null) return '—'
@@ -109,8 +113,15 @@ export function CompanyProfileHeavyCharts({
         <CardContent className="space-y-3" data-testid="company-profile-trend-chart">
           <ResponsiveContainer width="100%" height={260} minWidth={0} minHeight={0}>
             <LineChart data={trendData}>
-              <XAxis dataKey="year" type="number" allowDecimals={false} />
-              <YAxis domain={['auto', 'auto']} />
+              <XAxis
+                dataKey="year"
+                type="number"
+                allowDecimals={false}
+                domain={['dataMin', 'dataMax']}
+                ticks={trendYearTicks}
+              />
+              <YAxis yAxisId="emissions" domain={['auto', 'auto']} />
+              <YAxis yAxisId="percent" orientation="right" domain={[0, 100]} />
               <Tooltip
                 labelFormatter={(year) => `Year ${year}`}
                 formatter={(value: unknown, name: unknown) => [
@@ -122,6 +133,7 @@ export function CompanyProfileHeavyCharts({
               <Line
                 type="monotone"
                 dataKey="scope1"
+                yAxisId="emissions"
                 stroke="#ef4444"
                 strokeWidth={2}
                 dot={{ r: 4 }}
@@ -131,11 +143,22 @@ export function CompanyProfileHeavyCharts({
               <Line
                 type="monotone"
                 dataKey="renewable"
+                yAxisId="percent"
                 stroke="#16a34a"
                 strokeWidth={2}
                 dot={{ r: 4 }}
                 connectNulls={false}
                 name={renewableLabel}
+              />
+              <Line
+                type="monotone"
+                dataKey="taxonomy"
+                yAxisId="percent"
+                stroke="#4f46e5"
+                strokeWidth={2}
+                dot={{ r: 4 }}
+                connectNulls={false}
+                name={taxonomyLabel}
               />
             </LineChart>
           </ResponsiveContainer>

@@ -997,6 +997,7 @@ def get_dashboard_stats(db: Session = Depends(get_db)) -> dict[str, Any]:
     from collections import defaultdict
     import statistics
 
+    distinct_companies = {record.company_name for record in records}
     yearly: dict[int, int] = defaultdict(int)
     for record in records:
         yearly[record.report_year] += 1
@@ -1010,8 +1011,21 @@ def get_dashboard_stats(db: Session = Depends(get_db)) -> dict[str, Any]:
         for record in records
         if record.scope1_co2e_tonnes is not None
     ]
-    emitters_desc = sorted(emitters, key=lambda item: item[2], reverse=True)
-    emitters_asc = sorted(emitters, key=lambda item: item[2])
+    top_emitters_by_company: dict[str, tuple[str, int, float]] = {}
+    bottom_emitters_by_company: dict[str, tuple[str, int, float]] = {}
+    for company, year, scope1 in emitters:
+        top_current = top_emitters_by_company.get(company)
+        if top_current is None or scope1 > top_current[2]:
+            top_emitters_by_company[company] = (company, year, scope1)
+        bottom_current = bottom_emitters_by_company.get(company)
+        if bottom_current is None or scope1 < bottom_current[2]:
+            bottom_emitters_by_company[company] = (company, year, scope1)
+    emitters_desc = sorted(
+        top_emitters_by_company.values(),
+        key=lambda item: item[2],
+        reverse=True,
+    )
+    emitters_asc = sorted(bottom_emitters_by_company.values(), key=lambda item: item[2])
 
     coverage_fields = [
         "scope1_co2e_tonnes",
@@ -1026,7 +1040,7 @@ def get_dashboard_stats(db: Session = Depends(get_db)) -> dict[str, Any]:
     ]
 
     return {
-        "total_companies": len(records),
+        "total_companies": len(distinct_companies),
         "avg_taxonomy_aligned": (
             round(statistics.mean(taxonomy_values), 1) if taxonomy_values else 0
         ),
