@@ -1,7 +1,7 @@
 """Multi-level QA audit for ESG data extraction.
 
-Combines fast L1 screening (GPT-5.4 mini, ~500–1500 chars per field)
-with deeper L2 verification (GPT-4o, page-local context) for flagged cases.
+Combines fast L1 screening (configured validation model, ~500–1500 chars per field)
+with deeper L2 verification (configured audit model, page-local context) for flagged cases.
 
 All corrections are append-only + human-reviewable, never auto-applied.
 
@@ -249,7 +249,7 @@ Respond ONLY with JSON:
 """
 
     try:
-        client = httpx.Client(timeout=30)
+        client = httpx.Client(timeout=90)
         response = client.post(
             CHAT_COMPLETIONS_URL,
             headers={"Authorization": f"Bearer {settings.openai_api_key}"},
@@ -344,7 +344,7 @@ Respond with JSON:
 """
 
     try:
-        client = httpx.Client(timeout=60)
+        client = httpx.Client(timeout=120)
         response = client.post(
             CHAT_COMPLETIONS_URL,
             headers={"Authorization": f"Bearer {settings.openai_api_key}"},
