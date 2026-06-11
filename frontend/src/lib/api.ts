@@ -1,4 +1,4 @@
-// Typed fetch wrappers for all 15 backend endpoints
+// Typed fetch wrappers for the backend API
 import type {
   AuditTrailRow,
   BenchmarkRecomputeResponse,
@@ -299,17 +299,7 @@ export const createManualReport = (
     }),
   })
 
-export const updateCompany = (
-  name: string,
-  year: number,
-  data: Partial<CompanyESGData>
-): Promise<CompanyESGData> =>
-  req(`/report/companies/${encodeURIComponent(name)}/${year}`, {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  })
-
-export const deleteCompany = (name: string, year: number): Promise<void> =>
+export const deleteCompany =(name: string, year: number): Promise<void> =>
   req(`/report/companies/${encodeURIComponent(name)}/${year}`, {
     method: 'DELETE',
   })
