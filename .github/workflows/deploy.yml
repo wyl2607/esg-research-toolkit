@@ -37,6 +37,7 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_DEPLOY_USER }}
           key: ${{ secrets.VPS_DEPLOY_KEY }}
+          command_timeout: 30m
           envs: GITHUB_SHA
           script: |
             set -e
