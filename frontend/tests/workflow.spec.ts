@@ -47,7 +47,7 @@ test.describe('seeded analyst workflow', () => {
       const profileResponsePromise = page.waitForResponse((response) => {
         const url = new URL(response.url())
         return (
-          url.pathname === `/api/report/companies/${encodeURIComponent(seeded.companyName)}/profile` &&
+          url.pathname === `/api/api/v1/companies/${encodeURIComponent(seeded.companyName)}/profile` &&
           response.status() === 200
         )
       })
