@@ -15,7 +15,6 @@ reports/
 .ruff_cache/
 frontend/
 tests/
-docs/
 .tmp/
 .codegraph/
 graphify-out/
