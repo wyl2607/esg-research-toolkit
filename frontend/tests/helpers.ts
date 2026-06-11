@@ -16,16 +16,16 @@ export type BrowserIssues = {
 
 export const smokeRoutes: RouteExpectation[] = [
   { path: '/', heading: 'Dashboard', name: 'dashboard' },
-  { path: '/upload', heading: 'ESG-Bericht hochladen', name: 'upload' },
-  { path: '/disclosures', heading: 'Ausstehende Offenlegungen', name: 'disclosures' },
-  { path: '/manual', heading: 'Manuelle Eingabe / Case Builder', name: 'manual' },
-  { path: '/taxonomy', heading: 'EU-Taxonomie Offenlegungsspiegel', name: 'taxonomy' },
-  { path: '/lcoe', heading: 'Stromgestehungskosten-Analyse', name: 'lcoe' },
-  { path: '/companies', heading: 'Unternehmen', name: 'companies' },
-  { path: '/compare', heading: 'Unternehmensvergleich', name: 'compare' },
-  { path: '/benchmarks', heading: 'Branchenbenchmarks', name: 'benchmarks' },
-  { path: '/frameworks', heading: 'Multi-Rahmenwerk ESG', name: 'frameworks' },
-  { path: '/regional', heading: 'Drei-Regionen ESG-Vergleich', name: 'regional' },
+  { path: '/upload', heading: 'Upload ESG Report', name: 'upload' },
+  { path: '/disclosures', heading: 'Pending Disclosures', name: 'disclosures' },
+  { path: '/manual', heading: 'Manual Input / Case Builder', name: 'manual' },
+  { path: '/taxonomy', heading: 'EU Taxonomy Disclosure Mirror', name: 'taxonomy' },
+  { path: '/lcoe', heading: 'LCOE Analysis', name: 'lcoe' },
+  { path: '/companies', heading: 'Companies', name: 'companies' },
+  { path: '/compare', heading: 'Compare Companies', name: 'compare' },
+  { path: '/benchmarks', heading: 'Industry Benchmarks', name: 'benchmarks' },
+  { path: '/frameworks', heading: 'Multi-Framework ESG', name: 'frameworks' },
+  { path: '/regional', heading: 'Three-Region ESG Comparison', name: 'regional' },
 ]
 
 export const a11yRoutes: RouteExpectation[] = smokeRoutes.filter((route) =>
