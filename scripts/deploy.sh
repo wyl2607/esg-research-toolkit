@@ -58,11 +58,16 @@ bash "$REPO_DIR/scripts/write_deploy_fingerprint.sh" \
   --target "$FINGERPRINT_FILE" >/dev/null
 echo " Fingerprint: $FINGERPRINT_FILE"
 
-# 6. Rebuild and restart Docker container
-echo "→ Restarting API container..."
+# 6. Build first, then swap containers. Build-before-down keeps the old
+# container serving if the build fails (2026-06-11 incident: down-then-build
+# with a full disk left the site 502 for hours). No --no-cache: cached layers
+# avoid the containerd snapshot blowup that filled the 39G disk.
+echo "→ Building API image..."
 cd "$REPO_DIR"
+$COMPOSE_CMD -f docker-compose.prod.yml build
+
+echo "→ Restarting API container..."
 $COMPOSE_CMD -f docker-compose.prod.yml down --remove-orphans || true
-$COMPOSE_CMD -f docker-compose.prod.yml build --no-cache
 $COMPOSE_CMD -f docker-compose.prod.yml up -d
 
 # 7. Install nginx config (first deploy only)
@@ -93,13 +98,17 @@ for i in $(seq 1 10); do
     echo " waiting... ($i/10)"
     sleep 3
 done
-for endpoint in /health /report/companies /disclosures/pending; do
+for endpoint in /health /health/deploy /report/companies /disclosures/pending; do
     if ! curl -sf "http://localhost:8001$endpoint" >/dev/null; then
         echo "ERROR: smoke check failed on $endpoint"
         exit 1
     fi
     echo " OK $endpoint"
 done
+
+# 9. Reclaim disk: drop dangling images left by the rebuild.
+echo "→ Pruning dangling images..."
+docker image prune -f
 
 echo "=== Deploy complete ==="
 echo "URL: https://esg.meichen.beauty"
