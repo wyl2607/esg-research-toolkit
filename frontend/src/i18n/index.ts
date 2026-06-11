@@ -32,7 +32,10 @@ export async function loadLocale(lang: string): Promise<void> {
 // not stay on fallback English.
 const detected = (i18n.language || 'en').split('-')[0]
 if (detected !== 'en') {
-  void loadLocale(detected).then(() => i18n.changeLanguage(detected))
+  loadLocale(detected)
+    .then(() => i18n.changeLanguage(detected))
+    // If the locale chunk fails to load, stay on the bundled English fallback.
+    .catch(() => {})
 }
 
 export default i18n
