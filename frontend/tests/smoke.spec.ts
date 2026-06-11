@@ -76,7 +76,7 @@ test.describe('frontend smoke routes', () => {
 
       await expect
         .poll(async () => {
-          const profileResponse = await request.get(`/api/report/companies/${encodedCompany}/profile`)
+          const profileResponse = await request.get(`/api/api/v1/companies/${encodedCompany}/profile`)
           if (!profileResponse.ok()) return false
           const profileBody = (await profileResponse.json()) as {
             evidence_summary?: Array<{ metric?: string; source_url?: string }>
