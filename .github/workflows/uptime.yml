@@ -1,0 +1,29 @@
+name: Uptime
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe production endpoints
+        run: |
+          for endpoint in /api/health /api/health/deploy; do
+            ok=0
+            for attempt in 1 2 3; do
+              if curl -sf --max-time 15 "https://esg.meichen.beauty$endpoint" >/dev/null; then
+                ok=1
+                break
+              fi
+              echo "attempt $attempt failed for $endpoint, retrying in 30s..."
+              sleep 30
+            done
+            if [ "$ok" != "1" ]; then
+              echo "::error::$endpoint unreachable after 3 attempts"
+              exit 1
+            fi
+            echo "OK $endpoint"
+          done
