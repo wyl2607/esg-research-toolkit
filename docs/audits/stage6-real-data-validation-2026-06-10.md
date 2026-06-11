@@ -92,7 +92,8 @@ sheet) and graphic-embedded data points — not silent extraction crashes. Recal
 
 ## 6. Deferred / future work
 
-- Quantify recall: needs LLM lane (repaired `extraction_qa_audit.py`) or manual annotation.
+- ~~Quantify recall: needs LLM lane (repaired `extraction_qa_audit.py`) or manual annotation.~~
+  Done 2026-06-11 via Xiaomi mimo channel — see `recall-quantification-2026-06-11.md`.
 - The interrupted Siemens AG 2023 L1 rows were reviewed on 2026-06-11: 3 `ok`
   verdicts approved and 4 false `missing` verdicts rejected using offline verifier
   evidence pages.
