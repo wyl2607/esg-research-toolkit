@@ -43,7 +43,7 @@ jobs:
             cd /opt/esg-research-toolkit
 
             echo "→ Fetch requested revision"
-            git fetch --depth=1 origin "$GITHUB_SHA"
+            git fetch --depth=1 origin main "$GITHUB_SHA"
             git checkout --detach "$GITHUB_SHA"
 
             echo "→ Run unified deploy script"

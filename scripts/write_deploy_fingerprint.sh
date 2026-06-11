@@ -86,7 +86,7 @@ GIT_BRANCH="$(git -C "$REPO_DIR" rev-parse --abbrev-ref HEAD)"
 if git -C "$REPO_DIR" merge-base --is-ancestor HEAD origin/main 2>/dev/null; then
   GIT_BRANCH="main"
 else
-  CONTAINING_BRANCH="$(git -C "$REPO_DIR" branch -r --contains HEAD 2>/dev/null | grep -v -- '->' | head -n1 | sed 's|^ *origin/||')"
+  CONTAINING_BRANCH="$(git -C "$REPO_DIR" branch -r --contains HEAD 2>/dev/null | grep -v -- '->' | head -n1 | sed 's|^ *origin/||' || true)"
   if [ -n "$CONTAINING_BRANCH" ]; then
     GIT_BRANCH="$CONTAINING_BRANCH"
   fi
