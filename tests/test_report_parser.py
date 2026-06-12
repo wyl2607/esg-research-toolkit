@@ -239,6 +239,45 @@ def test_analyze_esg_data_regex_only_mode_converts_units_from_match_context() ->
     assert result.total_capex_eur == pytest.approx(2500000.0)
 
 
+def test_analyze_esg_data_regex_only_mode_normalizes_gwh_and_tm3() -> None:
+    # Salzgitter/VW 教训：GWh 与德式 Tm³（thousand m³）单位归一
+    text = (
+        "Salzgitter AG 2023 Sustainability Report\n"
+        "Scope 1: 10 tCO2e\n"
+        "Energy consumption: 1,234 GWh\n"
+        "Wasserverbrauch: 532 Tm³\n"
+    )
+
+    with patch.dict(os.environ, {"PARSER_REGEX_ONLY": "1"}), patch("report_parser.analyzer.complete") as mock_complete:
+        result = analyze_esg_data(text, filename="Salzgitter_2023.pdf")
+
+    mock_complete.assert_not_called()
+    assert result.energy_consumption_mwh == pytest.approx(1234000.0)
+    assert result.water_usage_m3 == pytest.approx(532000.0)
+
+
+def test_analyze_esg_data_regex_only_mode_normalizes_million_mwh_and_twh() -> None:
+    # VW 2024 教训：能耗以 "million MWh" / TWh 披露
+    text_million = (
+        "Volkswagen Group 2024 Report\n"
+        "Scope 1: 10 tCO2e\n"
+        "Energy consumption: 19.0 million MWh\n"
+    )
+    text_twh = (
+        "Example Group 2024 Report\n"
+        "Scope 1: 10 tCO2e\n"
+        "Energy consumption: 2.5 TWh\n"
+    )
+
+    with patch.dict(os.environ, {"PARSER_REGEX_ONLY": "1"}), patch("report_parser.analyzer.complete") as mock_complete:
+        result_million = analyze_esg_data(text_million, filename="VW_2024.pdf")
+        result_twh = analyze_esg_data(text_twh, filename="Example_2024.pdf")
+
+    mock_complete.assert_not_called()
+    assert result_million.energy_consumption_mwh == pytest.approx(19000000.0)
+    assert result_twh.energy_consumption_mwh == pytest.approx(2500000.0)
+
+
 def test_analyze_esg_data_regex_only_mode_keeps_metric_units_independent() -> None:
     text = (
         "Mixed Units GmbH 2024 ESG Report\n"
