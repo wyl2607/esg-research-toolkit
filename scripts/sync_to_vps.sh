@@ -65,7 +65,11 @@ cd "${VPS_PATH}"
 # Explicit DATABASE_URL: without it the remote .env's relative path resolves
 # to a stale DB under the repo checkout instead of the production bind mount.
 DATABASE_URL="sqlite:////opt/esg-data/esg_toolkit.db" .venv/bin/python scripts/import_verified.py "${REMOTE_DIR}"
-curl -sf -X POST http://127.0.0.1:8001/benchmarks/recompute || echo "WARN: recompute call failed"
+if ! curl -sf -X POST http://127.0.0.1:8001/benchmarks/recompute; then
+    echo "ERROR: benchmark recompute failed — rows imported but benchmarks are stale." >&2
+    echo "Fix the API container, then rerun: curl -X POST http://127.0.0.1:8001/benchmarks/recompute" >&2
+    exit 1
+fi
 echo "Remote import complete."
 EOF
 
