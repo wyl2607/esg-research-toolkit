@@ -8,6 +8,11 @@ DATA_DIR="/opt/esg-data"
 REPORTS_DIR="/opt/esg-reports"
 NGINX_CONF="/etc/nginx/sites-available/esg.conf"
 FINGERPRINT_FILE="$REPO_DIR/.deploy-fingerprint.json"
+# Image name pinned in docker-compose.prod.yml; uid 10001 matches the app user
+# in the Dockerfile.
+IMAGE_LATEST="esg-toolkit-api:latest"
+IMAGE_ROLLBACK="esg-toolkit-api:rollback"
+APP_UID="10001"
 
 detect_compose() {
     if docker compose version >/dev/null 2>&1; then
@@ -38,8 +43,9 @@ cd "$REPO_DIR/frontend"
 npm install --silent
 npm run build
 
-# 3. Ensure data dirs exist
+# 3. Ensure data dirs exist and are writable by the non-root container user
 mkdir -p "$DATA_DIR" "$REPORTS_DIR"
+chown -R "$APP_UID:$APP_UID" "$DATA_DIR" "$REPORTS_DIR"
 
 # 4. Check .env.prod exists
 if [ ! -f "$REPO_DIR/.env.prod" ]; then
@@ -64,6 +70,10 @@ echo " Fingerprint: $FINGERPRINT_FILE"
 # avoid the containerd snapshot blowup that filled the 39G disk.
 echo "→ Building API image..."
 cd "$REPO_DIR"
+# Keep the pre-deploy image around so a failed smoke check can roll back.
+if docker image inspect "$IMAGE_LATEST" >/dev/null 2>&1; then
+    docker tag "$IMAGE_LATEST" "$IMAGE_ROLLBACK"
+fi
 $COMPOSE_CMD -f docker-compose.prod.yml build
 
 echo "→ Restarting API container..."
@@ -86,22 +96,43 @@ fi
 # 8. Smoke check. /health stays green even when the DB schema has drifted
 # (2026-06-10 incident: stamped-but-unmigrated SQLite 500'd every core route),
 # so also hit endpoints that actually query the main tables.
+# On failure, roll back to the pre-deploy image (#57: a bad image otherwise
+# stays live until someone notices).
+rollback_and_exit() {
+    echo "ERROR: $1"
+    if docker image inspect "$IMAGE_ROLLBACK" >/dev/null 2>&1; then
+        echo "→ Rolling back to previous image..."
+        docker tag "$IMAGE_ROLLBACK" "$IMAGE_LATEST"
+        $COMPOSE_CMD -f docker-compose.prod.yml up -d --no-build
+        for i in $(seq 1 10); do
+            if curl -sf http://localhost:8001/health >/dev/null; then
+                echo "Rollback succeeded: previous image is serving. Deploy aborted."
+                exit 1
+            fi
+            echo " waiting for rollback container... ($i/10)"
+            sleep 3
+        done
+        echo "ERROR: rollback container failed health check — manual intervention needed"
+    else
+        echo "WARN: no rollback image ($IMAGE_ROLLBACK) — container left as-is"
+    fi
+    exit 1
+}
+
 echo "→ Smoke check..."
 for i in $(seq 1 10); do
     if curl -sf http://localhost:8001/health >/dev/null; then
         break
     fi
     if [ "$i" = "10" ]; then
-        echo "ERROR: API health check failed"
-        exit 1
+        rollback_and_exit "API health check failed"
     fi
     echo " waiting... ($i/10)"
     sleep 3
 done
 for endpoint in /health /health/deploy /report/companies /disclosures/pending; do
     if ! curl -sf "http://localhost:8001$endpoint" >/dev/null; then
-        echo "ERROR: smoke check failed on $endpoint"
-        exit 1
+        rollback_and_exit "smoke check failed on $endpoint"
     fi
     echo " OK $endpoint"
 done
