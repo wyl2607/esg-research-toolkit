@@ -25,6 +25,15 @@ _SYSTEM = """You are an ESG data analyst. Extract ESG metrics from the provided 
 - female_pct: float (0-100) or null
 - primary_activities: list of strings (e.g. ["solar_pv", "wind_onshore"])
 
+Entity scope (CRITICAL):
+- Always use GROUP-CONSOLIDATED figures (labeled "Group", "Konzern", "consolidated").
+- Reports often ALSO contain parent-company-only tables (labeled e.g. "Volkswagen AG", "AG only", "parent company", "Mutterunternehmen", "separate financial statements"). NEVER take values from a parent-entity table when group figures exist — parent-entity values are typically 5-10x smaller (employees, emissions, energy).
+- If a table header or nearby caption names the legal parent entity alone (".. AG" / ".. SE" without "Group"/"Konzern"), treat it as parent-only and keep searching for the group table.
+
+EU Taxonomy (CRITICAL):
+- taxonomy_aligned_revenue_pct / taxonomy_aligned_capex_pct mean the taxonomy-ALIGNED share ("taxonomy-aligned", "taxonomiekonform") only.
+- "Taxonomy-ELIGIBLE" ("taxonomiefähig") is NOT aligned. If the report only discloses eligible percentages, return null — do NOT substitute the eligible value.
+
 Notes on table parsing:
 - Tables columns order: Indicator | Unit | 2022 | 2023 | 2024 (oldest to newest left to right).
 - Always use MOST RECENT year: rightmost non-empty non-"/" column.
@@ -33,9 +42,9 @@ Notes on table parsing:
 - "tCO 2 e" and "tCO2e" both mean tCO2e.
 
 Unit conversions:
-- Water: unit "m3" use value as-is. Unit "10 thousand m3" multiply by 10000. Unit "万吨" multiply by 10000000.
+- Water: unit "m3" use value as-is. Unit "Tm3"/"thousand m3" multiply by 1000. Unit "10 thousand m3" multiply by 10000. Unit "万吨" multiply by 10000000.
 - Revenue/CapEx: unit "RMB 10 thousand" = value x 10000 / 7.8 = EUR. Unit "亿元" = value x 1e8 / 7.8 = EUR.
-- Energy MWh: use as-is. Unit "万千瓦时" multiply by 10000.
+- Energy MWh: use as-is. Unit "GWh" multiply by 1000. Unit "TWh" or "million MWh" multiply by 1000000. Unit "万千瓦时" multiply by 10 (= 10,000 kWh).
 - Percentages: float 0-100, do not divide by 100.
 
 For primary_activities: snake_case strings e.g. "battery_manufacturing", "solar_pv".
@@ -329,12 +338,16 @@ def _regex_fallback(text: str, filename: str = "") -> CompanyESGData:
     energy_match = _extract_value_with_context(
         text,
         [
-            r"(?:energy consumption|energy used|能源消费总量|综合能耗|energieverbrauch|gesamtenergieverbrauch)[^\d]{0,40}([\d,.]+)\s*(?:mwh|兆瓦时|万千瓦时|kwh)",
+            r"(?:energy consumption|energy used|能源消费总量|综合能耗|energieverbrauch|gesamtenergieverbrauch)[^\d]{0,40}([\d,.]+)\s*(?:million\s+mwh|twh|gwh|mwh|兆瓦时|万千瓦时|kwh)",
         ],
     )
     if energy_match is not None:
         energy_value, energy_context = energy_match
-        if re.search(r"万千瓦时", energy_context, re.IGNORECASE):
+        if re.search(r"million\s+mwh|\btwh\b", energy_context, re.IGNORECASE):
+            result["energy_consumption_mwh"] = energy_value * 1e6
+        elif re.search(r"\bgwh\b", energy_context, re.IGNORECASE):
+            result["energy_consumption_mwh"] = energy_value * 1000
+        elif re.search(r"万千瓦时", energy_context, re.IGNORECASE):
             result["energy_consumption_mwh"] = energy_value * 10000 / 1000
         elif re.search(r"\bkwh\b", energy_context, re.IGNORECASE):
             result["energy_consumption_mwh"] = energy_value / 1000
@@ -351,13 +364,15 @@ def _regex_fallback(text: str, filename: str = "") -> CompanyESGData:
     water_match = _extract_value_with_context(
         text,
         [
-            r"(?:water (?:consumption|usage)|用水(?:总量|量)?|wasserverbrauch|wasserentnahme)[^\d]{0,40}([\d,.]+)\s*(?:10 thousand m3|m3|m³|立方米|万立方米|万m3)",
+            r"(?:water (?:consumption|usage)|用水(?:总量|量)?|wasserverbrauch|wasserentnahme)[^\d]{0,40}([\d,.]+)\s*(?:10 thousand m3|thousand m(?:3|³)|tm(?:3|³)|m3|m³|立方米|万立方米|万m3)",
         ],
     )
     if water_match is not None:
         water_value, water_context = water_match
         if re.search(r"(10 thousand m3|万立方米|万m3)", water_context, re.IGNORECASE):
             water_value *= 10000
+        elif re.search(r"thousand m(?:3|³)|\btm(?:3|³)", water_context, re.IGNORECASE):
+            water_value *= 1000
         result["water_usage_m3"] = water_value
 
     result["waste_recycled_pct"] = _extract_percentage(
