@@ -2094,7 +2094,9 @@ export interface operations {
     export_companies_csv_report_companies_export_csv_get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "x-admin-token"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -2109,12 +2111,23 @@ export interface operations {
                     "application/json": unknown;
                 };
             };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
     };
     export_companies_xlsx_report_companies_export_xlsx_get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "x-admin-token"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -2127,6 +2140,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
