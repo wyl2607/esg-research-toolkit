@@ -73,7 +73,10 @@ def delete_company_report(
 
 
 @router.get("/companies/export/csv")
-def export_companies_csv(db: Session = Depends(get_db)) -> StreamingResponse:
+def export_companies_csv(
+    _: None = Depends(require_admin_token),
+    db: Session = Depends(get_db),
+) -> StreamingResponse:
     records = list_reports_grouped(db)
     fieldnames = [
         "company_name",
@@ -103,7 +106,10 @@ def export_companies_csv(db: Session = Depends(get_db)) -> StreamingResponse:
 
 
 @router.get("/companies/export/xlsx")
-def export_companies_xlsx(db: Session = Depends(get_db)) -> StreamingResponse:
+def export_companies_xlsx(
+    _: None = Depends(require_admin_token),
+    db: Session = Depends(get_db),
+) -> StreamingResponse:
     records = list_reports_grouped(db)
 
     wb = openpyxl.Workbook()
