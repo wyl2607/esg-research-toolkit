@@ -1,5 +1,6 @@
 services:
   api:
+    image: esg-toolkit-api:latest
     build:
       context: .
     ports:

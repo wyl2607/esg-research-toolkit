@@ -22,7 +22,13 @@ COPY --from=builder /install /usr/local
 
 COPY . .
 
-RUN mkdir -p data reports
+# uid/gid must stay in sync with the chown in scripts/deploy.sh (bind mounts).
+RUN groupadd --gid 10001 app \
+    && useradd --uid 10001 --gid app --home-dir /app --no-create-home app \
+    && mkdir -p data reports \
+    && chown app:app data reports
+
+USER app
 
 EXPOSE 8000
 
