@@ -13,7 +13,8 @@
 # Prerequisites on VPS:
 #   - python venv at /opt/esg-toolkit/.venv with backend deps installed
 #   - scripts/import_verified.py present (mirror of repo)
-#   - uvicorn running, /benchmarks/recompute reachable on 127.0.0.1:8000
+#   - production DB at /opt/esg-data/esg_toolkit.db (bind mount)
+#   - api container port mapped to 127.0.0.1:8001 (docker-compose.prod.yml)
 #
 # Safety:
 #   - never auto-runs; you call it explicitly when you've reviewed the export
@@ -61,8 +62,10 @@ echo "→ triggering remote import + benchmark recompute…"
 ssh "${VPS_HOST}" bash -s <<EOF
 set -euo pipefail
 cd "${VPS_PATH}"
-.venv/bin/python scripts/import_verified.py "${REMOTE_DIR}"
-curl -sf -X POST http://127.0.0.1:8000/benchmarks/recompute || echo "WARN: recompute call failed"
+# Explicit DATABASE_URL: without it the remote .env's relative path resolves
+# to a stale DB under the repo checkout instead of the production bind mount.
+DATABASE_URL="sqlite:////opt/esg-data/esg_toolkit.db" .venv/bin/python scripts/import_verified.py "${REMOTE_DIR}"
+curl -sf -X POST http://127.0.0.1:8001/benchmarks/recompute || echo "WARN: recompute call failed"
 echo "Remote import complete."
 EOF
 
