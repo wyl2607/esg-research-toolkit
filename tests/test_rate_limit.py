@@ -43,6 +43,7 @@ def test_upload_rate_limit(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> N
             industry_sector = data.industry_sector
             scope1_co2e_tonnes = data.scope1_co2e_tonnes
             scope2_co2e_tonnes = data.scope2_co2e_tonnes
+            scope2_basis = data.scope2_basis
             scope3_co2e_tonnes = None
             energy_consumption_mwh = data.energy_consumption_mwh
             renewable_energy_pct = data.renewable_energy_pct
@@ -110,6 +111,7 @@ def test_upload_override_company_name_takes_precedence(
             industry_sector = kwargs.get("industry_sector")
             scope1_co2e_tonnes = data.scope1_co2e_tonnes
             scope2_co2e_tonnes = None
+            scope2_basis = None
             scope3_co2e_tonnes = None
             energy_consumption_mwh = None
             renewable_energy_pct = None

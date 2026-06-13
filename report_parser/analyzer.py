@@ -12,6 +12,7 @@ _SYSTEM = """You are an ESG data analyst. Extract ESG metrics from the provided 
 - report_year: integer (e.g. 2023)
 - scope1_co2e_tonnes: float or null
 - scope2_co2e_tonnes: float or null
+- scope2_basis: "market" | "location" | null
 - scope3_co2e_tonnes: float or null
 - energy_consumption_mwh: float or null
 - renewable_energy_pct: float (0-100) or null
@@ -33,6 +34,15 @@ Entity scope (CRITICAL):
 EU Taxonomy (CRITICAL):
 - taxonomy_aligned_revenue_pct / taxonomy_aligned_capex_pct mean the taxonomy-ALIGNED share ("taxonomy-aligned", "taxonomiekonform") only.
 - "Taxonomy-ELIGIBLE" ("taxonomiefähig") is NOT aligned. If the report only discloses eligible percentages, return null — do NOT substitute the eligible value.
+
+Scope 2 basis (CRITICAL):
+- Scope 2 emissions are canonically MARKET-BASED. When a report discloses both market-based and location-based Scope 2, take the market-based value and set scope2_basis="market".
+- If ONLY location-based Scope 2 is disclosed, take that value and set scope2_basis="location".
+- If scope2_co2e_tonnes is null, scope2_basis must be null.
+
+Workforce gender (CRITICAL):
+- female_pct denominator = TOTAL WORKFORCE (share of women among all employees).
+- If the report only discloses the female share of management / leadership / board / supervisory bodies, return female_pct=null — do NOT substitute a management ratio for the total-workforce figure.
 
 Notes on table parsing:
 - Tables columns order: Indicator | Unit | 2022 | 2023 | 2024 (oldest to newest left to right).
@@ -277,6 +287,7 @@ def _regex_fallback(text: str, filename: str = "") -> CompanyESGData:
         "report_year": 2024,
         "scope1_co2e_tonnes": None,
         "scope2_co2e_tonnes": None,
+        "scope2_basis": None,
         "scope3_co2e_tonnes": None,
         "energy_consumption_mwh": None,
         "renewable_energy_pct": None,

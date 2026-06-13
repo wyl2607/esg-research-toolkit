@@ -45,6 +45,7 @@ except Exception:  # pragma: no cover - optional, depends on benchmark module sh
 METRIC_FIELDS = [
     "scope1_co2e_tonnes",
     "scope2_co2e_tonnes",
+    "scope2_basis",
     "scope3_co2e_tonnes",
     "energy_consumption_mwh",
     "renewable_energy_pct",
