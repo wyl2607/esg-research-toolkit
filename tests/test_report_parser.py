@@ -106,6 +106,65 @@ def test_extract_text_from_pdf_fallback_to_pdfplumber() -> None:
     assert result == "Fallback extracted text"
 
 
+def test_clean_page_text_normalizes_pua_digits() -> None:
+    from report_parser.extractor import _clean_page_text
+
+    # Salzgitter 2024 根因：字体子集把 "2" 编码为 U+F032，文本层数字看似被裁位
+    assert _clean_page_text("Total 3\uf032,975,507 MWh") == "Total 32,975,507 MWh"
+
+
+def _write_misaligned_table_pdf(pdf_path) -> None:
+    """构造文本层列序错乱的表格 PDF：单元格按列优先写入，
+    纯文本流提取会把列读成行（#59 Uniper / Salzgitter 列裁位模式）。"""
+    import fitz
+
+    doc = fitz.open()
+    page = doc.new_page(width=400, height=300)
+    page.insert_text((50, 45), "Salzgitter energy disclosure")
+
+    for x in (50, 180, 260, 340):
+        page.draw_line((x, 60), (x, 120))
+    for y in (60, 80, 100, 120):
+        page.draw_line((50, y), (340, y))
+
+    cells = {
+        (0, 0): "Indicator", (0, 1): "2024", (0, 2): "2023",
+        (1, 0): "Energy intensity", (1, 1): "3,316", (1, 2): "3,401",
+        (2, 0): "Revenue", (2, 1): "9,944", (2, 2): "10,791",
+    }
+    for r, c in [(0, 0), (1, 0), (2, 0), (0, 1), (1, 1), (2, 1), (0, 2), (1, 2), (2, 2)]:
+        x = (55, 185, 265)[c]
+        y = (75, 95, 115)[r]
+        page.insert_text((x, y), cells[(r, c)])
+    doc.save(str(pdf_path))
+    doc.close()
+
+
+def test_extract_text_table_rows_aligned_despite_text_layer_order(tmp_path) -> None:
+    pdf_path = tmp_path / "misaligned_table.pdf"
+    _write_misaligned_table_pdf(pdf_path)
+
+    text = extract_text_from_pdf(pdf_path)
+
+    assert "Salzgitter energy disclosure" in text
+    assert "Indicator | 2024 | 2023" in text
+    assert "Energy intensity | 3,316 | 3,401" in text
+    assert "Revenue | 9,944 | 10,791" in text
+
+
+def test_pdfplumber_table_rows_aligned_despite_text_layer_order(tmp_path) -> None:
+    from report_parser.extractor import _extract_with_pdfplumber
+
+    pdf_path = tmp_path / "misaligned_table.pdf"
+    _write_misaligned_table_pdf(pdf_path)
+
+    text = _extract_with_pdfplumber(pdf_path)
+
+    assert "Salzgitter energy disclosure" in text
+    assert "Energy intensity | 3,316 | 3,401" in text
+    assert "Revenue | 9,944 | 10,791" in text
+
+
 def test_analyze_esg_data_with_mock_openai() -> None:
     report_text = "A" * 9000
     response_payload = {
