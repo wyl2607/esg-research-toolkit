@@ -2695,6 +2695,7 @@ def test_extraction_prompt_states_scope2_basis_and_female_rules() -> None:
 
     assert "scope2_basis" in _SYSTEM
     assert "market-based" in _SYSTEM.lower()
+    assert "scope2_co2e_tonnes is null, scope2_basis must be null" in _SYSTEM.lower()
     assert "total workforce" in _SYSTEM.lower()
 
 

@@ -345,6 +345,31 @@ def test_scope2_basis_backfill_labels_existing_rows(tmp_path: Path) -> None:
     assert basis_by_company["SAP SE"] is None
 
 
+def test_scope2_basis_backfill_raises_on_rwe_name_variant(tmp_path: Path) -> None:
+    # SEC-3 guard: an RWE 2023 row that matches %RWE% but not the exact name
+    # 'RWE AG' would silently keep 'market'; the migration must raise instead.
+    cfg = _alembic_config()
+    db_path = tmp_path / "scope2_backfill_rwe_variant.sqlite3"
+
+    _upgrade_to(cfg, db_path, "0002_retire_runtime_helpers")
+
+    engine = create_engine(f"sqlite:///{db_path}")
+    try:
+        with engine.begin() as conn:
+            conn.execute(
+                text(
+                    "INSERT INTO company_reports "
+                    "(company_name, report_year, source_doc_key, scope2_co2e_tonnes, deletion_requested) "
+                    "VALUES ('RWE Aktiengesellschaft', 2023, 'k-rwe-variant', 200000.0, 0)"
+                )
+            )
+    finally:
+        engine.dispose()
+
+    with pytest.raises(RuntimeError, match="RWE 2023 Scope 2 row present"):
+        _upgrade_head(cfg, db_path)
+
+
 def test_scope2_basis_validator_normalizes_llm_variants() -> None:
     from core.schemas import CompanyESGData
 
