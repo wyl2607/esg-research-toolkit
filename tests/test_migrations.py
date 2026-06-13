@@ -68,6 +68,20 @@ def _stamp(cfg: Config, sqlite_db_path: Path, revision: str) -> None:
         command.stamp(cfg, revision)
 
 
+def _upgrade_to(cfg: Config, sqlite_db_path: Path, revision: str) -> None:
+    with _temporary_database_url(f"sqlite:///{sqlite_db_path}"):
+        command.upgrade(cfg, revision)
+
+
+def _downgrade(cfg: Config, sqlite_db_path: Path, revision: str) -> None:
+    with _temporary_database_url(f"sqlite:///{sqlite_db_path}"):
+        command.downgrade(cfg, revision)
+
+
+def _company_reports_columns(sqlite_db_path: Path) -> set[str]:
+    return _table_shapes(sqlite_db_path, ["company_reports"])["company_reports"]["columns"]
+
+
 def _read_alembic_versions(sqlite_db_path: Path) -> list[str]:
     engine = create_engine(f"sqlite:///{sqlite_db_path}")
     try:
@@ -275,3 +289,73 @@ def test_production_alembic_init_rejects_in_memory_sqlite(monkeypatch: pytest.Mo
         database_runtime.init_db()
 
     runtime_engine.dispose()
+
+
+def test_scope2_basis_column_round_trips(tmp_path: Path) -> None:
+    cfg = _alembic_config()
+    db_path = tmp_path / "scope2_reversible.sqlite3"
+
+    _upgrade_head(cfg, db_path)
+    assert "scope2_basis" in _company_reports_columns(db_path)
+
+    _downgrade(cfg, db_path, "0002_retire_runtime_helpers")
+    assert "scope2_basis" not in _company_reports_columns(db_path)
+
+    _upgrade_head(cfg, db_path)
+    assert "scope2_basis" in _company_reports_columns(db_path)
+
+
+def test_scope2_basis_backfill_labels_existing_rows(tmp_path: Path) -> None:
+    cfg = _alembic_config()
+    db_path = tmp_path / "scope2_backfill.sqlite3"
+
+    _upgrade_to(cfg, db_path, "0002_retire_runtime_helpers")
+
+    engine = create_engine(f"sqlite:///{db_path}")
+    try:
+        with engine.begin() as conn:
+            conn.execute(
+                text(
+                    "INSERT INTO company_reports "
+                    "(company_name, report_year, source_doc_key, scope2_co2e_tonnes, deletion_requested) "
+                    "VALUES "
+                    "('BASF SE', 2023, 'k-market', 1000.0, 0), "
+                    "('RWE AG', 2023, 'k-location', 200000.0, 0), "
+                    "('SAP SE', 2023, 'k-null', NULL, 0)"
+                )
+            )
+    finally:
+        engine.dispose()
+
+    _upgrade_head(cfg, db_path)
+
+    engine = create_engine(f"sqlite:///{db_path}")
+    try:
+        with engine.connect() as conn:
+            basis_by_company = dict(
+                conn.execute(
+                    text("SELECT company_name, scope2_basis FROM company_reports")
+                ).all()
+            )
+    finally:
+        engine.dispose()
+
+    assert basis_by_company["BASF SE"] == "market"
+    assert basis_by_company["RWE AG"] == "location"
+    assert basis_by_company["SAP SE"] is None
+
+
+def test_scope2_basis_validator_normalizes_llm_variants() -> None:
+    from core.schemas import CompanyESGData
+
+    def _basis(value: str | None) -> str | None:
+        return CompanyESGData.model_validate(
+            {"company_name": "Acme", "report_year": 2023, "scope2_basis": value}
+        ).scope2_basis
+
+    assert _basis("Market-based") == "market"
+    assert _basis("LOCATION") == "location"
+    assert _basis("location-based") == "location"
+    assert _basis("  Market  ") == "market"
+    assert _basis("unknown") is None
+    assert _basis(None) is None

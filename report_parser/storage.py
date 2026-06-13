@@ -72,6 +72,7 @@ class CompanyReport(Base):
     # ── ESG metrics ──────────────────────────────────────────────────────────
     scope1_co2e_tonnes = Column(Float, nullable=True)
     scope2_co2e_tonnes = Column(Float, nullable=True)
+    scope2_basis = Column(String, nullable=True)  # market | location
     scope3_co2e_tonnes = Column(Float, nullable=True)
     energy_consumption_mwh = Column(Float, nullable=True)
     renewable_energy_pct = Column(Float, nullable=True)
@@ -191,6 +192,7 @@ def save_report(
 
     record.scope1_co2e_tonnes = normalized_data.scope1_co2e_tonnes
     record.scope2_co2e_tonnes = normalized_data.scope2_co2e_tonnes
+    record.scope2_basis = normalized_data.scope2_basis
     record.scope3_co2e_tonnes = normalized_data.scope3_co2e_tonnes
     record.industry_code = normalized_data.industry_code
     record.industry_sector = normalized_data.industry_sector
@@ -613,6 +615,7 @@ def ensure_storage_schema(engine: Engine) -> None:
         "industry_sector": "TEXT",
         "evidence_summary": "TEXT",
         "source_doc_key": "TEXT",
+        "scope2_basis": "TEXT",
     }
     required_pending_columns: dict[str, str] = {
         "review_note": "TEXT",
