@@ -191,6 +191,7 @@ def _record_to_merge_source_input(
         downloaded_at=record.downloaded_at.isoformat() if record.downloaded_at else None,
         scope1_co2e_tonnes=record.scope1_co2e_tonnes,
         scope2_co2e_tonnes=record.scope2_co2e_tonnes,
+        scope2_basis=record.scope2_basis,
         scope3_co2e_tonnes=record.scope3_co2e_tonnes,
         energy_consumption_mwh=record.energy_consumption_mwh,
         renewable_energy_pct=record.renewable_energy_pct,
@@ -559,6 +560,7 @@ def _record_to_company_data(record) -> CompanyESGData:
         industry_sector=record.industry_sector,
         scope1_co2e_tonnes=record.scope1_co2e_tonnes,
         scope2_co2e_tonnes=record.scope2_co2e_tonnes,
+        scope2_basis=record.scope2_basis,
         scope3_co2e_tonnes=record.scope3_co2e_tonnes,
         energy_consumption_mwh=record.energy_consumption_mwh,
         renewable_energy_pct=record.renewable_energy_pct,
@@ -828,6 +830,32 @@ def get_company_history(
     }
 
 
+def _collect_observed_company_names(db, resolved_name, records) -> set[str]:
+    observed: set[str] = set()
+    for record in records:
+        year_source_records = list_source_reports_for_company_year(
+            db,
+            resolved_name,
+            record.report_year,
+            collapse_duplicates=False,
+        )
+        observed.update(item.company_name for item in year_source_records if item.company_name)
+    return observed
+
+
+def _assemble_framework_results(framework_rows) -> list[dict[str, Any]]:
+    framework_results = []
+    for row in framework_rows:
+        result = json.loads(row.result_payload)
+        result["framework_version"] = result.get("framework_version") or row.framework_version
+        result["framework_id"] = result.get("framework_id") or row.framework_id
+        result["framework"] = result.get("framework") or row.framework_name
+        result["analysis_result_id"] = row.id
+        result["stored_at"] = row.created_at.isoformat() if row.created_at else None
+        framework_results.append(result)
+    return framework_results
+
+
 def get_company_profile(
     company_name: str,
     db: Session = Depends(get_db),
@@ -841,15 +869,7 @@ def get_company_profile(
     resolved_name = records[0].company_name
 
     latest = records[-1]
-    observed_company_names: set[str] = set()
-    for record in records:
-        year_source_records = list_source_reports_for_company_year(
-            db,
-            resolved_name,
-            record.report_year,
-            collapse_duplicates=False,
-        )
-        observed_company_names.update(item.company_name for item in year_source_records if item.company_name)
+    observed_company_names = _collect_observed_company_names(db, resolved_name, records)
 
     latest_source_records = list_source_reports_for_company_year(
         db,
@@ -882,15 +902,7 @@ def get_company_profile(
         company_name=resolved_name,
         report_year=latest.report_year,
     )
-    framework_results = []
-    for row in framework_rows:
-        result = json.loads(row.result_payload)
-        result["framework_version"] = result.get("framework_version") or row.framework_version
-        result["framework_id"] = result.get("framework_id") or row.framework_id
-        result["framework"] = result.get("framework") or row.framework_name
-        result["analysis_result_id"] = row.id
-        result["stored_at"] = row.created_at.isoformat() if row.created_at else None
-        framework_results.append(result)
+    framework_results = _assemble_framework_results(framework_rows)
     latest_framework_metadata = [_framework_metadata_item(row) for row in framework_rows]
     framework_scores = [scorer(latest_data).model_dump() for scorer in _SCORERS.values()]
     years_available = [record.report_year for record in records]
@@ -1091,6 +1103,7 @@ def list_company_reports(
                 ),
                 "scope1_co2e_tonnes": record.scope1_co2e_tonnes,
                 "scope2_co2e_tonnes": record.scope2_co2e_tonnes,
+                "scope2_basis": record.scope2_basis,
                 "scope3_co2e_tonnes": record.scope3_co2e_tonnes,
                 "energy_consumption_mwh": record.energy_consumption_mwh,
                 "renewable_energy_pct": record.renewable_energy_pct,

@@ -2747,3 +2747,68 @@ def test_save_report_fail_open_bypass_allows_invalid_values(
         pdf_filename="invalid-fail-open.pdf",
     )
     assert saved.scope1_co2e_tonnes == pytest.approx(9_999_999_999_999.0)
+
+
+def test_extraction_prompt_states_scope2_basis_and_female_rules() -> None:
+    from report_parser.analyzer import _SYSTEM
+
+    assert "scope2_basis" in _SYSTEM
+    assert "market-based" in _SYSTEM.lower()
+    assert "scope2_co2e_tonnes is null, scope2_basis must be null" in _SYSTEM.lower()
+    assert "total workforce" in _SYSTEM.lower()
+
+
+def test_regex_fallback_leaves_scope2_basis_none() -> None:
+    from report_parser.analyzer import _regex_fallback
+
+    result = _regex_fallback("范围二: 12,500 tCO2e", filename="Acme_2024.pdf")
+
+    assert result.scope2_co2e_tonnes == pytest.approx(12500.0)
+    assert result.scope2_basis is None
+
+
+def test_save_report_round_trips_scope2_basis(
+    db_session: Session,
+    make_company_data,
+) -> None:
+    data = make_company_data(
+        company_name="RWE AG",
+        report_year=2023,
+        scope2_co2e_tonnes=200000.0,
+        scope2_basis="location",
+    )
+
+    saved = save_report(db_session, data, pdf_filename="rwe-2023.pdf")
+    loaded = get_report(db_session, company_name="RWE AG", report_year=2023)
+
+    assert saved.scope2_basis == "location"
+    assert loaded is not None
+    assert loaded.scope2_basis == "location"
+
+
+def test_merge_payload_carries_scope2_basis_with_scope2_value(
+    db_session: Session,
+) -> None:
+    from types import SimpleNamespace
+
+    from report_parser.disclosures_api import _merge_payload_with_selected_metrics
+
+    row = SimpleNamespace(company_name="Fresh Co", report_year=2024)
+
+    merged = _merge_payload_with_selected_metrics(
+        row=row,
+        extracted_payload={"scope2_co2e_tonnes": 1234.0, "scope2_basis": "location"},
+        include_metrics=["scope2_co2e_tonnes"],
+        db=db_session,
+    )
+    assert merged["scope2_co2e_tonnes"] == 1234.0
+    assert merged["scope2_basis"] == "location"
+
+    merged_unknown = _merge_payload_with_selected_metrics(
+        row=row,
+        extracted_payload={"scope2_co2e_tonnes": 99.0},
+        include_metrics=["scope2_co2e_tonnes"],
+        db=db_session,
+    )
+    assert merged_unknown["scope2_co2e_tonnes"] == 99.0
+    assert merged_unknown["scope2_basis"] is None

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Literal, TypeAlias
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from core.evidence import Evidence
 from core.normalization.period import NormalizedPeriod
@@ -29,6 +29,7 @@ class CompanyESGData(BaseModel):
     industry_sector: str | None = None
     scope1_co2e_tonnes: float | None = None
     scope2_co2e_tonnes: float | None = None
+    scope2_basis: Literal["market", "location"] | None = None
     scope3_co2e_tonnes: float | None = None
     energy_consumption_mwh: float | None = None
     renewable_energy_pct: float | None = None
@@ -42,6 +43,16 @@ class CompanyESGData(BaseModel):
     female_pct: float | None = None
     primary_activities: list[str] = Field(default_factory=list)
     evidence_summary: list[dict[str, Any]] = Field(default_factory=list)
+
+    @field_validator("scope2_basis", mode="before")
+    @classmethod
+    def _normalize_scope2_basis(cls, value: Any) -> str | None:
+        """Tolerate LLM variants ("Market-based", "LOCATION") without failing the
+        whole extraction; unknown tokens degrade to None rather than ValidationError."""
+        if not isinstance(value, str):
+            return None
+        cleaned = value.strip().lower().removesuffix("-based").strip()
+        return cleaned if cleaned in {"market", "location"} else None
 
 
 class ManualReportInput(CompanyESGData):
@@ -308,6 +319,7 @@ class CompanyReportListItem(BaseModel):
     created_at: str | None = None
     scope1_co2e_tonnes: float | None = None
     scope2_co2e_tonnes: float | None = None
+    scope2_basis: Literal["market", "location"] | None = None
     scope3_co2e_tonnes: float | None = None
     energy_consumption_mwh: float | None = None
     renewable_energy_pct: float | None = None

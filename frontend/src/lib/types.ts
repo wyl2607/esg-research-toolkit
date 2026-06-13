@@ -996,6 +996,8 @@ export interface components {
             scope1_co2e_tonnes?: number | null;
             /** Scope2 Co2E Tonnes */
             scope2_co2e_tonnes?: number | null;
+            /** Scope2 Basis */
+            scope2_basis?: ("market" | "location") | null;
             /** Scope3 Co2E Tonnes */
             scope3_co2e_tonnes?: number | null;
             /** Energy Consumption Mwh */
@@ -1198,6 +1200,8 @@ export interface components {
             scope1_co2e_tonnes?: number | null;
             /** Scope2 Co2E Tonnes */
             scope2_co2e_tonnes?: number | null;
+            /** Scope2 Basis */
+            scope2_basis?: ("market" | "location") | null;
             /** Scope3 Co2E Tonnes */
             scope3_co2e_tonnes?: number | null;
             /** Energy Consumption Mwh */
@@ -1570,6 +1574,8 @@ export interface components {
             scope1_co2e_tonnes?: number | null;
             /** Scope2 Co2E Tonnes */
             scope2_co2e_tonnes?: number | null;
+            /** Scope2 Basis */
+            scope2_basis?: ("market" | "location") | null;
             /** Scope3 Co2E Tonnes */
             scope3_co2e_tonnes?: number | null;
             /** Energy Consumption Mwh */
@@ -1673,6 +1679,8 @@ export interface components {
             scope1_co2e_tonnes?: number | null;
             /** Scope2 Co2E Tonnes */
             scope2_co2e_tonnes?: number | null;
+            /** Scope2 Basis */
+            scope2_basis?: ("market" | "location") | null;
             /** Scope3 Co2E Tonnes */
             scope3_co2e_tonnes?: number | null;
             /** Energy Consumption Mwh */
@@ -3734,6 +3742,7 @@ export interface CompanyESGData {
   industry_sector?: string | null
   scope1_co2e_tonnes: number | null
   scope2_co2e_tonnes: number | null
+  scope2_basis?: ("market" | "location") | null
   scope3_co2e_tonnes: number | null
   energy_consumption_mwh: number | null
   renewable_energy_pct: number | null

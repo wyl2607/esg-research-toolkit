@@ -617,6 +617,7 @@ def _record_to_company_data(record: Any) -> CompanyESGData:
         "industry_sector": record.industry_sector,
         "scope1_co2e_tonnes": record.scope1_co2e_tonnes,
         "scope2_co2e_tonnes": record.scope2_co2e_tonnes,
+        "scope2_basis": record.scope2_basis,
         "scope3_co2e_tonnes": record.scope3_co2e_tonnes,
         "energy_consumption_mwh": record.energy_consumption_mwh,
         "renewable_energy_pct": record.renewable_energy_pct,
@@ -665,6 +666,11 @@ def _merge_payload_with_selected_metrics(
     for metric in include_metrics:
         if metric in extracted_payload:
             base_payload[metric] = extracted_payload[metric]
+            # F2: scope2_basis follows the scope2 value. When the Scope 2 value is
+            # taken from the new payload, carry that same payload's basis (absent →
+            # None, an honest "unknown" for the freshly approved value).
+            if metric == "scope2_co2e_tonnes":
+                base_payload["scope2_basis"] = extracted_payload.get("scope2_basis")
 
     base_payload["company_name"] = row.company_name
     base_payload["report_year"] = row.report_year
