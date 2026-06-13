@@ -996,6 +996,8 @@ export interface components {
             scope1_co2e_tonnes?: number | null;
             /** Scope2 Co2E Tonnes */
             scope2_co2e_tonnes?: number | null;
+            /** Scope2 Basis */
+            scope2_basis?: ("market" | "location") | null;
             /** Scope3 Co2E Tonnes */
             scope3_co2e_tonnes?: number | null;
             /** Energy Consumption Mwh */
@@ -1198,6 +1200,8 @@ export interface components {
             scope1_co2e_tonnes?: number | null;
             /** Scope2 Co2E Tonnes */
             scope2_co2e_tonnes?: number | null;
+            /** Scope2 Basis */
+            scope2_basis?: ("market" | "location") | null;
             /** Scope3 Co2E Tonnes */
             scope3_co2e_tonnes?: number | null;
             /** Energy Consumption Mwh */
@@ -1570,6 +1574,8 @@ export interface components {
             scope1_co2e_tonnes?: number | null;
             /** Scope2 Co2E Tonnes */
             scope2_co2e_tonnes?: number | null;
+            /** Scope2 Basis */
+            scope2_basis?: ("market" | "location") | null;
             /** Scope3 Co2E Tonnes */
             scope3_co2e_tonnes?: number | null;
             /** Energy Consumption Mwh */
@@ -1673,6 +1679,8 @@ export interface components {
             scope1_co2e_tonnes?: number | null;
             /** Scope2 Co2E Tonnes */
             scope2_co2e_tonnes?: number | null;
+            /** Scope2 Basis */
+            scope2_basis?: ("market" | "location") | null;
             /** Scope3 Co2E Tonnes */
             scope3_co2e_tonnes?: number | null;
             /** Energy Consumption Mwh */
