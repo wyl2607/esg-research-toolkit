@@ -3742,6 +3742,7 @@ export interface CompanyESGData {
   industry_sector?: string | null
   scope1_co2e_tonnes: number | null
   scope2_co2e_tonnes: number | null
+  scope2_basis?: ("market" | "location") | null
   scope3_co2e_tonnes: number | null
   energy_consumption_mwh: number | null
   renewable_energy_pct: number | null
