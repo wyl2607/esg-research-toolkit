@@ -47,6 +47,20 @@ Workforce gender (CRITICAL):
 - female_pct denominator = TOTAL WORKFORCE (share of women among all employees).
 - If the report only discloses the female share of management / leadership / board / supervisory bodies, return female_pct=null — do NOT substitute a management ratio for the total-workforce figure.
 
+Energy (CRITICAL):
+- Single-period tables (header like "in MWh 2024" or a single period column, ESRS E1 layout) have NO multi-year columns — take the value from that single column; the rightmost-year rule does not apply.
+- Pick the row labelled "Total energy consumption" (group total). Do NOT take fossil / renewable / fuel / electricity sub-rows, nor per-vehicle or intensity rows.
+- Apply the existing unit conversions (GWh x1000, TWh/"million MWh" x1000000) per the table's stated unit.
+
+Water (CRITICAL):
+- water_usage_m3 = TOTAL WATER CONSUMPTION (the row "Total water consumption"). If no consumption total exists, fall back to total water WITHDRAWAL. Never sum withdrawal + discharge.
+- Exclude "recycled/reused", "stored", "discharged", and "intensity per revenue" (m³/€) rows — these are NOT water_usage_m3 even when their number is much larger.
+
+Scope 3 (CRITICAL):
+- If no Scope 3 total appears in the emissions table, read NARRATIVE prose too (e.g. "Scope 3 emissions amounted to X million metric tons of CO2e").
+- "million metric tons" / "Mt CO2e" / "Mt CO₂e" → multiply by 1,000,000 to get tonnes.
+- Take the consolidated GROUP Scope 3 total; ignore single categories (e.g. "Category 1 only") unless labelled as the overall Scope 3 sum.
+
 Notes on table parsing:
 - Tables columns order: Indicator | Unit | 2022 | 2023 | 2024 (oldest to newest left to right).
 - Always use MOST RECENT year: rightmost non-empty non-"/" column. EXCEPTION: EU Taxonomy Article 8 tables are criteria-column matrices, not year columns — follow the EU Taxonomy rules above instead.
