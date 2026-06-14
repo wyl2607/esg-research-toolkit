@@ -2671,7 +2671,9 @@ export interface operations {
     fetch_disclosure_disclosures_fetch_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "x-admin-token"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -2778,7 +2780,9 @@ export interface operations {
     approve_pending_disclosure_disclosures__pending_id__approve_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "x-admin-token"?: string | null;
+            };
             path: {
                 pending_id: number;
             };
@@ -2834,7 +2838,9 @@ export interface operations {
     reject_pending_disclosure_disclosures__pending_id__reject_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "x-admin-token"?: string | null;
+            };
             path: {
                 pending_id: number;
             };

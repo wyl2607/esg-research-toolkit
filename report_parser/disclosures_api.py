@@ -31,6 +31,7 @@ from core.schemas import (
     PendingDisclosureStatus,
 )
 from report_parser.analyzer import analyze_esg_data
+from report_parser.admin_routes import require_admin_token
 from report_parser.company_identity import canonical_company_name, company_name_variants
 from report_parser.extractor import extract_text_from_pdf
 from report_parser.storage import (
@@ -689,6 +690,7 @@ def _merge_payload_with_selected_metrics(
 def fetch_disclosure(
     payload: DisclosureFetchRequest,
     background_tasks: BackgroundTasks,
+    _: None = Depends(require_admin_token),
     db: Session = Depends(get_db),
 ) -> DisclosureFetchResponse:
     source_hint = payload.source_hint if payload.source_hint in SOURCE_HINTS else "company_site"
@@ -844,6 +846,7 @@ def get_disclosure_lane_stats(
 def approve_pending_disclosure(
     pending_id: int = FastAPIPath(..., ge=1, le=MAX_PENDING_DISCLOSURE_ID),
     payload: DisclosureReviewRequest = Body(...),
+    _: None = Depends(require_admin_token),
     db: Session = Depends(get_db),
 ) -> DisclosureReviewResponse:
     row = get_pending_disclosure(db, pending_id)
@@ -931,6 +934,7 @@ def approve_pending_disclosure(
 def reject_pending_disclosure(
     pending_id: int = FastAPIPath(..., ge=1, le=MAX_PENDING_DISCLOSURE_ID),
     payload: DisclosureReviewRequest = Body(...),
+    _: None = Depends(require_admin_token),
     db: Session = Depends(get_db),
 ) -> DisclosureReviewResponse:
     row = get_pending_disclosure(db, pending_id)
