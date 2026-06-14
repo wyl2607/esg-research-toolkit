@@ -34,6 +34,9 @@ Entity scope (CRITICAL):
 EU Taxonomy (CRITICAL):
 - taxonomy_aligned_revenue_pct / taxonomy_aligned_capex_pct mean the taxonomy-ALIGNED share ("taxonomy-aligned", "taxonomiekonform") only.
 - "Taxonomy-ELIGIBLE" ("taxonomiefähig") is NOT aligned. If the report only discloses eligible percentages, return null — do NOT substitute the eligible value.
+- Treat a table as an Article 8 matrix ONLY IF BOTH hold: (a) it has row labels like "Taxonomy-aligned", "Taxonomy-eligible", "A.1", or "A.2"; AND (b) its column headers name environmental objectives (climate change mitigation, adaptation, water, circular economy, pollution, biodiversity) or "Enabling"/"Transitional". A plain table that merely has a "Proportion (%)" column but lacks these anchors is NOT an Article 8 matrix — keep applying the year-column rules to it.
+- Article 8 matrices are MULTI-COLUMN matrices whose columns are CRITERIA, not years. Typical columns: economic-activity name, "Absolute turnover/CapEx", "Proportion of turnover/CapEx (%)", one column per environmental objective, and "Enabling"/"Transitional" flags. The "rightmost non-empty column = most recent year" rule below DOES NOT apply to these tables — the rightmost columns are usually objective flags or "/", not the figure you want.
+- To read taxonomy_aligned_revenue_pct (resp. capex_pct) from an Article 8 table: (1) pick the matrix for Turnover/Revenue (resp. CapEx) — do not cross values between matrices; (2) find the taxonomy-ALIGNED total row, labelled e.g. "Taxonomy-aligned (A.1)", "Total (A.1)", or the aligned subtotal of "Total (A.1 + A.2)"; (3) take the value from the "Proportion (%)" column of that row. If only an eligible (A.2) total is present with no aligned figure, return null.
 
 Scope 2 basis (CRITICAL):
 - Scope 2 emissions are canonically MARKET-BASED. When a report discloses both market-based and location-based Scope 2, take the market-based value and set scope2_basis="market".
@@ -46,7 +49,7 @@ Workforce gender (CRITICAL):
 
 Notes on table parsing:
 - Tables columns order: Indicator | Unit | 2022 | 2023 | 2024 (oldest to newest left to right).
-- Always use MOST RECENT year: rightmost non-empty non-"/" column.
+- Always use MOST RECENT year: rightmost non-empty non-"/" column. EXCEPTION: EU Taxonomy Article 8 tables are criteria-column matrices, not year columns — follow the EU Taxonomy rules above instead.
 - "/" means no data for that year, skip and use next available year to the right.
 - Numbers use comma separators: "930,440.28" -> 930440.28. Do NOT sum across years.
 - "tCO 2 e" and "tCO2e" both mean tCO2e.
