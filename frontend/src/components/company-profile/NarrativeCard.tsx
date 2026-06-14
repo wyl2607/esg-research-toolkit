@@ -6,6 +6,7 @@ import type { CompanyNarrativeSummary } from '@/lib/types'
 
 interface NarrativeCardProps {
   narrativeSummary: CompanyNarrativeSummary
+  companyName: string
   improvedMetricLabels: string[]
   weakenedMetricLabels: string[]
   strengthMetricLabels: string[]
@@ -14,6 +15,7 @@ interface NarrativeCardProps {
 
 export function NarrativeCard({
   narrativeSummary,
+  companyName,
   improvedMetricLabels,
   weakenedMetricLabels,
   strengthMetricLabels,
@@ -118,6 +120,7 @@ export function NarrativeCard({
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{t('profile.narrativePortfolioTitle')}</p>
           <p className="rounded-lg border bg-white px-4 py-3 leading-6">
             {t('profile.narrativePortfolioBody', {
+              company: companyName,
               periods: narrativeSummary.snapshot.periods_count,
               frameworks: narrativeSummary.snapshot.framework_count,
             })}

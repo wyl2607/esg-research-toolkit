@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import importlib.util
 import json
@@ -433,7 +434,7 @@ if _MULTIPART_AVAILABLE:
         with pdf_path.open("wb") as handle:
             handle.write(content)
 
-        text = extract_text_from_pdf(pdf_path)
+        text = await asyncio.to_thread(extract_text_from_pdf, pdf_path)
         if not text:
             raise HTTPException(
                 422,
@@ -441,7 +442,7 @@ if _MULTIPART_AVAILABLE:
             )
 
         try:
-            esg_data = analyze_esg_data(text, filename=file.filename or "")
+            esg_data = await asyncio.to_thread(analyze_esg_data, text, filename=file.filename or "")
         except AIExtractionError as exc:
             raise HTTPException(422, str(exc.reason)) from exc
         if override_company_name is not None and override_company_name.strip():

@@ -550,6 +550,8 @@
     "aliasConsolidationYes": "是（已归并别名）",
     "aliasConsolidationNo": "未检测到别名归并",
     "aliasListNone": "暂无别名变体记录。",
+    "scope2BasisMarket": "市场基准法",
+    "scope2BasisLocation": "区位基准法",
     "sourceMergePriorityLabel": "合并/来源优先级",
     "sourceMergePriorityReserved": "该区域预留用于后续展示 merge 与 source priority 说明。",
     "provenanceTitle": "当前分析来源",
@@ -582,7 +584,7 @@
     "yoyAlignment": "分类法对齐同比",
     "yoyScope1Hint": "负值通常意味着排放下降，通常是积极信号。",
     "yoyTaxonomyHint": "用于跟踪分类法对齐收入占比的变化（若有披露）。",
-    "yoyNarrativeReady": "相较于 {{year}}，可再生能源占比变化 {{renewableDelta}}，分类法对齐收入占比变化 {{taxonomyDelta}}。下一版应进一步解释这些变化背后的业务或披露原因。",
+    "yoyNarrativeReady": "相较于 {{year}}：可再生能源占比 {{renewableDelta}}、分类法对齐收入占比 {{taxonomyDelta}}、范围一排放 {{scope1Delta}}。",
     "yoyNarrativeMissing": "当前缺少足够的上一期数据，暂时无法生成有说服力的同比叙事。",
     "frameworkTitle": "框架分析结果",
     "noFrameworkResults": "暂无已保存框架结果，请先运行框架评分。",
@@ -662,7 +664,7 @@
     "narrativeGapTitle": "当前披露缺口",
     "narrativeNoGaps": "当前未检测到关键披露缺口。",
     "narrativePortfolioTitle": "为什么这个案例适合作为作品集示例",
-    "narrativePortfolioBody": "CATL 案例展示了完整链路：多时期数据连续性、跨框架解读，以及明确的披露优势/缺口。单页同时承载 {{periods}} 个时期与 {{frameworks}} 个框架视角，适合用于专业求职与产品演示。"
+    "narrativePortfolioBody": "{{company}} 案例展示了完整链路：多时期数据连续性、跨框架解读，以及明确的披露优势/缺口。单页同时承载 {{periods}} 个时期与 {{frameworks}} 个框架视角，适合用于专业求职与产品演示。"
   },
   "manual": {
     "kicker": "案例构建",
@@ -685,6 +687,10 @@
     "sourceUrl": "来源链接",
     "metricsTitle": "核心指标",
     "metricsHint": "只填写你已经确认可信的字段。缺失值会被明确保留，后续可以再补。",
+    "scope2Basis": "范围二核算方法",
+    "scope2BasisUnspecified": "未指定",
+    "scope2BasisMarket": "市场法",
+    "scope2BasisLocation": "位置法",
     "scope3": "范围三排放（tCO2e）",
     "taxonomyRevenue": "分类法对齐收入 %",
     "taxonomyCapex": "分类法对齐 CapEx %",

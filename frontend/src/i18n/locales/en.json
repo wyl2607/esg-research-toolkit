@@ -550,6 +550,8 @@
     "aliasConsolidationYes": "Yes (aliases consolidated)",
     "aliasConsolidationNo": "No alias consolidation detected",
     "aliasListNone": "No alias variants recorded.",
+    "scope2BasisMarket": "Market-based",
+    "scope2BasisLocation": "Location-based",
     "sourceMergePriorityLabel": "Merge/source priority",
     "sourceMergePriorityReserved": "Reserved for upcoming merge and source-priority explanation.",
     "provenanceTitle": "Current analysis provenance",
@@ -582,7 +584,7 @@
     "yoyAlignment": "YoY Alignment",
     "yoyScope1Hint": "Negative values mean emissions decreased, which is usually positive.",
     "yoyTaxonomyHint": "Tracks change in aligned revenue ratio where disclosed.",
-    "yoyNarrativeReady": "Compared with {{year}}, renewable share moved {{renewableDelta}} and taxonomy-aligned revenue moved {{taxonomyDelta}}. This is where the next version should explain the business or disclosure reason behind the change.",
+    "yoyNarrativeReady": "Compared with {{year}}: renewable share {{renewableDelta}}, taxonomy-aligned revenue {{taxonomyDelta}}, Scope 1 {{scope1Delta}}.",
     "yoyNarrativeMissing": "There is not enough prior-period data yet to generate a strong year-over-year narrative.",
     "frameworkTitle": "Framework Results",
     "noFrameworkResults": "No saved framework results yet. Run framework scoring first.",
@@ -662,7 +664,7 @@
     "narrativeGapTitle": "Current gaps",
     "narrativeNoGaps": "No key disclosure gaps are currently detected.",
     "narrativePortfolioTitle": "Why this case is useful as a portfolio example",
-    "narrativePortfolioBody": "The CATL profile demonstrates a complete workflow: multi-period data continuity, cross-framework interpretation, and explicit disclosure strengths/gaps. With {{periods}} periods and {{frameworks}} framework views in one page, it is suitable for professional product and analyst demonstrations."
+    "narrativePortfolioBody": "The {{company}} profile demonstrates a complete workflow: multi-period data continuity, cross-framework interpretation, and explicit disclosure strengths/gaps. With {{periods}} periods and {{frameworks}} framework views in one page, it is suitable for professional product and analyst demonstrations."
   },
   "manual": {
     "kicker": "Case construction",
@@ -685,6 +687,10 @@
     "sourceUrl": "Source URL",
     "metricsTitle": "Core metrics",
     "metricsHint": "Fill only the fields you already trust. Missing values stay explicit and can be backfilled later.",
+    "scope2Basis": "Scope 2 accounting method",
+    "scope2BasisUnspecified": "Unspecified",
+    "scope2BasisMarket": "Market-based",
+    "scope2BasisLocation": "Location-based",
     "scope3": "Scope 3 (tCO2e)",
     "taxonomyRevenue": "Taxonomy-aligned revenue %",
     "taxonomyCapex": "Taxonomy-aligned CapEx %",

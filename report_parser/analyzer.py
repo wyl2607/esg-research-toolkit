@@ -34,6 +34,9 @@ Entity scope (CRITICAL):
 EU Taxonomy (CRITICAL):
 - taxonomy_aligned_revenue_pct / taxonomy_aligned_capex_pct mean the taxonomy-ALIGNED share ("taxonomy-aligned", "taxonomiekonform") only.
 - "Taxonomy-ELIGIBLE" ("taxonomiefähig") is NOT aligned. If the report only discloses eligible percentages, return null — do NOT substitute the eligible value.
+- Treat a table as an Article 8 matrix ONLY IF BOTH hold: (a) it has row labels like "Taxonomy-aligned", "Taxonomy-eligible", "A.1", or "A.2"; AND (b) its column headers name environmental objectives (climate change mitigation, adaptation, water, circular economy, pollution, biodiversity) or "Enabling"/"Transitional". A plain table that merely has a "Proportion (%)" column but lacks these anchors is NOT an Article 8 matrix — keep applying the year-column rules to it.
+- Article 8 matrices are MULTI-COLUMN matrices whose columns are CRITERIA, not years. Typical columns: economic-activity name, "Absolute turnover/CapEx", "Proportion of turnover/CapEx (%)", one column per environmental objective, and "Enabling"/"Transitional" flags. The "rightmost non-empty column = most recent year" rule below DOES NOT apply to these tables — the rightmost columns are usually objective flags or "/", not the figure you want.
+- To read taxonomy_aligned_revenue_pct (resp. capex_pct) from an Article 8 table: (1) pick the matrix for Turnover/Revenue (resp. CapEx) — do not cross values between matrices; (2) find the taxonomy-ALIGNED total row, labelled e.g. "Taxonomy-aligned (A.1)", "Total (A.1)", or the aligned subtotal of "Total (A.1 + A.2)"; (3) take the value from the "Proportion (%)" column of that row. If only an eligible (A.2) total is present with no aligned figure, return null.
 
 Scope 2 basis (CRITICAL):
 - Scope 2 emissions are canonically MARKET-BASED. When a report discloses both market-based and location-based Scope 2, take the market-based value and set scope2_basis="market".
@@ -44,9 +47,23 @@ Workforce gender (CRITICAL):
 - female_pct denominator = TOTAL WORKFORCE (share of women among all employees).
 - If the report only discloses the female share of management / leadership / board / supervisory bodies, return female_pct=null — do NOT substitute a management ratio for the total-workforce figure.
 
+Energy (CRITICAL):
+- Single-period tables (header like "in MWh 2024" or a single period column, ESRS E1 layout) have NO multi-year columns — take the value from that single column; the rightmost-year rule does not apply.
+- Pick the row labelled "Total energy consumption" (group total). Do NOT take fossil / renewable / fuel / electricity sub-rows, nor per-vehicle or intensity rows.
+- Apply the existing unit conversions (GWh x1000, TWh/"million MWh" x1000000) per the table's stated unit.
+
+Water (CRITICAL):
+- water_usage_m3 = TOTAL WATER CONSUMPTION (the row "Total water consumption"). If no consumption total exists, fall back to total water WITHDRAWAL. Never sum withdrawal + discharge.
+- Exclude "recycled/reused", "stored", "discharged", and "intensity per revenue" (m³/€) rows — these are NOT water_usage_m3 even when their number is much larger.
+
+Scope 3 (CRITICAL):
+- If no Scope 3 total appears in the emissions table, read NARRATIVE prose too (e.g. "Scope 3 emissions amounted to X million metric tons of CO2e").
+- "million metric tons" / "Mt CO2e" / "Mt CO₂e" → multiply by 1,000,000 to get tonnes.
+- Take the consolidated GROUP Scope 3 total; ignore single categories (e.g. "Category 1 only") unless labelled as the overall Scope 3 sum.
+
 Notes on table parsing:
 - Tables columns order: Indicator | Unit | 2022 | 2023 | 2024 (oldest to newest left to right).
-- Always use MOST RECENT year: rightmost non-empty non-"/" column.
+- Always use MOST RECENT year: rightmost non-empty non-"/" column. EXCEPTION: EU Taxonomy Article 8 tables are criteria-column matrices, not year columns — follow the EU Taxonomy rules above instead.
 - "/" means no data for that year, skip and use next available year to the right.
 - Numbers use comma separators: "930,440.28" -> 930440.28. Do NOT sum across years.
 - "tCO 2 e" and "tCO2e" both mean tCO2e.

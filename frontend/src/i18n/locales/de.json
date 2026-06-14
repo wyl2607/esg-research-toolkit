@@ -550,6 +550,8 @@
     "aliasConsolidationYes": "Ja (Aliasse zusammengeführt)",
     "aliasConsolidationNo": "Keine Alias-Konsolidierung erkannt",
     "aliasListNone": "Keine Alias-Varianten erfasst.",
+    "scope2BasisMarket": "Marktbasiert",
+    "scope2BasisLocation": "Standortbasiert",
     "sourceMergePriorityLabel": "Merge-/Quellenpriorität",
     "sourceMergePriorityReserved": "Für die kommende Darstellung von Merge- und Quellenpriorität reserviert.",
     "provenanceTitle": "Aktuelle Analyse-Herkunft",
@@ -582,7 +584,7 @@
     "yoyAlignment": "Konformität (YoY)",
     "yoyScope1Hint": "Negative Werte bedeuten meist sinkende Emissionen und sind daher oft positiv.",
     "yoyTaxonomyHint": "Zeigt die Veränderung des taxonomiekonformen Umsatzanteils, sofern offengelegt.",
-    "yoyNarrativeReady": "Verglichen mit {{year}} veränderte sich der Anteil erneuerbarer Energien um {{renewableDelta}} und der taxonomiekonforme Umsatzanteil um {{taxonomyDelta}}. In der nächsten Version sollte hier der geschäftliche oder berichtsbezogene Grund erklärt werden.",
+    "yoyNarrativeReady": "Verglichen mit {{year}}: Erneuerbare {{renewableDelta}}, taxonomiekonformer Umsatz {{taxonomyDelta}}, Scope 1 {{scope1Delta}}.",
     "yoyNarrativeMissing": "Es gibt noch nicht genug Daten aus der Vorperiode, um eine belastbare Year-over-Year-Erzählung zu bilden.",
     "frameworkTitle": "Rahmenwerk-Ergebnisse",
     "noFrameworkResults": "Noch keine gespeicherten Rahmenwerk-Ergebnisse. Bitte zuerst Bewertung ausführen.",
@@ -662,7 +664,7 @@
     "narrativeGapTitle": "Aktuelle Lücken",
     "narrativeNoGaps": "Aktuell werden keine zentralen Offenlegungslücken erkannt.",
     "narrativePortfolioTitle": "Warum dieser Fall als Portfolio-Beispiel nützlich ist",
-    "narrativePortfolioBody": "Das CATL-Profil zeigt einen vollständigen Workflow: mehrperiodige Datenkontinuität, framework-übergreifende Einordnung sowie explizite Offenlegungsstärken und -lücken. Mit {{periods}} Zeiträumen und {{frameworks}} Framework-Sichten auf einer Seite eignet sich der Fall für professionelle Produkt- und Analysten-Demos."
+    "narrativePortfolioBody": "Das {{company}}-Profil zeigt einen vollständigen Workflow: mehrperiodige Datenkontinuität, framework-übergreifende Einordnung sowie explizite Offenlegungsstärken und -lücken. Mit {{periods}} Zeiträumen und {{frameworks}} Framework-Sichten auf einer Seite eignet sich der Fall für professionelle Produkt- und Analysten-Demos."
   },
   "manual": {
     "kicker": "Case-Aufbau",
@@ -685,6 +687,10 @@
     "sourceUrl": "Quell-URL",
     "metricsTitle": "Kernmetriken",
     "metricsHint": "Trage nur Werte ein, denen du bereits vertraust. Fehlende Werte bleiben explizit sichtbar und können später ergänzt werden.",
+    "scope2Basis": "Scope 2 Berechnungsmethode",
+    "scope2BasisUnspecified": "Nicht angegeben",
+    "scope2BasisMarket": "Marktbasiert",
+    "scope2BasisLocation": "Standortbasiert",
     "scope3": "Scope 3 (tCO2e)",
     "taxonomyRevenue": "Taxonomiekonformer Umsatz %",
     "taxonomyCapex": "Taxonomiekonforme CapEx %",

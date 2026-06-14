@@ -57,13 +57,25 @@ export function CoreMetricsSection({
           value={asNum(latestMetrics.scope2_co2e_tonnes, locale)}
           unit="tCO2e"
           footer={
-            <EvidenceBadge
-              evidence={evidenceByMetric.get('scope2_co2e_tonnes')}
-              metricLabel={metricDisclosureLabel(t, 'scope2_co2e_tonnes')}
-              fallbackFramework={latestPeriod.source_document_type}
-              fallbackPeriodLabel={latestPeriod.reporting_period_label}
-              testId="evidence-badge-scope2_co2e_tonnes"
-            />
+            <div className="space-y-1.5">
+              {latestMetrics.scope2_basis === 'market' && (
+                <span className="inline-block rounded border border-sky-200 bg-sky-50 px-1.5 py-0.5 text-[10px] font-medium text-sky-700">
+                  {t('profile.scope2BasisMarket')}
+                </span>
+              )}
+              {latestMetrics.scope2_basis === 'location' && (
+                <span className="inline-block rounded border border-violet-200 bg-violet-50 px-1.5 py-0.5 text-[10px] font-medium text-violet-700">
+                  {t('profile.scope2BasisLocation')}
+                </span>
+              )}
+              <EvidenceBadge
+                evidence={evidenceByMetric.get('scope2_co2e_tonnes')}
+                metricLabel={metricDisclosureLabel(t, 'scope2_co2e_tonnes')}
+                fallbackFramework={latestPeriod.source_document_type}
+                fallbackPeriodLabel={latestPeriod.reporting_period_label}
+                testId="evidence-badge-scope2_co2e_tonnes"
+              />
+            </div>
           }
         />
         <MetricCard
