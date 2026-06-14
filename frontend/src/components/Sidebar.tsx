@@ -8,6 +8,7 @@ import {
   Building2,
   GitCompare,
   Globe,
+  Map,
   BarChart3,
   FilePenLine,
   ClipboardList,
@@ -33,6 +34,7 @@ export function Sidebar({ id, className, onNavigate }: SidebarProps) {
     { to: '/disclosures', label: t('nav.pendingDisclosures'), icon: ClipboardList },
     { to: '/compare', label: t('nav.compare'), icon: GitCompare },
     { to: '/frameworks', label: t('nav.frameworks'), icon: Globe },
+    { to: '/regional', label: t('nav.regional'), icon: Map },
     { to: '/taxonomy', label: t('nav.taxonomy'), icon: Tag },
   ]
 
