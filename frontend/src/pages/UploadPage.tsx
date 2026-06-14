@@ -342,7 +342,7 @@ export function UploadPage() {
         </NoticeBanner>
       ) : null}
 
-      {hasPrefilledGapTarget ? (
+      {import.meta.env.DEV && hasPrefilledGapTarget ? (
         <AutoFetchPanel
           form={{
             sourceHint: autoFetchSourceHint,

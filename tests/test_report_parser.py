@@ -28,6 +28,7 @@ from report_parser.api import (
     router as report_router,
     save_manual_report,
 )
+from report_parser.admin_routes import require_admin_token
 from report_parser.disclosures_api import _run_fetch_pipeline, router as disclosures_router
 from report_parser.analyzer import AIExtractionError, analyze_esg_data
 from report_parser.extractor import extract_text_from_pdf
@@ -629,6 +630,7 @@ def test_disclosures_fetch_creates_pending_item_and_lists_it() -> None:
     app = FastAPI()
     app.include_router(disclosures_router)
     app.dependency_overrides[get_db] = lambda: db_session
+    app.dependency_overrides[require_admin_token] = lambda: None
 
     try:
         with TestClient(app) as client:
@@ -673,6 +675,7 @@ def test_disclosures_fetch_upserts_same_source_without_duplication() -> None:
     app = FastAPI()
     app.include_router(disclosures_router)
     app.dependency_overrides[get_db] = lambda: db_session
+    app.dependency_overrides[require_admin_token] = lambda: None
 
     source_url = "https://example.com/basf-2022.pdf"
     try:
@@ -730,6 +733,7 @@ def test_disclosures_fetch_uses_source_type_aware_default_source_url(
     app = FastAPI()
     app.include_router(disclosures_router)
     app.dependency_overrides[get_db] = lambda: db_session
+    app.dependency_overrides[require_admin_token] = lambda: None
 
     try:
         with TestClient(app) as client:
@@ -763,6 +767,7 @@ def test_disclosures_fetch_supports_official_source_hints() -> None:
     app = FastAPI()
     app.include_router(disclosures_router)
     app.dependency_overrides[get_db] = lambda: db_session
+    app.dependency_overrides[require_admin_token] = lambda: None
 
     try:
         with TestClient(app) as client:
@@ -817,6 +822,7 @@ def test_disclosures_fetch_sec_hint_keeps_company_name_query_tokens() -> None:
     app = FastAPI()
     app.include_router(disclosures_router)
     app.dependency_overrides[get_db] = lambda: db_session
+    app.dependency_overrides[require_admin_token] = lambda: None
 
     try:
         with TestClient(app) as client:
@@ -852,6 +858,7 @@ def test_disclosures_fetch_accepts_multi_source_hints_and_persists_them() -> Non
     app = FastAPI()
     app.include_router(disclosures_router)
     app.dependency_overrides[get_db] = lambda: db_session
+    app.dependency_overrides[require_admin_token] = lambda: None
 
     try:
         with TestClient(app) as client:
@@ -894,6 +901,7 @@ def test_disclosures_fetch_source_url_override_wins_over_source_hint() -> None:
     app = FastAPI()
     app.include_router(disclosures_router)
     app.dependency_overrides[get_db] = lambda: db_session
+    app.dependency_overrides[require_admin_token] = lambda: None
 
     custom_url = "https://example.com/custom-source.pdf"
     try:
@@ -927,6 +935,7 @@ def test_disclosures_fetch_rejects_non_http_source_url() -> None:
     app = FastAPI()
     app.include_router(disclosures_router)
     app.dependency_overrides[get_db] = lambda: db_session
+    app.dependency_overrides[require_admin_token] = lambda: None
 
     try:
         with TestClient(app) as client:
@@ -1031,6 +1040,7 @@ def test_disclosures_lane_stats_endpoint_aggregates_and_orders_lanes() -> None:
     app = FastAPI()
     app.include_router(disclosures_router)
     app.dependency_overrides[get_db] = lambda: db_session
+    app.dependency_overrides[require_admin_token] = lambda: None
 
     try:
         row1, _ = upsert_pending_disclosure(
@@ -1120,6 +1130,7 @@ def test_disclosures_approve_merges_pending_report() -> None:
     app = FastAPI()
     app.include_router(disclosures_router)
     app.dependency_overrides[get_db] = lambda: db_session
+    app.dependency_overrides[require_admin_token] = lambda: None
 
     try:
         with patch.dict(os.environ, {"ESG_CONTRACT_TEST_MODE": "1"}):
@@ -1167,6 +1178,7 @@ def test_disclosures_approve_can_merge_selected_metrics_only(make_company_data) 
     app = FastAPI()
     app.include_router(disclosures_router)
     app.dependency_overrides[get_db] = lambda: db_session
+    app.dependency_overrides[require_admin_token] = lambda: None
 
     try:
         save_report(
@@ -1244,6 +1256,7 @@ def test_disclosures_approve_rejects_unknown_include_metric() -> None:
     app = FastAPI()
     app.include_router(disclosures_router)
     app.dependency_overrides[get_db] = lambda: db_session
+    app.dependency_overrides[require_admin_token] = lambda: None
 
     try:
         with patch.dict(os.environ, {"ESG_CONTRACT_TEST_MODE": "1"}):
@@ -1283,6 +1296,7 @@ def test_disclosures_reject_marks_pending_without_merge() -> None:
     app = FastAPI()
     app.include_router(disclosures_router)
     app.dependency_overrides[get_db] = lambda: db_session
+    app.dependency_overrides[require_admin_token] = lambda: None
 
     try:
         with patch.dict(os.environ, {"ESG_CONTRACT_TEST_MODE": "1"}):
@@ -1328,6 +1342,7 @@ def test_disclosures_review_endpoints_enforce_final_status_conflicts() -> None:
     app = FastAPI()
     app.include_router(disclosures_router)
     app.dependency_overrides[get_db] = lambda: db_session
+    app.dependency_overrides[require_admin_token] = lambda: None
 
     try:
         with patch.dict(os.environ, {"ESG_CONTRACT_TEST_MODE": "1"}):
@@ -1380,6 +1395,7 @@ def test_disclosures_approve_returns_400_for_fail_closed_validation() -> None:
     app = FastAPI()
     app.include_router(disclosures_router)
     app.dependency_overrides[get_db] = lambda: db_session
+    app.dependency_overrides[require_admin_token] = lambda: None
 
     try:
         with patch.dict(os.environ, {"ESG_CONTRACT_TEST_MODE": "1"}):
