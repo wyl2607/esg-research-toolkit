@@ -333,6 +333,16 @@
       "brazilAtj": "Brasilien-ATJ-Potenzial: Zuckerrohr-Ethanol gehört weltweit zu den günstigsten Rohstoffen; Export nach Deutschland ist ab 2027+ realistisch.",
       "ptlTrajectory": "PtL-Pfad: 2,50–5,00 €/L im Jahr 2025, mit günstiger erneuerbarer Energie Richtung 1,00–1,50 €/L bis 2035.",
       "germanProduction": "Deutsche Produktion: durch Kosten erneuerbarer Elektrizität begrenzt; PtL-Pilotanlagen gehen 2024–2026 schrittweise online."
+    },
+    "charts": {
+      "capex": "CAPEX",
+      "feedstock": "Rohstoff",
+      "opex": "OPEX",
+      "policyCredit": "Politikgutschrift",
+      "total": "GESAMT",
+      "jetA1": "Jet A-1 (Kerosin)",
+      "safPathway": "SAF ({{pathway}})",
+      "breakeven": "Break-even"
     }
   },
   "companies": {
@@ -511,7 +521,24 @@
       "legend": "Legende",
       "legendComparable": "Gleiche oder äquivalente Metrik — numerischer Vergleich ist sinnvoll.",
       "legendPartial": "Konzept in allen Rahmenwerken vorhanden, aber Methodik oder Umfang unterschiedlich — nur Richtungsvergleich.",
-      "legendNotComparable": "In mindestens einem Rahmenwerk fehlt das Konzept oder unterscheidet sich grundlegend — kein numerischer Vergleich."
+      "legendNotComparable": "In mindestens einem Rahmenwerk fehlt das Konzept oder unterscheidet sich grundlegend — kein numerischer Vergleich.",
+      "dimensionNotes": {
+        "climate_mitigation": "EU-Taxonomie und CSRD verlangen beide Scope 1+2 nach standardisierten GHG-Protocol-Methoden. CSRC 2023 empfiehlt Scope 1+2, schreibt aber kein bestimmtes Protokoll vor — die Methodik kann abweichen.",
+        "climate_adaptation": "Die EU-Taxonomie definiert sechs Klimaanpassungsziele mit DNSH-Kriterien. CSRD (ESRS E1) verlangt Klimarisiko-Offenlegungen, die an dieselben Ziele anknüpfen. CSRC 2023 hat keine vergleichbare strukturierte Klimaanpassungsanforderung.",
+        "water": "CSRD (ESRS E3) verlangt quantitative Wasserverbrauchs- und Wasserstress-Indikatoren. Die EU-Taxonomie enthält Wasser als DNSH-Ziel, aber keine eigenständige Kennzahl. CSRC 2023 erfragt Wasserverbrauchsdaten nach bestem Bemühen; die Vergleichbarkeit hängt von der tatsächlichen Offenlegung ab.",
+        "circular_economy": "Kreislaufwirtschaft ist sowohl in der EU-Taxonomie (CE-Aktivitätenliste) als auch in CSRD (ESRS E5) ein benanntes Ziel. CSRC 2023 enthält keine strukturierte Kreislaufwirtschaftsdimension; Recyclingquote ist nur ein ungenauer Proxy.",
+        "pollution": "EU-Taxonomie und CSRD (ESRS E2) definieren beide Umweltverschmutzungsprävention als eigenständiges Ziel mit spezifischen Stofflisten. CSRC 2023 verlangt Umweltverschmutzungsangaben vor allem von Schwerindustrieunternehmen; Umfang und Stofflisten unterscheiden sich.",
+        "biodiversity": "EU-Taxonomie (Ziel 6) und CSRD (ESRS E4) beziehen sich beide auf Biodiversität und Ökosysteme. CSRC 2023 hat keine biodiversitätsspezifische Offenlegungspflicht; verwandte Angaben sind freiwillig und nicht standardisiert.",
+        "e1_climate": "ESRS E1 ist der zentrale CSRD-Klimastandard mit Scope 1+2+3 und Transformationsplänen. Die EU-Taxonomie adressiert Klimaschutz/-anpassung über Aktivitätskriterien statt Unternehmensoffenlegungen. CSRC 2023 deckt Scope 1+2 ab, aber nicht Scope 3 und Transformationspläne.",
+        "e2_e5_pollution_circular": "ESRS E2 (Umweltverschmutzung) und E5 (Kreislaufwirtschaft) sind hier kombiniert. Die EU-Taxonomie deckt beides als DNSH-Ziele ab. CSRC 2023 hat keine gleichwertigen strukturierten Anforderungen für beide Themen.",
+        "e3_water": "ESRS E3 (Wasser und Meeresressourcen) verlangt detaillierte Offenlegungen einschließlich Wasserstressgebieten. Die EU-Taxonomie behandelt Wasser als DNSH-Ziel ohne eigene Kennzahl. CSRC 2023 erfragt Wasserdaten, aber ohne Wasserstresskontext.",
+        "e4_biodiversity": "ESRS E4 (Biodiversität) und EU-Taxonomie-Ziel 6 sind strukturell ausgerichtet. CSRC 2023 hat keine biodiversitätsspezifische Anforderung.",
+        "s1_workforce": "ESRS S1 (eigene Belegschaft) verlangt Mitarbeiterzahl, Gender-Pay-Gap, Arbeitsbedingungen und Tarifbindung. Die EU-Taxonomie bewertet keine sozialen Indikatoren auf Dimensionsebene. CSRC 2023 verlangt Geschlechterverhältnis und Mitarbeiterwohlfahrt, aber mit geringerer Granularität.",
+        "g1_governance": "ESRS G1 (Geschäftsgebaren) umfasst Korruptionsbekämpfung, Lieferanten-Sorgfaltspflicht und politisches Engagement. Die EU-Taxonomie adressiert Governance nicht direkt. CSRC 2023 enthält Vorstandsstruktur und Anti-Korruption, aber mit anderen Definitionen.",
+        "csrc_environment": "CSRC Environment bündelt Scope 1+2, Energie und Abfall in einer Dimension. Die EU-Taxonomie adressiert überlappende Indikatoren über Aktivitätskriterien und DNSH. CSRD trennt diese in E1–E5; ein direkter Score-Vergleich mit CSRC_ENV ist nur richtungsweisend.",
+        "csrc_social": "CSRC Social umfasst Belegschaft, Gemeinschaftsinvestitionen und Produktsicherheit. Die EU-Taxonomie hat keine soziale Bewertungsdimension. CSRD (S1–S4) ist granularer; ein kombinierter CSRC-Social-Score ist nur teilweise mit einzelnen ESRS-S-Standards vergleichbar.",
+        "csrc_governance": "CSRC Governance umfasst Vorstandsstruktur, Eigentümertransparenz und Anti-Korruption gemäß chinesischen Corporate-Governance-Regeln (CSRC Code 2023). Die EU-Taxonomie enthält keine Governance-Bewertung. CSRD (G1) überschneidet sich teilweise, nutzt aber OECD- und UNGP-Rahmenwerke statt CSRC-Regeln."
+      }
     },
     "diffExplanation": {
       "title": "Bewertungsvergleich",

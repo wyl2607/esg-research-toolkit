@@ -333,6 +333,16 @@
       "brazilAtj": "巴西 ATJ 潜力：甘蔗乙醇是全球较低成本原料之一，2027 年后具备出口德国可行性。",
       "ptlTrajectory": "PtL 走势：2025 年约 €2.50–5.00/L，若获得低价可再生电力，2035 年有望降至 €1.00–1.50/L。",
       "germanProduction": "德国本土生产：受可再生电力成本限制；PtL 试点装置在 2024–2026 年陆续上线。"
+    },
+    "charts": {
+      "capex": "CAPEX",
+      "feedstock": "原料",
+      "opex": "OPEX",
+      "policyCredit": "政策抵扣",
+      "total": "合计",
+      "jetA1": "Jet A-1（煤油）",
+      "safPathway": "SAF（{{pathway}}）",
+      "breakeven": "盈亏平衡"
     }
   },
   "companies": {
@@ -511,7 +521,24 @@
       "legend": "图例",
       "legendComparable": "指标定义相同或等价，可进行跨框架数值比较。",
       "legendPartial": "各框架均涵盖此概念，但方法论或范围存在差异，仅作方向性对比。",
-      "legendNotComparable": "至少一个框架缺失或定义根本不同，不建议进行数值比较。"
+      "legendNotComparable": "至少一个框架缺失或定义根本不同，不建议进行数值比较。",
+      "dimensionNotes": {
+        "climate_mitigation": "EU 分类法与 CSRD 均要求按标准化 GHG Protocol 方法披露范围 1+2。CSRC 2023 鼓励披露范围 1+2，但未强制指定协议，方法论可能不同。",
+        "climate_adaptation": "EU 分类法定义六项气候适应目标及 DNSH 标准。CSRD（ESRS E1）要求与这些目标一致的气候风险披露。CSRC 2023 没有等效的结构化气候适应要求。",
+        "water": "CSRD（ESRS E3）要求定量用水量及水压力指标。EU 分类法将水作为 DNSH 目标，但不强制独立指标。CSRC 2023 以尽力而为方式要求用水数据，可比性取决于实际披露内容。",
+        "circular_economy": "循环经济在 EU 分类法（CE 活动清单）和 CSRD（ESRS E5）中均为命名目标。CSRC 2023 没有结构化循环经济维度；废弃物回收率仅为近似代理指标。",
+        "pollution": "EU 分类法与 CSRD（ESRS E2）均将污染防治定义为独立目标并列出特定物质清单。CSRC 2023 主要要求重工业企业披露污染信息，范围和物质清单不同。",
+        "biodiversity": "EU 分类法（目标 6）与 CSRD（ESRS E4）均涉及生物多样性与生态系统。CSRC 2023 没有生物多样性专项披露要求，相关内容为自愿且非标准化披露。",
+        "e1_climate": "ESRS E1 是 CSRD 核心气候标准，覆盖范围 1+2+3 及转型计划。EU 分类法通过活动标准而非公司级披露处理气候减缓/适应。CSRC 2023 覆盖范围 1+2，但不包含范围 3 和转型计划。",
+        "e2_e5_pollution_circular": "此处合并 ESRS E2（污染）与 E5（循环经济）。EU 分类法将两者均作为 DNSH 目标。CSRC 2023 对这两个主题均缺乏等效结构化要求。",
+        "e3_water": "ESRS E3（水资源与海洋资源）要求细粒度披露，包括水压力区域。EU 分类法将水作为 DNSH 目标，但没有专用指标。CSRC 2023 要求用水数据，但不包含水压力背景。",
+        "e4_biodiversity": "ESRS E4（生物多样性）与 EU 分类法目标 6 在结构上对齐。CSRC 2023 没有生物多样性专项要求。",
+        "s1_workforce": "ESRS S1（自有员工）要求员工人数、性别薪酬差距、工作条件和集体谈判覆盖率。EU 分类法不在维度层面评估社会指标。CSRC 2023 要求性别比例和员工福利，但粒度较低。",
+        "g1_governance": "ESRS G1（商业行为）涵盖反腐败、供应商尽职调查和政治参与。EU 分类法不直接处理治理。CSRC 2023 包含董事会构成和反腐败事项，但定义不同。",
+        "csrc_environment": "CSRC 环境维度将范围 1+2、能源和废弃物合并为一项。EU 分类法通过活动标准和 DNSH 处理重叠指标。CSRD 将其拆分为 E1–E5；与 CSRC_ENV 的直接得分比较仅具方向性。",
+        "csrc_social": "CSRC 社会维度涵盖员工、社区投资和产品安全。EU 分类法没有社会评分维度。CSRD（S1–S4）更细粒度；CSRC 社会综合得分仅能与各 ESRS S 标准部分可比。",
+        "csrc_governance": "CSRC 治理维度涵盖董事会结构、所有权透明度和反腐败，符合中国公司治理规则（CSRC Code 2023）。EU 分类法不包含治理评分。CSRD（G1）部分重叠，但采用 OECD 和 UNGP 框架而非 CSRC 规则。"
+      }
     },
     "diffExplanation": {
       "title": "得分对比说明",

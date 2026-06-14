@@ -116,7 +116,9 @@ function ComparabilityMatrixPanel() {
                 <td className="py-2 pr-3">
                   <ComparabilityBadge level={row.csrd} />
                 </td>
-                <td className="max-w-[240px] py-2 text-slate-500">{row.notes}</td>
+                <td className="max-w-[240px] py-2 text-slate-500">
+                  {t(`frameworks.comparabilityMatrix.dimensionNotes.${row.notesKey}`)}
+                </td>
               </tr>
             ))}
           </tbody>
