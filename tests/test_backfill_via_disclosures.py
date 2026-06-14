@@ -14,6 +14,7 @@ from core.database import Base, get_db
 from core.schemas import CompanyESGData
 from esg_frameworks.storage import FrameworkAnalysisResult  # noqa: F401 - register table on Base metadata
 from report_parser import disclosures_api
+from report_parser.admin_routes import require_admin_token
 from report_parser.api import router as report_router
 from report_parser.disclosures_api import router as disclosures_router
 from report_parser.storage import save_report, update_pending_disclosure_payload
@@ -35,6 +36,7 @@ def seeded_backfill_client(monkeypatch: pytest.MonkeyPatch) -> Generator[TestCli
     app.include_router(report_router)
     app.include_router(disclosures_router)
     app.dependency_overrides[get_db] = lambda: db_session
+    app.dependency_overrides[require_admin_token] = lambda: None
 
     distinct_companies = sorted({company_name for company_name, _ in BACKFILL_TARGETS})
     for company_name in distinct_companies:
