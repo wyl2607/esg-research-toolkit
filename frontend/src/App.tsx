@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Link, Route, Routes, useLocation } from 'react-router-dom'
 import { Suspense, lazy } from 'react'
 import { useTranslation } from 'react-i18next'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -57,15 +57,19 @@ const SafPage = lazy(() =>
 
 function NotFound() {
   const { t } = useTranslation()
+  const location = useLocation()
   return (
     <div className="py-16 text-center">
       <h1 className="text-2xl font-semibold mb-2 text-slate-900 dark:text-slate-100">
         {t('errors.notFound', 'Page not found')}
       </h1>
       <p className="text-slate-500 mb-6">{t('common.noData')}</p>
-      <a href="/" className="underline text-amber-700 dark:text-amber-400">
+      <Link
+        to={{ pathname: '/', search: location.search }}
+        className="underline text-amber-700 dark:text-amber-400"
+      >
         {t('nav.dashboard')}
-      </a>
+      </Link>
     </div>
   )
 }

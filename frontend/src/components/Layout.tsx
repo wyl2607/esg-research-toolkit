@@ -16,8 +16,9 @@ export function Layout() {
     document.documentElement.setAttribute('lang', lang)
 
     const path = location.pathname
-    let pageLabel = t('nav.dashboard')
-    if (path === '/disclosures') pageLabel = t('nav.pendingDisclosures')
+    let pageLabel = ''
+    if (path === '/') pageLabel = t('nav.dashboard')
+    else if (path === '/disclosures') pageLabel = t('nav.pendingDisclosures')
     else if (path.startsWith('/companies')) pageLabel = t('nav.companies')
     else if (path === '/upload') pageLabel = t('nav.upload')
     else if (path === '/compare') pageLabel = t('nav.compare')

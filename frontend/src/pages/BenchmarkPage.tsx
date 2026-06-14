@@ -187,7 +187,7 @@ function BenchmarkPeersPanel({ isLoading, isError, error, companies, companyCoun
               <span className="text-xs text-stone-500 dark:text-slate-400">
                 {(() => {
                   const opt = findNaceOption(company.industry_code)
-                  return opt ? getLocalizedSector(opt, locale) : (company.industry_sector ?? company.industry_code ?? '—')
+                  return opt ? getLocalizedSector(opt, locale) : (company.industry_code ?? company.industry_sector ?? '—')
                 })()} ·{' '}
                 {company.report_year ?? '—'}
               </span>
