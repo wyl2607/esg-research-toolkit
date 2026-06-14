@@ -872,5 +872,16 @@
     "gapAnalysis": "Gap Analysis",
     "compliancePriority": "Compliance Priority Actions",
     "selectPrompt": "Select a company to view three-region ESG comparison."
+  },
+  "dimension": {
+    "carbon_emissions": "Carbon Emissions",
+    "social_labor": "Social & Labor",
+    "governance_transparency": "Governance & Transparency"
+  },
+  "readiness": {
+    "leading": "Leading",
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low"
   }
 }

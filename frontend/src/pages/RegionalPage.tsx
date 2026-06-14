@@ -51,22 +51,37 @@ export function RegionalPage() {
 
   const backendOffline = isBackendOffline(companiesError) || isBackendOffline(reportError)
 
+  const getDimensionLabel = (name: string) => {
+    const keyMap: Record<string, string> = {
+      'Carbon Emissions': 'dimension.carbon_emissions',
+      'Social & Labor': 'dimension.social_labor',
+      'Governance & Transparency': 'dimension.governance_transparency',
+    }
+    const k = keyMap[name]
+    return k ? t(k, { defaultValue: name }) : name
+  }
+
   const radarData =
     report?.cross_matrix.map((m) => ({
-      dimension: m.dimension_name,
+      dimension: getDimensionLabel(m.dimension_name),
       EU: m.eu_score != null ? Math.round(m.eu_score * 100) : 0,
       CN: m.cn_score != null ? Math.round(m.cn_score * 100) : 0,
       US: m.us_score != null ? Math.round(m.us_score * 100) : 0,
     })) ?? []
 
   const readinessBorderClass =
-    report?.overall_readiness === 'Leading'
+    report?.overall_readiness === 'Leading' || report?.overall_readiness === t('readiness.leading', { defaultValue: 'Leading' })
       ? 'border-green-500'
-      : report?.overall_readiness === 'High'
+      : report?.overall_readiness === 'High' || report?.overall_readiness === t('readiness.high', { defaultValue: 'High' })
         ? 'border-blue-500'
-        : report?.overall_readiness === 'Medium'
+        : report?.overall_readiness === 'Medium' || report?.overall_readiness === t('readiness.medium', { defaultValue: 'Medium' })
           ? 'border-yellow-500'
           : 'border-red-500'
+
+  const getReadinessLabel = (r: string) => {
+    const k = `readiness.${r.toLowerCase()}`
+    return t(k, { defaultValue: r })
+  }
 
   return (
     <PageContainer>
@@ -153,7 +168,7 @@ export function RegionalPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-slate-500">{t('regional.overallReadiness')}</p>
-                <p className="text-2xl font-bold text-slate-900">{report.overall_readiness}</p>
+                <p className="text-2xl font-bold text-slate-900">{getReadinessLabel(report.overall_readiness)}</p>
               </div>
               <div className="text-right text-sm text-slate-500">
                 {report.company_name} · {report.report_year}
@@ -255,7 +270,7 @@ export function RegionalPage() {
                       key={`${row.dimension_name}-${i}`}
                       className="align-top border-b border-stone-200 last:border-0"
                     >
-                      <td className="py-3 pr-4 font-medium text-slate-800">{row.dimension_name}</td>
+                      <td className="py-3 pr-4 font-medium text-slate-800">{getDimensionLabel(row.dimension_name)}</td>
                       <td className="max-w-[160px] py-3 pr-4 text-xs text-slate-600">
                         {row.eu_requirement}
                       </td>

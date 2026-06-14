@@ -872,5 +872,16 @@
     "gapAnalysis": "差距分析",
     "compliancePriority": "合规优先行动",
     "selectPrompt": "选择企业以查看三地 ESG 框架对比分析"
+  },
+  "dimension": {
+    "carbon_emissions": "碳排放",
+    "social_labor": "社会与劳工",
+    "governance_transparency": "治理与透明度"
+  },
+  "readiness": {
+    "leading": "领先",
+    "high": "高",
+    "medium": "中",
+    "low": "低"
   }
 }

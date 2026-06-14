@@ -33,7 +33,7 @@ import type { BatchStatusResponse, CompanyESGData } from '@/lib/types'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { localizeErrorMessage } from '@/lib/error-utils'
-import { findNaceOption, NACE_OPTIONS } from '@/lib/nace-codes'
+import { findNaceOption, NACE_OPTIONS, getLocalizedSector } from '@/lib/nace-codes'
 import { DISCLOSURE_REVIEW_METRICS, areDisclosureReviewValuesEqual } from '@/lib/disclosure-review'
 
 const BATCH_STORAGE_KEY = 'esg_last_batch_id'
@@ -406,7 +406,7 @@ export function UploadPage() {
             {NACE_OPTIONS.map((option) => (
               <option key={option.code} value={option.code}>
                 {option.code} —{' '}
-                {i18n.resolvedLanguage?.startsWith('de') ? option.sectorDe : option.sectorEn}
+                {getLocalizedSector(option, i18n.resolvedLanguage)}
               </option>
             ))}
           </select>
