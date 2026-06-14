@@ -15,6 +15,7 @@ interface YoySummary {
   previousYear: number | null
   renewableDelta: number | null
   taxonomyDelta: number | null
+  scope1Delta: number | null
   hasAnyDelta: boolean
 }
 
@@ -77,8 +78,9 @@ export function YoyDeltaCard({ yoyDeltaCard, yoySummary }: YoyDeltaCardProps) {
               {yoySummary?.hasAnyDelta
                 ? t('profile.yoyNarrativeReady', {
                     year: yoySummary.previousYear ?? '—',
-                    renewableDelta: yoySummary.renewableDelta != null ? `${yoySummary.renewableDelta >= 0 ? '+' : ''}${yoySummary.renewableDelta.toFixed(1)}%` : '—',
-                    taxonomyDelta: yoySummary.taxonomyDelta != null ? `${yoySummary.taxonomyDelta >= 0 ? '+' : ''}${yoySummary.taxonomyDelta.toFixed(1)}%` : '—',
+                    renewableDelta: yoySummary.renewableDelta != null ? `${yoySummary.renewableDelta >= 0 ? '+' : ''}${yoySummary.renewableDelta.toFixed(1)} pp` : '—',
+                    taxonomyDelta: yoySummary.taxonomyDelta != null ? `${yoySummary.taxonomyDelta >= 0 ? '+' : ''}${yoySummary.taxonomyDelta.toFixed(1)} pp` : '—',
+                    scope1Delta: yoySummary.scope1Delta != null ? `${yoySummary.scope1Delta >= 0 ? '+' : ''}${yoySummary.scope1Delta.toFixed(1)} tCO2e` : '—',
                   })
                 : t('profile.yoyNarrativeMissing')}
             </p>
