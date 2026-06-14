@@ -295,7 +295,7 @@ export function DashboardPage() {
                   key={`${company.company_name}-${company.report_year}`}
                   type="button"
                   className="w-full rounded-xl border border-stone-200 bg-white/90 p-3 text-left transition hover:border-stone-300 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600"
-                  onClick={() => navigate('/taxonomy')}
+                  onClick={() => navigate(`/companies/${encodeURIComponent(company.company_name)}`)}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
@@ -337,7 +337,7 @@ export function DashboardPage() {
                     <tr
                       key={`${company.company_name}-${company.report_year}`}
                       className="cursor-pointer border-b last:border-0 hover:bg-slate-50"
-                      onClick={() => navigate('/taxonomy')}
+                      onClick={() => navigate(`/companies/${encodeURIComponent(company.company_name)}`)}
                     >
                       <td className="px-4 py-3 font-medium">{company.company_name}</td>
                       <td className="px-4 py-3 text-slate-600">{company.report_year}</td>
