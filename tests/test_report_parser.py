@@ -165,6 +165,22 @@ def test_pdfplumber_table_rows_aligned_despite_text_layer_order(tmp_path) -> Non
     assert "Revenue | 9,944 | 10,791" in text
 
 
+def test_system_prompt_carries_article8_taxonomy_guidance() -> None:
+    # recall §4.3 最大缺口簇（taxonomy 14 处）根因：prompt 的 "最右列=最新年份" 规则
+    # 误导 LLM 在 Article 8 多列矩阵里抓错列。锁定 Article 8 列结构指引 + 年份规则例外，
+    # 防止后续编辑回退该指引（prompt 实效需真跑 LLM 验证，此处只锁内容存在）。
+    from report_parser.analyzer import _SYSTEM
+
+    assert "Article 8" in _SYSTEM
+    assert "Proportion" in _SYSTEM
+    # 年份列规则必须显式声明对 Article 8 不适用
+    assert "DOES NOT apply" in _SYSTEM
+    assert "EXCEPTION: EU Taxonomy Article 8" in _SYSTEM
+    # 正向识别条件：仅当行/列锚点同时命中才按 Article 8 处理，防普通表误判
+    assert "ONLY IF BOTH" in _SYSTEM
+    assert "is NOT an Article 8 matrix" in _SYSTEM
+
+
 def test_analyze_esg_data_with_mock_openai() -> None:
     report_text = "A" * 9000
     response_payload = {
