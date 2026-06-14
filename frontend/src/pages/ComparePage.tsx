@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { listCompanies } from '@/lib/api'
+import { Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { CompareTablePanel } from '@/components/compare/CompareTablePanel'
@@ -13,6 +14,7 @@ import { NoticeBanner } from '@/components/NoticeBanner'
 import { FilterBar } from '@/components/FilterBar'
 import type { CompanyESGData } from '@/lib/types'
 import { useTranslation } from 'react-i18next'
+import { exportCompaniesCSV, exportToJSON } from '@/lib/export'
 import { localizeErrorMessage } from '@/lib/error-utils'
 import { cn } from '@/lib/utils'
 import {
@@ -206,6 +208,32 @@ export function ComparePage() {
                 </span>
               </FilterBar.Field>
             )}
+            <FilterBar.Actions>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => exportCompaniesCSV(
+                  selectedCompanies,
+                  `esg-compare-${new Date().toISOString().slice(0, 10)}.csv`,
+                )}
+                aria-label={t('companies.csvExport')}
+              >
+                <Download size={14} className="mr-1 shrink-0" />
+                {t('companies.csvExport')}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => exportToJSON(
+                  selectedCompanies,
+                  `esg-compare-${new Date().toISOString().slice(0, 10)}.json`,
+                )}
+                aria-label={t('companies.jsonExport')}
+              >
+                <Download size={14} className="mr-1 shrink-0" />
+                {t('companies.jsonExport')}
+              </Button>
+            </FilterBar.Actions>
           </FilterBar>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">

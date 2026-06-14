@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { listCompaniesWithYearCoverage, getTaxonomyReport, downloadTaxonomyPdf } from '@/lib/api'
+import { listCompaniesWithYearCoverage, getTaxonomyReport, downloadTaxonomyPdf, listActivities } from '@/lib/api'
 import { CompanyYearPicker, type CompanyYearSelection } from '@/components/CompanyYearPicker'
 import { TaxonomyRadarChart } from '@/components/RadarChart'
 import { MetricCard } from '@/components/MetricCard'
@@ -31,6 +31,16 @@ export function TaxonomyPage() {
     queryFn: listCompaniesWithYearCoverage,
   })
 
+  const {
+    data: activities = [],
+    isLoading: activitiesLoading,
+    error: activitiesError,
+    refetch: refetchActivities,
+  } = useQuery({
+    queryKey: ['taxonomy-activities'],
+    queryFn: listActivities,
+  })
+
   const companyName = selection.company
   const companyYear = selection.year
 
@@ -40,7 +50,7 @@ export function TaxonomyPage() {
     enabled: !!companyName && !!companyYear,
   })
 
-  const backendOffline = isBackendOffline(companiesError) || isBackendOffline(reportError)
+  const backendOffline = isBackendOffline(companiesError) || isBackendOffline(reportError) || isBackendOffline(activitiesError)
 
   return (
     <PageContainer>
@@ -125,6 +135,74 @@ export function TaxonomyPage() {
           className="max-w-2xl"
         />
       ) : null}
+
+      <Panel title={t('taxonomy.activitiesReference')}>
+        {activitiesLoading ? (
+          <QueryStateCard
+            tone="loading"
+            title={t('common.loading')}
+            body={t('taxonomy.activitiesLoading')}
+          />
+        ) : activitiesError && !backendOffline ? (
+          <QueryStateCard
+            tone="error"
+            title={t('common.error')}
+            body={localizeErrorMessage(t, activitiesError, 'common.error')}
+            actionLabel={t('errorBoundary.retry')}
+            onAction={() => void refetchActivities()}
+          />
+        ) : activities.length === 0 ? (
+          <QueryStateCard
+            tone="empty"
+            title={t('common.noData')}
+            body={t('taxonomy.activitiesEmpty')}
+          />
+        ) : (
+          <div className="overflow-x-auto" role="region" tabIndex={0}>
+            <table className="w-full text-sm">
+              <thead className="editorial-table-header">
+                <tr>
+                  <th className="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-300">
+                    {t('taxonomy.activityId')}
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-300">
+                    {t('taxonomy.activityName')}
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-300">
+                    {t('taxonomy.activitySector')}
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-300">
+                    {t('taxonomy.ghgThreshold')}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {activities.map((activity) => (
+                  <tr
+                    key={String(activity.activity_id)}
+                    className="border-b border-stone-200 last:border-0 hover:bg-stone-50/50 dark:border-slate-600 dark:hover:bg-slate-700/30"
+                  >
+                    <td className="px-4 py-3 font-mono text-xs text-slate-600 dark:text-slate-300">
+                      {activity.activity_id}
+                    </td>
+                    <td className="px-4 py-3 text-slate-900 dark:text-slate-100">
+                      {activity.name}
+                    </td>
+                    <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
+                      {activity.sector}
+                    </td>
+                    <td className="px-4 py-3 numeric-mono text-slate-900 dark:text-slate-100">
+                      {activity.ghg_threshold_gco2e_per_kwh != null
+                        ? `${activity.ghg_threshold_gco2e_per_kwh} gCO₂e/kWh`
+                        : '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Panel>
 
       {isLoading ? (
         <QueryStateCard

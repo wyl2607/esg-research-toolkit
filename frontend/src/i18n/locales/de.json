@@ -192,7 +192,14 @@
     },
     "dnshCheck": "DNSH-Prüfung",
     "loadingData": "Taxonomiedaten werden geladen…",
-    "selectPrompt": "Bitte wählen Sie oben ein Unternehmen aus."
+    "selectPrompt": "Bitte wählen Sie oben ein Unternehmen aus.",
+    "activitiesReference": "Aktivitäten- & Schwellenwertreferenz",
+    "activitiesLoading": "Aktivitätskatalog wird geladen…",
+    "activitiesEmpty": "Keine Aktivitäten im Taxonomiekatalog.",
+    "activityId": "Aktivitäts-ID",
+    "activityName": "Name",
+    "activitySector": "Sektor",
+    "ghgThreshold": "THG-Schwellenwert"
   },
   "lcoe": {
     "kicker": "Techno-ökonomische Werkbank",

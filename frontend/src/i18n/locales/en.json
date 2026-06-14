@@ -192,7 +192,14 @@
     },
     "dnshCheck": "DNSH Check",
     "loadingData": "Loading taxonomy data…",
-    "selectPrompt": "Select a company above to view taxonomy analysis."
+    "selectPrompt": "Select a company above to view taxonomy analysis.",
+    "activitiesReference": "Activity & Threshold Reference",
+    "activitiesLoading": "Loading activity catalog…",
+    "activitiesEmpty": "No activities in the taxonomy catalog.",
+    "activityId": "Activity ID",
+    "activityName": "Name",
+    "activitySector": "Sector",
+    "ghgThreshold": "GHG Threshold"
   },
   "lcoe": {
     "kicker": "Techno-economic workbench",
