@@ -446,6 +446,7 @@ export function CompanyProfilePage() {
       <IdentityCard
         companyName={profile.company_name}
         identitySummary={identitySummary}
+        mergedResult={profile.latest_merged_result}
       />
 
       <ProvenanceCard
@@ -518,6 +519,7 @@ export function CompanyProfilePage() {
       <Suspense fallback={profileSectionFallback}>
         <NarrativeCard
           narrativeSummary={narrativeSummary}
+          companyName={profile.company_name}
           improvedMetricLabels={improvedMetricLabels}
           weakenedMetricLabels={weakenedMetricLabels}
           strengthMetricLabels={strengthMetricLabels}

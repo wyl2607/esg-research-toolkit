@@ -2,15 +2,17 @@ import { Building2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { Panel } from '@/components/layout/Panel'
-import type { CompanyIdentityProvenanceSummary } from '@/lib/types'
+import type { CompanyIdentityProvenanceSummary, CompanyMergedResult } from '@/lib/types'
+import { metricDisclosureLabel, prettifyToken } from '@/pages/company-profile/utils'
 
 interface IdentityCardProps {
   companyName: string
   identitySummary: CompanyIdentityProvenanceSummary | null
+  mergedResult?: CompanyMergedResult | null
 }
 
 export function IdentityCard(props: IdentityCardProps) {
-  const { companyName, identitySummary } = props
+  const { companyName, identitySummary, mergedResult } = props
   const { t } = useTranslation()
 
   return (
@@ -66,12 +68,41 @@ export function IdentityCard(props: IdentityCardProps) {
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
             {t('profile.sourceMergePriorityLabel')}
           </p>
-          <p className="mt-2 break-words text-sm text-slate-700 [overflow-wrap:anywhere]">
-            {identitySummary?.merge_priority_preview ?? t('profile.sourceMergePriorityReserved')}
-          </p>
-          {identitySummary?.source_priority_preview ? (
-            <p className="mt-1 break-words text-xs text-amber-700 [overflow-wrap:anywhere]">{identitySummary.source_priority_preview}</p>
-          ) : null}
+          {identitySummary?.merge_priority_preview ? (
+            <>
+              <p className="mt-2 break-words text-sm text-slate-700 [overflow-wrap:anywhere]">
+                {identitySummary.merge_priority_preview}
+              </p>
+              {identitySummary.source_priority_preview ? (
+                <p className="mt-1 break-words text-xs text-amber-700 [overflow-wrap:anywhere]">{identitySummary.source_priority_preview}</p>
+              ) : null}
+            </>
+          ) : mergedResult && Object.keys(mergedResult.metrics).length > 0 ? (
+            <div className="mt-2 space-y-1.5">
+              {Object.entries(mergedResult.metrics)
+                .filter(([, m]) => m.chosen_source_document_type != null)
+                .slice(0, 6)
+                .map(([key, m]) => (
+                  <div key={key} className="flex min-w-0 items-start justify-between gap-2 text-xs">
+                    <span className="break-words text-slate-600 [overflow-wrap:anywhere]">
+                      {metricDisclosureLabel(t, key)}
+                    </span>
+                    <span className={`shrink-0 rounded px-1.5 py-0.5 font-medium ${m.conflict_detected ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-700'}`}>
+                      {prettifyToken(m.chosen_source_document_type ?? '')}
+                    </span>
+                  </div>
+                ))}
+              {mergedResult.source_count > 1 && (
+                <p className="text-xs text-slate-400">
+                  {t('profile.provenanceMergeSummary', { count: mergedResult.source_count })}
+                </p>
+              )}
+            </div>
+          ) : (
+            <p className="mt-2 break-words text-sm text-slate-500 [overflow-wrap:anywhere]">
+              {t('profile.sourceMergePriorityReserved')}
+            </p>
+          )}
         </div>
       </div>
     </Panel>
