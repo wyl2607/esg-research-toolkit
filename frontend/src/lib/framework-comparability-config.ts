@@ -36,8 +36,8 @@ export interface DimensionComparability {
   eu_taxonomy: ComparabilityLevel
   csrc_2023: ComparabilityLevel
   csrd: ComparabilityLevel
-  /** Short rationale explaining the comparability rating */
-  notes: string
+  /** i18n key under frameworks.comparabilityMatrix.dimensionNotes.* */
+  notesKey: string
 }
 
 /**
@@ -52,9 +52,7 @@ export const FRAMEWORK_COMPARABILITY: DimensionComparability[] = [
     eu_taxonomy: 'comparable',
     csrc_2023: 'partial',
     csrd: 'comparable',
-    notes:
-      'EU Taxonomy and CSRD both require Scope 1+2 under standardised GHG Protocol methods. ' +
-      'CSRC 2023 encourages Scope 1+2 but does not mandate a specific protocol, so methodology may differ.',
+    notesKey: 'climate_mitigation',
   },
   {
     dimensionKey: 'climate_adaptation',
@@ -62,10 +60,7 @@ export const FRAMEWORK_COMPARABILITY: DimensionComparability[] = [
     eu_taxonomy: 'comparable',
     csrc_2023: 'not_comparable',
     csrd: 'comparable',
-    notes:
-      'EU Taxonomy defines six climate-adaptation objectives with DNSH criteria. ' +
-      'CSRD (ESRS E1) requires climate-risk disclosures aligned with the same objectives. ' +
-      'CSRC 2023 has no equivalent structured climate-adaptation requirement.',
+    notesKey: 'climate_adaptation',
   },
   {
     dimensionKey: 'water',
@@ -73,10 +68,7 @@ export const FRAMEWORK_COMPARABILITY: DimensionComparability[] = [
     eu_taxonomy: 'partial',
     csrc_2023: 'partial',
     csrd: 'comparable',
-    notes:
-      'CSRD (ESRS E3) requires quantitative water-usage and water-stress indicators. ' +
-      'EU Taxonomy includes water as a DNSH objective but does not mandate a standalone metric. ' +
-      'CSRC 2023 asks for water-usage data on a best-effort basis; comparability depends on what is actually disclosed.',
+    notesKey: 'water',
   },
   {
     dimensionKey: 'circular_economy',
@@ -84,10 +76,7 @@ export const FRAMEWORK_COMPARABILITY: DimensionComparability[] = [
     eu_taxonomy: 'comparable',
     csrc_2023: 'not_comparable',
     csrd: 'comparable',
-    notes:
-      'Circular economy is a named objective under both EU Taxonomy (CE activities list) and ' +
-      'CSRD (ESRS E5). CSRC 2023 does not include a structured circular-economy dimension; ' +
-      'waste-recycled % is the closest proxy but is not defined equivalently.',
+    notesKey: 'circular_economy',
   },
   {
     dimensionKey: 'pollution',
@@ -95,10 +84,7 @@ export const FRAMEWORK_COMPARABILITY: DimensionComparability[] = [
     eu_taxonomy: 'comparable',
     csrc_2023: 'partial',
     csrd: 'comparable',
-    notes:
-      'EU Taxonomy and CSRD (ESRS E2) both define pollution prevention as a standalone objective ' +
-      'with specific substance lists. CSRC 2023 requires pollution disclosures mainly for ' +
-      'heavy-industry companies; the scope and substance lists differ.',
+    notesKey: 'pollution',
   },
   {
     dimensionKey: 'biodiversity',
@@ -106,10 +92,7 @@ export const FRAMEWORK_COMPARABILITY: DimensionComparability[] = [
     eu_taxonomy: 'comparable',
     csrc_2023: 'not_comparable',
     csrd: 'comparable',
-    notes:
-      'EU Taxonomy (objective 6) and CSRD (ESRS E4) both reference biodiversity and ecosystems. ' +
-      'CSRC 2023 does not have a biodiversity-specific disclosure requirement; any related ' +
-      'disclosures are voluntary and non-standardised.',
+    notesKey: 'biodiversity',
   },
   // CSRD-specific ESRS dimensions
   {
@@ -118,10 +101,7 @@ export const FRAMEWORK_COMPARABILITY: DimensionComparability[] = [
     eu_taxonomy: 'partial',
     csrc_2023: 'partial',
     csrd: 'comparable',
-    notes:
-      'ESRS E1 is the primary CSRD climate standard covering Scope 1+2+3 and transition plans. ' +
-      'EU Taxonomy addresses climate mitigation/adaptation through activity criteria rather than ' +
-      'company-level disclosures. CSRC 2023 covers Scope 1+2 but omits Scope 3 and transition plans.',
+    notesKey: 'e1_climate',
   },
   {
     dimensionKey: 'e2_e5_pollution_circular',
@@ -129,9 +109,7 @@ export const FRAMEWORK_COMPARABILITY: DimensionComparability[] = [
     eu_taxonomy: 'partial',
     csrc_2023: 'not_comparable',
     csrd: 'comparable',
-    notes:
-      'ESRS E2 (pollution) and E5 (circular economy) are combined here. EU Taxonomy covers both ' +
-      'as DNSH objectives. CSRC 2023 lacks equivalent structured requirements for both topics.',
+    notesKey: 'e2_e5_pollution_circular',
   },
   {
     dimensionKey: 'e3_water',
@@ -139,10 +117,7 @@ export const FRAMEWORK_COMPARABILITY: DimensionComparability[] = [
     eu_taxonomy: 'partial',
     csrc_2023: 'partial',
     csrd: 'comparable',
-    notes:
-      'ESRS E3 (water and marine resources) requires granular disclosure including water-stress ' +
-      'areas. EU Taxonomy covers water as a DNSH objective without a dedicated metric. ' +
-      'CSRC 2023 asks for water data but without water-stress context.',
+    notesKey: 'e3_water',
   },
   {
     dimensionKey: 'e4_biodiversity',
@@ -150,9 +125,7 @@ export const FRAMEWORK_COMPARABILITY: DimensionComparability[] = [
     eu_taxonomy: 'partial',
     csrc_2023: 'not_comparable',
     csrd: 'comparable',
-    notes:
-      'ESRS E4 (biodiversity) and EU Taxonomy objective 6 are structurally aligned. ' +
-      'CSRC 2023 has no biodiversity-specific requirement.',
+    notesKey: 'e4_biodiversity',
   },
   {
     dimensionKey: 's1_workforce',
@@ -160,10 +133,7 @@ export const FRAMEWORK_COMPARABILITY: DimensionComparability[] = [
     eu_taxonomy: 'not_comparable',
     csrc_2023: 'partial',
     csrd: 'comparable',
-    notes:
-      'ESRS S1 (own workforce) requires headcount, gender pay gap, working conditions, and ' +
-      'collective bargaining coverage. EU Taxonomy does not assess social indicators at the ' +
-      'dimension level. CSRC 2023 requires gender ratio and employee welfare but at lower granularity.',
+    notesKey: 's1_workforce',
   },
   {
     dimensionKey: 'g1_governance',
@@ -171,10 +141,7 @@ export const FRAMEWORK_COMPARABILITY: DimensionComparability[] = [
     eu_taxonomy: 'not_comparable',
     csrc_2023: 'partial',
     csrd: 'comparable',
-    notes:
-      'ESRS G1 (business conduct) covers anti-corruption, supplier due diligence, and political ' +
-      'engagement. EU Taxonomy does not address governance directly. CSRC 2023 includes board ' +
-      'composition and anti-corruption items but uses different definitions.',
+    notesKey: 'g1_governance',
   },
   // CSRC-specific dimensions
   {
@@ -183,10 +150,7 @@ export const FRAMEWORK_COMPARABILITY: DimensionComparability[] = [
     eu_taxonomy: 'partial',
     csrc_2023: 'comparable',
     csrd: 'partial',
-    notes:
-      'CSRC Environment bundles Scope 1+2, energy, and waste into one dimension. ' +
-      'EU Taxonomy addresses overlapping indicators via activity criteria and DNSH. ' +
-      'CSRD separates these into E1–E5; a direct score comparison with CSRC_ENV is only directional.',
+    notesKey: 'csrc_environment',
   },
   {
     dimensionKey: 'csrc_social',
@@ -194,10 +158,7 @@ export const FRAMEWORK_COMPARABILITY: DimensionComparability[] = [
     eu_taxonomy: 'not_comparable',
     csrc_2023: 'comparable',
     csrd: 'partial',
-    notes:
-      'CSRC Social covers workforce, community investment, and product safety. ' +
-      'EU Taxonomy has no social scoring dimension. CSRD (S1–S4) is more granular; ' +
-      'a combined CSRC Social score is only partially comparable to individual ESRS S-standards.',
+    notesKey: 'csrc_social',
   },
   {
     dimensionKey: 'csrc_governance',
@@ -205,11 +166,7 @@ export const FRAMEWORK_COMPARABILITY: DimensionComparability[] = [
     eu_taxonomy: 'not_comparable',
     csrc_2023: 'comparable',
     csrd: 'partial',
-    notes:
-      'CSRC Governance covers board structure, ownership transparency, and anti-corruption ' +
-      'aligned with Chinese corporate-governance rules (CSRC Code 2023). ' +
-      'EU Taxonomy omits governance scoring. CSRD (G1) overlaps partially but uses OECD ' +
-      'and UNGP frameworks rather than CSRC rules.',
+    notesKey: 'csrc_governance',
   },
 ]
 

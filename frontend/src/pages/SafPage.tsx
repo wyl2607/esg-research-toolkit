@@ -57,16 +57,17 @@ function fmt(n: number, decimals = 2) {
 }
 
 function CostBreakdownChart({ result }: { result: SAFCostResult }) {
+  const { t } = useTranslation()
   const data = [
-    { name: 'CAPEX', value: result.capex_component_eur_per_tonne, fill: '#6366f1' },
-    { name: 'Feedstock', value: result.feedstock_component_eur_per_tonne, fill: '#f59e0b' },
-    { name: 'OPEX', value: result.opex_component_eur_per_tonne, fill: '#22c55e' },
+    { name: t('saf.charts.capex'), value: result.capex_component_eur_per_tonne, fill: '#6366f1' },
+    { name: t('saf.charts.feedstock'), value: result.feedstock_component_eur_per_tonne, fill: '#f59e0b' },
+    { name: t('saf.charts.opex'), value: result.opex_component_eur_per_tonne, fill: '#22c55e' },
     {
-      name: 'Policy Credit',
+      name: t('saf.charts.policyCredit'),
       value: -result.policy_credit_eur_per_tonne,
       fill: result.policy_credit_eur_per_tonne > 0 ? '#10b981' : '#e5e7eb',
     },
-    { name: 'TOTAL', value: result.levelized_cost_eur_per_tonne, fill: '#0ea5e9' },
+    { name: t('saf.charts.total'), value: result.levelized_cost_eur_per_tonne, fill: '#0ea5e9' },
   ]
 
   return (
@@ -87,13 +88,15 @@ function CostBreakdownChart({ result }: { result: SAFCostResult }) {
 }
 
 function CompetitivenessBar({ result }: { result: SAFCostResult }) {
+  const { t } = useTranslation()
   const jetPrice = result.jet_fuel_reference_eur_per_litre
   const safPrice = result.levelized_cost_eur_per_litre
   const max = Math.max(jetPrice, safPrice) * 1.3
+  const pathwayLabel = t(PATHWAY_KEYS[result.pathway] ?? result.pathway, { defaultValue: result.pathway })
 
   const data = [
-    { name: 'Jet A-1 (kerosene)', value: jetPrice, fill: '#94a3b8' },
-    { name: `SAF (${result.pathway})`, value: safPrice, fill: result.is_cost_competitive ? '#22c55e' : '#f59e0b' },
+    { name: t('saf.charts.jetA1'), value: jetPrice, fill: '#94a3b8' },
+    { name: t('saf.charts.safPathway', { pathway: pathwayLabel }), value: safPrice, fill: result.is_cost_competitive ? '#22c55e' : '#f59e0b' },
   ]
 
   return (
@@ -103,7 +106,7 @@ function CompetitivenessBar({ result }: { result: SAFCostResult }) {
         <XAxis type="number" domain={[0, max]} tick={{ fontSize: 12 }} unit=" €/L" />
         <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={120} />
         <Tooltip formatter={(v) => [`€${fmt(Number(v ?? 0))}/L`, '']} />
-        <ReferenceLine x={jetPrice} stroke="#ef4444" strokeDasharray="4 2" label={{ value: 'Breakeven', position: 'insideTopRight', fontSize: 11, fill: '#ef4444' }} />
+        <ReferenceLine x={jetPrice} stroke="#ef4444" strokeDasharray="4 2" label={{ value: t('saf.charts.breakeven'), position: 'insideTopRight', fontSize: 11, fill: '#ef4444' }} />
         <Bar dataKey="value" radius={[0, 4, 4, 0]}>
           {data.map((entry, i) => (
             <Cell key={i} fill={entry.fill} />

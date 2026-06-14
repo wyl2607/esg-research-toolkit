@@ -55,6 +55,11 @@ const SafPage = lazy(() =>
   import('@/pages/SafPage').then((module) => ({ default: module.SafPage }))
 )
 
+function LoadingFallback() {
+  const { t } = useTranslation()
+  return <div className="p-6 text-sm text-slate-500">{t('common.loading')}</div>
+}
+
 function NotFound() {
   const { t } = useTranslation()
   const location = useLocation()
@@ -82,7 +87,7 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <Suspense fallback={<div className="p-6 text-sm text-slate-500">Loading…</div>}>
+        <Suspense fallback={<LoadingFallback />}>
           <Routes>
             <Route element={<Layout />}>
               <Route index element={<DashboardPage />} />
