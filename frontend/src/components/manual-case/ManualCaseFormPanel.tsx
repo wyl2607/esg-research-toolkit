@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { localizeErrorMessage } from '@/lib/error-utils'
-import { NACE_OPTIONS } from '@/lib/nace-codes'
+import { NACE_OPTIONS, getLocalizedSector } from '@/lib/nace-codes'
 import type { ManualFormState } from '@/pages/manual-case/utils'
 
 interface ManualCaseFormPanelProps {
@@ -148,7 +148,7 @@ export function ManualCaseFormPanel({
               {NACE_OPTIONS.map((option) => (
                 <option key={option.code} value={option.code}>
                   {option.code} —{' '}
-                  {i18n.resolvedLanguage?.startsWith('de') ? option.sectorDe : option.sectorEn}
+                  {getLocalizedSector(option, i18n.resolvedLanguage)}
                 </option>
               ))}
             </select>

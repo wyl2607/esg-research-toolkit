@@ -27,15 +27,24 @@ export async function loadLocale(lang: string): Promise<void> {
   i18n.addResourceBundle(lang, 'translation', mod.default as Record<string, unknown>, true, false)
 }
 
-// Detection (saved preference or browser language) may pick a language whose
-// bundle is outside the critical path; load it and re-resolve so the UI does
-// not stay on fallback English.
+// Resolve the active locale once, deterministically, so a forced ?lang= always
+// wins over the detected language instead of racing it. A ?lang=de|en|zh query
+// param makes every language version of every page (e.g. /disclosures?lang=zh)
+// directly callable; otherwise fall back to the detected/saved language.
+const supported = new Set(['de', 'en', 'zh'])
 const detected = (i18n.language || 'en').split('-')[0]
-if (detected !== 'en') {
-  loadLocale(detected)
-    .then(() => i18n.changeLanguage(detected))
-    // If the locale chunk fails to load, stay on the bundled English fallback.
-    .catch(() => {})
-}
+const forced =
+  typeof window !== 'undefined'
+    ? new URLSearchParams(window.location.search).get('lang')
+    : null
+
+const nextLang =
+  forced && supported.has(forced) ? forced : supported.has(detected) ? detected : 'en'
+
+// loadLocale() is a no-op for English and already-loaded bundles. If the chunk
+// fails to load, stay on the bundled English fallback.
+loadLocale(nextLang)
+  .then(() => i18n.changeLanguage(nextLang))
+  .catch(() => {})
 
 export default i18n

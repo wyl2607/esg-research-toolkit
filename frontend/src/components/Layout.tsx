@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Outlet } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Outlet, useLocation } from 'react-router-dom'
 import { Menu, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Sidebar } from './Sidebar'
@@ -7,8 +7,30 @@ import { LanguageSwitcher } from './LanguageSwitcher'
 import { ThemeSwitcher } from './ThemeSwitcher'
 
 export function Layout() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const location = useLocation()
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
+
+  useEffect(() => {
+    const lang = i18n.resolvedLanguage || 'en'
+    document.documentElement.setAttribute('lang', lang)
+
+    const path = location.pathname
+    let pageLabel = ''
+    if (path === '/') pageLabel = t('nav.dashboard')
+    else if (path === '/disclosures') pageLabel = t('nav.pendingDisclosures')
+    else if (path.startsWith('/companies')) pageLabel = t('nav.companies')
+    else if (path === '/upload') pageLabel = t('nav.upload')
+    else if (path === '/compare') pageLabel = t('nav.compare')
+    else if (path === '/frameworks') pageLabel = t('nav.frameworks')
+    else if (path === '/taxonomy') pageLabel = t('nav.taxonomy')
+    else if (path === '/benchmarks') pageLabel = t('nav.benchmarks')
+    else if (path === '/manual') pageLabel = t('nav.manual')
+    else if (path === '/lcoe') pageLabel = t('nav.lcoe')
+    else if (path === '/saf') pageLabel = t('nav.saf')
+    else if (path === '/regional' || path.startsWith('/coverage')) pageLabel = t('nav.regional')
+    document.title = pageLabel ? `${pageLabel} · ${t('nav.appName')}` : t('nav.appName')
+  }, [location.pathname, i18n.resolvedLanguage, t])
 
   return (
     <div className="flex h-screen overflow-hidden bg-transparent">

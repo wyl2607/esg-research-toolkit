@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { getAuditTrail, getIndustryBenchmarks } from '@/lib/api'
 import { localizeErrorMessage } from '@/lib/error-utils'
-import { findNaceOption } from '@/lib/nace-codes'
+import { findNaceOption, getLocalizedSector } from '@/lib/nace-codes'
 import type { AuditTrailRow, CompanyESGData, IndustryBenchmarkMetric } from '@/lib/types'
 
 interface PeerComparisonCardProps {
@@ -321,12 +321,7 @@ export function PeerComparisonCard(props: PeerComparisonCardProps) {
   }
 
   const naceOption = findNaceOption(industryCode)
-  const industryLabel =
-    naceOption == null
-      ? industryCode
-      : locale === 'de'
-        ? naceOption.sectorDe
-        : naceOption.sectorEn
+  const industryLabel = naceOption == null ? industryCode : getLocalizedSector(naceOption, locale)
 
   return (
     <Card>

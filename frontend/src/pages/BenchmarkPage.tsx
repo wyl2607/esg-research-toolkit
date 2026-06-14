@@ -16,7 +16,7 @@ import {
   recomputeIndustryBenchmarks,
 } from '@/lib/api'
 import { isBackendOffline, localizeErrorMessage } from '@/lib/error-utils'
-import { findNaceOption, NACE_OPTIONS } from '@/lib/nace-codes'
+import { findNaceOption, NACE_OPTIONS, getLocalizedSector } from '@/lib/nace-codes'
 import type { CompanyByIndustryEntry, IndustryBenchmarkMetric } from '@/lib/types'
 
 // ── Private panel components ──────────────────────────────────────────────
@@ -149,9 +149,10 @@ interface PeersProps {
   error: unknown
   companies: CompanyByIndustryEntry[]
   companyCount: number
+  locale: string
 }
 
-function BenchmarkPeersPanel({ isLoading, isError, error, companies, companyCount }: PeersProps) {
+function BenchmarkPeersPanel({ isLoading, isError, error, companies, companyCount, locale }: PeersProps) {
   const { t } = useTranslation()
   return (
     <Panel title={t('benchmark.peersHeading', { count: companyCount })}>
@@ -184,7 +185,10 @@ function BenchmarkPeersPanel({ isLoading, isError, error, companies, companyCoun
                 {company.company_name}
               </span>
               <span className="text-xs text-stone-500 dark:text-slate-400">
-                {company.industry_sector ?? company.industry_code ?? '—'} ·{' '}
+                {(() => {
+                  const opt = findNaceOption(company.industry_code)
+                  return opt ? getLocalizedSector(opt, locale) : (company.industry_code ?? company.industry_sector ?? '—')
+                })()} ·{' '}
                 {company.report_year ?? '—'}
               </span>
             </li>
@@ -274,8 +278,7 @@ export function BenchmarkPage() {
   }, [visibleMetrics])
 
   const option = findNaceOption(industryCode)
-  const industryLabel =
-    option == null ? industryCode : locale === 'de' ? option.sectorDe : option.sectorEn
+  const industryLabel = option == null ? industryCode : getLocalizedSector(option, locale)
 
   const minSampleSize = useMemo(() => {
     if (!visibleMetrics.length) return null
@@ -338,7 +341,7 @@ export function BenchmarkPage() {
           >
             {NACE_OPTIONS.map((nace) => (
               <option key={nace.code} value={nace.code}>
-                {nace.code} — {locale === 'de' ? nace.sectorDe : nace.sectorEn}
+                {nace.code} — {getLocalizedSector(nace, locale)}
               </option>
             ))}
           </select>
@@ -413,6 +416,7 @@ export function BenchmarkPage() {
         error={companiesQuery.error}
         companies={companiesQuery.data?.companies ?? []}
         companyCount={companiesQuery.data?.company_count ?? 0}
+        locale={locale}
       />
     </PageContainer>
   )

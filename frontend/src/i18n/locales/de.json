@@ -872,5 +872,16 @@
     "gapAnalysis": "Lückenanalyse",
     "compliancePriority": "Compliance-Prioritäten",
     "selectPrompt": "Unternehmen auswählen für Drei-Regionen-ESG-Vergleich"
+  },
+  "dimension": {
+    "carbon_emissions": "Carbon Emissions",
+    "social_labor": "Social & Labor",
+    "governance_transparency": "Governance & Transparency"
+  },
+  "readiness": {
+    "leading": "Leading",
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low"
   }
 }
