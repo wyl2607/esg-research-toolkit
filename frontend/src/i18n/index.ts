@@ -38,4 +38,14 @@ if (detected !== 'en') {
     .catch(() => {})
 }
 
+// Support ?lang=de|en|zh to force a specific language for any page.
+// This makes every language version of every page (e.g. /disclosures?lang=zh)
+// directly callable and render with the chosen locale.
+if (typeof window !== 'undefined') {
+  const forced = new URLSearchParams(window.location.search).get('lang')
+  if (forced && ['de', 'en', 'zh'].includes(forced)) {
+    loadLocale(forced).then(() => i18n.changeLanguage(forced)).catch(() => {})
+  }
+}
+
 export default i18n

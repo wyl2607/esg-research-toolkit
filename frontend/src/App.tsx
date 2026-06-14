@@ -1,5 +1,6 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { Suspense, lazy } from 'react'
+import { useTranslation } from 'react-i18next'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Layout } from '@/components/Layout'
 
@@ -54,6 +55,21 @@ const SafPage = lazy(() =>
   import('@/pages/SafPage').then((module) => ({ default: module.SafPage }))
 )
 
+function NotFound() {
+  const { t } = useTranslation()
+  return (
+    <div className="py-16 text-center">
+      <h1 className="text-2xl font-semibold mb-2 text-slate-900 dark:text-slate-100">
+        {t('errors.notFound', 'Page not found')}
+      </h1>
+      <p className="text-slate-500 mb-6">{t('common.noData')}</p>
+      <a href="/" className="underline text-amber-700 dark:text-amber-400">
+        {t('nav.dashboard')}
+      </a>
+    </div>
+  )
+}
+
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
 })
@@ -83,6 +99,7 @@ export default function App() {
               {import.meta.env.DEV && (
                 <Route path="design-preview" element={<DesignPreviewPage />} />
               )}
+              <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>
         </Suspense>
