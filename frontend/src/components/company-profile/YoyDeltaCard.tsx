@@ -52,7 +52,7 @@ export function YoyDeltaCard({ yoyDeltaCard, yoySummary }: YoyDeltaCardProps) {
           </div>
           <div className="rounded-lg border bg-slate-50 px-4 py-4">
             <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-              YoY Revenue
+              {t('profile.yoyRevenue')}
             </p>
             <p className={`mt-2 text-2xl font-semibold ${deltaToneClass(yoyDeltaCard.revenueDeltaPct)}`}>
               {deltaPercentLabel(yoyDeltaCard.revenueDeltaPct)}
@@ -63,7 +63,7 @@ export function YoyDeltaCard({ yoyDeltaCard, yoySummary }: YoyDeltaCardProps) {
           </div>
           <div className="rounded-lg border bg-slate-50 px-4 py-4">
             <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-              YoY Alignment
+              {t('profile.yoyAlignment')}
             </p>
             <p className={`mt-2 text-2xl font-semibold ${deltaToneClass(yoyDeltaCard.alignmentDeltaPct)}`}>
               {deltaPercentLabel(yoyDeltaCard.alignmentDeltaPct)}

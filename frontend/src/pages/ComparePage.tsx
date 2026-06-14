@@ -170,7 +170,7 @@ export function ComparePage() {
               el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
             }}
           >
-            {t('compare.startCta', { defaultValue: 'Vergleich starten' })}
+            {t('compare.startCta')}
           </Button>
         </FilterBar.Actions>
       </FilterBar>
