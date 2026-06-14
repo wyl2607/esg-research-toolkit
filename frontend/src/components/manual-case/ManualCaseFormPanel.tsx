@@ -175,6 +175,24 @@ export function ManualCaseFormPanel({
             ))}
           </div>
           <div className="space-y-2">
+            <Label htmlFor="scope2_basis">{t('manual.scope2Basis')}</Label>
+            <Select
+              value={form.scope2_basis}
+              onValueChange={(value) =>
+                onFieldChange('scope2_basis', value === 'unspecified' ? '' : value)
+              }
+            >
+              <SelectTrigger id="scope2_basis">
+                <SelectValue placeholder={t('manual.scope2BasisUnspecified')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="unspecified">{t('manual.scope2BasisUnspecified')}</SelectItem>
+                <SelectItem value="market">{t('manual.scope2BasisMarket')}</SelectItem>
+                <SelectItem value="location">{t('manual.scope2BasisLocation')}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="primary_activities">{t('manual.activities')}</Label>
             <textarea
               id="primary_activities"

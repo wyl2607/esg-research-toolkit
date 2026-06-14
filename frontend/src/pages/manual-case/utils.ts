@@ -9,6 +9,7 @@ export type ManualFormState = {
   source_url: string
   scope1_co2e_tonnes: string
   scope2_co2e_tonnes: string
+  scope2_basis: string
   scope3_co2e_tonnes: string
   renewable_energy_pct: string
   taxonomy_aligned_revenue_pct: string
@@ -30,6 +31,7 @@ export const EMPTY_FORM: ManualFormState = {
   source_url: '',
   scope1_co2e_tonnes: '',
   scope2_co2e_tonnes: '',
+  scope2_basis: '',
   scope3_co2e_tonnes: '',
   renewable_energy_pct: '',
   taxonomy_aligned_revenue_pct: '',
@@ -62,6 +64,10 @@ export function buildPayload(form: ManualFormState): ManualReportInput {
     source_url: form.source_url.trim() || null,
     scope1_co2e_tonnes: parseOptionalNumber(form.scope1_co2e_tonnes),
     scope2_co2e_tonnes: parseOptionalNumber(form.scope2_co2e_tonnes),
+    scope2_basis:
+      form.scope2_basis === 'market' || form.scope2_basis === 'location'
+        ? form.scope2_basis
+        : null,
     scope3_co2e_tonnes: parseOptionalNumber(form.scope3_co2e_tonnes),
     energy_consumption_mwh: parseOptionalNumber(form.energy_consumption_mwh),
     renewable_energy_pct: parseOptionalNumber(form.renewable_energy_pct),
@@ -93,6 +99,10 @@ export function payloadToForm(payload: Partial<ManualReportInput>): ManualFormSt
       payload.scope1_co2e_tonnes != null ? String(payload.scope1_co2e_tonnes) : '',
     scope2_co2e_tonnes:
       payload.scope2_co2e_tonnes != null ? String(payload.scope2_co2e_tonnes) : '',
+    scope2_basis:
+      payload.scope2_basis === 'market' || payload.scope2_basis === 'location'
+        ? payload.scope2_basis
+        : '',
     scope3_co2e_tonnes:
       payload.scope3_co2e_tonnes != null ? String(payload.scope3_co2e_tonnes) : '',
     renewable_energy_pct:
