@@ -26,10 +26,10 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from sqlalchemy import create_engine, func
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import func
 
 from core.config import settings
+from core.database import SessionLocal
 from report_parser.storage import CompanyReport
 from report_parser.company_identity import canonical_company_name
 
@@ -52,9 +52,7 @@ def similarity(a: str, b: str) -> float:
 
 
 def main() -> int:
-    engine = create_engine(settings.database_url)
-    Session = sessionmaker(bind=engine)
-    session = Session()
+    session = SessionLocal()
 
     rows = (
         session.query(

@@ -28,10 +28,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-
-from core.config import settings
+from core.database import SessionLocal
 from report_parser.storage import CompanyReport
 
 
@@ -158,9 +155,7 @@ def git_status() -> tuple[list[str], list[str]]:
 
 
 def verify_drift_row() -> dict | None:
-    engine = create_engine(settings.database_url)
-    Session = sessionmaker(bind=engine)
-    session = Session()
+    session = SessionLocal()
     row = (
         session.query(CompanyReport)
         .filter(CompanyReport.company_name == "Slash/Like Name Co")
