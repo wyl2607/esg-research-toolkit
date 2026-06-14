@@ -499,6 +499,28 @@
       "csrc_environment": "Environment",
       "csrc_social": "Social",
       "csrc_governance": "Governance"
+    },
+    "comparabilityMatrix": {
+      "title": "Cross-Framework Comparability Matrix",
+      "subtitle": "Which ESG dimensions can be compared across frameworks, and where methodology differences apply.",
+      "dimension": "Dimension",
+      "comparable": "Comparable",
+      "partial": "Partial",
+      "not_comparable": "Not Comparable",
+      "notes": "Notes",
+      "legend": "Legend",
+      "legendComparable": "Same or equivalent metric — cross-framework numerical comparison is meaningful.",
+      "legendPartial": "Concept exists in all frameworks but methodology or scope differs — directional comparison only.",
+      "legendNotComparable": "Absent or fundamentally different in at least one framework — do not compare numerically."
+    },
+    "diffExplanation": {
+      "title": "Score Comparison",
+      "highestScore": "Highest score: {{framework}} ({{score}}%)",
+      "lowestScore": "Lowest score: {{framework}} ({{score}}%)",
+      "spread": "Spread between highest and lowest: {{spread}} percentage points",
+      "coverageGap": "Coverage gap: {{framework}} has the lowest data coverage at {{pct}}%",
+      "allEqual": "All three frameworks produced similar scores — the company's disclosures are broadly consistent.",
+      "noData": "Select a company to see a score comparison."
     }
   },
   "companyYearPicker": {

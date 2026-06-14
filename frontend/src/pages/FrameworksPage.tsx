@@ -20,7 +20,177 @@ import {
 } from 'recharts'
 import { useTranslation } from 'react-i18next'
 import { localizeErrorMessage, isBackendOffline } from '@/lib/error-utils'
+import { FRAMEWORK_COMPARABILITY, type ComparabilityLevel } from '@/lib/framework-comparability-config'
 
+// ---------------------------------------------------------------------------
+// Comparability badge
+// ---------------------------------------------------------------------------
+const COMPARABILITY_COLORS: Record<ComparabilityLevel, string> = {
+  comparable: 'bg-green-100 text-green-800 border-green-300',
+  partial: 'bg-amber-100 text-amber-800 border-amber-300',
+  not_comparable: 'bg-stone-100 text-stone-500 border-stone-300',
+}
+
+function ComparabilityBadge({ level }: { level: ComparabilityLevel }) {
+  const { t } = useTranslation()
+  const label = t(`frameworks.comparabilityMatrix.${level}`)
+  return (
+    <span
+      className={`inline-block rounded border px-1.5 py-0.5 text-[10px] font-medium ${COMPARABILITY_COLORS[level]}`}
+    >
+      {label}
+    </span>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Comparability matrix table
+// ---------------------------------------------------------------------------
+function ComparabilityMatrixPanel() {
+  const { t } = useTranslation()
+
+  return (
+    <Panel>
+      <div className="mb-2">
+        <p className="text-sm font-semibold text-slate-800">
+          {t('frameworks.comparabilityMatrix.title')}
+        </p>
+        <p className="mt-0.5 text-xs text-slate-500">
+          {t('frameworks.comparabilityMatrix.subtitle')}
+        </p>
+      </div>
+
+      {/* Legend */}
+      <div className="mb-3 flex flex-wrap gap-3 rounded-md bg-stone-50 p-2 text-xs text-slate-600">
+        <span className="font-medium text-slate-700">{t('frameworks.comparabilityMatrix.legend')}:</span>
+        <span className="flex items-center gap-1">
+          <ComparabilityBadge level="comparable" />
+          <span>{t('frameworks.comparabilityMatrix.legendComparable')}</span>
+        </span>
+        <span className="flex items-center gap-1">
+          <ComparabilityBadge level="partial" />
+          <span>{t('frameworks.comparabilityMatrix.legendPartial')}</span>
+        </span>
+        <span className="flex items-center gap-1">
+          <ComparabilityBadge level="not_comparable" />
+          <span>{t('frameworks.comparabilityMatrix.legendNotComparable')}</span>
+        </span>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs">
+          <thead>
+            <tr className="border-b border-stone-200 text-slate-500">
+              <th className="py-1.5 pr-3 text-left font-medium">
+                {t('frameworks.comparabilityMatrix.dimension')}
+              </th>
+              <th className="py-1.5 pr-2 text-left font-medium" style={{ color: FRAMEWORK_COLORS.eu_taxonomy }}>
+                EU Taxonomy
+              </th>
+              <th className="py-1.5 pr-2 text-left font-medium" style={{ color: FRAMEWORK_COLORS.csrc_2023 }}>
+                CSRC 2023
+              </th>
+              <th className="py-1.5 pr-3 text-left font-medium" style={{ color: FRAMEWORK_COLORS.csrd }}>
+                CSRD/ESRS
+              </th>
+              <th className="py-1.5 text-left font-medium">
+                {t('frameworks.comparabilityMatrix.notes')}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {FRAMEWORK_COMPARABILITY.map((row) => (
+              <tr
+                key={row.dimensionKey}
+                className="border-b border-stone-100 last:border-0"
+              >
+                <td className="py-2 pr-3 font-medium text-slate-700">
+                  {t(`frameworks.dim.${row.labelKey}`, { defaultValue: row.dimensionKey })}
+                </td>
+                <td className="py-2 pr-2">
+                  <ComparabilityBadge level={row.eu_taxonomy} />
+                </td>
+                <td className="py-2 pr-2">
+                  <ComparabilityBadge level={row.csrc_2023} />
+                </td>
+                <td className="py-2 pr-3">
+                  <ComparabilityBadge level={row.csrd} />
+                </td>
+                <td className="max-w-[240px] py-2 text-slate-500">{row.notes}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Panel>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Score diff explanation — derived purely from API data already returned
+// ---------------------------------------------------------------------------
+function ScoreDiffPanel({ frameworks }: { frameworks: FrameworkScoreResult[] }) {
+  const { t } = useTranslation()
+
+  if (frameworks.length === 0) return null
+
+  const FRAMEWORK_DISPLAY: Record<string, string> = {
+    eu_taxonomy: 'EU Taxonomy',
+    csrc_2023: 'CSRC 2023',
+    csrd: 'CSRD/ESRS',
+  }
+
+  const sorted = [...frameworks].sort((a, b) => b.total_score - a.total_score)
+  const highest = sorted[0]
+  const lowest = sorted[sorted.length - 1]
+  const spread = Math.round((highest.total_score - lowest.total_score) * 100)
+  const allEqual = spread < 5 // within 5 pp — treat as "similar"
+
+  const lowestCoverage = [...frameworks].sort((a, b) => a.coverage_pct - b.coverage_pct)[0]
+
+  return (
+    <Panel>
+      <p className="mb-2 text-sm font-semibold text-slate-800">
+        {t('frameworks.diffExplanation.title')}
+      </p>
+      <div className="space-y-1.5 text-xs text-slate-600">
+        {allEqual ? (
+          <p>{t('frameworks.diffExplanation.allEqual')}</p>
+        ) : (
+          <>
+            <p>
+              {t('frameworks.diffExplanation.highestScore', {
+                framework: FRAMEWORK_DISPLAY[highest.framework_id] ?? highest.framework,
+                score: Math.round(highest.total_score * 100),
+              })}
+            </p>
+            <p>
+              {t('frameworks.diffExplanation.lowestScore', {
+                framework: FRAMEWORK_DISPLAY[lowest.framework_id] ?? lowest.framework,
+                score: Math.round(lowest.total_score * 100),
+              })}
+            </p>
+            <p>
+              {t('frameworks.diffExplanation.spread', { spread })}
+            </p>
+          </>
+        )}
+        {lowestCoverage.coverage_pct < 80 && (
+          <p className="mt-1 text-amber-700">
+            {t('frameworks.diffExplanation.coverageGap', {
+              framework: FRAMEWORK_DISPLAY[lowestCoverage.framework_id] ?? lowestCoverage.framework,
+              pct: Math.round(lowestCoverage.coverage_pct),
+            })}
+          </p>
+        )}
+      </div>
+    </Panel>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// GradeBadge
+// ---------------------------------------------------------------------------
 function GradeBadge({ grade }: { grade: string }) {
   const colors: Record<string, string> = {
     A: 'border-green-300 bg-green-50 text-green-800',
@@ -257,11 +427,15 @@ export function FrameworksPage() {
         <div className="space-y-4">
           <NoticeBanner tone="warning">{report.summary}</NoticeBanner>
 
+          <ScoreDiffPanel frameworks={report.frameworks} />
+
           <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
             {report.frameworks.map((fw) => (
               <FrameworkCard key={fw.framework_id} fw={fw} />
             ))}
           </div>
+
+          <ComparabilityMatrixPanel />
         </div>
       )}
 
