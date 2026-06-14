@@ -499,6 +499,28 @@
       "csrc_environment": "环境",
       "csrc_social": "社会",
       "csrc_governance": "治理"
+    },
+    "comparabilityMatrix": {
+      "title": "跨框架可比性矩阵",
+      "subtitle": "哪些 ESG 维度在各框架间可以横向比较，哪些存在方法论差异。",
+      "dimension": "维度",
+      "comparable": "可比",
+      "partial": "部分可比",
+      "not_comparable": "不可比",
+      "notes": "说明",
+      "legend": "图例",
+      "legendComparable": "指标定义相同或等价，可进行跨框架数值比较。",
+      "legendPartial": "各框架均涵盖此概念，但方法论或范围存在差异，仅作方向性对比。",
+      "legendNotComparable": "至少一个框架缺失或定义根本不同，不建议进行数值比较。"
+    },
+    "diffExplanation": {
+      "title": "得分对比说明",
+      "highestScore": "最高分：{{framework}}（{{score}}%）",
+      "lowestScore": "最低分：{{framework}}（{{score}}%）",
+      "spread": "最高与最低分差：{{spread}} 个百分点",
+      "coverageGap": "覆盖率缺口：{{framework}} 的数据覆盖率最低，仅 {{pct}}%",
+      "allEqual": "三个框架得分基本一致——该企业的披露在各框架下表现较为均衡。",
+      "noData": "请选择一家公司以查看得分对比说明。"
     }
   },
   "companyYearPicker": {

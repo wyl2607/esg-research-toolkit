@@ -499,6 +499,28 @@
       "csrc_environment": "Umwelt",
       "csrc_social": "Soziales",
       "csrc_governance": "Governance"
+    },
+    "comparabilityMatrix": {
+      "title": "Vergleichbarkeitsmatrix über Rahmenwerke",
+      "subtitle": "Welche ESG-Dimensionen können rahmenwerkübergreifend verglichen werden und wo bestehen methodische Unterschiede.",
+      "dimension": "Dimension",
+      "comparable": "Vergleichbar",
+      "partial": "Teilweise vergleichbar",
+      "not_comparable": "Nicht vergleichbar",
+      "notes": "Hinweise",
+      "legend": "Legende",
+      "legendComparable": "Gleiche oder äquivalente Metrik — numerischer Vergleich ist sinnvoll.",
+      "legendPartial": "Konzept in allen Rahmenwerken vorhanden, aber Methodik oder Umfang unterschiedlich — nur Richtungsvergleich.",
+      "legendNotComparable": "In mindestens einem Rahmenwerk fehlt das Konzept oder unterscheidet sich grundlegend — kein numerischer Vergleich."
+    },
+    "diffExplanation": {
+      "title": "Bewertungsvergleich",
+      "highestScore": "Höchste Bewertung: {{framework}} ({{score}}%)",
+      "lowestScore": "Niedrigste Bewertung: {{framework}} ({{score}}%)",
+      "spread": "Spanne zwischen höchster und niedrigster Bewertung: {{spread}} Prozentpunkte",
+      "coverageGap": "Abdeckungslücke: {{framework}} hat die niedrigste Datenabdeckung mit {{pct}}%",
+      "allEqual": "Alle drei Rahmenwerke erzielten ähnliche Werte — die Offenlegungen des Unternehmens sind über alle Frameworks hinweg konsistent.",
+      "noData": "Bitte wählen Sie ein Unternehmen, um den Bewertungsvergleich zu sehen."
     }
   },
   "companyYearPicker": {
