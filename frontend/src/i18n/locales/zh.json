@@ -192,7 +192,14 @@
     },
     "dnshCheck": "DNSH 检查",
     "loadingData": "正在加载分类法数据…",
-    "selectPrompt": "请在上方选择公司以查看分析结果。"
+    "selectPrompt": "请在上方选择公司以查看分析结果。",
+    "activitiesReference": "活动与阈值参考",
+    "activitiesLoading": "正在加载活动目录…",
+    "activitiesEmpty": "分类法目录中暂无活动。",
+    "activityId": "活动 ID",
+    "activityName": "名称",
+    "activitySector": "行业",
+    "ghgThreshold": "温室气体阈值"
   },
   "lcoe": {
     "kicker": "技术经济分析工作台",
