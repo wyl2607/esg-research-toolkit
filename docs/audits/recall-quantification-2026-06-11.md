@@ -2,7 +2,29 @@
 
 Date: 2026-06-11
 Scope: recall (missed-but-present rate) of NULL extracted ESG fields, plus an LLM precision cross-check of stored non-null values, against original report PDFs
-Status: **audit complete, verdicts stored append-only** — closes the recall gap deferred in Stage 6 §6. Writeback pending human review.
+Status: **audit complete; writeback applied 2026-06-14** — closes the recall gap deferred in Stage 6 §6.
+
+## 0. Writeback outcome (2026-06-14)
+
+Human review applied via `scripts/dev_tasks/09_recall_writeback.py` under the
+analyzer schema rules. Of the 48 NULL-lane gaps:
+
+- **3 genuine fills** written to `company_reports` (the rest had been closed
+  independently by the #66 re-extraction before this review):
+  BASF SE 2023 energy 32,100,000 MWh · Munich Re 2024 Scope 2 112,657 t
+  (market-based, `scope2_basis` set) · EnBW 2024 taxonomy-aligned revenue 21.8 %.
+  All three trace to the PDF in the offline verifier (BASF/EnBW `verified`,
+  Munich Re `found_elsewhere`).
+- **36 confirmed** — stored value already present and matching; audit rows
+  marked `approved`, no data change (1 of these, Uniper 2024 Scope 3, differs
+  >1 % from the audit value and is deferred to the non-NULL precision lane).
+- **8 rejected** per schema rule: 3 female_pct (management/leadership, not total
+  workforce), RWE 2022 taxonomy (derived), Heidelberg 2024 Scope 2 (derived),
+  DHL 2024 water ("Not material", non-numeric), RWE 2024 water (lignite-mine
+  freshwater, not group total), PUMA 2024 Scope 3 (Cat1+Cat4 only).
+
+Snapshot: `runtime/qa/offline-verify-20260614-post-recall-writeback.json`
+(98.6 % traceable). VPS sync pending approval.
 
 ## 1. Dataset and channel
 
