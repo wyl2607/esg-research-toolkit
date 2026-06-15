@@ -189,6 +189,7 @@ def _record_to_merge_source_input(
         industry_code=record.industry_code,
         industry_sector=record.industry_sector,
         source_url=record.source_url,
+        pdf_filename=record.pdf_filename,
         downloaded_at=record.downloaded_at.isoformat() if record.downloaded_at else None,
         scope1_co2e_tonnes=record.scope1_co2e_tonnes,
         scope2_co2e_tonnes=record.scope2_co2e_tonnes,

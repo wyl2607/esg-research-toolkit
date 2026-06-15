@@ -597,6 +597,8 @@
     "provenanceSourceSummary": "{{count}} source documents",
     "provenanceMergeSummary": "{{count}} documents merged",
     "provenanceMergeMetricCue": "{{metric}} currently resolves to {{sourceType}} ({{reason}}).",
+    "mergeChosenFile": "File: {{filename}}",
+    "mergeChosenUrl": "Source URL",
     "provenanceFrameworkVersion": "{{framework}} · v{{version}}",
     "provenanceFrameworkTimestamp": "Captured {{date}}",
     "provenanceFrameworkMore": "+{{count}} more framework runs",
