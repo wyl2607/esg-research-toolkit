@@ -4034,3 +4034,8 @@ export interface RegionalComparisonReport {
   overall_readiness: string
   key_insights: string[]
 }
+
+export type FrameworkVersionInfo = components["schemas"]["FrameworkVersionInfo"]
+export type MergeSourceInput = components["schemas"]["MergeSourceInput"]
+export type MergeMetricDecision = components["schemas"]["MergeMetricDecision"]
+export type MergePreviewResponse = components["schemas"]["MergePreviewResponse"]
