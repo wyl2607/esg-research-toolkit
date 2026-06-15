@@ -2284,6 +2284,34 @@ def test_company_history_and_profile_include_period_and_framework_results(
     assert profile["data_quality_summary"]["readiness_label"] == "usable"
 
 
+def test_profile_framework_scores_have_stored_at_and_version(
+    db_session: Session,
+    make_company_data,
+) -> None:
+    save_report(
+        db_session,
+        make_company_data(company_name="StoredAt Corp", report_year=2024, renewable_energy_pct=50.0),
+        pdf_filename="storedat-2024.pdf",
+        reporting_period_label="FY2024",
+        reporting_period_type="annual",
+        source_document_type="sustainability_report",
+    )
+
+    profile = get_company_profile(company_name="StoredAt Corp", db=db_session)
+
+    assert len(profile["framework_scores"]) == len(_SCORERS)
+    for item in profile["framework_scores"]:
+        assert item.get("stored_at") is not None, f"stored_at missing for {item.get('framework_id')}"
+        assert item.get("framework_version") is not None, (
+            f"framework_version missing for {item.get('framework_id')}"
+        )
+        assert item.get("analysis_result_id") is not None, (
+            f"analysis_result_id missing for {item.get('framework_id')}"
+        )
+
+    assert profile["narrative_summary"]["framework_count"] > 0
+
+
 def test_company_history_three_year_trend_ordering_and_yoy(
     db_session: Session,
     make_company_data,
