@@ -212,7 +212,9 @@ export function MergePreviewSection({
     ? buildMergeSourceId(
         currentDraft.company_name.trim(),
         currentDraft.report_year,
-        currentDraft.source_document_type
+        currentDraft.source_document_type,
+        currentDraft.source_url ?? null,
+        currentDraft.reporting_period_label ?? null
       )
     : null
 

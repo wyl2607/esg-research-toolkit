@@ -2,10 +2,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, model_validator
 
-from core.schemas import FrameworkVersionInfo, FRAMEWORK_VERSION_CATALOG
-
-# FrameworkVersionInfo now lives in core.schemas; re-exported here for existing importers (esg_frameworks.api).
-__all__ = ["FrameworkVersionInfo"]
+from core.schemas import FRAMEWORK_VERSION_CATALOG
 
 LEGACY_FRAMEWORK_VERSION = "v1"
 

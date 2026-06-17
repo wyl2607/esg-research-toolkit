@@ -3,25 +3,39 @@ import type { CompanyESGData, ManualReportInput, MergeSourceInput } from '@/lib/
 export function buildMergeSourceId(
   companyName: string,
   reportYear: number,
-  sourceDocumentType?: string | null
+  sourceDocumentType?: string | null,
+  sourceUrl?: string | null,
+  reportingPeriodLabel?: string | null
 ) {
-  return `${companyName}:${reportYear}:${sourceDocumentType ?? 'unknown'}`
+  const normalizedCompany = companyName.trim()
+  const normalizedType = sourceDocumentType?.trim() || 'unknown'
+  const discriminator = sourceUrl?.trim() || reportingPeriodLabel?.trim() || 'default'
+  return `${normalizedCompany}:${reportYear}:${normalizedType}:${discriminator}`
 }
 
 export function toMergeSourceInput(
   doc: ManualReportInput | CompanyESGData,
   sourceId?: string
 ): MergeSourceInput {
+  const normalizedCompany = doc.company_name.trim()
+  const normalizedType = doc.source_document_type?.trim() || null
+  const normalizedSourceUrl = 'source_url' in doc ? doc.source_url ?? null : null
   const resolvedSourceId =
     sourceId ??
-    buildMergeSourceId(doc.company_name, doc.report_year, doc.source_document_type)
+    buildMergeSourceId(
+      normalizedCompany,
+      doc.report_year,
+      normalizedType,
+      normalizedSourceUrl,
+      doc.reporting_period_label ?? null
+    )
 
   return {
-    company_name: doc.company_name,
+    company_name: normalizedCompany,
     report_year: doc.report_year,
     reporting_period_label: doc.reporting_period_label ?? null,
     reporting_period_type: doc.reporting_period_type ?? null,
-    source_document_type: doc.source_document_type ?? null,
+    source_document_type: normalizedType,
     industry_code: doc.industry_code ?? null,
     industry_sector: doc.industry_sector ?? null,
     scope1_co2e_tonnes: doc.scope1_co2e_tonnes ?? null,
@@ -39,7 +53,7 @@ export function toMergeSourceInput(
     total_employees: doc.total_employees ?? null,
     female_pct: doc.female_pct ?? null,
     primary_activities: doc.primary_activities ?? [],
-    source_url: 'source_url' in doc ? doc.source_url ?? null : null,
+    source_url: normalizedSourceUrl,
     source_id: resolvedSourceId,
   }
 }
