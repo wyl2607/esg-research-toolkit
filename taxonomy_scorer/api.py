@@ -1,5 +1,6 @@
 import json
 import threading
+from contextlib import closing
 from typing import Any
 
 from cachetools import TTLCache
@@ -69,17 +70,17 @@ def get_report_by_name(
     if cached_report is not None:
         return cached_report
 
-    from core.database import get_db
+    from core.database import SessionLocal
     from report_parser.storage import get_report
 
-    db = next(get_db())
-    record = get_report(db, company_name, report_year)
-    if not record:
-        raise HTTPException(
-            status_code=404,
-            detail=f"No report found for {company_name} ({report_year})",
-        )
-    data = _record_to_company_esg(record)
+    with closing(SessionLocal()) as db:
+        record = get_report(db, company_name, report_year)
+        if not record:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No report found for {company_name} ({report_year})",
+            )
+        data = _record_to_company_esg(record)
     result = score_company(data)
     gaps = analyze_gaps(data, result)
     report = generate_json_report(data, result, gaps)
@@ -94,18 +95,18 @@ def download_pdf_report(
     report_year: int = Query(..., ge=MIN_REPORT_YEAR, le=MAX_REPORT_YEAR),
 ) -> Response:
     """Generate and return a PDF EU Taxonomy report for a stored company."""
-    from core.database import get_db
+    from core.database import SessionLocal
     from report_parser.storage import get_report
     from taxonomy_scorer.pdf_report import generate_pdf
 
-    db = next(get_db())
-    record = get_report(db, company_name, report_year)
-    if not record:
-        raise HTTPException(
-            status_code=404,
-            detail=f"No report found for {company_name} ({report_year})",
-        )
-    data = _record_to_company_esg(record)
+    with closing(SessionLocal()) as db:
+        record = get_report(db, company_name, report_year)
+        if not record:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No report found for {company_name} ({report_year})",
+            )
+        data = _record_to_company_esg(record)
     result = score_company(data)
     gaps = analyze_gaps(data, result)
     pdf_bytes = generate_pdf(data, result, gaps)
