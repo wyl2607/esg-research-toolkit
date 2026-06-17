@@ -10,14 +10,13 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 
 from core.database import get_db
-from core.schemas import CompanyESGData, FrameworkCacheClearResponse
+from core.schemas import CompanyESGData, FrameworkCacheClearResponse, FrameworkVersionInfo
 from esg_frameworks import csrc_2023, csrd, eu_taxonomy, gri_standards, sasb_standards, sec_climate
 from esg_frameworks.comparison import build_comparison
 from esg_frameworks.schemas import (
     FRAMEWORK_DISPLAY_NAMES,
     FRAMEWORK_VERSIONS,
     FrameworkScoreResult,
-    FrameworkVersionInfo,
     MultiFrameworkReport,
 )
 from esg_frameworks.storage import (

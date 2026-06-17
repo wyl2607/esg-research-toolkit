@@ -2,16 +2,11 @@ from __future__ import annotations
 
 from pydantic import BaseModel, model_validator
 
+from core.schemas import FRAMEWORK_VERSION_CATALOG
+
 LEGACY_FRAMEWORK_VERSION = "v1"
 
-_FRAMEWORK_VERSION_CATALOG: dict[str, tuple[str, str]] = {
-    "eu_taxonomy": ("2020/852", "EU Taxonomy"),
-    "csrc_2023": ("2023", "China CSRC 2023"),
-    "csrd": ("ESRS-2024", "CSRD/ESRS"),
-    "sec_climate": ("SEC-2024", "SEC Climate"),
-    "gri_universal": ("GRI-2021", "GRI Universal"),
-    "sasb_standards": ("SASB-2023", "SASB Standards"),
-}
+_FRAMEWORK_VERSION_CATALOG = FRAMEWORK_VERSION_CATALOG
 
 FRAMEWORK_VERSIONS: dict[str, str] = {
     framework_id: framework_version
@@ -70,12 +65,6 @@ class FrameworkScoreResult(BaseModel):
             framework_version=self.framework_version,
         )
         return self
-
-
-class FrameworkVersionInfo(BaseModel):
-    framework_id: str
-    framework_version: str
-    display_name: str
 
 
 class MultiFrameworkReport(BaseModel):

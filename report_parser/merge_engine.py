@@ -5,6 +5,8 @@ from datetime import datetime
 
 from core.schemas import (
     CompanyESGData,
+    FrameworkVersionInfo,
+    FRAMEWORK_VERSION_CATALOG,
     MergedMetricResult,
     MergedResult,
     MergeMetricCandidate,
@@ -182,6 +184,16 @@ def build_merge_preview(documents: list[MergeSourceInput]) -> MergePreviewRespon
             unresolved_metrics.append(metric)
 
     merged_metrics = CompanyESGData(**merged_payload)
+
+    framework_versions = [
+        FrameworkVersionInfo(
+            framework_id=fid,
+            framework_version=ver,
+            display_name=disp,
+        )
+        for fid, (ver, disp) in FRAMEWORK_VERSION_CATALOG.items()
+    ]
+
     return MergePreviewResponse(
         company_name=first.company_name,
         report_year=first.report_year,
@@ -197,6 +209,7 @@ def build_merge_preview(documents: list[MergeSourceInput]) -> MergePreviewRespon
             "event",
         ],
         unresolved_metrics=unresolved_metrics,
+        framework_versions=framework_versions,
     )
 
 
