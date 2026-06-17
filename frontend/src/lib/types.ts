@@ -1658,6 +1658,8 @@ export interface components {
             document_priority: string[];
             /** Unresolved Metrics */
             unresolved_metrics?: string[];
+            /** Framework Versions */
+            framework_versions?: components["schemas"]["FrameworkVersionInfo"][];
         };
         /** MergeSourceInput */
         MergeSourceInput: {

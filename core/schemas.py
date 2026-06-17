@@ -122,6 +122,23 @@ class MergePreviewResponse(BaseModel):
     decisions: list[MergeMetricDecision]
     document_priority: list[str]
     unresolved_metrics: list[str] = Field(default_factory=list)
+    framework_versions: list[FrameworkVersionInfo] = Field(default_factory=list)
+
+
+class FrameworkVersionInfo(BaseModel):
+    framework_id: str
+    framework_version: str
+    display_name: str
+
+
+FRAMEWORK_VERSION_CATALOG: dict[str, tuple[str, str]] = {
+    "eu_taxonomy": ("2020/852", "EU Taxonomy"),
+    "csrc_2023": ("2023", "China CSRC 2023"),
+    "csrd": ("ESRS-2024", "CSRD/ESRS"),
+    "sec_climate": ("SEC-2024", "SEC Climate"),
+    "gri_universal": ("GRI-2021", "GRI Universal"),
+    "sasb_standards": ("SASB-2023", "SASB Standards"),
+}
 
 
 class BatchJobItem(BaseModel):
