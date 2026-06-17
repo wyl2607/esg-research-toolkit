@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import {
@@ -11,6 +11,7 @@ import {
 import { localizeErrorMessage } from '@/lib/error-utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Panel } from '@/components/layout/Panel'
@@ -43,6 +44,11 @@ export function PendingDisclosuresPage() {
     queryFn: listCompanies,
     staleTime: 60_000,
   })
+
+  const [tokenInput, setTokenInput] = useState(() => (typeof window === 'undefined' ? '' : localStorage.getItem('esg_admin_token') || ''))
+
+  const saveToken = () => { if (typeof window !== 'undefined') localStorage.setItem('esg_admin_token', tokenInput) }
+  const clearToken = () => { if (typeof window !== 'undefined') localStorage.removeItem('esg_admin_token'); setTokenInput('') }
 
   const pendingRows = pendingQuery.data ?? EMPTY_PENDING_ROWS
 
@@ -91,6 +97,21 @@ export function PendingDisclosuresPage() {
         subtitle={t('disclosures.subtitle')}
         kpis={[{ label: t('disclosures.pendingCount'), value: pendingRows.length }]}
       />
+
+      <div className="mb-3 flex flex-wrap items-end gap-2">
+        <div>
+          <div className="text-xs text-slate-500 mb-0.5">{t('admin.tokenLabel')}</div>
+          <Input
+            type="password"
+            value={tokenInput}
+            onChange={(e) => setTokenInput(e.target.value)}
+            className="w-64 h-8"
+            placeholder={t('admin.tokenHint')}
+          />
+        </div>
+        <Button type="button" size="sm" onClick={saveToken}>{t('admin.tokenSave')}</Button>
+        <Button type="button" size="sm" variant="outline" onClick={clearToken}>{t('admin.tokenClear')}</Button>
+      </div>
 
       {pendingQuery.isLoading ? (
         <QueryStateCard
