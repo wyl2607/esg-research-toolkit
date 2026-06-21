@@ -14,8 +14,16 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN mkdir -p data reports
+# Create a non-root user and give it ownership of the app + writable dirs.
+RUN mkdir -p data reports \
+    && useradd --create-home --uid 10001 appuser \
+    && chown -R appuser:appuser /app
+
+USER appuser
 
 EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+    CMD curl -fsS http://127.0.0.1:8000/health || exit 1
 
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

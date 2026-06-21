@@ -8,6 +8,9 @@ DATA_DIR="/opt/esg-data"
 REPORTS_DIR="/opt/esg-reports"
 NGINX_CONF="/etc/nginx/sites-available/esg.conf"
 FINGERPRINT_FILE="$REPO_DIR/.deploy-fingerprint.json"
+# Deployment domain + ACME contact. Override via env to avoid hardcoding.
+DEPLOY_DOMAIN="${DEPLOY_DOMAIN:-esg.meichen.beauty}"
+CERTBOT_EMAIL="${CERTBOT_EMAIL:-admin@meichen.beauty}"
 
 detect_compose() {
     if docker compose version >/dev/null 2>&1; then
@@ -38,13 +41,23 @@ cd "$REPO_DIR/frontend"
 npm install --silent
 npm run build
 
-# 3. Ensure data dirs exist
+# 3. Ensure data dirs exist and are writable by the container's non-root user.
+# The image runs as uid 10001 (see Dockerfile USER appuser); bind-mounted host
+# dirs default to root ownership, so chown them or the app cannot write its DB.
 mkdir -p "$DATA_DIR" "$REPORTS_DIR"
+chown -R 10001:10001 "$DATA_DIR" "$REPORTS_DIR"
 
-# 4. Check .env.prod exists
+# 4. Check .env.prod exists and carries the mandatory secrets.
 if [ ! -f "$REPO_DIR/.env.prod" ]; then
     echo "ERROR: $REPO_DIR/.env.prod not found!"
-    echo "Create it with: OPENAI_API_KEY, OPENAI_MODEL (OPENAI_BASE_URL optional, defaults to official OpenAI endpoint)"
+    echo "Create it with: OPENAI_API_KEY, ADMIN_API_TOKEN (required when APP_ENV=production),"
+    echo "OPENAI_MODEL, and optionally API_ACCESS_TOKEN / OPENAI_BASE_URL."
+    exit 1
+fi
+if ! grep -qE '^ADMIN_API_TOKEN=.+' "$REPO_DIR/.env.prod"; then
+    echo "ERROR: ADMIN_API_TOKEN is empty in .env.prod."
+    echo "Production refuses to start with unauthenticated admin endpoints."
+    echo "Generate one with: openssl rand -hex 32"
     exit 1
 fi
 
@@ -72,8 +85,8 @@ if [ ! -f "$NGINX_CONF" ]; then
     ln -sf "$NGINX_CONF" /etc/nginx/sites-enabled/esg.conf
     nginx -t && systemctl reload nginx
     echo "→ Getting SSL certificate..."
-    certbot --nginx -d esg.meichen.beauty --non-interactive --agree-tos \
-        -m admin@meichen.beauty --redirect || echo "WARN: certbot failed, HTTP only"
+    certbot --nginx -d "$DEPLOY_DOMAIN" --non-interactive --agree-tos \
+        -m "$CERTBOT_EMAIL" --redirect || echo "WARN: certbot failed, HTTP only"
 else
     nginx -t && systemctl reload nginx
 fi
@@ -94,4 +107,4 @@ for i in $(seq 1 10); do
 done
 
 echo "=== Deploy complete ==="
-echo "URL: https://esg.meichen.beauty"
+echo "URL: https://$DEPLOY_DOMAIN"

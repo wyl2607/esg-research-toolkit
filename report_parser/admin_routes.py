@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 import io
 import os
+import secrets
 
 import openpyxl
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
@@ -16,17 +17,39 @@ from report_parser.storage import hard_delete_report, list_reports_grouped, requ
 
 router = APIRouter(tags=["report_parser_admin"])
 
+# Environments where admin operations may run WITHOUT a configured token.
+# Every other environment (production, staging, or any unknown value) is
+# fail-closed: a token is mandatory.
+_LOCAL_ENVS = {"development", "dev", "local", "test", "testing"}
+
 
 def require_admin_token(x_admin_token: str | None = Header(default=None)) -> None:
     configured_token = os.getenv("ADMIN_API_TOKEN", settings.admin_api_token).strip()
     if configured_token:
-        if x_admin_token != configured_token:
+        # Constant-time comparison to avoid leaking the token via timing.
+        if not secrets.compare_digest(x_admin_token or "", configured_token):
             raise HTTPException(403, "Admin token required")
         return
 
-    app_env = os.getenv("APP_ENV", settings.app_env)
-    if app_env.lower() == "production":
-        raise HTTPException(503, "Admin operations require ADMIN_API_TOKEN in production")
+    # No token configured: only permitted on local/dev/test environments.
+    app_env = os.getenv("APP_ENV", settings.app_env).strip().lower()
+    if app_env not in _LOCAL_ENVS:
+        raise HTTPException(503, "Admin operations require ADMIN_API_TOKEN to be configured")
+
+
+def validate_admin_config() -> None:
+    """Fail fast at startup if a non-local deployment has no admin token.
+
+    Without this, a misconfigured production/staging boot would silently expose
+    admin operations (deletion, export) with no authentication.
+    """
+    configured_token = os.getenv("ADMIN_API_TOKEN", settings.admin_api_token).strip()
+    app_env = os.getenv("APP_ENV", settings.app_env).strip().lower()
+    if not configured_token and app_env not in _LOCAL_ENVS:
+        raise RuntimeError(
+            f"ADMIN_API_TOKEN must be set when APP_ENV={app_env!r} (non-local). "
+            "Refusing to start with unauthenticated admin endpoints."
+        )
 
 
 @router.post(

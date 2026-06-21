@@ -465,13 +465,26 @@ if _MULTIPART_AVAILABLE:
         upload_dir = Path("data/reports")
         upload_dir.mkdir(parents=True, exist_ok=True)
 
+        max_batch_total_bytes = 4 * MAX_PDF_BYTES  # cap the whole batch, not just per-file
         saved_files: list[tuple[Path, str]] = []
+        total_bytes = 0
         for file in files:
             content = await file.read()
             _validate_pdf_bytes(file.filename, content)
             assert file.filename is not None  # guarded by _validate_pdf_bytes
 
-            pdf_path = upload_dir / Path(file.filename).name
+            total_bytes += len(content)
+            if total_bytes > max_batch_total_bytes:
+                raise HTTPException(
+                    413,
+                    f"Batch exceeds total size limit of {max_batch_total_bytes // (1024 * 1024)} MB",
+                )
+
+            # Hash-prefixed name (as in single upload): avoids collisions/overwrites
+            # between files sharing an original name and prevents leaking the raw name.
+            file_hash = hashlib.sha256(content).hexdigest()
+            safe_name = f"{file_hash[:16]}_{Path(file.filename).name}"
+            pdf_path = upload_dir / safe_name
             with pdf_path.open("wb") as handle:
                 handle.write(content)
             saved_files.append((pdf_path, file.filename))
@@ -1031,6 +1044,11 @@ def list_company_reports(
     limit: int = 50,
     db: Session = Depends(get_db),
 ) -> list[dict[str, Any]]:
+    # Clamp pagination so a huge ?limit= cannot pull the whole table at once.
+    # Done in-body (not via Query bounds) because this function is also called
+    # directly in tests/other code paths.
+    skip = max(0, skip)
+    limit = max(1, min(limit, 200))
     records = list_reports_grouped(db)[skip : skip + limit]
     payload = []
     for record in records:

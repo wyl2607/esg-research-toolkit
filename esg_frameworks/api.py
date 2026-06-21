@@ -6,10 +6,12 @@ from typing import Any
 
 from cachetools import TTLCache
 from cachetools.keys import hashkey
-from fastapi import APIRouter, Depends, HTTPException, Path, Query
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request
 from sqlalchemy.orm import Session
 
 from core.database import get_db
+from core.limiter import limiter
+from report_parser.admin_routes import require_admin_token
 from core.schemas import CompanyESGData, FrameworkCacheClearResponse
 from esg_frameworks import csrc_2023, csrd, eu_taxonomy, gri_standards, sasb_standards, sec_climate
 from esg_frameworks.comparison import build_comparison
@@ -262,7 +264,11 @@ def list_framework_versions() -> list[FrameworkVersionInfo]:
 
 
 @router.post("/cache/clear", response_model=FrameworkCacheClearResponse)
-def clear_framework_cache() -> FrameworkCacheClearResponse:
+@limiter.limit("10/minute")
+def clear_framework_cache(
+    request: Request,
+    _: None = Depends(require_admin_token),
+) -> FrameworkCacheClearResponse:
     """清除框架对比缓存（管理员用）。"""
     with _cache_lock:
         removed = len(_score_cache)

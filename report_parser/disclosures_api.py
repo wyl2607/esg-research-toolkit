@@ -4,6 +4,7 @@ import ipaddress
 import json
 import os
 import re
+import socket
 import tempfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -16,6 +17,7 @@ from pydantic import ValidationError
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from core.auth import require_api_token
 from core.database import SessionLocal, get_db
 from core.schemas import (
     CompanyESGData,
@@ -138,17 +140,55 @@ def _is_pytest_mode() -> bool:
     return bool(os.getenv("PYTEST_CURRENT_TEST"))
 
 
+def _ip_is_blocked(ip: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
+    """True if an IP is in any range we must never let the server reach."""
+    return (
+        ip.is_private
+        or ip.is_loopback
+        or ip.is_link_local
+        or ip.is_reserved
+        or ip.is_multicast
+        or ip.is_unspecified
+    )
+
+
 def _is_private_or_local_hostname(hostname: str | None) -> bool:
+    """SSRF guard: block loopback/private/link-local/reserved targets.
+
+    Crucially this also RESOLVES non-literal hostnames and blocks them if any
+    resolved address is internal — otherwise a name like ``internal.corp`` or a
+    record pointed at ``169.254.169.254`` (cloud metadata) would slip through.
+    Resolution failures are treated as unsafe (fail closed).
+
+    Note: this does not fully defeat DNS-rebinding (resolve-at-check vs
+    resolve-at-connect); for the threat model here (fetching public ESG report
+    URLs) blocking on resolution is a substantial improvement.
+    """
     if not hostname:
         return True
-    lowered = hostname.lower()
-    if lowered in {"localhost", "127.0.0.1", "::1"}:
+    lowered = hostname.lower().strip().strip("[]")
+    if lowered == "localhost" or lowered.endswith((".local", ".internal", ".localhost")):
         return True
+
+    # Direct IP literal.
     try:
-        ip = ipaddress.ip_address(lowered)
+        return _ip_is_blocked(ipaddress.ip_address(lowered))
     except ValueError:
-        return lowered.endswith(".local")
-    return ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved
+        pass
+
+    # Hostname: resolve and block if ANY resolved address is internal.
+    try:
+        infos = socket.getaddrinfo(lowered, None)
+    except (socket.gaierror, UnicodeError, OSError):
+        return True  # cannot resolve -> fail closed
+    for info in infos:
+        addr = str(info[4][0]).split("%")[0]  # drop IPv6 scope id
+        try:
+            if _ip_is_blocked(ipaddress.ip_address(addr)):
+                return True
+        except ValueError:
+            return True
+    return False
 
 
 def _candidate_source_urls(
@@ -491,13 +531,21 @@ def _run_fetch_pipeline(
         source_type=source_type,
         source_hints=source_hints,
     )
-    client = httpx.Client(follow_redirects=True)
+    client = httpx.Client(
+        follow_redirects=True,
+        max_redirects=3,
+        timeout=HTTP_TIMEOUT_SECONDS,
+    )
     downloaded: tuple[bytes, str] | None = None
     attempted_urls: list[str] = []
 
     try:
         for candidate in candidates:
-            if _is_private_or_local_hostname(urlparse(candidate).hostname):
+            parsed = urlparse(candidate)
+            # Only fetch over http(s); reject file://, gopher://, etc.
+            if parsed.scheme not in {"http", "https"}:
+                continue
+            if _is_private_or_local_hostname(parsed.hostname):
                 continue
             attempted_urls.append(candidate)
 
@@ -684,6 +732,7 @@ def fetch_disclosure(
     payload: DisclosureFetchRequest,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
+    _: None = Depends(require_api_token),
 ) -> DisclosureFetchResponse:
     source_hint = payload.source_hint if payload.source_hint in SOURCE_HINTS else "company_site"
     source_hints = _normalize_source_hints(source_hint, payload.source_hints)
@@ -839,6 +888,7 @@ def approve_pending_disclosure(
     pending_id: int = FastAPIPath(..., ge=1, le=MAX_PENDING_DISCLOSURE_ID),
     payload: DisclosureReviewRequest = Body(...),
     db: Session = Depends(get_db),
+    _: None = Depends(require_api_token),
 ) -> DisclosureReviewResponse:
     row = get_pending_disclosure(db, pending_id)
     if row is None:
@@ -926,6 +976,7 @@ def reject_pending_disclosure(
     pending_id: int = FastAPIPath(..., ge=1, le=MAX_PENDING_DISCLOSURE_ID),
     payload: DisclosureReviewRequest = Body(...),
     db: Session = Depends(get_db),
+    _: None = Depends(require_api_token),
 ) -> DisclosureReviewResponse:
     row = get_pending_disclosure(db, pending_id)
     if row is None:

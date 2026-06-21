@@ -16,6 +16,7 @@ from sqlalchemy import text
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from benchmark.api import router as benchmark_router
 from core.config import settings
@@ -27,6 +28,7 @@ from core.schemas import CompanyESGData, DeployHealthResponse, HealthResponse, M
 from core.version import app_version
 from esg_frameworks.api import _SCORERS, router as frameworks_router
 from esg_frameworks.storage import list_framework_results, save_framework_result
+from report_parser.admin_routes import validate_admin_config
 from report_parser.api import router as report_router
 from report_parser.api import v1_router as report_v1_router
 from report_parser.disclosures_api import router as disclosures_router
@@ -197,13 +199,35 @@ REQUEST_BODY_EXAMPLES = {
 }
 
 
+_DEFAULT_CORS_ORIGINS = ["http://localhost:5173", "http://localhost:4173"]
+
+
 def _cors_allowed_origins() -> list[str]:
     configured_origins = os.getenv("CORS_ALLOWED_ORIGINS", settings.cors_allowed_origins)
-    return [origin.strip() for origin in configured_origins.split(",") if origin.strip()]
+    origins = [origin.strip() for origin in configured_origins.split(",") if origin.strip()]
+    # Refuse wildcard origins: a reflected "*" lets any site call the API. If the
+    # config is only "*", fall back to the safe localhost defaults.
+    safe_origins = [o for o in origins if o != "*"]
+    if not safe_origins:
+        return list(_DEFAULT_CORS_ORIGINS)
+    return safe_origins
+
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """Attach baseline hardening headers to every API response."""
+
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("X-Frame-Options", "DENY")
+        response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+        response.headers.setdefault("X-Permitted-Cross-Domain-Policies", "none")
+        return response
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    validate_admin_config()
     init_db()
     validate_models_startup()
     if CONTRACT_TEST_MODE:
@@ -225,9 +249,11 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_allowed_origins(),
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "Accept", "X-Admin-Token", "X-API-Token"],
 )
+app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(SlowAPIMiddleware)
 
 app.state.limiter = limiter

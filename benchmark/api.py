@@ -1,15 +1,22 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
 from benchmark.compute import recompute_industry_benchmarks
 from benchmark.models import IndustryBenchmark
 from core.database import get_db
+from core.limiter import limiter
+from report_parser.admin_routes import require_admin_token
 
 router = APIRouter(prefix="/benchmarks", tags=["benchmarks"])
 
 
 @router.post("/recompute")
-def recompute(db: Session = Depends(get_db)) -> dict[str, int]:
+@limiter.limit("5/hour")
+def recompute(
+    request: Request,
+    _: None = Depends(require_admin_token),
+    db: Session = Depends(get_db),
+) -> dict[str, int]:
     return recompute_industry_benchmarks(db)
 
 

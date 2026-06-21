@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 from datetime import datetime, timezone
 from typing import Any
 
@@ -619,6 +620,15 @@ def ensure_storage_schema(engine: Engine) -> None:
         "status": "TEXT",
         "source_type": "TEXT",
     }
+
+    # Defense-in-depth: these identifiers are interpolated into ALTER TABLE
+    # (column names cannot be bound parameters). They are constant today, but
+    # validate them so a future edit can never introduce SQL injection here.
+    _SAFE_IDENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+    _ALLOWED_COL_TYPES = {"TEXT", "INTEGER", "REAL", "NUMERIC", "BLOB"}
+    for _name, _col_type in {**required_columns, **required_pending_columns}.items():
+        if not _SAFE_IDENT.match(_name) or _col_type.upper() not in _ALLOWED_COL_TYPES:
+            raise ValueError(f"Unsafe schema migration definition: {_name!r} {_col_type!r}")
 
     with engine.begin() as conn:
         existing_cols = {
