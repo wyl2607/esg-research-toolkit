@@ -176,7 +176,7 @@ def _seed_profile_contract_data(db_session: Session) -> None:
 
 
 def _load_fixture(name: str) -> dict:
-    return json.loads((FIXTURE_DIR / name).read_text())
+    return json.loads((FIXTURE_DIR / name).read_text(encoding="utf-8"))
 
 
 def test_company_profile_v1_matches_golden_fixture_and_legacy_alias_has_deprecation_header(

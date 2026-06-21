@@ -508,7 +508,21 @@ def reset_seed(api_base: str, companies: list[SeedCompany], *, dry_run: bool) ->
     trigger_recompute(api_base)
 
 
+def _force_utf8_stdio() -> None:
+    """Avoid UnicodeEncodeError when printing non-ASCII (e.g. German names,
+    status glyphs) on platforms whose default stdout encoding is not UTF-8
+    (Windows cp1252). No-op where reconfigure is unavailable."""
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            try:
+                reconfigure(encoding="utf-8")
+            except (ValueError, OSError):
+                pass
+
+
 def main(argv: list[str] | None = None) -> int:
+    _force_utf8_stdio()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--api-base", default=DEFAULT_API_BASE)
     parser.add_argument("--validate", action="store_true", help="run Phase A then Phase B")

@@ -231,6 +231,7 @@ def test_script_entrypoint_runs_without_manual_pythonpath() -> None:
         env=env,
         capture_output=True,
         text=True,
+        encoding="utf-8",
         check=False,
     )
 

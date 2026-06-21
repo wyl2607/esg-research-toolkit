@@ -18,6 +18,7 @@ def test_copilot_quota_snapshot_uses_terminal_dump_override(tmp_path: Path) -> N
         cwd=project_root,
         env=env,
         text=True,
+        encoding="utf-8",
         capture_output=True,
         check=False,
     )
@@ -28,6 +29,6 @@ def test_copilot_quota_snapshot_uses_terminal_dump_override(tmp_path: Path) -> N
     assert latest_json.exists()
     assert history.exists()
 
-    payload = json.loads(latest_json.read_text())
+    payload = json.loads(latest_json.read_text(encoding="utf-8"))
     assert payload["remaining_reqs_pct"] == "37%"
     assert payload["source"] == "terminal_front_tab"
