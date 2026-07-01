@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import threading
 import time
+import traceback
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -171,7 +172,7 @@ class BatchAnalysisManager:
             result = esg_data
         except Exception as exc:  # pragma: no cover - background execution path
             status = "failed"
-            error = str(exc)
+            error = f"{exc}\n{traceback.format_exc()}"
             result = None
 
         finished = _utc_now_iso()
