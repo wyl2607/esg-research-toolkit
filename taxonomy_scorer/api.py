@@ -1,4 +1,3 @@
-import json
 import threading
 from contextlib import closing
 from typing import Any
@@ -10,6 +9,7 @@ from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import Response
 
 from core.schemas import CompanyESGData, TaxonomyScoreResult, TaxonomyTextReportResponse
+from core.record_mapping import record_to_company_esg_data as _record_to_company_esg
 from taxonomy_scorer.gap_analyzer import analyze_gaps
 from taxonomy_scorer.reporter import generate_json_report, generate_text_summary
 from taxonomy_scorer.scorer import score_company
@@ -21,19 +21,7 @@ MIN_REPORT_YEAR = 1900
 MAX_REPORT_YEAR = 2100
 
 
-def _record_to_company_esg(record) -> CompanyESGData:
-    """Normalize DB record fields to CompanyESGData input shape."""
-    payload = record.__dict__.copy()
-    for json_field in ("primary_activities", "evidence_summary"):
-        raw = payload.get(json_field)
-        if raw is None:
-            payload[json_field] = []
-        elif isinstance(raw, str):
-            try:
-                payload[json_field] = json.loads(raw) if raw else []
-            except json.JSONDecodeError:
-                payload[json_field] = []
-    return CompanyESGData.model_validate(payload)
+
 
 
 @router.post("/score", response_model=TaxonomyScoreResult)

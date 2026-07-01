@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from core.database import get_db
 from core.limiter import limiter
 from core.normalization.period import normalize_reporting_period
+from core.record_mapping import record_to_company_esg_data
 from core.schemas import (
     AuditTrailRow,
     BatchStatusResponse,
@@ -550,32 +551,10 @@ def preview_merge(payload: MergePreviewRequest) -> MergePreviewResponse:
 
 
 def _record_to_company_data(record) -> CompanyESGData:
-    evidence_summary = _record_evidence_anchors(record)
-    return CompanyESGData(
-        company_name=record.company_name,
-        report_year=record.report_year,
-        reporting_period_label=record.reporting_period_label,
-        reporting_period_type=record.reporting_period_type,
-        source_document_type=record.source_document_type,
-        industry_code=record.industry_code,
-        industry_sector=record.industry_sector,
-        scope1_co2e_tonnes=record.scope1_co2e_tonnes,
-        scope2_co2e_tonnes=record.scope2_co2e_tonnes,
-        scope2_basis=record.scope2_basis,
-        scope3_co2e_tonnes=record.scope3_co2e_tonnes,
-        energy_consumption_mwh=record.energy_consumption_mwh,
-        renewable_energy_pct=record.renewable_energy_pct,
-        water_usage_m3=record.water_usage_m3,
-        waste_recycled_pct=record.waste_recycled_pct,
-        total_revenue_eur=record.total_revenue_eur,
-        taxonomy_aligned_revenue_pct=record.taxonomy_aligned_revenue_pct,
-        total_capex_eur=record.total_capex_eur,
-        taxonomy_aligned_capex_pct=record.taxonomy_aligned_capex_pct,
-        total_employees=record.total_employees,
-        female_pct=record.female_pct,
-        primary_activities=json.loads(record.primary_activities) if record.primary_activities else [],
-        evidence_summary=evidence_summary,
-    )
+    # api.py recomputes evidence anchors instead of using the stored field
+    data = record_to_company_esg_data(record)
+    data.evidence_summary = _record_evidence_anchors(record)
+    return data
 
 
 def _build_scored_metrics(
