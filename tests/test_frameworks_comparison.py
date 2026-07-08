@@ -154,6 +154,10 @@ def test_compare_regional_endpoint_returns_expected_shape(monkeypatch) -> None:
 def test_compare_endpoint_uses_cache_and_can_clear(monkeypatch) -> None:
     import esg_frameworks.api as frameworks_api
 
+    # Exercise the unconfigured-token local mode; admin gating of
+    # /frameworks/cache/clear is covered in test_admin_routes_security.
+    monkeypatch.setenv("ADMIN_API_TOKEN", "")
+
     sample = CompanyESGData(
         company_name="CATL",
         report_year=2024,
@@ -246,6 +250,10 @@ def test_compare_endpoint_allows_new_row_when_payload_changes(
     monkeypatch,
 ) -> None:
     import esg_frameworks.api as frameworks_api
+
+    # Exercise the unconfigured-token local mode; admin gating of
+    # /frameworks/cache/clear is covered in test_admin_routes_security.
+    monkeypatch.setenv("ADMIN_API_TOKEN", "")
 
     with framework_db_session_factory() as session:
         _seed_company_report(session)
