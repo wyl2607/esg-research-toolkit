@@ -196,6 +196,7 @@ export interface MergeMetricCandidate {
   source_id: string
   source_document_type: string | null
   source_url: string | null
+  pdf_filename: string | null
   reporting_period_label: string | null
   priority_rank: number
   value: string | number | string[] | null
@@ -207,6 +208,8 @@ export interface MergedMetricResult {
   candidate_values: MergeMetricCandidate[]
   chosen_source: string | null
   chosen_source_document_type: string | null
+  chosen_source_url: string | null
+  chosen_pdf_filename: string | null
   merge_reason: string
   conflict_detected: boolean
 }

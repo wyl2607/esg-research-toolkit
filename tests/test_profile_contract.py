@@ -7,11 +7,13 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from core.database import Base, get_db
 from core.schemas import CompanyESGData
 from esg_frameworks.schemas import DimensionScore, FrameworkScoreResult
-from esg_frameworks.storage import save_framework_result
+from esg_frameworks.storage import FrameworkAnalysisResult, save_framework_result
+from report_parser.api import get_company_profile
 from main import app
 from report_parser.storage import save_report
 
@@ -21,7 +23,13 @@ FIXTURE_DIR = Path(__file__).parent / "fixtures" / "company_profile_v1"
 
 @pytest.fixture
 def db_session() -> Generator[Session, None, None]:
-    engine = create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False})
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        # single shared connection so tables created here stay visible to the
+        # TestClient worker thread after commits return connections to the pool
+        poolclass=StaticPool,
+    )
     TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
     Base.metadata.create_all(bind=engine)
@@ -174,9 +182,18 @@ def _seed_profile_contract_data(db_session: Session) -> None:
     db_session.commit()
     db_session.refresh(framework_result)
 
+    # The profile endpoint persists one result per scorer on first call. Warm
+    # that persistence here and pin the created_at timestamps so every profile
+    # call in the tests returns identical, deterministic framework data.
+    get_company_profile(company_name="V1 Contract Corp", db=db_session)
+    db_session.query(FrameworkAnalysisResult).filter(
+        FrameworkAnalysisResult.id != framework_result.id
+    ).update({"created_at": datetime(2025, 2, 1, 12, 0, tzinfo=timezone.utc)})
+    db_session.commit()
+
 
 def _load_fixture(name: str) -> dict:
-    return json.loads((FIXTURE_DIR / name).read_text())
+    return json.loads((FIXTURE_DIR / name).read_text(encoding="utf-8"))
 
 
 def test_company_profile_v1_matches_golden_fixture_and_legacy_alias_has_deprecation_header(

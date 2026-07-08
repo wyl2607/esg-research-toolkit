@@ -62,6 +62,7 @@ class ManualReportInput(CompanyESGData):
 class MergeSourceInput(ManualReportInput):
     source_id: str | None = None
     downloaded_at: str | None = None
+    pdf_filename: str | None = None
 
 
 class MergePreviewRequest(BaseModel):
@@ -82,6 +83,7 @@ class MergeMetricCandidate(BaseModel):
     source_id: str
     source_document_type: str | None = None
     source_url: str | None = None
+    pdf_filename: str | None = None
     reporting_period_label: str | None = None
     priority_rank: int
     value: str | int | float | list[str] | None = None
@@ -103,6 +105,8 @@ class MergedMetricResult(BaseModel):
     candidate_values: list[MergeMetricCandidate] = Field(default_factory=list)
     chosen_source: str | None = None
     chosen_source_document_type: str | None = None
+    chosen_source_url: str | None = None
+    chosen_pdf_filename: str | None = None
     merge_reason: str
     conflict_detected: bool = False
 
