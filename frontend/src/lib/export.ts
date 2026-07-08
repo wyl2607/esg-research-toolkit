@@ -17,7 +17,8 @@ function triggerDownload(content: string, filename: string, mimeType: string): v
   URL.revokeObjectURL(url)
 }
 
-function escapeCSVCell(value: unknown): string {
+// Exported for unit tests: pure serialization helpers.
+export function escapeCSVCell(value: unknown): string {
   if (value === null || value === undefined) return ''
   const str = String(value)
   // Wrap in quotes if the value contains commas, quotes, or newlines
@@ -31,7 +32,7 @@ function rowToCSV(row: Record<string, unknown>): string {
   return Object.values(row).map(escapeCSVCell).join(',')
 }
 
-function buildCSV(headers: string[], rows: Record<string, unknown>[]): string {
+export function buildCSV(headers: string[], rows: Record<string, unknown>[]): string {
   const headerLine = headers.map(escapeCSVCell).join(',')
   const dataLines = rows.map(rowToCSV)
   return [headerLine, ...dataLines].join('\n')
