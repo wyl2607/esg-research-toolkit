@@ -185,6 +185,7 @@ def _record_to_merge_source_input(
     return MergeSourceInput(
         source_id=f"db:{record.id}",
         source_url=record.source_url,
+        pdf_filename=record.pdf_filename,
         downloaded_at=record.downloaded_at.isoformat() if record.downloaded_at else None,
         primary_activities=json.loads(record.primary_activities) if record.primary_activities else [],
         evidence_summary=_evidence_anchors_for_record(record),

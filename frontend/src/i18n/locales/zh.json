@@ -603,6 +603,8 @@
     "provenanceSourceSummary": "{{count}} 份来源文档",
     "provenanceMergeSummary": "{{count}} 份文档已合并",
     "provenanceMergeMetricCue": "{{metric}} 当前取自 {{sourceType}}（{{reason}}）。",
+    "mergeChosenFile": "文件：{{filename}}",
+    "mergeChosenUrl": "来源链接",
     "provenanceFrameworkVersion": "{{framework}} · v{{version}}",
     "provenanceFrameworkTimestamp": "记录于 {{date}}",
     "provenanceFrameworkMore": "+{{count}} 个更多框架运行记录",

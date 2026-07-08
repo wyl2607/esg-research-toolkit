@@ -648,6 +648,7 @@
       "energy_consumption_mwh": {
         "candidate_values": [
           {
+            "pdf_filename": "v1-contract-2024.pdf",
             "priority_rank": 300,
             "reporting_period_label": "FY2024",
             "source_document_type": "sustainability_report",
@@ -656,8 +657,10 @@
             "value": 540.0
           }
         ],
+        "chosen_pdf_filename": "v1-contract-2024.pdf",
         "chosen_source": "db:2",
         "chosen_source_document_type": "sustainability_report",
+        "chosen_source_url": "https://example.com/v1-contract-2024.pdf",
         "chosen_value": 540.0,
         "conflict_detected": false,
         "merge_reason": "single_source",
@@ -666,6 +669,7 @@
       "female_pct": {
         "candidate_values": [
           {
+            "pdf_filename": "v1-contract-2024.pdf",
             "priority_rank": 300,
             "reporting_period_label": "FY2024",
             "source_document_type": "sustainability_report",
@@ -674,8 +678,10 @@
             "value": 48.0
           }
         ],
+        "chosen_pdf_filename": "v1-contract-2024.pdf",
         "chosen_source": "db:2",
         "chosen_source_document_type": "sustainability_report",
+        "chosen_source_url": "https://example.com/v1-contract-2024.pdf",
         "chosen_value": 48.0,
         "conflict_detected": false,
         "merge_reason": "single_source",
@@ -684,6 +690,7 @@
       "primary_activities": {
         "candidate_values": [
           {
+            "pdf_filename": "v1-contract-2024.pdf",
             "priority_rank": 300,
             "reporting_period_label": "FY2024",
             "source_document_type": "sustainability_report",
@@ -695,8 +702,10 @@
             ]
           }
         ],
+        "chosen_pdf_filename": "v1-contract-2024.pdf",
         "chosen_source": "db:2",
         "chosen_source_document_type": "sustainability_report",
+        "chosen_source_url": "https://example.com/v1-contract-2024.pdf",
         "chosen_value": [
           "solar_pv",
           "battery_storage"
@@ -708,6 +717,7 @@
       "renewable_energy_pct": {
         "candidate_values": [
           {
+            "pdf_filename": "v1-contract-2024.pdf",
             "priority_rank": 300,
             "reporting_period_label": "FY2024",
             "source_document_type": "sustainability_report",
@@ -716,8 +726,10 @@
             "value": 45.0
           }
         ],
+        "chosen_pdf_filename": "v1-contract-2024.pdf",
         "chosen_source": "db:2",
         "chosen_source_document_type": "sustainability_report",
+        "chosen_source_url": "https://example.com/v1-contract-2024.pdf",
         "chosen_value": 45.0,
         "conflict_detected": false,
         "merge_reason": "single_source",
@@ -726,6 +738,7 @@
       "scope1_co2e_tonnes": {
         "candidate_values": [
           {
+            "pdf_filename": "v1-contract-2024.pdf",
             "priority_rank": 300,
             "reporting_period_label": "FY2024",
             "source_document_type": "sustainability_report",
@@ -734,8 +747,10 @@
             "value": 120.0
           }
         ],
+        "chosen_pdf_filename": "v1-contract-2024.pdf",
         "chosen_source": "db:2",
         "chosen_source_document_type": "sustainability_report",
+        "chosen_source_url": "https://example.com/v1-contract-2024.pdf",
         "chosen_value": 120.0,
         "conflict_detected": false,
         "merge_reason": "single_source",
@@ -744,6 +759,7 @@
       "scope2_co2e_tonnes": {
         "candidate_values": [
           {
+            "pdf_filename": "v1-contract-2024.pdf",
             "priority_rank": 300,
             "reporting_period_label": "FY2024",
             "source_document_type": "sustainability_report",
@@ -752,8 +768,10 @@
             "value": 74.0
           }
         ],
+        "chosen_pdf_filename": "v1-contract-2024.pdf",
         "chosen_source": "db:2",
         "chosen_source_document_type": "sustainability_report",
+        "chosen_source_url": "https://example.com/v1-contract-2024.pdf",
         "chosen_value": 74.0,
         "conflict_detected": false,
         "merge_reason": "single_source",
@@ -762,6 +780,7 @@
       "scope3_co2e_tonnes": {
         "candidate_values": [
           {
+            "pdf_filename": "v1-contract-2024.pdf",
             "priority_rank": 300,
             "reporting_period_label": "FY2024",
             "source_document_type": "sustainability_report",
@@ -770,8 +789,10 @@
             "value": 980.0
           }
         ],
+        "chosen_pdf_filename": "v1-contract-2024.pdf",
         "chosen_source": "db:2",
         "chosen_source_document_type": "sustainability_report",
+        "chosen_source_url": "https://example.com/v1-contract-2024.pdf",
         "chosen_value": 980.0,
         "conflict_detected": false,
         "merge_reason": "single_source",
@@ -780,6 +801,7 @@
       "taxonomy_aligned_capex_pct": {
         "candidate_values": [
           {
+            "pdf_filename": "v1-contract-2024.pdf",
             "priority_rank": 300,
             "reporting_period_label": "FY2024",
             "source_document_type": "sustainability_report",
@@ -788,8 +810,10 @@
             "value": 35.0
           }
         ],
+        "chosen_pdf_filename": "v1-contract-2024.pdf",
         "chosen_source": "db:2",
         "chosen_source_document_type": "sustainability_report",
+        "chosen_source_url": "https://example.com/v1-contract-2024.pdf",
         "chosen_value": 35.0,
         "conflict_detected": false,
         "merge_reason": "single_source",
@@ -798,6 +822,7 @@
       "taxonomy_aligned_revenue_pct": {
         "candidate_values": [
           {
+            "pdf_filename": "v1-contract-2024.pdf",
             "priority_rank": 300,
             "reporting_period_label": "FY2024",
             "source_document_type": "sustainability_report",
@@ -806,8 +831,10 @@
             "value": 28.0
           }
         ],
+        "chosen_pdf_filename": "v1-contract-2024.pdf",
         "chosen_source": "db:2",
         "chosen_source_document_type": "sustainability_report",
+        "chosen_source_url": "https://example.com/v1-contract-2024.pdf",
         "chosen_value": 28.0,
         "conflict_detected": false,
         "merge_reason": "single_source",
@@ -816,6 +843,7 @@
       "total_employees": {
         "candidate_values": [
           {
+            "pdf_filename": "v1-contract-2024.pdf",
             "priority_rank": 300,
             "reporting_period_label": "FY2024",
             "source_document_type": "sustainability_report",
@@ -824,8 +852,10 @@
             "value": 1020
           }
         ],
+        "chosen_pdf_filename": "v1-contract-2024.pdf",
         "chosen_source": "db:2",
         "chosen_source_document_type": "sustainability_report",
+        "chosen_source_url": "https://example.com/v1-contract-2024.pdf",
         "chosen_value": 1020,
         "conflict_detected": false,
         "merge_reason": "single_source",
@@ -834,6 +864,7 @@
       "waste_recycled_pct": {
         "candidate_values": [
           {
+            "pdf_filename": "v1-contract-2024.pdf",
             "priority_rank": 300,
             "reporting_period_label": "FY2024",
             "source_document_type": "sustainability_report",
@@ -842,8 +873,10 @@
             "value": 62.0
           }
         ],
+        "chosen_pdf_filename": "v1-contract-2024.pdf",
         "chosen_source": "db:2",
         "chosen_source_document_type": "sustainability_report",
+        "chosen_source_url": "https://example.com/v1-contract-2024.pdf",
         "chosen_value": 62.0,
         "conflict_detected": false,
         "merge_reason": "single_source",
@@ -852,6 +885,7 @@
       "water_usage_m3": {
         "candidate_values": [
           {
+            "pdf_filename": "v1-contract-2024.pdf",
             "priority_rank": 300,
             "reporting_period_label": "FY2024",
             "source_document_type": "sustainability_report",
@@ -860,8 +894,10 @@
             "value": 12000.0
           }
         ],
+        "chosen_pdf_filename": "v1-contract-2024.pdf",
         "chosen_source": "db:2",
         "chosen_source_document_type": "sustainability_report",
+        "chosen_source_url": "https://example.com/v1-contract-2024.pdf",
         "chosen_value": 12000.0,
         "conflict_detected": false,
         "merge_reason": "single_source",
@@ -1142,6 +1178,7 @@
           "energy_consumption_mwh": {
             "candidate_values": [
               {
+                "pdf_filename": "v1-contract-2023.pdf",
                 "priority_rank": 400,
                 "reporting_period_label": "FY2023",
                 "source_document_type": "annual_report",
@@ -1150,8 +1187,10 @@
                 "value": 610.0
               }
             ],
+            "chosen_pdf_filename": "v1-contract-2023.pdf",
             "chosen_source": "db:1",
             "chosen_source_document_type": "annual_report",
+            "chosen_source_url": "https://example.com/v1-contract-2023.pdf",
             "chosen_value": 610.0,
             "conflict_detected": false,
             "merge_reason": "single_source",
@@ -1160,6 +1199,7 @@
           "female_pct": {
             "candidate_values": [
               {
+                "pdf_filename": "v1-contract-2023.pdf",
                 "priority_rank": 400,
                 "reporting_period_label": "FY2023",
                 "source_document_type": "annual_report",
@@ -1168,8 +1208,10 @@
                 "value": 44.0
               }
             ],
+            "chosen_pdf_filename": "v1-contract-2023.pdf",
             "chosen_source": "db:1",
             "chosen_source_document_type": "annual_report",
+            "chosen_source_url": "https://example.com/v1-contract-2023.pdf",
             "chosen_value": 44.0,
             "conflict_detected": false,
             "merge_reason": "single_source",
@@ -1178,6 +1220,7 @@
           "primary_activities": {
             "candidate_values": [
               {
+                "pdf_filename": "v1-contract-2023.pdf",
                 "priority_rank": 400,
                 "reporting_period_label": "FY2023",
                 "source_document_type": "annual_report",
@@ -1188,8 +1231,10 @@
                 ]
               }
             ],
+            "chosen_pdf_filename": "v1-contract-2023.pdf",
             "chosen_source": "db:1",
             "chosen_source_document_type": "annual_report",
+            "chosen_source_url": "https://example.com/v1-contract-2023.pdf",
             "chosen_value": [
               "solar_pv"
             ],
@@ -1200,6 +1245,7 @@
           "renewable_energy_pct": {
             "candidate_values": [
               {
+                "pdf_filename": "v1-contract-2023.pdf",
                 "priority_rank": 400,
                 "reporting_period_label": "FY2023",
                 "source_document_type": "annual_report",
@@ -1208,8 +1254,10 @@
                 "value": 31.0
               }
             ],
+            "chosen_pdf_filename": "v1-contract-2023.pdf",
             "chosen_source": "db:1",
             "chosen_source_document_type": "annual_report",
+            "chosen_source_url": "https://example.com/v1-contract-2023.pdf",
             "chosen_value": 31.0,
             "conflict_detected": false,
             "merge_reason": "single_source",
@@ -1218,6 +1266,7 @@
           "scope1_co2e_tonnes": {
             "candidate_values": [
               {
+                "pdf_filename": "v1-contract-2023.pdf",
                 "priority_rank": 400,
                 "reporting_period_label": "FY2023",
                 "source_document_type": "annual_report",
@@ -1226,8 +1275,10 @@
                 "value": 140.0
               }
             ],
+            "chosen_pdf_filename": "v1-contract-2023.pdf",
             "chosen_source": "db:1",
             "chosen_source_document_type": "annual_report",
+            "chosen_source_url": "https://example.com/v1-contract-2023.pdf",
             "chosen_value": 140.0,
             "conflict_detected": false,
             "merge_reason": "single_source",
@@ -1236,6 +1287,7 @@
           "scope2_co2e_tonnes": {
             "candidate_values": [
               {
+                "pdf_filename": "v1-contract-2023.pdf",
                 "priority_rank": 400,
                 "reporting_period_label": "FY2023",
                 "source_document_type": "annual_report",
@@ -1244,8 +1296,10 @@
                 "value": 88.0
               }
             ],
+            "chosen_pdf_filename": "v1-contract-2023.pdf",
             "chosen_source": "db:1",
             "chosen_source_document_type": "annual_report",
+            "chosen_source_url": "https://example.com/v1-contract-2023.pdf",
             "chosen_value": 88.0,
             "conflict_detected": false,
             "merge_reason": "single_source",
@@ -1254,6 +1308,7 @@
           "total_employees": {
             "candidate_values": [
               {
+                "pdf_filename": "v1-contract-2023.pdf",
                 "priority_rank": 400,
                 "reporting_period_label": "FY2023",
                 "source_document_type": "annual_report",
@@ -1262,8 +1317,10 @@
                 "value": 980
               }
             ],
+            "chosen_pdf_filename": "v1-contract-2023.pdf",
             "chosen_source": "db:1",
             "chosen_source_document_type": "annual_report",
+            "chosen_source_url": "https://example.com/v1-contract-2023.pdf",
             "chosen_value": 980,
             "conflict_detected": false,
             "merge_reason": "single_source",
@@ -1430,6 +1487,7 @@
           "energy_consumption_mwh": {
             "candidate_values": [
               {
+                "pdf_filename": "v1-contract-2024.pdf",
                 "priority_rank": 300,
                 "reporting_period_label": "FY2024",
                 "source_document_type": "sustainability_report",
@@ -1438,8 +1496,10 @@
                 "value": 540.0
               }
             ],
+            "chosen_pdf_filename": "v1-contract-2024.pdf",
             "chosen_source": "db:2",
             "chosen_source_document_type": "sustainability_report",
+            "chosen_source_url": "https://example.com/v1-contract-2024.pdf",
             "chosen_value": 540.0,
             "conflict_detected": false,
             "merge_reason": "single_source",
@@ -1448,6 +1508,7 @@
           "female_pct": {
             "candidate_values": [
               {
+                "pdf_filename": "v1-contract-2024.pdf",
                 "priority_rank": 300,
                 "reporting_period_label": "FY2024",
                 "source_document_type": "sustainability_report",
@@ -1456,8 +1517,10 @@
                 "value": 48.0
               }
             ],
+            "chosen_pdf_filename": "v1-contract-2024.pdf",
             "chosen_source": "db:2",
             "chosen_source_document_type": "sustainability_report",
+            "chosen_source_url": "https://example.com/v1-contract-2024.pdf",
             "chosen_value": 48.0,
             "conflict_detected": false,
             "merge_reason": "single_source",
@@ -1466,6 +1529,7 @@
           "primary_activities": {
             "candidate_values": [
               {
+                "pdf_filename": "v1-contract-2024.pdf",
                 "priority_rank": 300,
                 "reporting_period_label": "FY2024",
                 "source_document_type": "sustainability_report",
@@ -1477,8 +1541,10 @@
                 ]
               }
             ],
+            "chosen_pdf_filename": "v1-contract-2024.pdf",
             "chosen_source": "db:2",
             "chosen_source_document_type": "sustainability_report",
+            "chosen_source_url": "https://example.com/v1-contract-2024.pdf",
             "chosen_value": [
               "solar_pv",
               "battery_storage"
@@ -1490,6 +1556,7 @@
           "renewable_energy_pct": {
             "candidate_values": [
               {
+                "pdf_filename": "v1-contract-2024.pdf",
                 "priority_rank": 300,
                 "reporting_period_label": "FY2024",
                 "source_document_type": "sustainability_report",
@@ -1498,8 +1565,10 @@
                 "value": 45.0
               }
             ],
+            "chosen_pdf_filename": "v1-contract-2024.pdf",
             "chosen_source": "db:2",
             "chosen_source_document_type": "sustainability_report",
+            "chosen_source_url": "https://example.com/v1-contract-2024.pdf",
             "chosen_value": 45.0,
             "conflict_detected": false,
             "merge_reason": "single_source",
@@ -1508,6 +1577,7 @@
           "scope1_co2e_tonnes": {
             "candidate_values": [
               {
+                "pdf_filename": "v1-contract-2024.pdf",
                 "priority_rank": 300,
                 "reporting_period_label": "FY2024",
                 "source_document_type": "sustainability_report",
@@ -1516,8 +1586,10 @@
                 "value": 120.0
               }
             ],
+            "chosen_pdf_filename": "v1-contract-2024.pdf",
             "chosen_source": "db:2",
             "chosen_source_document_type": "sustainability_report",
+            "chosen_source_url": "https://example.com/v1-contract-2024.pdf",
             "chosen_value": 120.0,
             "conflict_detected": false,
             "merge_reason": "single_source",
@@ -1526,6 +1598,7 @@
           "scope2_co2e_tonnes": {
             "candidate_values": [
               {
+                "pdf_filename": "v1-contract-2024.pdf",
                 "priority_rank": 300,
                 "reporting_period_label": "FY2024",
                 "source_document_type": "sustainability_report",
@@ -1534,8 +1607,10 @@
                 "value": 74.0
               }
             ],
+            "chosen_pdf_filename": "v1-contract-2024.pdf",
             "chosen_source": "db:2",
             "chosen_source_document_type": "sustainability_report",
+            "chosen_source_url": "https://example.com/v1-contract-2024.pdf",
             "chosen_value": 74.0,
             "conflict_detected": false,
             "merge_reason": "single_source",
@@ -1544,6 +1619,7 @@
           "scope3_co2e_tonnes": {
             "candidate_values": [
               {
+                "pdf_filename": "v1-contract-2024.pdf",
                 "priority_rank": 300,
                 "reporting_period_label": "FY2024",
                 "source_document_type": "sustainability_report",
@@ -1552,8 +1628,10 @@
                 "value": 980.0
               }
             ],
+            "chosen_pdf_filename": "v1-contract-2024.pdf",
             "chosen_source": "db:2",
             "chosen_source_document_type": "sustainability_report",
+            "chosen_source_url": "https://example.com/v1-contract-2024.pdf",
             "chosen_value": 980.0,
             "conflict_detected": false,
             "merge_reason": "single_source",
@@ -1562,6 +1640,7 @@
           "taxonomy_aligned_capex_pct": {
             "candidate_values": [
               {
+                "pdf_filename": "v1-contract-2024.pdf",
                 "priority_rank": 300,
                 "reporting_period_label": "FY2024",
                 "source_document_type": "sustainability_report",
@@ -1570,8 +1649,10 @@
                 "value": 35.0
               }
             ],
+            "chosen_pdf_filename": "v1-contract-2024.pdf",
             "chosen_source": "db:2",
             "chosen_source_document_type": "sustainability_report",
+            "chosen_source_url": "https://example.com/v1-contract-2024.pdf",
             "chosen_value": 35.0,
             "conflict_detected": false,
             "merge_reason": "single_source",
@@ -1580,6 +1661,7 @@
           "taxonomy_aligned_revenue_pct": {
             "candidate_values": [
               {
+                "pdf_filename": "v1-contract-2024.pdf",
                 "priority_rank": 300,
                 "reporting_period_label": "FY2024",
                 "source_document_type": "sustainability_report",
@@ -1588,8 +1670,10 @@
                 "value": 28.0
               }
             ],
+            "chosen_pdf_filename": "v1-contract-2024.pdf",
             "chosen_source": "db:2",
             "chosen_source_document_type": "sustainability_report",
+            "chosen_source_url": "https://example.com/v1-contract-2024.pdf",
             "chosen_value": 28.0,
             "conflict_detected": false,
             "merge_reason": "single_source",
@@ -1598,6 +1682,7 @@
           "total_employees": {
             "candidate_values": [
               {
+                "pdf_filename": "v1-contract-2024.pdf",
                 "priority_rank": 300,
                 "reporting_period_label": "FY2024",
                 "source_document_type": "sustainability_report",
@@ -1606,8 +1691,10 @@
                 "value": 1020
               }
             ],
+            "chosen_pdf_filename": "v1-contract-2024.pdf",
             "chosen_source": "db:2",
             "chosen_source_document_type": "sustainability_report",
+            "chosen_source_url": "https://example.com/v1-contract-2024.pdf",
             "chosen_value": 1020,
             "conflict_detected": false,
             "merge_reason": "single_source",
@@ -1616,6 +1703,7 @@
           "waste_recycled_pct": {
             "candidate_values": [
               {
+                "pdf_filename": "v1-contract-2024.pdf",
                 "priority_rank": 300,
                 "reporting_period_label": "FY2024",
                 "source_document_type": "sustainability_report",
@@ -1624,8 +1712,10 @@
                 "value": 62.0
               }
             ],
+            "chosen_pdf_filename": "v1-contract-2024.pdf",
             "chosen_source": "db:2",
             "chosen_source_document_type": "sustainability_report",
+            "chosen_source_url": "https://example.com/v1-contract-2024.pdf",
             "chosen_value": 62.0,
             "conflict_detected": false,
             "merge_reason": "single_source",
@@ -1634,6 +1724,7 @@
           "water_usage_m3": {
             "candidate_values": [
               {
+                "pdf_filename": "v1-contract-2024.pdf",
                 "priority_rank": 300,
                 "reporting_period_label": "FY2024",
                 "source_document_type": "sustainability_report",
@@ -1642,8 +1733,10 @@
                 "value": 12000.0
               }
             ],
+            "chosen_pdf_filename": "v1-contract-2024.pdf",
             "chosen_source": "db:2",
             "chosen_source_document_type": "sustainability_report",
+            "chosen_source_url": "https://example.com/v1-contract-2024.pdf",
             "chosen_value": 12000.0,
             "conflict_detected": false,
             "merge_reason": "single_source",
