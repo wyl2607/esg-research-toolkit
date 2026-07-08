@@ -42,6 +42,12 @@
     "grade": "Bewertung",
     "summary": "Zusammenfassung"
   },
+  "admin": {
+    "tokenLabel": "Admin-Token",
+    "tokenSave": "Speichern",
+    "tokenClear": "Löschen",
+    "tokenHint": "Für geschützte Admin-Operationen (nur lokal)"
+  },
   "dashboard": {
     "kicker": "Portfolio-Kommandozentrale",
     "title": "Dashboard",

@@ -7,9 +7,13 @@ import type {
   CompanyProfile,
   CompanyESGData,
   FrameworkScoreResult,
+  FrameworkVersionInfo,
   IndustryBenchmarksResponse,
   LCOEInput,
   LCOEResult,
+  MergeMetricDecision,
+  MergePreviewResponse,
+  MergeSourceInput,
   MultiFrameworkReport,
   SensitivityResult,
   TaxonomyActivity,
@@ -17,7 +21,14 @@ import type {
   ManualReportInput,
 } from './types'
 
+export type { FrameworkVersionInfo, MergeMetricDecision, MergePreviewResponse, MergeSourceInput }
+
 const BASE = '/api'
+
+function getAdminToken(): string {
+  if (typeof window === 'undefined') return ''
+  return localStorage.getItem('esg_admin_token') || ''
+}
 
 export interface IndustryMetadataInput {
   industryCode?: string
@@ -41,10 +52,18 @@ async function toApiError(res: Response): Promise<ApiError> {
   return new ApiError(res.status, detail)
 }
 
-async function req<T>(path: string, init?: RequestInit): Promise<T> {
+async function req<T>(path: string, init?: RequestInit & { admin?: boolean }): Promise<T> {
+  const { admin, ...restInit } = (init ?? {}) as RequestInit & { admin?: boolean }
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (admin) {
+    const tok = getAdminToken()
+    if (tok) headers['X-Admin-Token'] = tok
+  }
+  const initH = (restInit as RequestInit).headers
+  if (initH) Object.assign(headers, initH)
   const res = await fetch(BASE + path, {
-    headers: { 'Content-Type': 'application/json' },
-    ...init,
+    headers,
+    ...restInit,
   })
   if (!res.ok) throw await toApiError(res)
   return res.json() as Promise<T>
@@ -199,6 +218,7 @@ export const fetchDisclosure = (
   req('/disclosures/fetch', {
     method: 'POST',
     body: JSON.stringify(payload),
+    admin: true,
   })
 
 export const getDisclosureLaneStats = ({
@@ -243,6 +263,7 @@ export const approvePendingDisclosure = (
   req(`/disclosures/${pendingId}/approve`, {
     method: 'POST',
     body: JSON.stringify(payload),
+    admin: true,
   })
 
 export const rejectPendingDisclosure = (
@@ -252,6 +273,7 @@ export const rejectPendingDisclosure = (
   req(`/disclosures/${pendingId}/reject`, {
     method: 'POST',
     body: JSON.stringify(payload),
+    admin: true,
   })
 
 // Backward-compatible aliases for disclosure review workflows.
@@ -284,7 +306,7 @@ export const getCompaniesByIndustry = (
 
 export const recomputeIndustryBenchmarks =
   (): Promise<BenchmarkRecomputeResponse> =>
-    req('/benchmarks/recompute', { method: 'POST' })
+    req('/benchmarks/recompute', { method: 'POST', admin: true })
 
 export const createManualReport = (
   data: ManualReportInput,
@@ -302,6 +324,7 @@ export const createManualReport = (
 export const deleteCompany =(name: string, year: number): Promise<void> =>
   req(`/report/companies/${encodeURIComponent(name)}/${year}`, {
     method: 'DELETE',
+    admin: true,
   })
 
 // ── Taxonomy ───────────────────────────────────────────────────────────────
@@ -459,3 +482,12 @@ export const getFrameworkScore = (
 export const listFrameworks = (): Promise<
   { id: string; name: string; region: string; mandatory_from: string; description: string }[]
 > => req('/frameworks/list')
+
+export const getFrameworkVersions = (): Promise<FrameworkVersionInfo[]> =>
+  req('/frameworks/versions')
+
+export const previewMerge = (documents: MergeSourceInput[]): Promise<MergePreviewResponse> =>
+  req('/report/merge/preview', {
+    method: 'POST',
+    body: JSON.stringify({ documents }),
+  })

@@ -42,6 +42,12 @@
     "grade": "评级",
     "summary": "摘要"
   },
+  "admin": {
+    "tokenLabel": "Admin Token",
+    "tokenSave": "保存",
+    "tokenClear": "清除",
+    "tokenHint": "用于受保护的管理员操作（仅本地存储）"
+  },
   "dashboard": {
     "kicker": "组合监控总览",
     "title": "仪表盘",

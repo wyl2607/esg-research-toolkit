@@ -1658,6 +1658,8 @@ export interface components {
             document_priority: string[];
             /** Unresolved Metrics */
             unresolved_metrics?: string[];
+            /** Framework Versions */
+            framework_versions?: components["schemas"]["FrameworkVersionInfo"][];
         };
         /** MergeSourceInput */
         MergeSourceInput: {
@@ -3561,7 +3563,9 @@ export interface operations {
     clear_framework_cache_frameworks_cache_clear_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "x-admin-token"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -3576,12 +3580,23 @@ export interface operations {
                     "application/json": components["schemas"]["FrameworkCacheClearResponse"];
                 };
             };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
     };
     recompute_benchmarks_recompute_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "x-admin-token"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -3596,6 +3611,15 @@ export interface operations {
                     "application/json": {
                         [key: string]: number;
                     };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -4034,3 +4058,8 @@ export interface RegionalComparisonReport {
   overall_readiness: string
   key_insights: string[]
 }
+
+export type FrameworkVersionInfo = components["schemas"]["FrameworkVersionInfo"]
+export type MergeSourceInput = components["schemas"]["MergeSourceInput"]
+export type MergeMetricDecision = components["schemas"]["MergeMetricDecision"]
+export type MergePreviewResponse = components["schemas"]["MergePreviewResponse"]
