@@ -34,6 +34,7 @@ from report_parser.analyzer import analyze_esg_data
 from report_parser.admin_routes import require_admin_token
 from report_parser.company_identity import canonical_company_name, company_name_variants
 from report_parser.extractor import extract_text_from_pdf
+from report_parser.mappers import record_scalar_fields
 from report_parser.storage import (
     PendingDisclosure,
     get_report,
@@ -609,27 +610,7 @@ def _run_fetch_pipeline(
 
 def _record_to_company_data(record: Any) -> CompanyESGData:
     payload = {
-        "company_name": record.company_name,
-        "report_year": record.report_year,
-        "reporting_period_label": record.reporting_period_label,
-        "reporting_period_type": record.reporting_period_type,
-        "source_document_type": record.source_document_type,
-        "industry_code": record.industry_code,
-        "industry_sector": record.industry_sector,
-        "scope1_co2e_tonnes": record.scope1_co2e_tonnes,
-        "scope2_co2e_tonnes": record.scope2_co2e_tonnes,
-        "scope2_basis": record.scope2_basis,
-        "scope3_co2e_tonnes": record.scope3_co2e_tonnes,
-        "energy_consumption_mwh": record.energy_consumption_mwh,
-        "renewable_energy_pct": record.renewable_energy_pct,
-        "water_usage_m3": record.water_usage_m3,
-        "waste_recycled_pct": record.waste_recycled_pct,
-        "total_revenue_eur": record.total_revenue_eur,
-        "taxonomy_aligned_revenue_pct": record.taxonomy_aligned_revenue_pct,
-        "total_capex_eur": record.total_capex_eur,
-        "taxonomy_aligned_capex_pct": record.taxonomy_aligned_capex_pct,
-        "total_employees": record.total_employees,
-        "female_pct": record.female_pct,
+        **record_scalar_fields(record),
         "primary_activities": [],
         "evidence_summary": [],
     }
