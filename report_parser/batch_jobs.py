@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -13,6 +14,8 @@ from core.schemas import BatchJobItem, BatchStatusResponse
 from report_parser.analyzer import analyze_esg_data
 from report_parser.extractor import extract_text_from_pdf
 from report_parser.storage import save_report
+
+_logger = logging.getLogger(__name__)
 
 # Evict completed/failed jobs older than this many seconds to keep the dict bounded.
 JOB_RETENTION_SECONDS = 24 * 3600
@@ -171,6 +174,9 @@ class BatchAnalysisManager:
             result = esg_data
         except Exception as exc:  # pragma: no cover - background execution path
             status = "failed"
+            # full traceback stays server-side; the error field is exposed to
+            # clients via /report/jobs/{batch_id}
+            _logger.exception("batch job %s (%s) failed", job_id, job["filename"])
             error = str(exc)
             result = None
 
