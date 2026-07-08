@@ -1,8 +1,7 @@
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { listCompaniesWithYearCoverage, getTaxonomyReport, downloadTaxonomyPdf, listActivities } from '@/lib/api'
 import { CompanyYearPicker, type CompanyYearSelection } from '@/components/CompanyYearPicker'
-import { TaxonomyRadarChart } from '@/components/RadarChart'
 import { MetricCard } from '@/components/MetricCard'
 import { QueryStateCard } from '@/components/QueryStateCard'
 import { PageContainer } from '@/components/layout/PageContainer'
@@ -15,6 +14,12 @@ import { Button } from '@/components/ui/button'
 import { CheckCircle, XCircle, Download } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { localizeErrorMessage, isBackendOffline } from '@/lib/error-utils'
+
+const TaxonomyRadarChart = lazy(() =>
+  import('@/components/RadarChart').then((module) => ({
+    default: module.TaxonomyRadarChart,
+  }))
+)
 
 export function TaxonomyPage() {
   const { t } = useTranslation()
@@ -243,7 +248,9 @@ export function TaxonomyPage() {
 
           <div className="grid gap-6 xl:grid-cols-2">
             <Panel title={t('taxonomy.objectiveScores')}>
-              <TaxonomyRadarChart data={report.objective_scores} />
+              <Suspense fallback={<div className="h-64 animate-pulse rounded-lg bg-slate-100" />}>
+                <TaxonomyRadarChart data={report.objective_scores} />
+              </Suspense>
             </Panel>
 
             <Panel title={t('taxonomy.dnshCheck')} className="space-y-4">
