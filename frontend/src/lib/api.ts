@@ -306,7 +306,7 @@ export const getCompaniesByIndustry = (
 
 export const recomputeIndustryBenchmarks =
   (): Promise<BenchmarkRecomputeResponse> =>
-    req('/benchmarks/recompute', { method: 'POST' })
+    req('/benchmarks/recompute', { method: 'POST', admin: true })
 
 export const createManualReport = (
   data: ManualReportInput,
