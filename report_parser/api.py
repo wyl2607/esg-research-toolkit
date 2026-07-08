@@ -870,17 +870,10 @@ def get_company_profile(
     framework_results = _assemble_framework_results(framework_rows)
     latest_framework_metadata = [_framework_metadata_item(row) for row in framework_rows]
 
-    for scorer in _SCORERS.values():
-        save_framework_result(db, scorer(latest_data))
-
-    all_framework_rows_after_save = list_framework_results(
-        db,
-        company_name=resolved_name,
-        report_year=latest.report_year,
-    )
-    scorer_framework_ids = set(_SCORERS.keys())
-    scorer_rows = [row for row in all_framework_rows_after_save if row.framework_id in scorer_framework_ids]
-    framework_scores = _assemble_framework_results(scorer_rows)
+    # save_framework_result is idempotent per payload hash, so repeated profile
+    # calls with unchanged data reuse the stored rows instead of inserting again.
+    saved_scorer_rows = [save_framework_result(db, scorer(latest_data)) for scorer in _SCORERS.values()]
+    framework_scores = _assemble_framework_results(saved_scorer_rows)
     years_available = [record.report_year for record in records]
     previous_trend_point = history["trend"][-2] if len(history["trend"]) >= 2 else None
     narrative_summary = _narrative_summary(
@@ -888,7 +881,7 @@ def get_company_profile(
         previous_trend_point=previous_trend_point,
         periods_count=len(history["periods"]),
         years_available=years_available,
-        framework_count=len(scorer_rows),
+        framework_count=len(saved_scorer_rows),
         data_quality_summary=data_quality_summary,
     )
     identity_provenance_summary = _identity_provenance_summary(

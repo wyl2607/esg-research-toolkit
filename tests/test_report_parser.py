@@ -1802,7 +1802,8 @@ def test_alias_names_collapse_into_single_company_profile_and_listing(
     assert "CATL" in profile["identity_provenance_summary"]["consolidated_aliases"]
     assert profile["identity_provenance_summary"]["latest_source_document_type"] == "sustainability_report"
     assert profile["narrative_summary"]["snapshot"]["periods_count"] == 2
-    assert profile["narrative_summary"]["snapshot"]["framework_count"] == 0
+    # profile call persists one result per scorer, so framework_count reflects them
+    assert profile["narrative_summary"]["snapshot"]["framework_count"] == len(_SCORERS)
     assert profile["narrative_summary"]["improved_metrics"] == [
         "scope1_co2e_tonnes",
         "renewable_energy_pct",
@@ -2309,7 +2310,7 @@ def test_profile_framework_scores_have_stored_at_and_version(
             f"analysis_result_id missing for {item.get('framework_id')}"
         )
 
-    assert profile["narrative_summary"]["framework_count"] > 0
+    assert profile["narrative_summary"]["snapshot"]["framework_count"] == len(_SCORERS)
 
 
 def test_company_history_three_year_trend_ordering_and_yoy(
