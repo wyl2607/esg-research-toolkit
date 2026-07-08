@@ -3563,7 +3563,9 @@ export interface operations {
     clear_framework_cache_frameworks_cache_clear_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "x-admin-token"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -3578,12 +3580,23 @@ export interface operations {
                     "application/json": components["schemas"]["FrameworkCacheClearResponse"];
                 };
             };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
     };
     recompute_benchmarks_recompute_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "x-admin-token"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -3598,6 +3611,15 @@ export interface operations {
                     "application/json": {
                         [key: string]: number;
                     };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

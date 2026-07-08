@@ -24,6 +24,7 @@ from esg_frameworks.storage import (
     list_framework_results,
     save_framework_result,
 )
+from report_parser.admin_routes import require_admin_token
 
 router = APIRouter(prefix="/frameworks", tags=["esg_frameworks"])
 
@@ -269,7 +270,9 @@ def list_framework_versions() -> list[FrameworkVersionInfo]:
 
 
 @router.post("/cache/clear", response_model=FrameworkCacheClearResponse)
-def clear_framework_cache() -> FrameworkCacheClearResponse:
+def clear_framework_cache(
+    _: None = Depends(require_admin_token),
+) -> FrameworkCacheClearResponse:
     """清除框架对比缓存（管理员用）。"""
     with _cache_lock:
         removed = len(_score_cache)

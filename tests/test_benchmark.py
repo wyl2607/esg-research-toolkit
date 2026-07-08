@@ -78,7 +78,13 @@ def test_recompute_industry_benchmarks_end_to_end(benchmark_db_session_factory: 
     assert 200 < row.p50 < 400
 
 
-def test_get_benchmark_endpoint_returns_rows(benchmark_db_session_factory: sessionmaker) -> None:
+def test_get_benchmark_endpoint_returns_rows(
+    benchmark_db_session_factory: sessionmaker,
+    monkeypatch,
+) -> None:
+    # Exercise the unconfigured-token local mode; admin gating of
+    # /benchmarks/recompute is covered in test_admin_routes_security.
+    monkeypatch.setenv("ADMIN_API_TOKEN", "")
     with benchmark_db_session_factory() as db:
         db.add_all(
             [
