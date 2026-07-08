@@ -1,5 +1,6 @@
 import json
 import logging
+from collections.abc import Sequence
 from datetime import datetime, timezone
 from typing import Any
 
@@ -268,48 +269,56 @@ def list_reports_for_company(
     return collapse_company_records(records)
 
 
-def list_source_reports_for_company_year(
+def collapse_source_duplicates(records: list[CompanyReport]) -> list[CompanyReport]:
+    grouped: dict[tuple[str, int, str, str, str, str, str, str], list[CompanyReport]] = {}
+    for record in records:
+        canonical = canonical_company_name(record.company_name)
+        key = (
+            canonical.lower(),
+            record.report_year,
+            (record.source_document_type or "").strip().lower(),
+            (record.reporting_period_label or "").strip().lower(),
+            (record.reporting_period_type or "").strip().lower(),
+            (record.source_url or "").strip().lower(),
+            (record.file_hash or "").strip().lower(),
+            (record.pdf_filename or "").strip().lower(),
+        )
+        grouped.setdefault(key, []).append(record)
+
+    collapsed: list[CompanyReport] = []
+    for candidates in grouped.values():
+        best = max(candidates, key=report_quality_score)
+        collapsed.append(best)
+
+    collapsed.sort(
+        key=lambda item: (
+            item.report_year,
+            (item.source_document_type or "").lower(),
+            item.id,
+        )
+    )
+    return collapsed
+
+
+def list_source_reports_for_company_years(
     db: Session,
     company_name: str,
-    report_year: int,
+    report_years: Sequence[int],
     *,
     include_deleted: bool = False,
     collapse_duplicates: bool = True,
-) -> list[CompanyReport]:
-    def _collapse_source_duplicates(records: list[CompanyReport]) -> list[CompanyReport]:
-        grouped: dict[tuple[str, int, str, str, str, str, str, str], list[CompanyReport]] = {}
-        for record in records:
-            canonical = canonical_company_name(record.company_name)
-            key = (
-                canonical.lower(),
-                record.report_year,
-                (record.source_document_type or "").strip().lower(),
-                (record.reporting_period_label or "").strip().lower(),
-                (record.reporting_period_type or "").strip().lower(),
-                (record.source_url or "").strip().lower(),
-                (record.file_hash or "").strip().lower(),
-                (record.pdf_filename or "").strip().lower(),
-            )
-            grouped.setdefault(key, []).append(record)
+) -> dict[int, list[CompanyReport]]:
+    """Fetch source reports for many years in one query, grouped by year.
 
-        collapsed: list[CompanyReport] = []
-        for candidates in grouped.values():
-            best = max(candidates, key=report_quality_score)
-            collapsed.append(best)
-
-        collapsed.sort(
-            key=lambda item: (
-                item.report_year,
-                (item.source_document_type or "").lower(),
-                item.id,
-            )
-        )
-        return collapsed
-
+    Row order within each year matches list_source_reports_for_company_year.
+    Years with no records are absent from the result.
+    """
+    if not report_years:
+        return {}
     variants = [variant.lower() for variant in company_name_variants(company_name)]
     query = db.query(CompanyReport).filter(
         func.lower(CompanyReport.company_name).in_(variants),
-        CompanyReport.report_year == report_year,
+        CompanyReport.report_year.in_(set(report_years)),
     )
     if not include_deleted:
         query = query.filter(CompanyReport.deletion_requested.is_(False))
@@ -318,9 +327,30 @@ def list_source_reports_for_company_year(
         CompanyReport.created_at.asc(),
         CompanyReport.id.asc(),
     ).all()
+    by_year: dict[int, list[CompanyReport]] = {}
+    for record in records:
+        by_year.setdefault(record.report_year, []).append(record)
     if not collapse_duplicates:
-        return records
-    return _collapse_source_duplicates(records)
+        return by_year
+    return {year: collapse_source_duplicates(rows) for year, rows in by_year.items()}
+
+
+def list_source_reports_for_company_year(
+    db: Session,
+    company_name: str,
+    report_year: int,
+    *,
+    include_deleted: bool = False,
+    collapse_duplicates: bool = True,
+) -> list[CompanyReport]:
+    by_year = list_source_reports_for_company_years(
+        db,
+        company_name,
+        [report_year],
+        include_deleted=include_deleted,
+        collapse_duplicates=collapse_duplicates,
+    )
+    return by_year.get(report_year, [])
 
 
 def list_reports_grouped(

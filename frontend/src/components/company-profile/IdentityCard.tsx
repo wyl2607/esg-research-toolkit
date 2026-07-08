@@ -83,13 +83,30 @@ export function IdentityCard(props: IdentityCardProps) {
                 .filter(([, m]) => m.chosen_source_document_type != null)
                 .slice(0, 6)
                 .map(([key, m]) => (
-                  <div key={key} className="flex min-w-0 items-start justify-between gap-2 text-xs">
-                    <span className="break-words text-slate-600 [overflow-wrap:anywhere]">
-                      {metricDisclosureLabel(t, key)}
-                    </span>
-                    <span className={`shrink-0 rounded px-1.5 py-0.5 font-medium ${m.conflict_detected ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-700'}`}>
-                      {prettifyToken(m.chosen_source_document_type ?? '')}
-                    </span>
+                  <div key={key} className="min-w-0 text-xs">
+                    <div className="flex min-w-0 items-start justify-between gap-2">
+                      <span className="break-words text-slate-600 [overflow-wrap:anywhere]">
+                        {metricDisclosureLabel(t, key)}
+                      </span>
+                      <span className={`shrink-0 rounded px-1.5 py-0.5 font-medium ${m.conflict_detected ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-700'}`}>
+                        {prettifyToken(m.chosen_source_document_type ?? '')}
+                      </span>
+                    </div>
+                    {m.chosen_pdf_filename ? (
+                      <p className="mt-0.5 break-all text-slate-400 [overflow-wrap:anywhere]">
+                        {t('profile.mergeChosenFile', { filename: m.chosen_pdf_filename })}
+                      </p>
+                    ) : m.chosen_source_url ? (
+                      <a
+                        href={m.chosen_source_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-0.5 block break-all text-indigo-500 underline-offset-2 hover:underline [overflow-wrap:anywhere]"
+                        title={m.chosen_source_url}
+                      >
+                        {t('profile.mergeChosenUrl')}
+                      </a>
+                    ) : null}
                   </div>
                 ))}
               {mergedResult.source_count > 1 && (

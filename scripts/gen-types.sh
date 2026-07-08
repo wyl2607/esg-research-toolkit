@@ -196,6 +196,7 @@ export interface MergeMetricCandidate {
   source_id: string
   source_document_type: string | null
   source_url: string | null
+  pdf_filename: string | null
   reporting_period_label: string | null
   priority_rank: number
   value: string | number | string[] | null
@@ -207,6 +208,8 @@ export interface MergedMetricResult {
   candidate_values: MergeMetricCandidate[]
   chosen_source: string | null
   chosen_source_document_type: string | null
+  chosen_source_url: string | null
+  chosen_pdf_filename: string | null
   merge_reason: string
   conflict_detected: boolean
 }
@@ -349,6 +352,11 @@ export interface RegionalComparisonReport {
   overall_readiness: string
   key_insights: string[]
 }
+
+export type FrameworkVersionInfo = components["schemas"]["FrameworkVersionInfo"]
+export type MergeSourceInput = components["schemas"]["MergeSourceInput"]
+export type MergeMetricDecision = components["schemas"]["MergeMetricDecision"]
+export type MergePreviewResponse = components["schemas"]["MergePreviewResponse"]
 EOF
 
 echo "Generated $OUTPUT_FILE from $OPENAPI_URL"

@@ -1613,6 +1613,8 @@ export interface components {
             source_document_type?: string | null;
             /** Source Url */
             source_url?: string | null;
+            /** Pdf Filename */
+            pdf_filename?: string | null;
             /** Reporting Period Label */
             reporting_period_label?: string | null;
             /** Priority Rank */
@@ -1658,6 +1660,8 @@ export interface components {
             document_priority: string[];
             /** Unresolved Metrics */
             unresolved_metrics?: string[];
+            /** Framework Versions */
+            framework_versions?: components["schemas"]["FrameworkVersionInfo"][];
         };
         /** MergeSourceInput */
         MergeSourceInput: {
@@ -1713,6 +1717,8 @@ export interface components {
             source_id?: string | null;
             /** Downloaded At */
             downloaded_at?: string | null;
+            /** Pdf Filename */
+            pdf_filename?: string | null;
         };
         /** ModelHealthEntry */
         ModelHealthEntry: {
@@ -3561,7 +3567,9 @@ export interface operations {
     clear_framework_cache_frameworks_cache_clear_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "x-admin-token"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -3576,12 +3584,23 @@ export interface operations {
                     "application/json": components["schemas"]["FrameworkCacheClearResponse"];
                 };
             };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
     };
     recompute_benchmarks_recompute_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "x-admin-token"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -3596,6 +3615,15 @@ export interface operations {
                     "application/json": {
                         [key: string]: number;
                     };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -3881,6 +3909,7 @@ export interface MergeMetricCandidate {
   source_id: string
   source_document_type: string | null
   source_url: string | null
+  pdf_filename: string | null
   reporting_period_label: string | null
   priority_rank: number
   value: string | number | string[] | null
@@ -3892,6 +3921,8 @@ export interface MergedMetricResult {
   candidate_values: MergeMetricCandidate[]
   chosen_source: string | null
   chosen_source_document_type: string | null
+  chosen_source_url: string | null
+  chosen_pdf_filename: string | null
   merge_reason: string
   conflict_detected: boolean
 }
@@ -4034,3 +4065,8 @@ export interface RegionalComparisonReport {
   overall_readiness: string
   key_insights: string[]
 }
+
+export type FrameworkVersionInfo = components["schemas"]["FrameworkVersionInfo"]
+export type MergeSourceInput = components["schemas"]["MergeSourceInput"]
+export type MergeMetricDecision = components["schemas"]["MergeMetricDecision"]
+export type MergePreviewResponse = components["schemas"]["MergePreviewResponse"]

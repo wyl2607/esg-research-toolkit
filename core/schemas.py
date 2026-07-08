@@ -62,6 +62,7 @@ class ManualReportInput(CompanyESGData):
 class MergeSourceInput(ManualReportInput):
     source_id: str | None = None
     downloaded_at: str | None = None
+    pdf_filename: str | None = None
 
 
 class MergePreviewRequest(BaseModel):
@@ -82,6 +83,7 @@ class MergeMetricCandidate(BaseModel):
     source_id: str
     source_document_type: str | None = None
     source_url: str | None = None
+    pdf_filename: str | None = None
     reporting_period_label: str | None = None
     priority_rank: int
     value: str | int | float | list[str] | None = None
@@ -103,6 +105,8 @@ class MergedMetricResult(BaseModel):
     candidate_values: list[MergeMetricCandidate] = Field(default_factory=list)
     chosen_source: str | None = None
     chosen_source_document_type: str | None = None
+    chosen_source_url: str | None = None
+    chosen_pdf_filename: str | None = None
     merge_reason: str
     conflict_detected: bool = False
 
@@ -122,6 +126,23 @@ class MergePreviewResponse(BaseModel):
     decisions: list[MergeMetricDecision]
     document_priority: list[str]
     unresolved_metrics: list[str] = Field(default_factory=list)
+    framework_versions: list[FrameworkVersionInfo] = Field(default_factory=list)
+
+
+class FrameworkVersionInfo(BaseModel):
+    framework_id: str
+    framework_version: str
+    display_name: str
+
+
+FRAMEWORK_VERSION_CATALOG: dict[str, tuple[str, str]] = {
+    "eu_taxonomy": ("2020/852", "EU Taxonomy"),
+    "csrc_2023": ("2023", "China CSRC 2023"),
+    "csrd": ("ESRS-2024", "CSRD/ESRS"),
+    "sec_climate": ("SEC-2024", "SEC Climate"),
+    "gri_universal": ("GRI-2021", "GRI Universal"),
+    "sasb_standards": ("SASB-2023", "SASB Standards"),
+}
 
 
 class BatchJobItem(BaseModel):

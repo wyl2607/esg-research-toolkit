@@ -5,6 +5,8 @@ from datetime import datetime
 
 from core.schemas import (
     CompanyESGData,
+    FrameworkVersionInfo,
+    FRAMEWORK_VERSION_CATALOG,
     MergedMetricResult,
     MergedResult,
     MergeMetricCandidate,
@@ -71,6 +73,7 @@ def _candidate_row(document: MergeSourceInput, metric: str) -> MergeMetricCandid
         source_id=source_id,
         source_document_type=document.source_document_type,
         source_url=document.source_url,
+        pdf_filename=document.pdf_filename,
         reporting_period_label=document.reporting_period_label,
         priority_rank=_priority_rank(document.source_document_type),
         value=_candidate_value(document, metric),
@@ -182,6 +185,16 @@ def build_merge_preview(documents: list[MergeSourceInput]) -> MergePreviewRespon
             unresolved_metrics.append(metric)
 
     merged_metrics = CompanyESGData(**merged_payload)
+
+    framework_versions = [
+        FrameworkVersionInfo(
+            framework_id=fid,
+            framework_version=ver,
+            display_name=disp,
+        )
+        for fid, (ver, disp) in FRAMEWORK_VERSION_CATALOG.items()
+    ]
+
     return MergePreviewResponse(
         company_name=first.company_name,
         report_year=first.report_year,
@@ -197,6 +210,7 @@ def build_merge_preview(documents: list[MergeSourceInput]) -> MergePreviewRespon
             "event",
         ],
         unresolved_metrics=unresolved_metrics,
+        framework_versions=framework_versions,
     )
 
 
@@ -204,12 +218,15 @@ def build_merged_result(documents: list[MergeSourceInput]) -> MergedResult:
     preview = build_merge_preview(documents)
     metrics: dict[str, MergedMetricResult] = {}
     for decision in preview.decisions:
+        top_candidate = decision.candidates[0] if decision.candidates else None
         metrics[decision.metric] = MergedMetricResult(
             metric=decision.metric,
             chosen_value=decision.selected_value,
             candidate_values=decision.candidates,
             chosen_source=decision.selected_source_id,
             chosen_source_document_type=decision.selected_source_document_type,
+            chosen_source_url=top_candidate.source_url if top_candidate else None,
+            chosen_pdf_filename=top_candidate.pdf_filename if top_candidate else None,
             merge_reason=decision.merge_reason,
             conflict_detected=decision.conflict_detected,
         )

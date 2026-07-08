@@ -42,6 +42,12 @@
     "grade": "Bewertung",
     "summary": "Zusammenfassung"
   },
+  "admin": {
+    "tokenLabel": "Admin-Token",
+    "tokenSave": "Speichern",
+    "tokenClear": "Löschen",
+    "tokenHint": "Für geschützte Admin-Operationen (nur lokal)"
+  },
   "dashboard": {
     "kicker": "Portfolio-Kommandozentrale",
     "title": "Dashboard",
@@ -597,6 +603,8 @@
     "provenanceSourceSummary": "{{count}} Quelldokumente",
     "provenanceMergeSummary": "{{count}} Dokumente zusammengeführt",
     "provenanceMergeMetricCue": "{{metric}} wird derzeit aus {{sourceType}} aufgelöst ({{reason}}).",
+    "mergeChosenFile": "Datei: {{filename}}",
+    "mergeChosenUrl": "Quell-URL",
     "provenanceFrameworkVersion": "{{framework}} · v{{version}}",
     "provenanceFrameworkTimestamp": "Erfasst am {{date}}",
     "provenanceFrameworkMore": "+{{count}} weitere Framework-Läufe",
