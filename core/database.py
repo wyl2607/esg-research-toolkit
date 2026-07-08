@@ -28,6 +28,28 @@ else:
         }
     )
 
+def _ensure_sqlite_parent_dir(database_url: str) -> None:
+    """Create the parent directory for a file-based SQLite DB.
+
+    Without this, ``sqlite:///./data/esg_toolkit.db`` fails to open with
+    "unable to open database file" whenever ``./data`` does not yet exist.
+    """
+    if not database_url.startswith("sqlite"):
+        return
+    try:
+        db_path = make_url(database_url).database
+    except Exception:  # noqa: BLE001
+        return
+    if not db_path or ":memory:" in db_path or "memory" in (db_path or ""):
+        return
+    parent = Path(db_path).expanduser().parent
+    if parent and not parent.exists():
+        parent.mkdir(parents=True, exist_ok=True)
+
+
+if _is_sqlite:
+    _ensure_sqlite_parent_dir(settings.database_url)
+
 engine = create_engine(settings.database_url, connect_args=_connect_args, **_engine_kwargs)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()

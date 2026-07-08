@@ -30,11 +30,11 @@ from core.schemas import (
     PendingDisclosureItem,
     PendingDisclosureStatus,
 )
-from core.record_mapping import record_to_company_esg_data as _record_to_company_data
 from report_parser.analyzer import analyze_esg_data
 from report_parser.admin_routes import require_admin_token
 from report_parser.company_identity import canonical_company_name, company_name_variants
 from report_parser.extractor import extract_text_from_pdf
+from report_parser.mappers import record_scalar_fields
 from report_parser.storage import (
     PendingDisclosure,
     get_report,
@@ -608,6 +608,23 @@ def _run_fetch_pipeline(
         db.close()
 
 
+def _record_to_company_data(record: Any) -> CompanyESGData:
+    payload = {
+        **record_scalar_fields(record),
+        "primary_activities": [],
+        "evidence_summary": [],
+    }
+    if isinstance(record.primary_activities, str) and record.primary_activities:
+        try:
+            payload["primary_activities"] = json.loads(record.primary_activities)
+        except json.JSONDecodeError:
+            payload["primary_activities"] = []
+    if isinstance(record.evidence_summary, str) and record.evidence_summary:
+        try:
+            payload["evidence_summary"] = json.loads(record.evidence_summary)
+        except json.JSONDecodeError:
+            payload["evidence_summary"] = []
+    return CompanyESGData.model_validate(payload)
 
 
 def _merge_payload_with_selected_metrics(

@@ -13,7 +13,6 @@ from sqlalchemy.orm import Session
 from core.database import get_db
 from core.limiter import limiter
 from core.normalization.period import normalize_reporting_period
-from core.record_mapping import record_to_company_esg_data
 from core.schemas import (
     AuditTrailRow,
     BatchStatusResponse,
@@ -36,12 +35,14 @@ from report_parser.analyzer import AIExtractionError, analyze_esg_data
 from report_parser.batch_jobs import batch_manager
 from report_parser.company_identity import canonical_company_name
 from report_parser.extractor import extract_text_from_pdf
+from report_parser.mappers import record_scalar_fields
 from report_parser.storage import (
     CompanyReport,
+    collapse_source_duplicates,
     get_report,
     list_reports_grouped,
     list_reports_for_company,
-    list_source_reports_for_company_year,
+    list_source_reports_for_company_years,
     save_report,
 )
 from taxonomy_scorer.scorer import get_metric_framework_mappings
@@ -179,34 +180,15 @@ def _record_to_merge_source_input(
     *,
     canonical_company_name_value: str | None = None,
 ) -> MergeSourceInput:
-    primary_activities = json.loads(record.primary_activities) if record.primary_activities else []
+    fields = record_scalar_fields(record)
+    fields["company_name"] = canonical_company_name_value or record.company_name
     return MergeSourceInput(
         source_id=f"db:{record.id}",
-        company_name=canonical_company_name_value or record.company_name,
-        report_year=record.report_year,
-        reporting_period_label=record.reporting_period_label,
-        reporting_period_type=record.reporting_period_type,
-        source_document_type=record.source_document_type,
-        industry_code=record.industry_code,
-        industry_sector=record.industry_sector,
         source_url=record.source_url,
         downloaded_at=record.downloaded_at.isoformat() if record.downloaded_at else None,
-        scope1_co2e_tonnes=record.scope1_co2e_tonnes,
-        scope2_co2e_tonnes=record.scope2_co2e_tonnes,
-        scope2_basis=record.scope2_basis,
-        scope3_co2e_tonnes=record.scope3_co2e_tonnes,
-        energy_consumption_mwh=record.energy_consumption_mwh,
-        renewable_energy_pct=record.renewable_energy_pct,
-        water_usage_m3=record.water_usage_m3,
-        waste_recycled_pct=record.waste_recycled_pct,
-        total_revenue_eur=record.total_revenue_eur,
-        taxonomy_aligned_revenue_pct=record.taxonomy_aligned_revenue_pct,
-        total_capex_eur=record.total_capex_eur,
-        taxonomy_aligned_capex_pct=record.taxonomy_aligned_capex_pct,
-        total_employees=record.total_employees,
-        female_pct=record.female_pct,
-        primary_activities=primary_activities,
+        primary_activities=json.loads(record.primary_activities) if record.primary_activities else [],
         evidence_summary=_evidence_anchors_for_record(record),
+        **fields,
     )
 
 
@@ -551,10 +533,11 @@ def preview_merge(payload: MergePreviewRequest) -> MergePreviewResponse:
 
 
 def _record_to_company_data(record) -> CompanyESGData:
-    # api.py recomputes evidence anchors instead of using the stored field
-    data = record_to_company_esg_data(record)
-    data.evidence_summary = _record_evidence_anchors(record)
-    return data
+    return CompanyESGData(
+        **record_scalar_fields(record),
+        primary_activities=json.loads(record.primary_activities) if record.primary_activities else [],
+        evidence_summary=_record_evidence_anchors(record),
+    )
 
 
 def _build_scored_metrics(
@@ -738,22 +721,26 @@ def get_company_history(
     company_name: str,
     db: Session = Depends(get_db),
 ) -> dict[str, Any]:
-    from esg_frameworks.storage import list_framework_results
+    from esg_frameworks.storage import list_framework_results_for_years
 
     records = list_reports_for_company(db, company_name)
     if not records:
         raise HTTPException(404, f"No reports found for {company_name}")
     resolved_name = records[0].company_name
 
+    years = [record.report_year for record in records]
+    sources_by_year = list_source_reports_for_company_years(db, resolved_name, years)
+    frameworks_by_year = list_framework_results_for_years(
+        db,
+        company_name=resolved_name,
+        report_years=years,
+    )
+
     trend = []
     periods = []
     framework_metadata = []
     for record in records:
-        source_records = list_source_reports_for_company_year(
-            db,
-            resolved_name,
-            record.report_year,
-        )
+        source_records = sources_by_year.get(record.report_year, [])
         merge_documents = [
             _record_to_merge_source_input(
                 item,
@@ -765,11 +752,7 @@ def get_company_history(
         merged_metrics = merged_result.merged_metrics
         anchors = _record_evidence_anchors(record)
         period = _period_metadata(record)
-        framework_rows = list_framework_results(
-            db,
-            company_name=resolved_name,
-            report_year=record.report_year,
-        )
+        framework_rows = frameworks_by_year.get(record.report_year, [])
         period_framework_metadata = [_framework_metadata_item(row) for row in framework_rows]
         framework_metadata.extend(period_framework_metadata)
         periods.append(
@@ -810,17 +793,13 @@ def get_company_history(
     }
 
 
-def _collect_observed_company_names(db, resolved_name, records) -> set[str]:
-    observed: set[str] = set()
-    for record in records:
-        year_source_records = list_source_reports_for_company_year(
-            db,
-            resolved_name,
-            record.report_year,
-            collapse_duplicates=False,
-        )
-        observed.update(item.company_name for item in year_source_records if item.company_name)
-    return observed
+def _collect_observed_company_names(raw_sources_by_year) -> set[str]:
+    return {
+        item.company_name
+        for rows in raw_sources_by_year.values()
+        for item in rows
+        if item.company_name
+    }
 
 
 def _assemble_framework_results(framework_rows) -> list[dict[str, Any]]:
@@ -849,12 +828,17 @@ def get_company_profile(
     resolved_name = records[0].company_name
 
     latest = records[-1]
-    observed_company_names = _collect_observed_company_names(db, resolved_name, records)
-
-    latest_source_records = list_source_reports_for_company_year(
+    years = [record.report_year for record in records]
+    raw_sources_by_year = list_source_reports_for_company_years(
         db,
         resolved_name,
-        latest.report_year,
+        years,
+        collapse_duplicates=False,
+    )
+    observed_company_names = _collect_observed_company_names(raw_sources_by_year)
+
+    latest_source_records = collapse_source_duplicates(
+        raw_sources_by_year.get(latest.report_year, [])
     )
     latest_merge_documents = [
         _record_to_merge_source_input(

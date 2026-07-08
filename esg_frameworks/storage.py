@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Sequence
 from datetime import datetime, timezone
 
 from sqlalchemy import Column, DateTime, Float, Integer, String, Text, UniqueConstraint, inspect, text
@@ -147,16 +148,41 @@ def list_framework_results(
     company_name: str,
     report_year: int,
 ) -> list[FrameworkAnalysisResult]:
+    by_year = list_framework_results_for_years(
+        db,
+        company_name=company_name,
+        report_years=[report_year],
+    )
+    return by_year.get(report_year, [])
+
+
+def list_framework_results_for_years(
+    db: Session,
+    *,
+    company_name: str,
+    report_years: Sequence[int],
+) -> dict[int, list[FrameworkAnalysisResult]]:
+    """Fetch framework results for many years in one query, grouped by year.
+
+    Row order within each year matches list_framework_results (created_at desc).
+    Years with no results are absent from the result.
+    """
+    if not report_years:
+        return {}
     variants = [variant.lower() for variant in company_name_variants(company_name)]
-    return (
+    rows = (
         db.query(FrameworkAnalysisResult)
         .filter(
             func.lower(FrameworkAnalysisResult.company_name).in_(variants),
-            FrameworkAnalysisResult.report_year == report_year,
+            FrameworkAnalysisResult.report_year.in_(set(report_years)),
         )
         .order_by(FrameworkAnalysisResult.created_at.desc())
         .all()
     )
+    by_year: dict[int, list[FrameworkAnalysisResult]] = {}
+    for row in rows:
+        by_year.setdefault(row.report_year, []).append(row)
+    return by_year
 
 
 def get_framework_result(db: Session, result_id: int) -> FrameworkAnalysisResult | None:

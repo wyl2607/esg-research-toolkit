@@ -27,6 +27,7 @@ from core.schemas import CompanyESGData, DeployHealthResponse, HealthResponse, M
 from core.version import app_version
 from esg_frameworks.api import _SCORERS, router as frameworks_router
 from esg_frameworks.storage import list_framework_results, save_framework_result
+from report_parser.admin_routes import validate_admin_config
 from report_parser.api import router as report_router
 from report_parser.api import v1_router as report_v1_router
 from report_parser.disclosures_api import router as disclosures_router
@@ -204,6 +205,7 @@ def _cors_allowed_origins() -> list[str]:
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    validate_admin_config()
     init_db()
     validate_models_startup()
     if CONTRACT_TEST_MODE:
