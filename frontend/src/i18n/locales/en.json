@@ -654,6 +654,8 @@
     "evidenceSnippetShowMore": "Show more",
     "evidenceSnippetShowLess": "Show less",
     "evidenceClose": "Close evidence details",
+    "evidenceFrameworkMappingsLabel": "Framework relevance",
+    "yoyCo2e": "YoY CO₂e",
     "metricFallback": "metric",
     "sourceFallback": "source",
     "dataQualityTitle": "Data quality & disclosure completeness",

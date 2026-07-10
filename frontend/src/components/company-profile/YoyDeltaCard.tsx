@@ -42,7 +42,7 @@ export function YoyDeltaCard({ yoyDeltaCard, yoySummary }: YoyDeltaCardProps) {
         <div className="grid gap-4 md:grid-cols-3">
           <div className="rounded-lg border bg-slate-50 px-4 py-4">
             <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-              YoY CO2e
+              {t('profile.yoyCo2e')}
             </p>
             <p className={`mt-2 text-2xl font-semibold ${deltaToneClass(yoyDeltaCard.co2eDeltaPct)}`}>
               {deltaPercentLabel(yoyDeltaCard.co2eDeltaPct)}

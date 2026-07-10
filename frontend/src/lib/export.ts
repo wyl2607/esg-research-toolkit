@@ -3,7 +3,13 @@
  * All serialization happens in the browser using data already in memory.
  */
 
-import type { CompanyESGData, CompanyProfile, CompanyTrendPoint } from '@/lib/types'
+import type {
+  CompanyESGData,
+  CompanyProfile,
+  CompanyTrendPoint,
+  FrameworkScoreResult,
+} from '@/lib/types'
+import { formatFrameworkMappingLabel } from '@/lib/profile-scored-metrics'
 
 // ── Internal helpers ────────────────────────────────────────────────────────
 
@@ -98,10 +104,65 @@ export function exportCompaniesCSV(companies: CompanyESGData[], filename?: strin
   triggerDownload(csv, name, 'text/csv;charset=utf-8;')
 }
 
+export function collectFrameworkScoreRows(
+  profile: CompanyProfile
+): Record<string, unknown>[] {
+  const scores: FrameworkScoreResult[] = [
+    ...(profile.framework_scores ?? []),
+    ...(profile.framework_results ?? []),
+  ]
+  const seen = new Set<string>()
+  const rows: Record<string, unknown>[] = []
+  for (const fw of scores) {
+    const key = `${fw.framework_id}|${fw.framework_version ?? ''}|${(fw as FrameworkScoreResult & { stored_at?: string | null }).stored_at ?? fw.analyzed_at ?? ''}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    rows.push({
+      Framework: fw.framework,
+      'Framework ID': fw.framework_id,
+      Version: fw.framework_version ?? '',
+      Score: fw.total_score,
+      Grade: fw.grade,
+      'Coverage %': fw.coverage_pct,
+      Gaps: (fw.gaps ?? []).join('; '),
+      Analyzed:
+        fw.analyzed_at ??
+        (fw as FrameworkScoreResult & { stored_at?: string | null }).stored_at ??
+        '',
+    })
+  }
+  return rows
+}
+
+export function collectScoredMetricEvidenceRows(
+  profile: CompanyProfile
+): Record<string, unknown>[] {
+  const scored = profile.scored_metrics ?? {}
+  return Object.entries(scored).map(([metricKey, metric]) => {
+    const evidence = metric.evidence
+    const mappings = (metric.framework_mappings ?? [])
+      .map(formatFrameworkMappingLabel)
+      .join('; ')
+    return {
+      Metric: metricKey,
+      Value: metric.value ?? '',
+      Unit: metric.unit ?? '',
+      Period: metric.period?.label ?? '',
+      'Source Document Type': metric.source_document_type ?? '',
+      Page: evidence?.page ?? '',
+      Snippet: evidence?.snippet ?? '',
+      'Extraction Method': evidence?.extraction_method ?? '',
+      Confidence: evidence?.confidence ?? '',
+      'Source Doc ID': evidence?.source_doc_id ?? '',
+      'Framework Mappings': mappings,
+    }
+  })
+}
+
 /**
  * Export a single company profile (latest metrics + historical trend) as CSV.
- * Generates two sections: a header section with latest metrics, then the trend table.
- * Now includes metadata section with export date and data version.
+ * Generates sections: metadata, latest metrics, historical trend, framework scores,
+ * and scored_metrics evidence (v1) when present.
  */
 export function exportCompanyProfileCSV(profile: CompanyProfile, filename?: string): void {
   // Section 0: Metadata
@@ -113,6 +174,10 @@ export function exportCompanyProfileCSV(profile: CompanyProfile, filename?: stri
       { Metadata: 'Latest Year', Value: profile.latest_year },
       { Metadata: 'Export Date', Value: exportDate },
       { Metadata: 'Data Years', Value: profile.years_available.join(', ') },
+      {
+        Metadata: 'API Version',
+        Value: profile.scored_metrics ? 'v1 (scored_metrics)' : 'legacy',
+      },
     ]
   )
 
@@ -143,9 +208,50 @@ export function exportCompanyProfileCSV(profile: CompanyProfile, filename?: stri
   }))
   const trendCSV = trendRows.length > 0 ? `\n\nHistorical Trend\n${buildCSV(TREND_HEADERS, trendRows)}` : ''
 
+  // Section 3: framework scores (deduped)
+  const frameworkRows = collectFrameworkScoreRows(profile)
+  const FRAMEWORK_HEADERS = [
+    'Framework',
+    'Framework ID',
+    'Version',
+    'Score',
+    'Grade',
+    'Coverage %',
+    'Gaps',
+    'Analyzed',
+  ]
+  const frameworkCSV =
+    frameworkRows.length > 0
+      ? `\n\nFramework Scores\n${buildCSV(FRAMEWORK_HEADERS, frameworkRows)}`
+      : ''
+
+  // Section 4: scored_metrics evidence + framework mappings
+  const evidenceRows = collectScoredMetricEvidenceRows(profile)
+  const EVIDENCE_HEADERS = [
+    'Metric',
+    'Value',
+    'Unit',
+    'Period',
+    'Source Document Type',
+    'Page',
+    'Snippet',
+    'Extraction Method',
+    'Confidence',
+    'Source Doc ID',
+    'Framework Mappings',
+  ]
+  const evidenceCSV =
+    evidenceRows.length > 0
+      ? `\n\nScored Metrics Evidence\n${buildCSV(EVIDENCE_HEADERS, evidenceRows)}`
+      : ''
+
   const defaultName = `${profile.company_name.replace(/[^a-z0-9]/gi, '_')}_esg_${profile.latest_year}_${new Date().toISOString().slice(0, 10)}.csv`
   const name = filename ?? defaultName
-  triggerDownload(`${metadataCSV}\n\nLatest Metrics (${profile.latest_year})\n${metricsCSV}${trendCSV}`, name, 'text/csv;charset=utf-8;')
+  triggerDownload(
+    `${metadataCSV}\n\nLatest Metrics (${profile.latest_year})\n${metricsCSV}${trendCSV}${frameworkCSV}${evidenceCSV}`,
+    name,
+    'text/csv;charset=utf-8;'
+  )
 }
 
 /**
