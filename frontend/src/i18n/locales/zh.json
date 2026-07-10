@@ -654,6 +654,8 @@
     "evidenceSnippetShowMore": "展开",
     "evidenceSnippetShowLess": "收起",
     "evidenceClose": "关闭证据详情",
+    "evidenceFrameworkMappingsLabel": "框架相关性",
+    "yoyCo2e": "同比 CO₂e",
     "metricFallback": "指标",
     "sourceFallback": "来源",
     "dataQualityTitle": "数据质量与披露完整度",

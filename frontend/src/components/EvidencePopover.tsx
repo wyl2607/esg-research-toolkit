@@ -281,6 +281,29 @@ export function EvidencePopover({
                 />
               </div>
             </div>
+
+            {(evidence.framework_mappings?.length ?? 0) > 0 ? (
+              <div
+                className="rounded-xl border border-slate-200 px-3 py-3"
+                data-testid={testId ? `${testId}-framework-mappings` : 'evidence-framework-mappings'}
+              >
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                  {t('profile.evidenceFrameworkMappingsLabel')}
+                </p>
+                <ul className="mt-2 flex flex-wrap gap-1.5">
+                  {evidence.framework_mappings!.map((mapping) => (
+                    <li
+                      key={`${mapping.framework_id}-${mapping.dimension ?? 'all'}`}
+                      className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-900"
+                      title={mapping.rationale ?? undefined}
+                    >
+                      {mapping.framework_name}
+                      {mapping.dimension ? ` · ${mapping.dimension}` : ''}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>

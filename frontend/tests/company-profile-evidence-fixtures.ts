@@ -68,6 +68,48 @@ export function buildEvidenceCompanyProfileFixture(): CompanyProfile {
       framework_metadata: [],
     },
     latest_metrics: latestMetrics,
+    scored_metrics: {
+      renewable_energy_pct: {
+        metric: 'renewable_energy_pct',
+        value: 49.1,
+        unit: '%',
+        period: {
+          period_id: 'period-2024',
+          label: 'FY 2024',
+          type: 'annual',
+          source_document_type: 'manual_case',
+          legacy_report_year: 2024,
+          fiscal_year: 2024,
+          reporting_standard: 'manual_case',
+          period_start: '2024-01-01',
+          period_end: '2024-12-31',
+        },
+        source_document_type: 'manual_case',
+        evidence: {
+          source_doc_id: 'fixture-hash-renewable',
+          page: 5,
+          char_range: [10, 80],
+          snippet:
+            'Renewable electricity share reached 49.1% in FY 2024, up from 44.0% last year. Procurement improvements across Germany sites drove the increase and the figure was validated during manual QA.',
+          extraction_method: 'manual',
+          confidence: 0.87,
+        },
+        framework_mappings: [
+          {
+            framework_id: 'eu_taxonomy',
+            framework_name: 'EU Taxonomy 2020',
+            dimension: 'Climate',
+            rationale: 'Renewable share informs climate mitigation alignment.',
+          },
+          {
+            framework_id: 'csrd',
+            framework_name: 'CSRD/ESRS',
+            dimension: 'E1 Climate',
+            rationale: 'Energy mix disclosure under ESRS E1.',
+          },
+        ],
+      },
+    },
     trend: [
       {
         year: 2022,

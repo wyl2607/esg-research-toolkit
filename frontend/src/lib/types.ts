@@ -3747,6 +3747,37 @@ export interface operations {
 // The raw OpenAPI types above are the source of truth; these exports preserve the
 // existing frontend import surface while the backend gradually adopts richer
 // response_model coverage for every route.
+export interface FrameworkMetricMapping {
+  framework_id: string
+  framework_name: string
+  dimension?: string | null
+  rationale?: string | null
+}
+
+export interface CompanyProfileMetricEvidence {
+  source_doc_id: string
+  page?: number | null
+  char_range?: [number, number] | number[] | null
+  snippet?: string | null
+  extraction_method?: string
+  confidence?: number
+}
+
+export interface CompanyProfileMetric {
+  metric: string
+  value?: string | number | string[] | null
+  unit?: string | null
+  period?: CompanyNormalizedPeriod & {
+    fiscal_year?: number
+    reporting_standard?: string
+    period_start?: string | null
+    period_end?: string | null
+  }
+  source_document_type?: string | null
+  evidence?: CompanyProfileMetricEvidence | null
+  framework_mappings?: FrameworkMetricMapping[]
+}
+
 export interface EvidenceAnchor {
   metric: string | null
   source: string | null
@@ -3759,11 +3790,12 @@ export interface EvidenceAnchor {
   reporting_period_label?: string | null
   period_label?: string | null
   extraction_method?: string | null
-  confidence?: string | null
+  confidence?: string | number | null
   confidence_score?: number | null
   source_type?: string | null
   source_url?: string | null
   file_hash?: string | null
+  framework_mappings?: FrameworkMetricMapping[]
 }
 
 export interface CompanyESGData {
@@ -4022,6 +4054,8 @@ export interface CompanyProfile {
   latest_year: number
   latest_period: CompanyProfileLatestPeriod
   latest_metrics: CompanyESGData
+  /** v1 canonical per-metric evidence + framework mappings */
+  scored_metrics?: Record<string, CompanyProfileMetric>
   trend: CompanyTrendPoint[]
   periods: CompanyHistoryPeriod[]
   framework_metadata?: FrameworkMetadata[]

@@ -11,7 +11,6 @@ import { getCompanyProfile } from '@/lib/api'
 import type {
   CompanyDataQualitySummary,
   CompanyIdentityProvenanceSummary,
-  EvidenceAnchor,
   CompanyNarrativeSummary,
   FrameworkMetadata,
 } from '@/lib/types'
@@ -19,17 +18,18 @@ import { useTranslation } from 'react-i18next'
 import { localizeErrorMessage } from '@/lib/error-utils'
 import { exportCompanyProfileCSV, exportToJSON } from '@/lib/export'
 import {
+  buildEvidenceByMetric,
+  collectLegacyEvidenceAnchors,
+} from '@/lib/profile-scored-metrics'
+import {
   buildCompanyTrendData,
   compactList,
   deltaNumber,
   deltaPctLabel,
   deltaPercent,
-  evidenceRichness,
   frameworkRunKey,
-  mergeEvidenceAnchor,
   metricDisclosureLabel,
   metricLabelsFromKeys,
-  normalizeProfileEvidenceAnchor,
   parseCompanyReportId,
   prettifyToken,
   sourceOriginLabel,
@@ -355,39 +355,12 @@ export function CompanyProfilePage() {
   const latestSourceTypes = compactList(
     latestSources.map((source) => prettifyToken(source.source_document_type))
   )
-  const latestEvidenceSummary = [
-    ...latestSources.flatMap((source) => source.evidence_anchors ?? []),
-    ...(profile.evidence_summary ?? []),
-  ]
-    .map((entry) =>
-      normalizeProfileEvidenceAnchor(
-        entry,
-        latestSources,
-        profile.latest_period.reporting_period_label,
-        profile.latest_period.source_document_type
-      )
-    )
-    .sort((a, b) => evidenceRichness(b) - evidenceRichness(a))
-    .reduce<EvidenceAnchor[]>((acc, normalized) => {
-      const key =
-        normalized.metric ??
-        `${normalized.document_title ?? normalized.source ?? 'evidence'}-${acc.length}`
-      const existingIndex = acc.findIndex((item) => item.metric === key)
-
-      if (existingIndex === -1) {
-        acc.push({ ...normalized, metric: normalized.metric ?? key })
-        return acc
-      }
-
-      acc[existingIndex] = mergeEvidenceAnchor(acc[existingIndex], normalized)
-      return acc
-    }, [])
-  const evidenceByMetric = latestEvidenceSummary.reduce<Map<string, EvidenceAnchor>>((map, entry) => {
-    if (entry.metric) {
-      map.set(entry.metric, entry)
-    }
-    return map
-  }, new Map())
+  // Prefer v1 scored_metrics for per-metric evidence + framework mappings.
+  const evidenceByMetric = buildEvidenceByMetric(profile)
+  const latestEvidenceSummary =
+    evidenceByMetric.size > 0
+      ? Array.from(evidenceByMetric.values())
+      : collectLegacyEvidenceAnchors(profile)
   const latestSourceOrigin = sourceOriginLabel(latestSources[0])
   const latestCompanyReportId = parseCompanyReportId(latestSources[0]?.source_id)
   const latestMergeCue = (() => {

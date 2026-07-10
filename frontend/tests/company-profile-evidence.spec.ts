@@ -43,6 +43,8 @@ test.describe('company profile evidence workflow', () => {
       )
       await expect(popover).toContainText('manual entry')
       await expect(popover).toContainText('Acme Sustainability Fact Sheet 2024')
+      await expect(page.getByTestId('evidence-badge-renewable_energy_pct-framework-mappings')).toBeVisible()
+      await expect(popover).toContainText('EU Taxonomy 2020')
 
       await expect(popover).toHaveScreenshot('company-profile-evidence-popover.png')
       await expectNoTrackedBrowserIssues(testInfo, 'company-profile-evidence', issues)
