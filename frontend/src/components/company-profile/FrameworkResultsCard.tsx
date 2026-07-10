@@ -30,7 +30,7 @@ export function FrameworkResultsCard({
     >
       <div className="space-y-3">
         {frameworkScores.length === 0 ? (
-          <p className="text-sm text-slate-400">{t('profile.noFrameworkResults')}</p>
+          <p className="text-sm text-slate-500">{t('profile.noFrameworkResults')}</p>
         ) : (
           frameworkScores.map((framework) => (
             (() => {
@@ -102,7 +102,7 @@ export function FrameworkResultsCard({
                       </div>
                     )}
                     {frameworkVersion || analyzedAt ? (
-                      <p className="mt-2 text-xs text-slate-400">
+                      <p className="mt-2 text-xs text-slate-500">
                         {frameworkVersion
                           ? t('profile.frameworkVersion', {
                               version: frameworkVersion,

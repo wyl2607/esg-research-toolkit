@@ -93,7 +93,7 @@ export function IdentityCard(props: IdentityCardProps) {
                       </span>
                     </div>
                     {m.chosen_pdf_filename ? (
-                      <p className="mt-0.5 break-all text-slate-400 [overflow-wrap:anywhere]">
+                      <p className="mt-0.5 break-all text-slate-500 [overflow-wrap:anywhere]">
                         {t('profile.mergeChosenFile', { filename: m.chosen_pdf_filename })}
                       </p>
                     ) : m.chosen_source_url ? (
@@ -101,7 +101,7 @@ export function IdentityCard(props: IdentityCardProps) {
                         href={m.chosen_source_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="mt-0.5 block break-all text-indigo-500 underline-offset-2 hover:underline [overflow-wrap:anywhere]"
+                        className="mt-0.5 block break-all text-indigo-600 underline-offset-2 hover:underline [overflow-wrap:anywhere]"
                         title={m.chosen_source_url}
                       >
                         {t('profile.mergeChosenUrl')}
@@ -110,7 +110,7 @@ export function IdentityCard(props: IdentityCardProps) {
                   </div>
                 ))}
               {mergedResult.source_count > 1 && (
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-500">
                   {t('profile.provenanceMergeSummary', { count: mergedResult.source_count })}
                 </p>
               )}

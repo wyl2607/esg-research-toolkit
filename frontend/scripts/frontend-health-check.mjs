@@ -268,6 +268,11 @@ async function computeRouteBundleEvidence() {
 
   function collectImportKeys(key, targetSet) {
     if (!key || targetSet.has(key)) return
+    // Vite 8 / Rolldown may list the HTML entry as a static import of lazy route
+    // chunks. Counting that pulls the already-loaded SPA shell (react + app
+    // index) into "route initial JS" and creates false route-bundle regressions.
+    // Route evidence should only measure route-specific static deps.
+    if (key === 'index.html' || manifest[key]?.isEntry) return
     const chunk = manifest[key]
     if (!chunk) return
     targetSet.add(key)
