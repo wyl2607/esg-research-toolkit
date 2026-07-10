@@ -36,7 +36,7 @@ export function deltaPercentLabel(value: number | null | undefined) {
 }
 
 export function deltaToneClass(value: number | null | undefined) {
-  if (value == null) return 'text-slate-400'
+  if (value == null) return 'text-slate-500'
   return value >= 0 ? 'text-emerald-600' : 'text-rose-600'
 }
 

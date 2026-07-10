@@ -30,7 +30,7 @@ export function EvidenceCard({
     >
       <div className="space-y-2">
         {latestEvidenceSummary.length === 0 ? (
-          <p className="text-sm text-slate-400">{t('profile.noEvidence')}</p>
+          <p className="text-sm text-slate-500">{t('profile.noEvidence')}</p>
         ) : (
           latestEvidenceSummary.map((e, i) => (
             <div

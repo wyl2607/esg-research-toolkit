@@ -79,7 +79,7 @@ export function CompanyProfileHeavyCharts({
         </CardHeader>
         <CardContent>
           {frameworkRadarData.length === 0 ? (
-            <p className="text-sm text-slate-400">{noFrameworkResultsLabel}</p>
+            <p className="text-sm text-slate-500">{noFrameworkResultsLabel}</p>
           ) : (
             <>
               <ResponsiveContainer width="100%" height={260} minWidth={0} minHeight={0}>
