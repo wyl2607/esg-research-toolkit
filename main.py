@@ -140,7 +140,8 @@ SAF_INPUT_EXAMPLE = {
     "feedstock_to_saf_ratio": 1.25,
     "opex_eur_per_tonne": 250.0,
     "policy_credit_eur_per_tonne": 0.0,
-    "jet_fuel_price_eur_per_litre": 0.60,
+    # ~0.66 USD/L EU jet proxy / ECB EURUSD (seed 2026-07-17)
+    "jet_fuel_price_eur_per_litre": 0.57,
     "saf_density_kg_per_litre": 0.800,
     "currency": "EUR",
     "reference_fx_to_eur": 1.0,
