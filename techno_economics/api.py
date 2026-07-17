@@ -123,7 +123,7 @@ def saf_benchmarks() -> dict[str, SAFInput]:
             feedstock_to_saf_ratio=1.25,         # ~80% conversion yield
             opex_eur_per_tonne=250,
             policy_credit_eur_per_tonne=0,
-            jet_fuel_price_eur_per_litre=0.60,
+            jet_fuel_price_eur_per_litre=0.57,
         ),
         # -------------------------------------------------------------------
         # ATJ: Alcohol-to-Jet (sugarcane ethanol)
@@ -141,7 +141,7 @@ def saf_benchmarks() -> dict[str, SAFInput]:
             feedstock_to_saf_ratio=2.1,          # ethanol → SAF conversion ratio
             opex_eur_per_tonne=280,
             policy_credit_eur_per_tonne=0,
-            jet_fuel_price_eur_per_litre=0.60,
+            jet_fuel_price_eur_per_litre=0.57,
         ),
         # -------------------------------------------------------------------
         # ATJ: Alcohol-to-Jet (US corn ethanol)
@@ -159,7 +159,7 @@ def saf_benchmarks() -> dict[str, SAFInput]:
             feedstock_to_saf_ratio=2.1,
             opex_eur_per_tonne=260,
             policy_credit_eur_per_tonne=-390,   # IRA 45Z credit ~€390/tonne SAF
-            jet_fuel_price_eur_per_litre=0.60,
+            jet_fuel_price_eur_per_litre=0.57,
             currency="USD",
             reference_fx_to_eur=0.93,
         ),
@@ -179,7 +179,7 @@ def saf_benchmarks() -> dict[str, SAFInput]:
             feedstock_to_saf_ratio=4.5,          # biomass gasification yield
             opex_eur_per_tonne=350,
             policy_credit_eur_per_tonne=0,
-            jet_fuel_price_eur_per_litre=0.60,
+            jet_fuel_price_eur_per_litre=0.57,
         ),
         # -------------------------------------------------------------------
         # PtL: Power-to-Liquid (electrofuels / e-kerosene)
@@ -198,7 +198,7 @@ def saf_benchmarks() -> dict[str, SAFInput]:
             feedstock_to_saf_ratio=5.5,          # H2 + CO2 → FT → SAF
             opex_eur_per_tonne=400,
             policy_credit_eur_per_tonne=0,
-            jet_fuel_price_eur_per_litre=0.60,
+            jet_fuel_price_eur_per_litre=0.57,
         ),
         # -------------------------------------------------------------------
         # PtL 2035 scenario: projected cost after scale-up + green H2 cost decline

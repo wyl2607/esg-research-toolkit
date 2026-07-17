@@ -560,7 +560,7 @@ class SAFInput(BaseModel):
 
     # Reference market prices
     jet_fuel_price_eur_per_litre: float = Field(
-        default=0.60, gt=0.0, le=10.0,
+        default=0.57, gt=0.0, le=10.0,  # public jet proxy seed ~2026-07
         description="Current conventional Jet A-1 price (€/litre) for breakeven comparison",
     )
 

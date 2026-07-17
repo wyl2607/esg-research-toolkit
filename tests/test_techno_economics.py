@@ -178,7 +178,7 @@ def make_saf_input(**overrides) -> SAFInput:
         "feedstock_to_saf_ratio": 1.25,
         "opex_eur_per_tonne": 250,
         "policy_credit_eur_per_tonne": 0.0,
-        "jet_fuel_price_eur_per_litre": 0.60,
+        "jet_fuel_price_eur_per_litre": 0.57,
     }
     data.update(overrides)
     return SAFInput(**data)
@@ -193,9 +193,9 @@ def test_saf_hefa_cost_in_expected_range() -> None:
     assert result.region == "EU"
 
 
-def test_saf_hefa_not_cost_competitive_vs_kerosene_2025() -> None:
-    """At 2025 market params, HEFA-SAF costs more than Jet A-1 (€0.60/L)."""
-    result = calculate_saf_cost(make_saf_input(jet_fuel_price_eur_per_litre=0.60))
+def test_saf_hefa_not_cost_competitive_vs_kerosene_2026() -> None:
+    """At 2026-07 jet proxy seed (~€0.57/L), HEFA-SAF still costs more than Jet A-1."""
+    result = calculate_saf_cost(make_saf_input(jet_fuel_price_eur_per_litre=0.57))
 
     assert not result.is_cost_competitive
     assert result.premium_vs_conventional_pct > 0

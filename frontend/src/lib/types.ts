@@ -1902,7 +1902,7 @@ export interface components {
             /**
              * Jet Fuel Price Eur Per Litre
              * @description Current conventional Jet A-1 price (€/litre) for breakeven comparison
-             * @default 0.6
+             * @default 0.57
              */
             jet_fuel_price_eur_per_litre: number;
             /**
