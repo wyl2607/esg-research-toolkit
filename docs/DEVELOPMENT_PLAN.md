@@ -227,3 +227,18 @@ class LCOEResult(BaseModel):
 - [ ] pytest 覆盖率 ≥ 70%
 - [ ] 无 `literature_pipeline` 残留
 - [ ] GitHub repo 公开，cv.md 链接更新
+
+## Portfolio maintenance mode (2026-07-30)
+
+After the portfolio optim campaign: **product development is the default**;
+maintenance runs on a clock.
+
+| Mode | When | What |
+|------|------|------|
+| Develop | Default | Ship features for this repo only |
+| Code quality | Blocks delivery / explicit debt | Bounded refactor only |
+| Data sources | Schedule / gate red / product need | Existing gates — no full re-audit |
+| Review | Weekly digest + before merge | `wyl2607/automation` Portfolio digest issue |
+
+Deferred majors (product-driven only): Tailwind 4, eslint 10, fastapi+pydantic, ruff 0.16.
+Cross-repo weekly scan: `wyl2607/automation` Portfolio scan workflow.
