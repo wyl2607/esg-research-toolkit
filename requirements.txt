@@ -11,7 +11,7 @@ sqlalchemy~=2.0.51
 alembic~=1.18.0
 
 # AI
-openai~=2.50.0
+openai~=2.51.0
 
 # Data processing
 pandas~=2.2.0
