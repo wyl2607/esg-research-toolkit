@@ -7,6 +7,9 @@ export interface MetricItem {
   label: string
   value: string | number
   color?: 'default' | 'green' | 'red' | 'blue'
+  /** Unknown metric (API failure / null) — visually distinct from measured zero. */
+  unavailable?: boolean
+  unavailableLabel?: string
 }
 
 interface Props {
@@ -133,7 +136,13 @@ export function SortableMetricList({ items, loading, storageKey = 'metric-card-o
                 <GripVertical size={16} className="text-slate-500" />
               </div>
               <div className="min-w-0 flex-1">
-                <MetricCard label={item.label} value={loading ? '…' : item.value} color={item.color} />
+                <MetricCard
+                  label={item.label}
+                  value={loading ? '…' : item.value}
+                  color={item.color}
+                  unavailable={!loading && item.unavailable}
+                  unavailableLabel={item.unavailableLabel}
+                />
               </div>
             </>
           ) : (
@@ -145,7 +154,13 @@ export function SortableMetricList({ items, loading, storageKey = 'metric-card-o
               >
                 <GripVertical size={14} className="text-slate-400" />
               </div>
-              <MetricCard label={item.label} value={loading ? '…' : item.value} color={item.color} />
+              <MetricCard
+                label={item.label}
+                value={loading ? '…' : item.value}
+                color={item.color}
+                unavailable={!loading && item.unavailable}
+                unavailableLabel={item.unavailableLabel}
+              />
             </>
           )}
         </div>

@@ -128,8 +128,9 @@ export const listCompaniesWithYearCoverage = (): Promise<CompanyYearCoverage[]> 
 
 export interface DashboardStats {
   total_companies: number
-  avg_taxonomy_aligned: number
-  avg_renewable_pct: number
+  /** Empty-set mean is null (undefined), never coerced to 0. */
+  avg_taxonomy_aligned: number | null
+  avg_renewable_pct: number | null
   yearly_trend: Array<{ year: number; count: number }>
   top_emitters: Array<{ company: string; year: number; scope1: number }>
   bottom_emitters: Array<{ company: string; year: number; scope1: number }>

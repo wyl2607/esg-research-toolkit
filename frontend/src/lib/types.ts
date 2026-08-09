@@ -1233,10 +1233,10 @@ export interface components {
         DashboardStatsResponse: {
             /** Total Companies */
             total_companies: number;
-            /** Avg Taxonomy Aligned */
-            avg_taxonomy_aligned: number;
-            /** Avg Renewable Pct */
-            avg_renewable_pct: number;
+            /** Avg Taxonomy Aligned (null when empty set — not 0) */
+            avg_taxonomy_aligned: number | null;
+            /** Avg Renewable Pct (null when empty set — not 0) */
+            avg_renewable_pct: number | null;
             /** Yearly Trend */
             yearly_trend?: Record<string, never>[];
             /** Top Emitters */
@@ -3873,8 +3873,8 @@ export interface BatchStatusResponse {
 
 export interface DashboardStats {
   total_companies: number
-  avg_taxonomy_aligned: number
-  avg_renewable_pct: number
+  avg_taxonomy_aligned: number | null
+  avg_renewable_pct: number | null
   yearly_trend: Array<{ year: number; count: number }>
   top_emitters: Array<{ company: string; year: number; scope1: number }>
   bottom_emitters: Array<{ company: string; year: number; scope1: number }>

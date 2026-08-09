@@ -37,10 +37,11 @@ function coerceNumericLabel(
   suffix?: string
 ) {
   const baseValue = Array.isArray(value) ? value[0] : value
-  const numericValue = typeof baseValue === 'number' ? baseValue : Number(baseValue ?? 0)
-  const formatted = Number.isFinite(numericValue)
-    ? new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(numericValue)
-    : '0'
+  // Never collapse unknown tooltip values to 0 — that implies a measured zero.
+  if (baseValue === null || baseValue === undefined || baseValue === '') return '—'
+  const numericValue = typeof baseValue === 'number' ? baseValue : Number(baseValue)
+  if (!Number.isFinite(numericValue)) return '—'
+  const formatted = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(numericValue)
   return suffix ? `${formatted} ${suffix}` : formatted
 }
 

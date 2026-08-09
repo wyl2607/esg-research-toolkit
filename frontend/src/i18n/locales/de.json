@@ -23,6 +23,7 @@
     "loading": "Wird geladen…",
     "error": "Fehler",
     "noData": "Keine Daten verfügbar",
+    "dataUnavailable": "Daten nicht verfügbar",
     "selectCompany": "Unternehmen & Jahr auswählen…",
     "company": "Unternehmen",
     "year": "Jahr",

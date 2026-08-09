@@ -2586,8 +2586,9 @@ def test_profile_history_contract_stable_period_and_evidence_shapes_for_legacy_r
 def test_get_dashboard_stats_returns_empty_payload_for_no_records(db_session: Session) -> None:
     payload = get_dashboard_stats(db=db_session)
     assert payload["total_companies"] == 0
-    assert payload["avg_taxonomy_aligned"] == 0
-    assert payload["avg_renewable_pct"] == 0
+    # Empty-set averages are undefined — must not collapse to 0.0.
+    assert payload["avg_taxonomy_aligned"] is None
+    assert payload["avg_renewable_pct"] is None
     assert payload["yearly_trend"] == []
     assert payload["top_emitters"] == []
     assert payload["bottom_emitters"] == []

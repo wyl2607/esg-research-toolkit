@@ -965,10 +965,11 @@ def get_company_profile_legacy(
 def get_dashboard_stats(db: Session = Depends(get_db)) -> dict[str, Any]:
     records = list_reports_grouped(db)
     if not records:
+        # total_companies=0 is an honest empty count; empty-set averages are undefined.
         return {
             "total_companies": 0,
-            "avg_taxonomy_aligned": 0,
-            "avg_renewable_pct": 0,
+            "avg_taxonomy_aligned": None,
+            "avg_renewable_pct": None,
             "yearly_trend": [],
             "top_emitters": [],
             "bottom_emitters": [],
@@ -1023,10 +1024,10 @@ def get_dashboard_stats(db: Session = Depends(get_db)) -> dict[str, Any]:
     return {
         "total_companies": len(distinct_companies),
         "avg_taxonomy_aligned": (
-            round(statistics.mean(taxonomy_values), 1) if taxonomy_values else 0
+            round(statistics.mean(taxonomy_values), 1) if taxonomy_values else None
         ),
         "avg_renewable_pct": (
-            round(statistics.mean(renewable_values), 1) if renewable_values else 0
+            round(statistics.mean(renewable_values), 1) if renewable_values else None
         ),
         "yearly_trend": yearly_trend,
         "top_emitters": [
