@@ -42,12 +42,6 @@ export function resolveDashboardMetric(
   return { value: format(raw), unavailable: false }
 }
 
-export function formatCountMetric(n: number): number {
-  return n
-}
-
 export function formatPercentMetric(n: number): string {
-  // Keep integer-looking zeros as "0%" to match prior honest-zero display.
-  if (Number.isInteger(n)) return `${n}%`
   return `${n}%`
 }

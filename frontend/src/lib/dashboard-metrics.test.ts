@@ -1,14 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import {
   METRIC_UNAVAILABLE,
-  formatCountMetric,
   formatPercentMetric,
   resolveDashboardMetric,
 } from './dashboard-metrics'
 
 describe('resolveDashboardMetric', () => {
   it('marks request failure as unavailable, never 0', () => {
-    expect(resolveDashboardMetric({ kind: 'error' }, formatCountMetric)).toEqual({
+    expect(resolveDashboardMetric({ kind: 'error' })).toEqual({
       value: METRIC_UNAVAILABLE,
       unavailable: true,
     })
@@ -19,7 +18,7 @@ describe('resolveDashboardMetric', () => {
   })
 
   it('renders honest zero when API returns 0', () => {
-    expect(resolveDashboardMetric({ kind: 'ready', value: 0 }, formatCountMetric)).toEqual({
+    expect(resolveDashboardMetric({ kind: 'ready', value: 0 })).toEqual({
       value: 0,
       unavailable: false,
     })

@@ -12,11 +12,7 @@ import { Button } from '@/components/ui/button'
 import { useTranslation } from 'react-i18next'
 import { ArrowDownUp, ArrowRight, ArrowUpDown } from 'lucide-react'
 import { localizeErrorMessage, isBackendOffline } from '@/lib/error-utils'
-import {
-  formatCountMetric,
-  formatPercentMetric,
-  resolveDashboardMetric,
-} from '@/lib/dashboard-metrics'
+import { formatPercentMetric, resolveDashboardMetric } from '@/lib/dashboard-metrics'
 
 import type { MetricItem } from '@/components/SortableMetricList'
 
@@ -124,8 +120,7 @@ export function DashboardPage() {
       : null
 
   const companiesMetric = resolveDashboardMetric(
-    metricSource ?? { kind: 'ready', value: stats?.total_companies },
-    formatCountMetric
+    metricSource ?? { kind: 'ready', value: stats?.total_companies }
   )
   const taxonomyMetric = resolveDashboardMetric(
     metricSource ?? { kind: 'ready', value: stats?.avg_taxonomy_aligned },
