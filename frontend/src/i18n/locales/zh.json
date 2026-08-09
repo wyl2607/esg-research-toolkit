@@ -23,6 +23,7 @@
     "loading": "加载中…",
     "error": "错误",
     "noData": "暂无数据",
+    "dataUnavailable": "数据不可用",
     "selectCompany": "选择公司和年份…",
     "company": "公司",
     "year": "年份",

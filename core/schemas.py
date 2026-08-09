@@ -316,8 +316,9 @@ class CompanyHistoryResponse(BaseModel):
 
 class DashboardStatsResponse(BaseModel):
     total_companies: int
-    avg_taxonomy_aligned: float
-    avg_renewable_pct: float
+    # Empty-set mean is undefined — never coerce to 0.0.
+    avg_taxonomy_aligned: float | None
+    avg_renewable_pct: float | None
     yearly_trend: list[dict[str, Any]] = Field(default_factory=list)
     top_emitters: list[dict[str, Any]] = Field(default_factory=list)
     bottom_emitters: list[dict[str, Any]] = Field(default_factory=list)

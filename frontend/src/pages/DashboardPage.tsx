@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { useTranslation } from 'react-i18next'
 import { ArrowDownUp, ArrowRight, ArrowUpDown } from 'lucide-react'
 import { localizeErrorMessage, isBackendOffline } from '@/lib/error-utils'
+import { formatPercentMetric, resolveDashboardMetric } from '@/lib/dashboard-metrics'
 
 import type { MetricItem } from '@/components/SortableMetricList'
 
@@ -108,6 +109,27 @@ export function DashboardPage() {
     : 0
 
   const backendOffline = isBackendOffline(statsError) || isBackendOffline(companiesError)
+  const metricUnavailableLabel = t('common.dataUnavailable')
+
+  // Three-way metric state: loading / error(unavailable) / ready (incl. honest zero).
+  // Never collapse unknown → 0 via ?? 0 / || 0.
+  const metricSource = statsLoading
+    ? ({ kind: 'loading' } as const)
+    : statsError
+      ? ({ kind: 'error' } as const)
+      : null
+
+  const companiesMetric = resolveDashboardMetric(
+    metricSource ?? { kind: 'ready', value: stats?.total_companies }
+  )
+  const taxonomyMetric = resolveDashboardMetric(
+    metricSource ?? { kind: 'ready', value: stats?.avg_taxonomy_aligned },
+    formatPercentMetric
+  )
+  const renewableMetric = resolveDashboardMetric(
+    metricSource ?? { kind: 'ready', value: stats?.avg_renewable_pct },
+    formatPercentMetric
+  )
 
   const chartFallback = (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -149,20 +171,26 @@ export function DashboardPage() {
             {
               id: 'companies',
               label: t('dashboard.companiesAnalyzed'),
-              value: stats?.total_companies ?? 0,
+              value: companiesMetric.value,
               color: 'default',
+              unavailable: companiesMetric.unavailable,
+              unavailableLabel: metricUnavailableLabel,
             } satisfies MetricItem,
             {
               id: 'taxonomy',
               label: t('dashboard.avgTaxonomy'),
-              value: `${stats?.avg_taxonomy_aligned ?? 0}%`,
+              value: taxonomyMetric.value,
               color: 'blue',
+              unavailable: taxonomyMetric.unavailable,
+              unavailableLabel: metricUnavailableLabel,
             } satisfies MetricItem,
             {
               id: 'renewable',
               label: t('dashboard.avgRenewable'),
-              value: `${stats?.avg_renewable_pct ?? 0}%`,
+              value: renewableMetric.value,
               color: 'blue',
+              unavailable: renewableMetric.unavailable,
+              unavailableLabel: metricUnavailableLabel,
             } satisfies MetricItem,
           ]}
         />

@@ -8,6 +8,9 @@ interface MetricCardProps {
   sub?: string
   unit?: string
   color?: 'default' | 'green' | 'red' | 'blue'
+  /** When true, value is unknown (failed request / null) — muted style, not a measured zero. */
+  unavailable?: boolean
+  unavailableLabel?: string
   footer?: ReactNode
 }
 
@@ -17,23 +20,28 @@ export function MetricCard({
   sub,
   unit,
   color = 'default',
+  unavailable = false,
+  unavailableLabel,
   footer,
 }: MetricCardProps) {
-  const valueColor = {
-    default: 'text-slate-900',
-    green: 'text-green-600',
-    red: 'text-red-600',
-    blue: 'text-indigo-600',
-  }[color]
-  
+  const valueColor = unavailable
+    ? 'text-slate-400'
+    : {
+        default: 'text-slate-900',
+        green: 'text-green-600',
+        red: 'text-red-600',
+        blue: 'text-indigo-600',
+      }[color]
+
   // Generate unique ID for aria-labelledby
   const titleId = `metric-title-${label.replace(/\s+/g, '-').toLowerCase()}`
+  const resolvedSub = sub ?? (unavailable ? unavailableLabel : undefined)
 
   return (
     <Card className="surface-card h-full min-w-0" role="region" aria-labelledby={titleId}>
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-3">
-          <CardTitle 
+          <CardTitle
             id={titleId}
             className="text-sm font-medium leading-5 text-slate-600"
           >
@@ -45,10 +53,13 @@ export function MetricCard({
       <CardContent>
         <div
           className={`numeric-mono break-words text-[1.85rem] font-semibold leading-none ${valueColor}`}
+          data-metric-state={unavailable ? 'unavailable' : 'ok'}
+          title={unavailable ? unavailableLabel : undefined}
+          aria-label={unavailable && unavailableLabel ? `${label}: ${unavailableLabel}` : undefined}
         >
           {value}
         </div>
-        {sub && <p className="mt-2 text-xs leading-5 text-slate-500">{sub}</p>}
+        {resolvedSub && <p className="mt-2 text-xs leading-5 text-slate-500">{resolvedSub}</p>}
         {footer ? <div className="mt-3 min-w-0 max-w-full">{footer}</div> : null}
       </CardContent>
     </Card>
