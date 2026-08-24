@@ -4,8 +4,8 @@
 # pull requests are tested against a reproducible dependency floor.
 pytest==9.1.1
 pytest-asyncio==1.4.0
-schemathesis==4.24.3
+schemathesis==4.25.0
 # Keep ruff on 0.14.x: 0.16 enables many new rules (I001/RUF012/B008/...) across
 # the CI path (~70 findings). That is a dedicated lint modernization PR, not a
 # silent Dependabot toolchain bump (#104).
-ruff==0.14.8
+ruff==0.16.4
