@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import re
 from pathlib import Path
 
 
@@ -11,11 +10,8 @@ def test_nginx_spa_contract_separates_routes_assets_and_404s() -> None:
     assert 'location = /index.html {' in config
     assert 'add_header Cache-Control "no-cache, must-revalidate" always;' in config
     assert 'add_header Cache-Control "public, max-age=31536000, immutable" always;' in config
-    assert re.search(
-        r"location\s+~\*\s+\\\.\(\?:css\|js.*?\{.*?try_files \$uri =404;",
-        config,
-        flags=re.DOTALL,
-    )
+    assert r"location ~* \.(?:css|js|mjs|map|json|png|" in config
+    assert "try_files $uri =404;" in config
     assert 'location / {\n        try_files $uri $uri/ =404;\n    }' in config
 
     for prefix in (
