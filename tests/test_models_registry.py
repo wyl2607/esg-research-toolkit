@@ -72,6 +72,7 @@ def test_health_payload_contains_last_checked(monkeypatch) -> None:
         lambda: ({"gpt-4.1", "gpt-5.4-mini", "gpt-4o"}, None),
     )
 
+    models._availability_cache.clear()
     payload = models.health_payload()
 
     assert payload["status"] == "ok"

@@ -120,8 +120,10 @@ def refresh_availability() -> dict[ModelPurpose, ModelAvailability]:
                 source = "provider"
                 detail = None
             else:
-                available = spec.model in _KNOWN_MODEL_WHITELIST
-                source = "whitelist"
+                # A whitelist entry is not proof that the configured credential
+                # can reach or use the model. Treat provider failure as unknown.
+                available = False
+                source = "unknown"
                 detail = provider_error
             if not available:
                 _logger.warning("model %s not in provider list for purpose=%s", spec.model, purpose)
@@ -154,7 +156,16 @@ def validate_models_startup() -> None:
         _logger.warning("model availability check failed at startup: %s", exc)
 
 
+def _availability_ready(
+    availability: dict[ModelPurpose, ModelAvailability],
+) -> bool:
+    return bool(availability) and all(
+        status.available is True for status in availability.values()
+    )
+
+
 def health_payload() -> dict[str, object]:
+    """Return detailed model diagnostics for protected operator access only."""
     availability = get_availability()
     specs = _registry()
     purpose_payload: dict[str, dict[str, object]] = {}
@@ -170,7 +181,24 @@ def health_payload() -> dict[str, object]:
             "detail": status.detail if status else None,
         }
 
+    ready = _availability_ready(availability)
     return {
-        "status": "ok",
+        "status": "ok" if ready else "degraded",
         "models": purpose_payload,
+    }
+
+
+def public_health_payload() -> dict[str, object]:
+    """Return a coarse, non-sensitive readiness contract for public probes."""
+    availability = get_availability()
+    ready = _availability_ready(availability)
+    return {
+        "status": "ok" if ready else "degraded",
+        "ready": ready,
+        "models": {
+            purpose: {
+                "available": bool(status and status.available),
+            }
+            for purpose, status in availability.items()
+        },
     }

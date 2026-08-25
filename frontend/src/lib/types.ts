@@ -894,6 +894,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/health/models/details": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Health Models Details */
+        get: operations["health_models_details_health_models_details_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1791,6 +1808,22 @@ export interface components {
             status: "pending" | "approved" | "rejected";
             /** Review Note */
             review_note?: string | null;
+        };
+        /** PublicModelHealthEntry */
+        PublicModelHealthEntry: {
+            /** Available */
+            available: boolean;
+        };
+        /** PublicModelsHealthResponse */
+        PublicModelsHealthResponse: {
+            /** Status */
+            status: string;
+            /** Ready */
+            ready: boolean;
+            /** Models */
+            models?: {
+                [key: string]: components["schemas"]["PublicModelHealthEntry"];
+            };
         };
         /**
          * SAFCostResult
@@ -3740,7 +3773,38 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    "application/json": components["schemas"]["PublicModelsHealthResponse"];
+                };
+            };
+        };
+    };
+    health_models_details_health_models_details_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-admin-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
                     "application/json": components["schemas"]["ModelsHealthResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
