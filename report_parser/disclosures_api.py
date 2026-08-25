@@ -11,7 +11,7 @@ from typing import Any
 from urllib.parse import quote_plus, urljoin, urlparse
 
 import httpx
-from fastapi import APIRouter, BackgroundTasks, Body, Depends, HTTPException, Path as FastAPIPath, Query, status
+from fastapi import APIRouter, BackgroundTasks, Body, Depends, HTTPException, Path as FastAPIPath, Query, Response, status
 from pydantic import ValidationError
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -130,6 +130,11 @@ def _pending_to_item(row: PendingDisclosure) -> PendingDisclosureItem:
         status=row.status,  # type: ignore[arg-type]
         review_note=row.review_note,
     )
+
+
+def _set_private_no_store(response: Response) -> None:
+    response.headers["Cache-Control"] = "private, no-store, max-age=0"
+    response.headers["Pragma"] = "no-cache"
 
 
 def _is_contract_test_mode() -> bool:
@@ -729,8 +734,11 @@ def get_pending_disclosures(
     report_year: int | None = Query(default=None, ge=MIN_REPORT_YEAR, le=MAX_REPORT_YEAR),
     status: PendingDisclosureStatus | None = Query(default="pending"),
     limit: int = Query(default=50, ge=1, le=200),
+    response: Response,
+    _: None = Depends(require_admin_token),
     db: Session = Depends(get_db),
 ) -> list[PendingDisclosureItem]:
+    _set_private_no_store(response)
     rows = list_pending_disclosures(
         db,
         company_name=company_name,
@@ -746,8 +754,11 @@ def get_disclosure_lane_stats(
     company_name: str | None = Query(default=None, min_length=1, max_length=200),
     report_year: int | None = Query(default=None, ge=MIN_REPORT_YEAR, le=MAX_REPORT_YEAR),
     window_days: int = Query(default=30, ge=1, le=365),
+    response: Response,
+    _: None = Depends(require_admin_token),
     db: Session = Depends(get_db),
 ) -> DisclosureLaneStatsResponse:
+    _set_private_no_store(response)
     cutoff = datetime.now(timezone.utc) - timedelta(days=window_days)
     query = db.query(PendingDisclosure).filter(PendingDisclosure.fetched_at >= cutoff)
     if company_name:
