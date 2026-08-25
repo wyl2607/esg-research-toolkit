@@ -27,7 +27,7 @@ jobs:
       - name: Validate deploy secrets
         id: deploy_secrets
         run: |
-          if [ -z "\${{ secrets.VPS_HOST }}" ] || [ -z "\${{ secrets.VPS_DEPLOY_KEY }}" ] || [ -z "\${{ secrets.VPS_DEPLOY_USER }}" ]; then
+          if [ -z "${{ secrets.VPS_HOST }}" ] || [ -z "${{ secrets.VPS_DEPLOY_KEY }}" ] || [ -z "${{ secrets.VPS_DEPLOY_USER }}" ]; then
             echo "ready=false" >> "$GITHUB_OUTPUT"
             echo "::warning::Skipping VPS deploy: set VPS_HOST, VPS_DEPLOY_USER, and VPS_DEPLOY_KEY repository secrets."
           else
@@ -38,9 +38,9 @@ jobs:
         if: steps.deploy_secrets.outputs.ready == 'true'
         uses: appleboy/ssh-action@v1.2.5
         with:
-          host: \${{ secrets.VPS_HOST }}
-          username: \${{ secrets.VPS_DEPLOY_USER }}
-          key: \${{ secrets.VPS_DEPLOY_KEY }}
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_DEPLOY_USER }}
+          key: ${{ secrets.VPS_DEPLOY_KEY }}
           command_timeout: 30m
           envs: GITHUB_SHA
           script: |
@@ -65,8 +65,8 @@ jobs:
       - name: Verify public deploy fingerprint
         if: steps.deploy_secrets.outputs.ready == 'true' && inputs.public_health_url != ''
         env:
-          PUBLIC_HEALTH_URL: \${{ inputs.public_health_url }}
-          EXPECTED_GITHUB_SHA: \${{ github.sha }}
+          PUBLIC_HEALTH_URL: ${{ inputs.public_health_url }}
+          EXPECTED_GITHUB_SHA: ${{ github.sha }}
         run: |
           payload="$(curl -fsS "$PUBLIC_HEALTH_URL")"
           echo "$payload"
@@ -85,11 +85,10 @@ jobs:
       - name: Verify public dashboard stats
         if: steps.deploy_secrets.outputs.ready == 'true' && inputs.public_dashboard_url != ''
         env:
-          PUBLIC_DASHBOARD_URL: \${{ inputs.public_dashboard_url }}
+          PUBLIC_DASHBOARD_URL: ${{ inputs.public_dashboard_url }}
         run: |
           payload="$(curl -fsS "$PUBLIC_DASHBOARD_URL")"
           printf '%s' "$payload" | python scripts/qa/verify_dashboard_stats.py
-
       - name: Deploy skipped (missing secrets)
         if: steps.deploy_secrets.outputs.ready != 'true'
         run: echo "Deploy step skipped because required secrets are not configured."
