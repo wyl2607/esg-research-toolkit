@@ -730,11 +730,11 @@ def fetch_disclosure(
 
 @router.get("/pending", response_model=list[PendingDisclosureItem])
 def get_pending_disclosures(
+    response: Response,
     company_name: str | None = Query(default=None, min_length=1, max_length=200),
     report_year: int | None = Query(default=None, ge=MIN_REPORT_YEAR, le=MAX_REPORT_YEAR),
     status: PendingDisclosureStatus | None = Query(default="pending"),
     limit: int = Query(default=50, ge=1, le=200),
-    response: Response,
     _: None = Depends(require_admin_token),
     db: Session = Depends(get_db),
 ) -> list[PendingDisclosureItem]:
@@ -751,10 +751,10 @@ def get_pending_disclosures(
 
 @router.get("/lane-stats", response_model=DisclosureLaneStatsResponse)
 def get_disclosure_lane_stats(
+    response: Response,
     company_name: str | None = Query(default=None, min_length=1, max_length=200),
     report_year: int | None = Query(default=None, ge=MIN_REPORT_YEAR, le=MAX_REPORT_YEAR),
     window_days: int = Query(default=30, ge=1, le=365),
-    response: Response,
     _: None = Depends(require_admin_token),
     db: Session = Depends(get_db),
 ) -> DisclosureLaneStatsResponse:
