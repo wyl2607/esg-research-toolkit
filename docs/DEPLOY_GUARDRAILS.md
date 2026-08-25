@@ -37,7 +37,13 @@ bash scripts/preflight_safe_exec.sh \
   --exec "curl -sf http://127.0.0.1:8001/health"
 ```
 
-## 3. Failure Taxonomy (for logs)
+## 3. API Listener Boundary
+
+Production Compose must bind the API host port as `127.0.0.1:8001:8000`. Nginx/Cloudflare is the public boundary; the API container port must not be published on all host interfaces. The deployment contract test rejects an unqualified `8001:8000` mapping.
+
+After deployment, verify the local reverse-proxy path and the listener boundary on the VPS without recording raw firewall output or environment values.
+
+## 4. Failure Taxonomy (for logs)
 
 - `SSH_BLOCKED_OR_SANDBOX`
 - `HOSTNAME_RESOLUTION_FAILURE`
