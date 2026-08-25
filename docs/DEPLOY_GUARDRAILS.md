@@ -83,3 +83,16 @@ Required repository secrets:
 - `VPS_DEPLOY_KEY`
 
 The remote host should already contain the repository checkout at `/opt/esg-research-toolkit`. The workflow fetches and checks out the requested commit in detached mode before running `scripts/deploy.sh`; it must not run an unpinned `git pull origin main` on the server.
+
+## 8. Post-deploy Smoke Contracts
+
+The unified deploy script checks only unauthenticated routes:
+
+- `/health`
+- `/health/deploy`
+- `/report/companies`
+- `/report/dashboard/stats`
+
+`/disclosures/pending` is an admin-protected review queue and must not be used as an unauthenticated smoke endpoint. The dashboard check validates the JSON shape while preserving `null` averages as "undefined"; it never converts missing data into a fabricated zero.
+
+For an externally observable check, manually dispatch the workflow with `public_health_url` and/or `public_dashboard_url` populated. A successful source merge is not evidence that the live VPS or public proxy has been updated; record the deployment SHA and live response separately.
