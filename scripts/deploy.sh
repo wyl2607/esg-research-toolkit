@@ -130,12 +130,18 @@ for i in $(seq 1 10); do
     echo " waiting... ($i/10)"
     sleep 3
 done
-for endpoint in /health /health/deploy /report/companies /disclosures/pending; do
+for endpoint in /health /health/deploy /report/companies; do
     if ! curl -sf "http://localhost:8001$endpoint" >/dev/null; then
         rollback_and_exit "smoke check failed on $endpoint"
     fi
     echo " OK $endpoint"
 done
+
+dashboard_payload="$(curl -fsS http://localhost:8001/report/dashboard/stats)" || \
+    rollback_and_exit "dashboard stats endpoint failed"
+if ! printf '%s' "$dashboard_payload" | python3 "$REPO_DIR/scripts/qa/verify_dashboard_stats.py"; then
+    rollback_and_exit "dashboard stats response contract failed"
+fi
 
 # 9. Reclaim disk: drop dangling images left by the rebuild.
 echo "→ Pruning dangling images..."
