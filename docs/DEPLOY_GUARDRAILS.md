@@ -54,7 +54,7 @@ After deployment, verify the local reverse-proxy path and the listener boundary 
 - `NON_JSON_RESPONSE_TO_JQ`
 - `UNKNOWN`
 
-## 4. Mandatory Logging
+## 5. Mandatory Logging
 
 Every deployment run must produce one main log under `logs/` and include:
 
@@ -63,7 +63,7 @@ Every deployment run must produce one main log under `logs/` and include:
 3. classified failure reason
 4. final status
 
-## 5. Team Enforcement
+## 6. Team Enforcement
 
 For any future deployment task (Task 10+ style):
 
@@ -72,7 +72,7 @@ For any future deployment task (Task 10+ style):
 3. failed subtasks must retry up to 3 times
 4. all subagent logs must be merged into one task log
 
-## 6. GitHub Actions Deploy Baseline
+## 7. GitHub Actions Deploy Baseline
 
 The GitHub deploy workflow is manual-only and must deploy the exact `GITHUB_SHA` selected by the workflow run.
 
