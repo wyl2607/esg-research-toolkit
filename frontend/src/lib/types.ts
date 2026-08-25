@@ -1763,22 +1763,6 @@ export interface components {
                 [key: string]: components["schemas"]["ModelHealthEntry"];
             };
         };
-        /** PublicModelHealthEntry */
-        PublicModelHealthEntry: {
-            /** Available */
-            available: boolean;
-        };
-        /** PublicModelsHealthResponse */
-        PublicModelsHealthResponse: {
-            /** Status */
-            status: string;
-            /** Ready */
-            ready: boolean;
-            /** Models */
-            models?: {
-                [key: string]: components["schemas"]["PublicModelHealthEntry"];
-            };
-        };
         /** MultiFrameworkReport */
         MultiFrameworkReport: {
             /** Company Name */
@@ -1824,6 +1808,22 @@ export interface components {
             status: "pending" | "approved" | "rejected";
             /** Review Note */
             review_note?: string | null;
+        };
+        /** PublicModelHealthEntry */
+        PublicModelHealthEntry: {
+            /** Available */
+            available: boolean;
+        };
+        /** PublicModelsHealthResponse */
+        PublicModelsHealthResponse: {
+            /** Status */
+            status: string;
+            /** Ready */
+            ready: boolean;
+            /** Models */
+            models?: {
+                [key: string]: components["schemas"]["PublicModelHealthEntry"];
+            };
         };
         /**
          * SAFCostResult
@@ -3796,6 +3796,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ModelsHealthResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
