@@ -5,6 +5,8 @@
 pytest==9.1.1
 pytest-asyncio==1.4.0
 schemathesis==4.24.3
+# Schemathesis 4.24.3 calls is_satisfiable; jsonschema-rs 0.50+ renamed that API.
+jsonschema-rs==0.49.0
 # Keep ruff on 0.14.x: 0.16 enables many new rules (I001/RUF012/B008/...) across
 # the CI path (~70 findings). That is a dedicated lint modernization PR, not a
 # silent Dependabot toolchain bump (#104).

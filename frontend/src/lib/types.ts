@@ -2724,7 +2724,9 @@ export interface operations {
                 status?: ("pending" | "approved" | "rejected") | null;
                 limit?: number;
             };
-            header?: never;
+            header?: {
+                "x-admin-token"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -2757,7 +2759,9 @@ export interface operations {
                 report_year?: number | null;
                 window_days?: number;
             };
-            header?: never;
+            header?: {
+                "x-admin-token"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
