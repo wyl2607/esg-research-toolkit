@@ -37,7 +37,13 @@ bash scripts/preflight_safe_exec.sh \
   --exec "curl -sf http://127.0.0.1:8001/health"
 ```
 
-## 3. Failure Taxonomy (for logs)
+## 3. API Listener Boundary
+
+Production Compose must bind the API host port as `127.0.0.1:8001:8000`. Nginx/Cloudflare is the public boundary; the API container port must not be published on all host interfaces. The deployment contract test rejects an unqualified `8001:8000` mapping.
+
+After deployment, verify the local reverse-proxy path and the listener boundary on the VPS without recording raw firewall output or environment values.
+
+## 4. Failure Taxonomy (for logs)
 
 - `SSH_BLOCKED_OR_SANDBOX`
 - `HOSTNAME_RESOLUTION_FAILURE`
@@ -48,7 +54,7 @@ bash scripts/preflight_safe_exec.sh \
 - `NON_JSON_RESPONSE_TO_JQ`
 - `UNKNOWN`
 
-## 4. Mandatory Logging
+## 5. Mandatory Logging
 
 Every deployment run must produce one main log under `logs/` and include:
 
@@ -57,7 +63,7 @@ Every deployment run must produce one main log under `logs/` and include:
 3. classified failure reason
 4. final status
 
-## 5. Team Enforcement
+## 6. Team Enforcement
 
 For any future deployment task (Task 10+ style):
 
@@ -66,7 +72,7 @@ For any future deployment task (Task 10+ style):
 3. failed subtasks must retry up to 3 times
 4. all subagent logs must be merged into one task log
 
-## 6. GitHub Actions Deploy Baseline
+## 7. GitHub Actions Deploy Baseline
 
 The GitHub deploy workflow is manual-only and must deploy the exact `GITHUB_SHA` selected by the workflow run.
 
