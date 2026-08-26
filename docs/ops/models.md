@@ -22,22 +22,22 @@ Each purpose also has default `max_tokens` and ordered fallback candidates.
 At app startup the service checks model availability:
 
 - if OpenAI provider listing works, check configured model names against `/v1/models`
-- if provider listing is unavailable, use local whitelist fallback
-- unknown models emit warnings and do not hard-crash startup
+- if provider listing is unavailable, availability is `unknown` and the service is degraded
+- a local model-name whitelist is not treated as proof that a credential or provider is usable
+- unknown or unavailable models emit warnings but do not hard-crash startup
 
 Warning format in logs:
 
 - `model <name> not in provider list for purpose=<purpose>`
 
-## Runtime Health Endpoint
+## Runtime Health Endpoints
 
-Use `GET /health/models` to inspect:
+Use public `GET /health/models` for load balancers and public monitoring. It returns only:
 
-- configured model per purpose
-- `max_tokens`
-- fallback list
-- availability status
-- check source (`provider` or `whitelist`)
-- last check timestamp
+- coarse `status` (`ok` or `degraded`)
+- `ready` boolean
+- per-purpose `available` booleans
 
-Use this endpoint in monitoring to catch typo/deprecation drift before it silently breaks audit or extraction pipelines.
+Use protected `GET /health/models/details` with the `X-Admin-Token` header for operator diagnostics. It contains configured model names, token budgets, fallbacks, check source, timestamps, and provider error details.
+
+Provider-list failures, including missing or invalid credentials, never report a ready model. The public endpoint contains no provider exception text or routing configuration.

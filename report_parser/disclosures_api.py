@@ -2,9 +2,12 @@ from __future__ import annotations
 
 import ipaddress
 import json
+import logging
 import os
 import re
+import socket
 import tempfile
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -52,6 +55,24 @@ MAX_REPORT_YEAR = 2100
 MAX_PENDING_DISCLOSURE_ID = 9_223_372_036_854_775_807
 MIN_PDF_BYTES = 1024
 HTTP_TIMEOUT_SECONDS = 4.0
+MAX_REDIRECTS = 5
+MAX_RESPONSE_BYTES = 25 * 1024 * 1024
+_METADATA_NETWORKS = tuple(
+    ipaddress.ip_network(network)
+    for network in (
+        "100.100.100.0/24",  # Alibaba metadata
+        "169.254.169.254/32",  # AWS/GCP/Azure metadata
+        "169.254.170.0/24",  # AWS ECS task metadata
+    )
+)
+_METADATA_HOSTNAMES = {
+    "metadata",
+    "metadata.google.internal",
+    "metadata.azure.internal",
+    "instance-data.ec2.internal",
+}
+_LOCAL_FETCH_ENVS = {"development", "dev", "local", "test", "testing"}
+_logger = logging.getLogger(__name__)
 HTTP_HEADERS = {
     "User-Agent": "esg-research-toolkit/0.2 (+contact: docs/esg-research-toolkit)",
     "Accept": "application/pdf,text/html;q=0.9,*/*;q=0.8",
@@ -145,17 +166,199 @@ def _is_pytest_mode() -> bool:
     return bool(os.getenv("PYTEST_CURRENT_TEST"))
 
 
+class _FetchPolicyError(ValueError):
+    """Raised when a source URL violates the outbound fetch policy."""
+
+
+@dataclass(frozen=True)
+class _FetchedResponse:
+    status_code: int
+    headers: Any
+    body: bytes
+    url: str
+
+
+def _is_local_fetch_test_mode() -> bool:
+    app_env = os.getenv("APP_ENV", "development").strip().lower()
+    return (
+        os.getenv("ESG_LOCAL_FETCH_TEST_MODE") == "1"
+        and app_env in _LOCAL_FETCH_ENVS
+    )
+
+
+def _is_unsafe_ip(ip: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
+    mapped = getattr(ip, "ipv4_mapped", None)
+    if mapped is not None:
+        ip = mapped
+    return (
+        ip.is_private
+        or ip.is_loopback
+        or ip.is_link_local
+        or ip.is_reserved
+        or ip.is_unspecified
+        or ip.is_multicast
+        or any(
+            ip in network
+            for network in _METADATA_NETWORKS
+            if network.version == ip.version
+        )
+    )
+
+
 def _is_private_or_local_hostname(hostname: str | None) -> bool:
     if not hostname:
         return True
-    lowered = hostname.lower()
-    if lowered in {"localhost", "127.0.0.1", "::1"}:
+    lowered = hostname.rstrip(".").lower()
+    if lowered in {
+        "localhost",
+        "127.0.0.1",
+        "::1",
+        "0.0.0.0",
+        "::",
+        *_METADATA_HOSTNAMES,
+    }:
+        return True
+    if lowered.endswith((".local", ".internal")):
         return True
     try:
         ip = ipaddress.ip_address(lowered)
     except ValueError:
-        return lowered.endswith(".local")
-    return ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved
+        return False
+    return _is_unsafe_ip(ip)
+
+
+def _resolve_destination_ips(
+    hostname: str,
+    port: int,
+) -> tuple[ipaddress.IPv4Address | ipaddress.IPv6Address, ...]:
+    try:
+        literal = ipaddress.ip_address(hostname)
+    except ValueError:
+        try:
+            infos = socket.getaddrinfo(hostname, port, type=socket.SOCK_STREAM)
+        except (OSError, socket.gaierror) as exc:
+            raise _FetchPolicyError("destination DNS resolution failed") from exc
+        resolved: list[ipaddress.IPv4Address | ipaddress.IPv6Address] = []
+        for info in infos:
+            address = str(info[4][0])
+            try:
+                resolved.append(ipaddress.ip_address(address))
+            except ValueError:
+                continue
+        if not resolved:
+            raise _FetchPolicyError("destination DNS resolution returned no addresses")
+        return tuple(dict.fromkeys(resolved))
+    return (literal,)
+
+
+def _validate_fetch_url(
+    raw_url: str,
+) -> tuple[str, tuple[ipaddress.IPv4Address | ipaddress.IPv6Address, ...]]:
+    try:
+        parsed = urlparse(raw_url)
+        hostname = parsed.hostname
+        port = parsed.port
+    except ValueError as exc:
+        raise _FetchPolicyError("malformed destination URL") from exc
+
+    allowed_schemes = {"https"}
+    if _is_local_fetch_test_mode():
+        allowed_schemes = {"http", "https"}
+    if parsed.scheme.lower() not in allowed_schemes:
+        raise _FetchPolicyError("destination scheme is not allowed")
+    if not hostname or parsed.username or parsed.password:
+        raise _FetchPolicyError("destination URL has invalid authority")
+
+    expected_port = 443 if parsed.scheme.lower() == "https" else 80
+    if port is None:
+        port = expected_port
+    if port != expected_port:
+        raise _FetchPolicyError("destination port is not allowed")
+    if _is_private_or_local_hostname(hostname):
+        raise _FetchPolicyError("destination hostname is private or local")
+
+    resolved_ips = _resolve_destination_ips(hostname, port)
+    if any(_is_unsafe_ip(ip) for ip in resolved_ips):
+        raise _FetchPolicyError("destination resolves to a private or metadata address")
+    return parsed.geturl(), resolved_ips
+
+
+def _safe_url_label(raw_url: str) -> str:
+    try:
+        parsed = urlparse(raw_url)
+        hostname = parsed.hostname or "<missing>"
+        port = parsed.port
+        suffix = f":{port}" if port is not None else ""
+        return f"{parsed.scheme.lower()}://{hostname}{suffix}"
+    except ValueError:
+        return "<malformed-url>"
+
+
+def _read_limited_response(response: Any) -> bytes:
+    body = bytearray()
+    for chunk in response.iter_bytes():
+        body.extend(chunk)
+        if len(body) > MAX_RESPONSE_BYTES:
+            raise _FetchPolicyError("response exceeds byte limit")
+    return bytes(body)
+
+
+def _fetch_with_safe_redirects(
+    client: httpx.Client,
+    source_url: str,
+) -> _FetchedResponse | None:
+    current_url = source_url
+    for redirect_index in range(MAX_REDIRECTS + 1):
+        try:
+            safe_url, _ = _validate_fetch_url(current_url)
+        except _FetchPolicyError as exc:
+            _logger.warning(
+                "disclosure fetch rejected destination=%s reason=%s",
+                _safe_url_label(current_url),
+                type(exc).__name__,
+            )
+            return None
+
+        try:
+            with client.stream(
+                "GET",
+                safe_url,
+                timeout=HTTP_TIMEOUT_SECONDS,
+                headers=HTTP_HEADERS,
+            ) as response:
+                if 300 <= response.status_code < 400:
+                    location = response.headers.get("location")
+                    if not location or redirect_index >= MAX_REDIRECTS:
+                        _logger.warning(
+                            "disclosure fetch rejected redirect destination=%s",
+                            _safe_url_label(safe_url),
+                        )
+                        return None
+                    current_url = urljoin(safe_url, location)
+                    continue
+
+                body = _read_limited_response(response)
+                return _FetchedResponse(
+                    status_code=response.status_code,
+                    headers=response.headers,
+                    body=body,
+                    url=str(response.url),
+                )
+        except _FetchPolicyError as exc:
+            _logger.warning(
+                "disclosure fetch rejected destination=%s reason=%s",
+                _safe_url_label(current_url),
+                type(exc).__name__,
+            )
+            return None
+        except httpx.HTTPError as exc:
+            _logger.info(
+                "disclosure fetch failed destination=%s error=%s",
+                _safe_url_label(current_url),
+                type(exc).__name__,
+            )
+            return None
+    return None
 
 
 def _candidate_source_urls(
@@ -379,15 +582,11 @@ def _lane_stats_from_evidence(evidence: dict[str, Any]) -> list[dict[str, int | 
 
 
 def _download_pdf_bytes(client: httpx.Client, source_url: str) -> tuple[bytes, str] | None:
-    try:
-        response = client.get(source_url, timeout=HTTP_TIMEOUT_SECONDS, headers=HTTP_HEADERS)
-    except httpx.HTTPError:
+    response = _fetch_with_safe_redirects(client, source_url)
+    if response is None or response.status_code != 200:
         return None
 
-    if response.status_code != 200:
-        return None
-
-    body = response.content
+    body = response.body
     if len(body) < MIN_PDF_BYTES:
         return None
 
@@ -395,28 +594,31 @@ def _download_pdf_bytes(client: httpx.Client, source_url: str) -> tuple[bytes, s
     if "pdf" not in content_type and not body.startswith(b"%PDF-"):
         return None
 
-    return body, str(response.url)
+    return body, response.url
 
 
 def _discover_pdf_url_from_html(client: httpx.Client, page_url: str) -> str | None:
-    try:
-        response = client.get(page_url, timeout=HTTP_TIMEOUT_SECONDS, headers=HTTP_HEADERS)
-    except httpx.HTTPError:
-        return None
-
-    if response.status_code != 200:
+    response = _fetch_with_safe_redirects(client, page_url)
+    if response is None or response.status_code != 200:
         return None
 
     content_type = response.headers.get("content-type", "").lower()
     if "html" not in content_type and "text" not in content_type:
         return None
 
-    html = response.text[:500_000]
-    matches = re.findall(r'href=["\']([^"\']+\.pdf(?:\?[^"\']*)?)["\']', html, flags=re.IGNORECASE)
+    html = response.body.decode("utf-8", errors="replace")[:500_000]
+    matches = re.findall(
+        r'href=["\']([^"\']+\.pdf(?:\?[^"\']*)?)["\']',
+        html,
+        flags=re.IGNORECASE,
+    )
     for href in matches:
-        resolved = urljoin(str(response.url), href)
-        if not _is_private_or_local_hostname(urlparse(resolved).hostname):
-            return resolved
+        resolved = urljoin(response.url, href)
+        try:
+            _validate_fetch_url(resolved)
+        except _FetchPolicyError:
+            continue
+        return resolved
     return None
 
 
@@ -498,13 +700,15 @@ def _run_fetch_pipeline(
         source_type=source_type,
         source_hints=source_hints,
     )
-    client = httpx.Client(follow_redirects=True)
+    client = httpx.Client(follow_redirects=False, trust_env=False)
     downloaded: tuple[bytes, str] | None = None
     attempted_urls: list[str] = []
 
     try:
         for candidate in candidates:
-            if _is_private_or_local_hostname(urlparse(candidate).hostname):
+            try:
+                _validate_fetch_url(candidate)
+            except _FetchPolicyError:
                 continue
             attempted_urls.append(candidate)
 
