@@ -34,6 +34,17 @@ updates:
       pip-minor-patch:
         patterns: ["*"]
         update-types: ["minor", "patch"]
+    ignore:
+      # requirements-ci.txt deliberately pins ruff to 0.14.x: 0.16 turns on
+      # ~70 new findings (I001/RUF012/B008/...) across the CI path, which is a
+      # dedicated lint modernization pass (#104), not a toolchain bump to wave
+      # through. Without this ignore, ruff 0.16 keeps riding into the
+      # pip-minor-patch group and takes the whole group PR red with it — as it
+      # did in #143, where a correct and wanted schemathesis + jsonschema-rs
+      # pair was blocked by the ruff bump sharing its PR.
+      # Remove this entry as part of #104, not before.
+      - dependency-name: "ruff"
+        versions: [">=0.15"]
   - package-ecosystem: "npm"
     directory: "/frontend"
     schedule:
