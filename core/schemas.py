@@ -201,6 +201,16 @@ class ModelsHealthResponse(BaseModel):
     models: dict[str, ModelHealthEntry] = Field(default_factory=dict)
 
 
+class PublicModelHealthEntry(BaseModel):
+    available: bool
+
+
+class PublicModelsHealthResponse(BaseModel):
+    status: str
+    ready: bool
+    models: dict[str, PublicModelHealthEntry] = Field(default_factory=dict)
+
+
 class TaxonomyScoreResult(BaseModel):
     company_name: str
     report_year: int

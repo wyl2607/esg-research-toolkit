@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from sqlalchemy import text
@@ -22,12 +22,19 @@ from core.config import settings
 from core.database import SessionLocal, init_db
 from core.limiter import limiter
 from core.models import health_payload as model_health_payload
+from core.models import public_health_payload as public_model_health_payload
 from core.models import validate_models_startup
-from core.schemas import CompanyESGData, DeployHealthResponse, HealthResponse, ModelsHealthResponse
+from core.schemas import (
+    CompanyESGData,
+    DeployHealthResponse,
+    HealthResponse,
+    ModelsHealthResponse,
+    PublicModelsHealthResponse,
+)
 from core.version import app_version
 from esg_frameworks.api import _SCORERS, router as frameworks_router
 from esg_frameworks.storage import list_framework_results, save_framework_result
-from report_parser.admin_routes import validate_admin_config
+from report_parser.admin_routes import require_admin_token, validate_admin_config
 from report_parser.api import router as report_router
 from report_parser.api import v1_router as report_v1_router
 from report_parser.disclosures_api import router as disclosures_router
@@ -465,6 +472,11 @@ def health_deploy() -> dict[str, object]:
     return payload
 
 
-@app.get("/health/models", response_model=ModelsHealthResponse)
+@app.get("/health/models", response_model=PublicModelsHealthResponse)
 def health_models() -> dict[str, object]:
+    return public_model_health_payload()
+
+
+@app.get("/health/models/details", response_model=ModelsHealthResponse)
+def health_models_details(_: None = Depends(require_admin_token)) -> dict[str, object]:
     return model_health_payload()

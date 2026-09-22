@@ -37,7 +37,13 @@ bash scripts/preflight_safe_exec.sh \
   --exec "curl -sf http://127.0.0.1:8001/health"
 ```
 
-## 3. Failure Taxonomy (for logs)
+## 3. API Listener Boundary
+
+Production Compose must bind the API host port as `127.0.0.1:8001:8000`. Nginx/Cloudflare is the public boundary; the API container port must not be published on all host interfaces. The deployment contract test rejects an unqualified `8001:8000` mapping.
+
+After deployment, verify the local reverse-proxy path and the listener boundary on the VPS without recording raw firewall output or environment values.
+
+## 4. Failure Taxonomy (for logs)
 
 - `SSH_BLOCKED_OR_SANDBOX`
 - `HOSTNAME_RESOLUTION_FAILURE`
@@ -48,7 +54,7 @@ bash scripts/preflight_safe_exec.sh \
 - `NON_JSON_RESPONSE_TO_JQ`
 - `UNKNOWN`
 
-## 4. Mandatory Logging
+## 5. Mandatory Logging
 
 Every deployment run must produce one main log under `logs/` and include:
 
@@ -57,7 +63,7 @@ Every deployment run must produce one main log under `logs/` and include:
 3. classified failure reason
 4. final status
 
-## 5. Team Enforcement
+## 6. Team Enforcement
 
 For any future deployment task (Task 10+ style):
 
@@ -66,7 +72,7 @@ For any future deployment task (Task 10+ style):
 3. failed subtasks must retry up to 3 times
 4. all subagent logs must be merged into one task log
 
-## 6. GitHub Actions Deploy Baseline
+## 7. GitHub Actions Deploy Baseline
 
 The GitHub deploy workflow is manual-only and must deploy the exact `GITHUB_SHA` selected by the workflow run.
 
@@ -77,3 +83,16 @@ Required repository secrets:
 - `VPS_DEPLOY_KEY`
 
 The remote host should already contain the repository checkout at `/opt/esg-research-toolkit`. The workflow fetches and checks out the requested commit in detached mode before running `scripts/deploy.sh`; it must not run an unpinned `git pull origin main` on the server.
+
+## 8. Post-deploy Smoke Contracts
+
+The unified deploy script checks only unauthenticated routes:
+
+- `/health`
+- `/health/deploy`
+- `/report/companies`
+- `/report/dashboard/stats`
+
+`/disclosures/pending` is an admin-protected review queue and must not be used as an unauthenticated smoke endpoint. The dashboard check validates the JSON shape while preserving `null` averages as "undefined"; it never converts missing data into a fabricated zero.
+
+For an externally observable check, manually dispatch the workflow with `public_health_url` and/or `public_dashboard_url` populated. A successful source merge is not evidence that the live VPS or public proxy has been updated; record the deployment SHA and live response separately.

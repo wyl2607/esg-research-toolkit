@@ -7,6 +7,10 @@ on:
         description: "Optional public /health/deploy URL to verify after deploy"
         required: false
         default: ""
+      public_dashboard_url:
+        description: "Optional public /report/dashboard/stats URL to verify after deploy"
+        required: false
+        default: ""
 
 jobs:
   deploy:
@@ -78,6 +82,13 @@ jobs:
               raise SystemExit(f"public deploy git_sha mismatch: expected {expected}, got {actual}")
           PY
 
+      - name: Verify public dashboard stats
+        if: steps.deploy_secrets.outputs.ready == 'true' && inputs.public_dashboard_url != ''
+        env:
+          PUBLIC_DASHBOARD_URL: ${{ inputs.public_dashboard_url }}
+        run: |
+          payload="$(curl -fsS "$PUBLIC_DASHBOARD_URL")"
+          printf '%s' "$payload" | python scripts/qa/verify_dashboard_stats.py
       - name: Deploy skipped (missing secrets)
         if: steps.deploy_secrets.outputs.ready != 'true'
         run: echo "Deploy step skipped because required secrets are not configured."
