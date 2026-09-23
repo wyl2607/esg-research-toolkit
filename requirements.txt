@@ -20,7 +20,7 @@ pdfplumber~=0.11.0
 
 # HTTP / scraping
 httpx~=0.27.0
-aiohttp>=3.13.5,<4
+aiohttp>=3.14.3,<4
 
 # Scientific computing (LCOE/NPV/IRR)
 numpy~=1.26.0
