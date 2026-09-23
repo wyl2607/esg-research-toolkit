@@ -12,7 +12,21 @@ def test_nginx_spa_contract_separates_routes_assets_and_404s() -> None:
     assert 'add_header Cache-Control "public, max-age=31536000, immutable" always;' in config
     assert r"location ~* \.(?:css|js|mjs|map|json|png|" in config
     assert "try_files $uri =404;" in config
-    assert 'location / {\n        try_files $uri $uri/ =404;\n    }' in config
+    assert (
+        'location / {\n'
+        '        error_page 404 =404 /index.html;\n'
+        '        try_files $uri $uri/ =404;\n'
+        '    }'
+    ) in config
+
+    assert (
+        "location ~ ^/(?:upload|disclosures|taxonomy|lcoe|saf|companies"
+        in config
+    ), "known frontend routes must be explicitly listed"
+    assert "try_files $uri $uri/ /index.html;" in config, (
+        "known frontend routes must fall back to the SPA shell"
+    )
+    assert "try_files $uri $uri/ =404;" in config, "random paths must return 404"
 
     for prefix in (
         "upload",
