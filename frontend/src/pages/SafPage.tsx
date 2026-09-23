@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
+import { useSearchParams } from 'react-router-dom'
 import { calcSafCost, getSafBenchmarks } from '@/lib/api'
 import type { SAFInput, SAFCostResult } from '@/lib/api'
+import { formFromUrlParams } from '@/lib/saf-url-params'
 import {
   BarChart,
   Bar,
@@ -14,7 +16,7 @@ import {
   Cell,
 } from 'recharts'
 import { useTranslation } from 'react-i18next'
-import { TrendingDown, TrendingUp, Fuel } from 'lucide-react'
+import { TrendingDown, TrendingUp, Fuel, FileText } from 'lucide-react'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Panel } from '@/components/layout/Panel'
@@ -120,6 +122,9 @@ function CompetitivenessBar({ result }: { result: SAFCostResult }) {
 export function SafPage() {
   const { t } = useTranslation()
   const [form, setForm] = useState<SAFInput>(DEFAULT_INPUT)
+  const [searchParams] = useSearchParams()
+  const [loadedPresetKey, setLoadedPresetKey] = useState<string | null>(null)
+  const [urlApplied, setUrlApplied] = useState(false)
 
   const safMutation = useMutation({ mutationFn: calcSafCost })
 
@@ -136,7 +141,18 @@ export function SafPage() {
   }
 
   const loadBenchmark = (key: string) => {
-    if (benchmarks?.[key]) setForm(benchmarks[key])
+    if (benchmarks?.[key]) {
+      setForm(benchmarks[key])
+      setLoadedPresetKey(key)
+    }
+  }
+
+  // Apply ?preset= / ?jet_fuel_price_eur_per_litre= once, as soon as the presets arrive.
+  if (benchmarks && !urlApplied) {
+    const { form: fromUrl, presetKey } = formFromUrlParams(searchParams, benchmarks, form)
+    setUrlApplied(true)
+    setForm(fromUrl)
+    if (presetKey) setLoadedPresetKey(presetKey)
   }
 
   const numField = (
@@ -194,6 +210,19 @@ export function SafPage() {
                 </button>
               ))}
             </div>
+            {loadedPresetKey && benchmarks?.[loadedPresetKey] && (
+              <div className="mt-2 flex items-center gap-1.5 text-xs text-stone-500 dark:text-slate-400">
+                <FileText size={12} />
+                <span>
+                  {t('saf.presetSource', { source: benchmarks[loadedPresetKey].source ?? t('common.noData') })}
+                  {benchmarks[loadedPresetKey].as_of && (
+                    <>
+                      {' '}· {t('saf.presetAsOf', { date: benchmarks[loadedPresetKey].as_of })}
+                    </>
+                  )}
+                </span>
+              </div>
+            )}
           </Panel>
 
           <Panel title={t('saf.inputParams')}>

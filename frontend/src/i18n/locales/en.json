@@ -357,7 +357,9 @@
       "jetA1": "Jet A-1 (kerosene)",
       "safPathway": "SAF ({{pathway}})",
       "breakeven": "Breakeven"
-    }
+    },
+    "presetSource": "Source: {{source}}",
+    "presetAsOf": "As of {{date}}"
   },
   "companies": {
     "kicker": "Company intelligence",
