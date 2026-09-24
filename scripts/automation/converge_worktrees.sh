@@ -35,6 +35,7 @@ CLEAN_LANE_VENV_COPIES=0
 DELETE_LOCAL_BRANCHES=0
 DELETE_REMOTE_BRANCHES=0
 INCLUDE_REPO_ROOT=1
+SELF_PATH=""
 ASSERT_NO_LANES=0
 ASSERT_NO_LANE_ARTIFACTS=0
 
@@ -59,7 +60,8 @@ usage() {
 Usage: scripts/automation/converge_worktrees.sh [options]
 
 Options:
-  --repo <path>                    Git 主仓路径（默认：脚本所在项目根）
+  --repo <path>                    Git 仓路径（默认：脚本所在项目根）；传 linked worktree 时自动归一到主仓，
+                                   且该 worktree 自身不计入自动发现的 lane
   --main <branch>                  主分支名（默认：main）
   --lane <path>                    指定 lane 路径，可重复；不传则自动发现
 
@@ -82,11 +84,17 @@ Safe defaults:
 USAGE
 }
 
+# 允许从 linked worktree 调用（其 .git 是文件）：REPO_PATH 归一到主仓，
+# 调用方所在 worktree 记为 SELF_PATH，不计入自动发现的 lane。
 ensure_repo() {
-  if [ ! -d "$REPO_PATH/.git" ]; then
+  if ! git -C "$REPO_PATH" rev-parse --git-dir >/dev/null 2>&1; then
     error "repo path is not a git repository: $REPO_PATH"
     exit 1
   fi
+  local common_dir
+  SELF_PATH="$(cd "$(git -C "$REPO_PATH" rev-parse --show-toplevel)" && pwd)"
+  common_dir="$(cd "$REPO_PATH" && cd "$(git rev-parse --git-common-dir)" && pwd)"
+  REPO_PATH="$(cd "$common_dir/.." && pwd)"
 }
 
 parse_args() {
@@ -173,10 +181,8 @@ collect_auto_lanes() {
         if [ -n "$current_path" ]; then
           local abs_path
           abs_path="$(cd "$current_path" 2>/dev/null && pwd || true)"
-          if [ -n "$abs_path" ]; then
-            if [ "$abs_path" != "$REPO_PATH" ]; then
-              LANES+=("$abs_path")
-            fi
+          if [ -n "$abs_path" ] && [ "$abs_path" != "$REPO_PATH" ] && [ "$abs_path" != "$SELF_PATH" ]; then
+            LANES+=("$abs_path")
           fi
         fi
         current_path=""
@@ -188,7 +194,7 @@ collect_auto_lanes() {
   if [ -n "$current_path" ]; then
     local abs_path
     abs_path="$(cd "$current_path" 2>/dev/null && pwd || true)"
-    if [ -n "$abs_path" ] && [ "$abs_path" != "$REPO_PATH" ]; then
+    if [ -n "$abs_path" ] && [ "$abs_path" != "$REPO_PATH" ] && [ "$abs_path" != "$SELF_PATH" ]; then
       LANES+=("$abs_path")
     fi
   fi
@@ -285,7 +291,7 @@ report_lane_status() {
   unique_commits="$(git -C "$REPO_PATH" log --oneline "$MAIN_BRANCH..$branch" | head -n 5 || true)"
   if [ -n "$unique_commits" ]; then
     echo "unique commits (top 5):"
-    echo "$unique_commits" | sed 's/^/  - /'
+    echo "  - ${unique_commits//$'\n'/$'\n'  - }"
   else
     echo "unique commits: (none)"
   fi
@@ -453,7 +459,6 @@ delete_remote_branch() {
 main() {
   parse_args "$@"
   ensure_repo
-  REPO_PATH="$(cd "$REPO_PATH" && pwd)"
 
   if [ "${LANES[0]+x}" != "x" ]; then
     collect_auto_lanes
@@ -488,7 +493,7 @@ main() {
       [ -z "$lane" ] && continue
       artifact_kb="$(lane_artifact_kb "$lane")"
       if [ "$artifact_kb" -gt 0 ]; then
-        error "guard failed: lane has heavy artifacts ($(awk -v kb=\"$artifact_kb\" 'BEGIN{printf \"%.1fMB\", kb/1024}')) -> $lane"
+        error "guard failed: lane has heavy artifacts ($(awk -v kb="$artifact_kb" 'BEGIN{printf "%.1fMB", kb/1024}')) -> $lane"
         failed=1
       fi
     done
