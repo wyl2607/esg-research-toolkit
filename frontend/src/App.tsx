@@ -1,5 +1,5 @@
 import { BrowserRouter, Link, Route, Routes, useLocation } from 'react-router-dom'
-import { Suspense, lazy } from 'react'
+import { Suspense, lazy, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Layout } from '@/components/Layout'
@@ -63,6 +63,16 @@ function LoadingFallback() {
 function NotFound() {
   const { t } = useTranslation()
   const location = useLocation()
+
+  useEffect(() => {
+    const robots = document.createElement('meta')
+    robots.name = 'robots'
+    robots.content = 'noindex'
+    document.head.appendChild(robots)
+
+    return () => robots.remove()
+  }, [])
+
   return (
     <div className="py-16 text-center">
       <h1 className="text-2xl font-semibold mb-2 text-slate-900 dark:text-slate-100">
