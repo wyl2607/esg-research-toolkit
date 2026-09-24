@@ -1887,6 +1887,16 @@ export interface components {
              */
             region: "DE" | "EU" | "US" | "BR" | "INTL";
             /**
+             * Source
+             * @description Where the preset inputs come from
+             */
+            source?: string | null;
+            /**
+             * As Of
+             * @description Date of the newest sourced input
+             */
+            as_of?: string | null;
+            /**
              * Production Capacity Tonnes Year
              * @description Annual SAF production capacity in tonnes
              * @default 50000
