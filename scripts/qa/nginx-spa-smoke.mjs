@@ -29,6 +29,11 @@ try {
   assert(/text\/html/i.test(knownContentType) && /charset=utf-8/i.test(knownContentType), 'known route must be HTML UTF-8')
   assert(/no-cache/i.test(knownRoute.headers.get('cache-control') || ''), 'known route HTML must be no-cache')
 
+  const unknownRoute = await fetchPath('/__nginx_spa_contract_missing__')
+  assert(unknownRoute.status === 404, `unknown route expected 404, got ${unknownRoute.status}`)
+  const unknownContentType = unknownRoute.headers.get('content-type') || ''
+  assert(/text\/html/i.test(unknownContentType), 'unknown route must render the SPA 404 page')
+
   const missingAsset = await fetchPath('/assets/__codex_missing__.js')
   assert(missingAsset.status === 404, `missing asset expected 404, got ${missingAsset.status}`)
 
@@ -43,6 +48,7 @@ try {
     baseUrl,
     root: root.status,
     knownRoute: knownRoute.status,
+    unknownRoute: unknownRoute.status,
     missingAsset: missingAsset.status,
     hashedAsset: asset.status,
   }))
