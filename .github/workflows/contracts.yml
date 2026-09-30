@@ -111,9 +111,17 @@ jobs:
 
       - name: Run Schemathesis contract tests
         run: |
+          # allow_header_conformance is the OPTIONS-side sibling of unsupported_method:
+          # unsupported_method still skips OPTIONS requests, so since 4.25.0 (the split
+          # that ships in schemathesis 4.28.0) this check owns them. Both are excluded
+          # because CONTRACT_TEST_EXCLUDED_OPERATIONS (main.py) deliberately publishes a
+          # pruned subset of the schema, while the running app still serves every method
+          # of a shared path -- e.g. /report/companies/{company_name}/{report_year} keeps
+          # its admin-only DELETE route, so a correct `Allow` header can never match the
+          # pruned contract schema.
           schemathesis run \
             --checks all \
-            --exclude-checks negative_data_rejection,positive_data_acceptance,unsupported_method,status_code_conformance,not_a_server_error \
+            --exclude-checks negative_data_rejection,positive_data_acceptance,unsupported_method,allow_header_conformance,status_code_conformance,not_a_server_error \
             --generation-codec ascii \
             --max-examples 100 \
             --url http://127.0.0.1:8001 \
