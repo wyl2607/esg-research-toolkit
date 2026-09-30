@@ -41,6 +41,7 @@ from report_parser.disclosures_api import router as disclosures_router
 from report_parser.storage import get_report, save_report
 from taxonomy_scorer.api import router as taxonomy_router
 from techno_economics.api import router as techno_router
+from report_parser.csp_report import CSPBodyLimitMiddleware, router as csp_report_router
 
 APP_VERSION = app_version()
 DEPLOY_FINGERPRINT_PATH = Path(os.getenv("DEPLOY_FINGERPRINT_PATH", "/app/.deploy-fingerprint.json"))
@@ -238,6 +239,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(CSPBodyLimitMiddleware)
 app.add_middleware(SlowAPIMiddleware)
 
 app.state.limiter = limiter
@@ -431,6 +433,7 @@ app.include_router(taxonomy_router)
 app.include_router(techno_router)
 app.include_router(frameworks_router)
 app.include_router(benchmark_router)
+app.include_router(csp_report_router)
 
 
 @app.get("/")
