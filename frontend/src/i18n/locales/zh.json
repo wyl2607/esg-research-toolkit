@@ -357,7 +357,9 @@
       "jetA1": "Jet A-1（煤油）",
       "safPathway": "SAF（{{pathway}}）",
       "breakeven": "盈亏平衡"
-    }
+    },
+    "presetSource": "来源：{{source}}",
+    "presetAsOf": "截止日期：{{date}}"
   },
   "companies": {
     "kicker": "公司分析库",

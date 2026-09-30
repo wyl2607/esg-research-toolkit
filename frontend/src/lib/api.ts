@@ -396,6 +396,8 @@ export interface SAFInput {
   saf_density_kg_per_litre?: number
   currency?: 'EUR' | 'USD'
   reference_fx_to_eur?: number
+  source?: string | null
+  as_of?: string | null
 }
 
 export interface SAFCostResult {

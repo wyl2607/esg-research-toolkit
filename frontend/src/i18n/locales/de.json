@@ -357,7 +357,9 @@
       "jetA1": "Jet A-1 (Kerosin)",
       "safPathway": "SAF ({{pathway}})",
       "breakeven": "Break-even"
-    }
+    },
+    "presetSource": "Quelle: {{source}}",
+    "presetAsOf": "Stand {{date}}"
   },
   "companies": {
     "kicker": "Unternehmensintelligenz",

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import date
 from typing import Any, Literal, TypeAlias
 
 from pydantic import BaseModel, Field, field_validator
@@ -532,6 +533,8 @@ class SAFInput(BaseModel):
 
     pathway: SAFPathway = "HEFA"
     region: SAFRegion = "EU"
+    source: str | None = Field(default=None, description="Where the preset inputs come from")
+    as_of: date | None = Field(default=None, description="Date of the newest sourced input")
 
     # Plant scale
     production_capacity_tonnes_year: float = Field(

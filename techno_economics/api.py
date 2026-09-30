@@ -1,3 +1,5 @@
+from datetime import date
+
 from fastapi import APIRouter, Query
 
 from core.schemas import LCOEInput, LCOEResult, SAFCostResult, SAFInput, SensitivityResult
@@ -115,11 +117,13 @@ def saf_benchmarks() -> dict[str, SAFInput]:
         "HEFA_EU": SAFInput(
             pathway="HEFA",
             region="EU",
+            source="UCO (ISCC) DDP NW Europe EUR 1,280-1,290/t, week ending 2026-09-10 (Fastmarkets, 2026-09-15, https://www.fastmarkets.com/insights/european-uco-and-animal-fat-prices-jump-on-strong-demand-and-geopolitical-tensions/); CAPEX/OPEX/yield are legacy estimates without a dated source.",
+            as_of=date(2026, 9, 10),
             production_capacity_tonnes_year=50_000,
             capex_eur_per_tonne_year=1_800,
             lifetime_years=20,
             discount_rate=0.08,
-            feedstock_cost_eur_per_tonne=600,   # UCO spot price EU 2025
+            feedstock_cost_eur_per_tonne=1285,  # UCO (ISCC) DDP NW Europe, week ending 2026-09-10
             feedstock_to_saf_ratio=1.25,         # ~80% conversion yield
             opex_eur_per_tonne=250,
             policy_credit_eur_per_tonne=0,
@@ -133,12 +137,14 @@ def saf_benchmarks() -> dict[str, SAFInput]:
         "ATJ_Brazil": SAFInput(
             pathway="ATJ",
             region="BR",
+            source="Ethanol-to-SAF ratio 2.0 from EASA reference-price methodology, Table 7 (AtJ 60 % conversion x 83 % selectivity, https://www.easa.europa.eu/en/downloads/142604/en); ethanol price, CAPEX and OPEX are legacy estimates without a dated source.",
+            as_of=date(2026, 2, 26),
             production_capacity_tonnes_year=100_000,
             capex_eur_per_tonne_year=2_200,
             lifetime_years=20,
             discount_rate=0.09,
             feedstock_cost_eur_per_tonne=180,   # Brazilian sugarcane ethanol equivalent
-            feedstock_to_saf_ratio=2.1,          # ethanol → SAF conversion ratio
+            feedstock_to_saf_ratio=2.0,          # EASA: AtJ 60% conversion × 83% selectivity
             opex_eur_per_tonne=280,
             policy_credit_eur_per_tonne=0,
             jet_fuel_price_eur_per_litre=0.57,
@@ -151,12 +157,14 @@ def saf_benchmarks() -> dict[str, SAFInput]:
         "ATJ_US_IRA": SAFInput(
             pathway="ATJ",
             region="US",
+            source="Ethanol-to-SAF ratio 2.0 from EASA reference-price methodology, Table 7 (AtJ 60 % conversion x 83 % selectivity, https://www.easa.europa.eu/en/downloads/142604/en); ethanol price, CAPEX and OPEX are legacy estimates without a dated source.",
+            as_of=date(2026, 2, 26),
             production_capacity_tonnes_year=200_000,
             capex_eur_per_tonne_year=2_000,
             lifetime_years=20,
             discount_rate=0.075,
             feedstock_cost_eur_per_tonne=220,
-            feedstock_to_saf_ratio=2.1,
+            feedstock_to_saf_ratio=2.0,          # EASA: AtJ 60% conversion × 83% selectivity
             opex_eur_per_tonne=260,
             policy_credit_eur_per_tonne=-390,   # IRA 45Z credit ~€390/tonne SAF
             jet_fuel_price_eur_per_litre=0.57,
@@ -171,12 +179,14 @@ def saf_benchmarks() -> dict[str, SAFInput]:
         "FT_biomass_DE": SAFInput(
             pathway="FT-biomass",
             region="DE",
+            source="Woodchip feedstock EUR 110/wet t and FT (biomass) 20 % conversion x 70 % selectivity (ratio 7.1) from EASA reference-price methodology, Tables 4 and 7 (https://www.easa.europa.eu/en/downloads/142604/en); CAPEX and OPEX are legacy estimates.",
+            as_of=date(2026, 2, 26),
             production_capacity_tonnes_year=30_000,
             capex_eur_per_tonne_year=5_500,
             lifetime_years=20,
             discount_rate=0.08,
-            feedstock_cost_eur_per_tonne=90,    # straw / wood chips EU 2025
-            feedstock_to_saf_ratio=4.5,          # biomass gasification yield
+            feedstock_cost_eur_per_tonne=110,   # EASA woodchip feedstock, EUR/wet tonne
+            feedstock_to_saf_ratio=7.1,          # EASA: 20% conversion × 70% selectivity
             opex_eur_per_tonne=350,
             policy_credit_eur_per_tonne=0,
             jet_fuel_price_eur_per_litre=0.57,
@@ -190,6 +200,8 @@ def saf_benchmarks() -> dict[str, SAFInput]:
         "PtL_EU_2025": SAFInput(
             pathway="PtL",
             region="EU",
+            source="Legacy estimate without a dated source; H2 and CO2 are lumped into one feedstock line (EASA uses 5.89 t CO2 + 0.79 t H2 per t fuel).",
+            as_of=None,
             production_capacity_tonnes_year=10_000,
             capex_eur_per_tonne_year=12_000,
             lifetime_years=20,
@@ -207,6 +219,8 @@ def saf_benchmarks() -> dict[str, SAFInput]:
         "PtL_EU_2035_projected": SAFInput(
             pathway="PtL",
             region="EU",
+            source="Legacy estimate without a dated source; H2 and CO2 are lumped into one feedstock line (EASA uses 5.89 t CO2 + 0.79 t H2 per t fuel).",
+            as_of=None,
             production_capacity_tonnes_year=100_000,
             capex_eur_per_tonne_year=5_000,
             lifetime_years=20,

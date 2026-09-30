@@ -4,6 +4,7 @@ from pydantic import ValidationError
 
 from core.schemas import LCOEInput, SAFInput
 from main import app
+from techno_economics.api import saf_benchmarks
 from techno_economics.lcoe import calculate_lcoe
 from techno_economics.npv_irr import calculate_irr, calculate_npv, calculate_payback
 from techno_economics.saf import calculate_saf_cost
@@ -284,6 +285,26 @@ def test_saf_benchmarks_endpoint_returns_all_pathways() -> None:
 
     # IRA credit must be negative (subsidy)
     assert payload["ATJ_US_IRA"]["policy_credit_eur_per_tonne"] < 0
+
+
+def test_saf_benchmark_presets_have_dated_sources_and_recalibrated_costs() -> None:
+    presets = saf_benchmarks()
+
+    assert all(preset.source for preset in presets.values())
+
+    hefa = presets["HEFA_EU"]
+    assert hefa.feedstock_cost_eur_per_tonne == pytest.approx(1285)
+    assert hefa.as_of.isoformat() == "2026-09-10"
+
+    ft_biomass = presets["FT_biomass_DE"]
+    assert ft_biomass.feedstock_cost_eur_per_tonne == pytest.approx(110)
+    assert ft_biomass.feedstock_to_saf_ratio == pytest.approx(7.1)
+
+    assert presets["ATJ_Brazil"].feedstock_to_saf_ratio == pytest.approx(2.0)
+    assert presets["ATJ_US_IRA"].feedstock_to_saf_ratio == pytest.approx(2.0)
+
+    hefa_cost = calculate_saf_cost(hefa)
+    assert 1_900 < hefa_cost.levelized_cost_eur_per_tonne < 2_200
 
 
 def test_saf_validation_rejects_positive_policy_credit() -> None:
