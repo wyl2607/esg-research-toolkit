@@ -1,6 +1,12 @@
 # Deploy Failure Analysis — "Deploy to USA VPS" step (2026-04-24 through 2026-06-11)
 
-_Written: 2026-09-30. Covers three failed workflow_dispatch runs (2026-04-24, 06-10, 06-11 ×3, last at commit `3c1c6aa`)._
+_Written: 2026-09-30. Reviews failed workflow_dispatch runs on 2026-04-24, 06-10, and 06-11 (three reruns on 06-11, last at commit `3c1c6aa`)._
+
+The missing Alembic flag is a reproduced production startup failure, covered by
+`tests/test_migrations.py::test_production_init_requires_alembic_init`. It is not
+a proven explanation for every historical failed deploy. History also records a
+fingerprint-script failure (#54) and disk exhaustion (#56); attributing an
+individual run requires its failing command and logs.
 
 ---
 
@@ -37,11 +43,9 @@ The container itself (`CMD uvicorn main:app …`) calls `init_db()` synchronousl
 
 ---
 
-## 2. Ranked failure causes
+## 2. Reproduced defect and historical failure evidence
 
-### Cause A — Missing `USE_ALEMBIC_INIT=true` in `.env.prod` / compose env (CRITICAL — provable from code)
-
-**Confidence: 95 %**
+### A — Missing `USE_ALEMBIC_INIT=true` (reproduced startup failure)
 
 **Evidence chain:**
 
@@ -56,7 +60,7 @@ The container itself (`CMD uvicorn main:app …`) calls `init_db()` synchronousl
            )
    ```
 
-2. `docker-compose.prod.yml` passes `APP_ENV: production` ([line 11](../../docker-compose.prod.yml#L11)) but **never** sets `USE_ALEMBIC_INIT`.
+2. `docker-compose.prod.yml` passes `APP_ENV: production` ([line 11](../../docker-compose.prod.yml#L11)) but did not set `USE_ALEMBIC_INIT` before this PR. The compose fix now sets it explicitly.
 
 3. `scripts/setup_vps.sh` generates the `.env.prod` template without `USE_ALEMBIC_INIT` ([setup_vps.sh:36–42](../../scripts/setup_vps.sh#L36-L42)).
 
@@ -66,39 +70,43 @@ The container itself (`CMD uvicorn main:app …`) calls `init_db()` synchronousl
 
 **Crash path:** container starts → uvicorn → `lifespan` → `init_db()` → `production=True`, `use_alembic_init=False` → `RuntimeError` → uvicorn exits → container stops immediately → smoke check at port 8001 returns `Connection refused` on every attempt → `exit 1`.
 
-**Why 2m18s?** D1–D9 (npm build + docker build + `docker compose up`) take ~2 min. The container exits almost immediately after `up -d`. The workflow-level health loop (10 × 3 s = 30 s max) then fails.
+A short deploy duration alone cannot identify the failing command. This crash
+path applies when the effective production configuration leaves the flag false;
+it does not establish which historical runs reached container startup.
 
-**Sub-risk:** Even if `USE_ALEMBIC_INIT=true` is added to `.env.prod`, the existing production SQLite at `/opt/esg-data/esg_toolkit.db` may lack an `alembic_version` table (pre-Alembic schema). The app would then call `alembic upgrade head` and migration `0001_baseline` tries to create tables that already exist, causing an `OperationalError: table already exists`. The correct first-deploy remedy is `alembic stamp head` to baseline the live DB before enabling `USE_ALEMBIC_INIT=true`.
+**Migration risk:** An existing SQLite DB at `/opt/esg-data/esg_toolkit.db` may lack
+an `alembic_version` table. Running `alembic upgrade head` on existing unversioned
+tables can fail with `OperationalError: table already exists`. Stamping `head`
+would only record migrations as applied, without executing them: a pre-0003
+schema would still lack `company_reports.scope2_basis` and its data backfill.
+Inspect the schema and revision, back up, and validate the cutover on a DB copy
+first. Stamp only a verified matching revision when necessary, then run
+`alembic upgrade head`; see section 4.
 
 ---
 
-### Cause B — `git fetch --depth=1 origin main "$GITHUB_SHA"` fails for non-tip commits (provable from code)
+### B — Fingerprint-script failure (#54), not a fetch failure
 
-**Confidence: 80 %**
+Commit `5d5872d` (#54, 2026-06-11) documents stale `origin/main` and
+`git branch -r --contains HEAD` returning no branch, causing the fingerprint
+script's `grep` to exit 1. That is evidence of failure in
+`write_deploy_fingerprint.sh`, not evidence that fetching a non-tip SHA failed.
 
-`git fetch --depth=1 origin main "$GITHUB_SHA"` fetches only the tip of `main` **plus** the literal refspec `"$GITHUB_SHA"`. If the workflow is dispatched on a commit that is not the current `main` tip (e.g. the 2026-06-11 reruns at `3c1c6aa` while other commits may exist on main), and the VPS repo is a shallow clone without that SHA already present, the fetch may fail with `fatal: couldn't find remote ref <sha>` because `$GITHUB_SHA` is not a valid refspec — only a branch/tag/explicit fetchspec works with shallow fetches.
-
-> **Note:** Commit `5d5872d` (#54, 2026-06-11) specifically documents this issue: _"origin/main is stale and `git branch -r --contains HEAD` prints nothing; grep then exits 1"_ — which is `write_deploy_fingerprint.sh`, not the fetch itself. But the same shallow-clone constraint applies to the fetch step.
-
-The correct form is:
-```bash
-git fetch --depth=1 origin "$GITHUB_SHA"
-```
-Without the `main` refspec (which conflates branch update with SHA pinning).
+Review reproduction fetched a non-tip SHA successfully with both
+`git fetch --depth=1 origin main "$GITHUB_SHA"` and
+`git fetch --depth=1 origin "$GITHUB_SHA"`. The earlier bad-refspec theory and its
+confidence claim are withdrawn. Keep the existing fetch of `main` plus the SHA;
+no fetch change is required for this startup fix.
 
 ---
 
 ### Cause C — `--no-cache` disk exhaustion (confirmed for 2026-06-11 by commit message, needs VPS for earlier runs)
 
-**Confidence: 75 % for 2026-06-11, 40 % for April run**
-
-Commit `fdd7f5d` (#56, 2026-06-11) documents explicitly: _"deploy.sh tore down the running container before building, the --no-cache build failed on a full disk (18G of containerd snapshots from repeated cacheless builds)"_. The April run used the same down-then-build-with-no-cache pattern (visible in `deploy.sh` at `3c1c6aa`, D6 was `down` then `build --no-cache`). If Cause A killed the April container on startup, repeated failed deploys would still accumulate dangling image layers, eventually filling disk on a subsequent run.
+Commit `fdd7f5d` (#56, 2026-06-11) documents explicitly: _"deploy.sh tore down the running container before building, the --no-cache build failed on a full disk (18G of containerd snapshots from repeated cacheless builds)"_. The April run used the same down-then-build-with-no-cache pattern (visible in `deploy.sh` at `3c1c6aa`, D6 was `down` then `build --no-cache`). The June disk failure does not establish the cause of the April run; earlier runs require their own logs.
 
 ---
 
 ### Cause D — `nginx -t && systemctl reload nginx` requires root (needs server)
-
-**Confidence: 40 %**
 
 `deploy.sh` steps D10 calls `nginx -t && systemctl reload nginx` ([lines 88, 93](../../scripts/deploy.sh#L88-L93)) without `sudo`. If `VPS_DEPLOY_USER` is non-root without passwordless sudo for `nginx`/`systemctl`, this command fails under `set -euo pipefail`. The guardrails doc requires a non-root deploy user ([DEPLOY_GUARDRAILS.md §7](../DEPLOY_GUARDRAILS.md#7-github-actions-deploy-baseline)) but does not specify sudo grants. Cannot verify without server access.
 
@@ -106,21 +114,19 @@ Commit `fdd7f5d` (#56, 2026-06-11) documents explicitly: _"deploy.sh tore down t
 
 ### Cause E — `chown -R 10001:10001` on `/opt/esg-data` requires root (needs server)
 
-**Confidence: 35 %**
-
 Added in `d35c22a` (#64, 2026-06-12 — after the last failure). Relevant only if Cause A and others are resolved and a future deploy runs. `chown` on a bind-mount directory owned by root fails without sudo. Non-issue for the April/June failure dates since that line did not exist yet.
 
 ---
 
 ### Summary table
 
-| # | Cause | Provable? | Confidence |
-|---|---|---|---|
-| A | `USE_ALEMBIC_INIT` missing → container crashes at startup | **Code** | **95 %** |
-| B | `git fetch --depth=1 origin main <sha>` bad refspec | Code | 80 % |
-| C | disk full from `--no-cache` + down-before-build | Code (Jun), needs server (Apr) | 75 % / 40 % |
-| D | `nginx reload` without sudo | Needs server | 40 % |
-| E | `chown` without sudo | Needs server (future) | 35 % |
+| # | Finding | Evidence and limits |
+|---|---|---|
+| A | Missing `USE_ALEMBIC_INIT` causes production startup failure | Reproduced in migration test; historical effective env/logs still needed |
+| B | Fingerprint script exits on missing branch match | Recorded by #54; non-tip SHA fetch succeeds in review reproduction |
+| C | Disk full from `--no-cache` + down-before-build | Recorded by #56 for June; earlier runs unconfirmed |
+| D | `nginx reload` permissions | Requires server verification |
+| E | `chown` permissions | Requires server verification; added after the failed runs |
 
 ---
 
@@ -135,13 +141,13 @@ docker ps --filter name=esg-toolkit --format 'table {{.Names}}\t{{.Status}}\t{{.
 docker inspect esg-research-toolkit-api-1 --format '{{.State.ExitCode}} {{.State.Error}} {{json .State.StartedAt}} {{json .State.FinishedAt}}' 2>/dev/null || \
 docker inspect $(docker ps -a --filter name=esg --format '{{.ID}}' | head -1) --format '{{.State.ExitCode}}: {{.State.Error}}'
 
-# 3. Last 100 lines of container logs (proves USE_ALEMBIC_INIT crash)
+# 3. Last 100 lines of container logs (look for the reproduced startup error)
 docker logs --tail=100 esg-research-toolkit-api-1 2>&1 | grep -E 'RuntimeError|USE_ALEMBIC|ERROR|startup|alembic' || \
 docker logs --tail=100 $(docker ps -a --filter name=esg --format '{{.ID}}' | head -1) 2>&1 | tail -50
 
 # 4. Check what USE_ALEMBIC_INIT is set to in the running or last compose config
 docker inspect esg-research-toolkit-api-1 --format '{{range .Config.Env}}{{println .}}{{end}}' 2>/dev/null | \
-  grep -E 'USE_ALEMBIC|ENFORCE_MIGRATION|APP_ENV|DATABASE_URL' || echo 'container not found by that name'
+  grep -E '^(USE_ALEMBIC_INIT|ENFORCE_MIGRATION_GATE|APP_ENV)=' || echo 'container not found by that name'
 
 # 5. Is there an alembic_version table in the production DB?
 sqlite3 /opt/esg-data/esg_toolkit.db ".tables" 2>/dev/null | tr ' ' '\n' | grep alembic || echo 'no alembic_version table (migration gate will fail)'
@@ -149,7 +155,7 @@ sqlite3 /opt/esg-data/esg_toolkit.db ".tables" 2>/dev/null | tr ' ' '\n' | grep 
 # 6. If alembic_version exists, show the version row
 sqlite3 /opt/esg-data/esg_toolkit.db "SELECT version_num FROM alembic_version;" 2>/dev/null || echo 'cannot query'
 
-# ── Cause B: shallow clone / fetch integrity ───────────────────────────────
+# ── B: repository state for fingerprint diagnosis ───────────────────────────────
 # 7. Is the VPS repo a shallow clone?
 git -C /opt/esg-research-toolkit rev-parse --is-shallow-repository
 
@@ -173,29 +179,64 @@ sudo nginx -t 2>&1
 
 ---
 
-## 4. Code fix (Cause A — provable from code alone)
+## 4. Startup fix and safe database cutover
 
-### Root fix: add `USE_ALEMBIC_INIT=true` to `docker-compose.prod.yml`
+### Startup fix: add `USE_ALEMBIC_INIT=true` to `docker-compose.prod.yml`
 
 The safest single-file fix is injecting the required flag in the compose `environment:` block so **every** future `docker compose up` on the VPS enables Alembic init automatically, regardless of what is in `.env.prod`.
 
 **File changed:** [`docker-compose.prod.yml`](../../docker-compose.prod.yml)
 
 > [!IMPORTANT]
-> Before running the next deploy, the owner must also **stamp the existing production DB** so Alembic does not try to re-create already-existing tables:
-> ```bash
-> # Run once on the VPS — no writes to app data:
-> cd /opt/esg-research-toolkit
-> docker compose -f docker-compose.prod.yml run --rm api \
->   alembic -c alembic.ini stamp head
-> ```
-> This is a prerequisite for the fix; it is a one-time operator action, not automatable from CI.
+> Validate the migration on a database copy before deploying with this flag.
+> `stamp` writes revision metadata only; it does not apply schema changes or data
+> backfills. Never stamp `head` merely because tables already exist.
 
-### Partial fix: also correct the `git fetch` refspec (Cause B)
+Operator procedure (not run by CI):
 
-**File changed:** [`.github/workflows/deploy.yml`](../../.github/workflows/deploy.yml)
+1. Inspect the database's actual schema and revision using `alembic current`,
+   `alembic history`, SQLite `.schema`, and `PRAGMA table_info(company_reports)`.
+   Compare all managed tables, columns, types, constraints and indexes against
+   the migration files in `alembic/versions/`, including their data preconditions.
+   An existing version row alone does not prove that the schema matches it.
+2. Pause all writers during cutover and take a restorable SQLite backup using the
+   SQLite backup API or `.backup` (rather than copying a live DB file that may
+   have WAL changes). Retain the untouched backup and make a separate working
+   copy for rehearsal. Point `DATABASE_URL` explicitly at that copy; do not use
+   the production compose bind mount for rehearsal.
+3. If the DB is unversioned, stamp only the revision whose schema **and data
+   effects** have been verified as already present. For example, an inspected
+   DB matching `0002_retire_runtime_helpers` should be stamped at that revision,
+   leaving `0003_add_scope2_basis` to run. If no revision matches, stop and
+   reconcile the schema rather than guessing. If already versioned and verified,
+   skip stamping. An empty DB needs only `upgrade head`.
+4. Run `alembic upgrade head` on the working copy. Check `alembic current` against
+   `alembic heads`, run `PRAGMA integrity_check`, compare row counts and critical
+   records with the backup, and verify that `scope2_basis` exists with the
+   expected backfill. Review 0003's #61 precision-correction prerequisite and
+   RWE 2023 exact-name guard before upgrading. Validate application startup and
+   representative reads against the upgraded copy.
+5. Only after rehearsal succeeds, repeat the verified procedure on the backed-up
+   target DB while writers remain paused, run the same checks, then deploy.
+   Preserve the backup for restoration if validation fails.
 
-Change `git fetch --depth=1 origin main "$GITHUB_SHA"` → `git fetch --depth=1 origin "$GITHUB_SHA"` to avoid conflating the branch tip update with the SHA fetch. The fingerprint script already resolves the branch correctly via `merge-base` after `#54`.
+Example commands **for the rehearsal copy only**, after its schema and data have
+been verified to match 0002 (use an absolute path to the working copy):
+
+```bash
+DATABASE_URL=sqlite:////path/to/rehearsal.db alembic current
+# Skip this stamp if the copy already has the verified revision recorded.
+DATABASE_URL=sqlite:////path/to/rehearsal.db alembic stamp 0002_retire_runtime_helpers
+DATABASE_URL=sqlite:////path/to/rehearsal.db alembic upgrade head
+DATABASE_URL=sqlite:////path/to/rehearsal.db alembic current
+sqlite3 /path/to/rehearsal.db 'PRAGMA integrity_check; PRAGMA table_info(company_reports);'
+```
+
+### Fetch remains unchanged
+
+[`.github/workflows/deploy.yml`](../../.github/workflows/deploy.yml) retains
+`git fetch --depth=1 origin main "$GITHUB_SHA"`. #54 addressed the fingerprint
+script; the reproduced startup defect does not require a different fetch.
 
 ---
 

@@ -13,8 +13,9 @@ services:
       APP_PORT: 8000
       DATABASE_URL: sqlite:///./data/esg_toolkit.db
       # Required: production startup enforces Alembic-managed schema (e650838).
-      # The VPS DB must be stamped once before the first deploy with this flag:
-      #   docker compose -f docker-compose.prod.yml run --rm api alembic stamp head
+      # Before cutover: inspect schema/revision, back up, and validate on a DB copy.
+      # Stamp only a verified matching revision if unversioned; then upgrade head.
+      # See docs/ops/deploy-failure-analysis-2026-09-30.md section 4.
       USE_ALEMBIC_INIT: "true"
     volumes:
       - /opt/esg-data:/app/data
