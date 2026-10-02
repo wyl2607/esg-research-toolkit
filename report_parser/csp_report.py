@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 
 from fastapi import APIRouter, HTTPException, Request, Response, status
 from pydantic import BaseModel, Field
-from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 from core.limiter import limiter
 
@@ -21,6 +21,20 @@ MAX_LOG_LINES_PER_MINUTE = 100
 
 _log_counts: dict[int, int] = {}
 _current_minute: int = 0
+
+
+def configure_csp_logging() -> None:
+    """Emit reports to stderr independently of uvicorn/Alembic root logging."""
+    logger = logging.getLogger("csp.report")
+    logger.setLevel(logging.INFO)
+    logger.disabled = False
+    if not any(handler.name == "csp.report" for handler in logger.handlers):
+        handler = logging.StreamHandler()
+        handler.set_name("csp.report")
+        handler.setLevel(logging.INFO)
+        handler.setFormatter(logging.Formatter("%(message)s"))
+        logger.addHandler(handler)
+    logger.propagate = False
 
 
 class LegacyCSPReport(BaseModel):
@@ -35,16 +49,24 @@ class ReportEntry(BaseModel):
 
 
 def _sanitize_blocked_uri(uri: str) -> str:
-    """Reduce blocked-uri to scheme+host, drop path and query."""
+    """Keep only an origin or scheme, never credentials or URL payloads."""
     if not uri or uri == "self" or uri == "inline" or uri == "eval":
         return uri
+    scheme = ""
     try:
         parsed = urlparse(uri)
-        if parsed.scheme and parsed.netloc:
-            return f"{parsed.scheme}://{parsed.netloc}"
-        return uri
-    except Exception:
-        return uri
+        scheme = parsed.scheme
+        if scheme and parsed.hostname:
+            hostname = parsed.hostname
+            port = parsed.port  # Validate before emitting any part of the origin.
+            if ":" in hostname:
+                hostname = f"[{hostname}]"
+            return f"{scheme}://{hostname}" + (f":{port}" if port is not None else "")
+    except ValueError:
+        # urlparse can reject a malformed authority before returning its scheme.
+        match = re.match(r"^([a-zA-Z][a-zA-Z0-9+.-]*):", uri)
+        scheme = match.group(1).lower() if match else ""
+    return f"{scheme}:" if scheme else ""
 
 
 def _sanitize_document_uri(uri: str) -> str:
@@ -104,24 +126,50 @@ def _should_log() -> bool:
     return True
 
 
-class CSPBodyLimitMiddleware(BaseHTTPMiddleware):
+class CSPBodyLimitMiddleware:
     """Middleware to enforce body size limit on CSP report endpoint only."""
 
-    async def dispatch(self, request: Request, call_next):
-        if request.url.path == "/csp-report" and request.method == "POST":
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] == "http" and scope["path"] == "/csp-report" and scope["method"] == "POST":
+            request = Request(scope, receive)
             content_length = request.headers.get("content-length")
             if content_length:
                 try:
                     if int(content_length) > MAX_BODY_BYTES:
-                        return Response(status_code=413)
+                        await Response(status_code=413)(scope, receive, send)
+                        return
                 except ValueError:
                     pass
-        return await call_next(request)
+            # Read at most the limit plus the first excess ASGI chunk. Never
+            # call downstream middleware on rejection: its disconnect listener
+            # could otherwise keep draining the untrusted request body.
+            body = bytearray()
+            async for chunk in request.stream():
+                if len(body) + len(chunk) > MAX_BODY_BYTES:
+                    await Response(status_code=413)(scope, receive, send)
+                    return
+                body.extend(chunk)
+
+            body_sent = False
+
+            async def bounded_receive():
+                nonlocal body_sent
+                if not body_sent:
+                    body_sent = True
+                    return {"type": "http.request", "body": bytes(body), "more_body": False}
+                return await receive()
+
+            await self.app(scope, bounded_receive, send)
+            return
+        await self.app(scope, receive, send)
 
 
-# Browsers send violation reports in bursts; the global 60/min per-IP limit must not drop them.
-@limiter.exempt
+# Allow browser bursts above the default 60/minute, but bound requests per client.
 @router.post("/csp-report", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
+@limiter.limit("100/minute")
 async def receive_csp_report(request: Request) -> None:
     """
     Receive CSP violation reports.
@@ -134,9 +182,11 @@ async def receive_csp_report(request: Request) -> None:
     Returns 413 if body exceeds 16 KB.
     Returns 400 if JSON is malformed.
     """
-    body = await request.body()
-    if len(body) > MAX_BODY_BYTES:
-        raise HTTPException(status_code=413, detail="Body too large")
+    body = bytearray()
+    async for chunk in request.stream():
+        if len(body) + len(chunk) > MAX_BODY_BYTES:
+            raise HTTPException(status_code=413, detail="Body too large")
+        body.extend(chunk)
 
     content_type = request.headers.get("content-type", "").split(";")[0].strip()
 
