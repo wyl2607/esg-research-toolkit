@@ -21,8 +21,9 @@ function checkSecurityHeaders(response, pathname) {
     'x-content-type-options': 'nosniff',
     'referrer-policy': 'strict-origin-when-cross-origin',
     'strict-transport-security': 'max-age=31536000',
+    'reporting-endpoints': 'csp-endpoint="/api/csp-report"',
     'permissions-policy': 'camera=(), microphone=(), geolocation=()',
-    'content-security-policy-report-only': "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; img-src 'self' data: blob: https:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' https:; worker-src 'self' blob:;",
+    'content-security-policy-report-only': "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; img-src 'self' data: blob: https:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' https:; worker-src 'self' blob:; report-uri /api/csp-report; report-to csp-endpoint;",
   })) {
     assert(response.headers.get(header) === expected, `${pathname}: ${header} expected ${expected}`)
   }
@@ -50,6 +51,16 @@ try {
     assert(/no-cache/i.test(response.headers.get('cache-control') || ''), `${pathname} HTML must be no-cache`)
     checkSecurityHeaders(response, pathname)
   }
+
+  const cspReport = await fetch(`${baseUrl}/api/csp-report`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/csp-report' },
+    body: JSON.stringify({ 'csp-report': { 'violated-directive': 'script-src', 'blocked-uri': 'inline' } }),
+    redirect: 'manual',
+  })
+  assert(cspReport.status === 204, `CSP report expected 204, got ${cspReport.status}`)
+  assert(await cspReport.text() === '', 'CSP report response must be empty')
+  checkSecurityHeaders(cspReport, '/api/csp-report')
 
   const unknownRoute = await fetchPath('/__nginx_spa_contract_missing__')
   assert(unknownRoute.status === 404, `unknown route expected 404, got ${unknownRoute.status}`)
@@ -86,6 +97,7 @@ try {
   console.log(JSON.stringify({
     baseUrl,
     root: root.status,
+    cspReport: cspReport.status,
     knownRoutesChecked: knownPaths.length,
     deniedPathsChecked: deniedPaths.length,
     unknownRoute: unknownRoute.status,

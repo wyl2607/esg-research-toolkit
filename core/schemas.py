@@ -536,9 +536,10 @@ class SAFInput(BaseModel):
     source: str | None = Field(default=None, description="Where the preset inputs come from")
     as_of: date | None = Field(default=None, description="Date of the newest sourced input")
 
+    # Bound divisors away from zero to prevent underflow and infinite costs.
     # Plant scale
     production_capacity_tonnes_year: float = Field(
-        default=50_000.0, gt=0.0, le=10_000_000.0,
+        default=50_000.0, ge=0.001, le=10_000_000.0,
         description="Annual SAF production capacity in tonnes",
     )
 
@@ -574,7 +575,7 @@ class SAFInput(BaseModel):
 
     # Reference market prices
     jet_fuel_price_eur_per_litre: float = Field(
-        default=0.57, gt=0.0, le=10.0,  # public jet proxy seed ~2026-07
+        default=0.57, ge=0.0001, le=10.0,  # public jet proxy seed ~2026-07
         description="Current conventional Jet A-1 price (€/litre) for breakeven comparison",
     )
 
@@ -582,7 +583,7 @@ class SAFInput(BaseModel):
     saf_density_kg_per_litre: float = Field(default=0.800, gt=0.5, le=1.0)
 
     currency: Literal["EUR", "USD"] = "EUR"
-    reference_fx_to_eur: float = Field(default=1.0, gt=0.0, le=10.0)
+    reference_fx_to_eur: float = Field(default=1.0, ge=0.0001, le=10.0)
 
 
 class SAFCostResult(BaseModel):

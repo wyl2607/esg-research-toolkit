@@ -1,3 +1,5 @@
+import math
+
 import pytest
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
@@ -321,3 +323,55 @@ def test_saf_validation_rejects_positive_policy_credit() -> None:
             policy_credit_eur_per_tonne=100.0,  # invalid: positive
             jet_fuel_price_eur_per_litre=0.60,
         )
+
+
+@pytest.mark.parametrize("field, value", [
+    ("jet_fuel_price_eur_per_litre", 5e-324),
+    ("jet_fuel_price_eur_per_litre", 1e-300),
+    ("reference_fx_to_eur", 5e-324),
+    ("reference_fx_to_eur", 1e-300),
+    ("production_capacity_tonnes_year", 5e-324),
+    ("production_capacity_tonnes_year", 1e-300),
+    ("production_capacity_tonnes_year", 1e308),
+])
+def test_saf_rejects_unsafe_divisors_without_breaking_next_request(field, value) -> None:
+    # Schemathesis coverage sent a subnormal jet price, causing an infinite
+    # premium and a JSON serialization error; the next valid request timed out.
+    payload = SAFInput().model_dump(mode="json")
+    payload.update({field: value, "as_of": "2000-01-01"})
+    with TestClient(app) as client:
+        rejected = client.post("/techno/saf", json=payload)
+        following = client.post("/techno/saf", json={"as_of": "2000-01-01", "policy_credit_eur_per_tonne": -1.0})
+    assert rejected.status_code == 422
+    assert rejected.json()["detail"][0]["loc"] == ["body", field]
+    assert following.status_code == 200
+
+
+@pytest.mark.parametrize("rate", [0.0, 5e-324, 1e-20])
+def test_saf_tiny_discount_rates_use_zero_rate_limit(rate) -> None:
+    payload = make_saf_input(discount_rate=rate).model_dump(mode="json")
+    with TestClient(app) as client:
+        response = client.post("/techno/saf", json=payload)
+    assert response.status_code == 200
+    body = response.json()
+    assert body["capex_component_eur_per_tonne"] == pytest.approx(90.0)
+    assert body["levelized_cost_eur_per_tonne"] == pytest.approx(1090.0)
+    assert all(math.isfinite(value) for value in body.values() if isinstance(value, (int, float)))
+
+
+def test_saf_numeric_boundaries_return_finite_results() -> None:
+    payload = SAFInput(
+        production_capacity_tonnes_year=0.001,
+        capex_eur_per_tonne_year=100_000,
+        lifetime_years=50,
+        discount_rate=0.999999,
+        feedstock_cost_eur_per_tonne=10_000,
+        feedstock_to_saf_ratio=50,
+        opex_eur_per_tonne=10_000,
+        jet_fuel_price_eur_per_litre=0.0001,
+        reference_fx_to_eur=0.0001,
+    ).model_dump(mode="json")
+    with TestClient(app) as client:
+        response = client.post("/techno/saf", json=payload)
+    assert response.status_code == 200
+    assert all(math.isfinite(value) for value in response.json().values() if isinstance(value, (int, float)))

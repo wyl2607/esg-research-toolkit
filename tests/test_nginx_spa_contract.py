@@ -16,11 +16,12 @@ HEADERS = (
     "X-Content-Type-Options nosniff",
     "Referrer-Policy strict-origin-when-cross-origin",
     'Strict-Transport-Security "max-age=31536000"',
+    'Reporting-Endpoints \'csp-endpoint="/api/csp-report"\'',
     'Permissions-Policy "camera=(), microphone=(), geolocation=()"',
     "Content-Security-Policy-Report-Only \"default-src 'self'; base-uri 'self'; "
     "object-src 'none'; frame-ancestors 'self'; img-src 'self' data: blob: https:; "
     "font-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; "
-    "connect-src 'self' https:; worker-src 'self' blob:;\"",
+    "connect-src 'self' https:; worker-src 'self' blob:; report-uri /api/csp-report; report-to csp-endpoint;\"",
 )
 
 
@@ -117,3 +118,13 @@ def test_security_headers_survive_cache_header_overrides() -> None:
         if "add_header" in body:
             for header in HEADERS:
                 assert f"add_header {header} always;" in body, selector
+
+
+def test_csp_reports_reach_api_with_bounded_body_and_no_spa_fallback() -> None:
+    body = location_for("/api/csp-report")
+    assert "proxy_pass http://127.0.0.1:8001/csp-report;" in body
+    assert "client_max_body_size 16k;" in body
+    assert "return 404;" not in body
+    assert "try_files" not in body
+    assert "error_page" not in body
+    assert "client_max_body_size 50M;" in location_for("/api/report/upload")

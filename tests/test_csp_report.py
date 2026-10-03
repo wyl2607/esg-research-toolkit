@@ -333,8 +333,8 @@ def test_csp_request_limit_allows_bursts_then_rejects(client, monkeypatch):
 
 
 @pytest.mark.parametrize("uri, expected", [
-    ("https://user:pass@example.org/x", "https://example.org"),
-    ("https://user:pass@example.org:8443/x?token=secret", "https://example.org:8443"),
+    ("https://user:example@example.org/x", "https://example.org"),
+    ("https://user:example@example.org:8443/x?token=secret", "https://example.org:8443"),
     ("https://user:pass@[2001:db8::1]:8443/x", "https://[2001:db8::1]:8443"),
     ("https://example.org:bad/x", "https:"),
     ("https://example.org:65536/x", "https:"),
@@ -342,7 +342,7 @@ def test_csp_request_limit_allows_bursts_then_rejects(client, monkeypatch):
     ("https:/secret/path", "https:"),
     ("data:text/plain,secret", "data:"),
     ("blob:https://example.org/secret", "blob:"),
-    ("mailto:user:pass@example.org", "mailto:"),
+    ("mailto:user:example@example.org", "mailto:"),
     ("/secret/path", ""),
 ])
 def test_blocked_uri_origin_only(uri, expected):
@@ -353,12 +353,12 @@ def test_blocked_uri_origin_only(uri, expected):
 
 def test_credentials_are_not_logged(client, log_capture):
     response = client.post("/csp-report", json={"csp-report": {
-        "blocked-uri": "https://user:pass@example.org/x",
+        "blocked-uri": "https://user:example@example.org/x",
     }}, headers={"Content-Type": "application/csp-report"})
     assert response.status_code == 204
     assert "blocked_uri=https://example.org " in log_capture.getvalue()
     assert "user" not in log_capture.getvalue()
-    assert "pass" not in log_capture.getvalue()
+    assert "@" not in log_capture.getvalue()
 
 
 @pytest.mark.parametrize("content_length", [None, b"1", b"invalid"])
