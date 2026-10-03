@@ -35,7 +35,12 @@ echo "=== ESG Toolkit Deploy ==="
 # 1. Verify deployed revision. The workflow checks out the exact SHA before
 # calling this script; do not pull main here or deployments lose traceability.
 cd "$REPO_DIR"
-git rev-parse HEAD
+DEPLOY_SHA="$(git rev-parse HEAD)"
+if [ -n "${GITHUB_SHA:-}" ] && [ "$DEPLOY_SHA" != "$GITHUB_SHA" ]; then
+    echo "ERROR: checkout does not match selected deployment SHA"
+    exit 1
+fi
+echo "Selected deployment SHA: $DEPLOY_SHA"
 
 # 2. Build frontend
 echo "→ Building frontend..."
@@ -73,6 +78,7 @@ cd "$REPO_DIR"
 # Keep the pre-deploy image around so a failed smoke check can roll back.
 if docker image inspect "$IMAGE_LATEST" >/dev/null 2>&1; then
     docker tag "$IMAGE_LATEST" "$IMAGE_ROLLBACK"
+    echo "Rollback image reference: $(docker image inspect --format '{{.Id}}' "$IMAGE_ROLLBACK")"
 fi
 $COMPOSE_CMD -f docker-compose.prod.yml build
 
@@ -141,6 +147,11 @@ dashboard_payload="$(curl -fsS http://localhost:8001/report/dashboard/stats)" ||
     rollback_and_exit "dashboard stats endpoint failed"
 if ! printf '%s' "$dashboard_payload" | python3 "$REPO_DIR/scripts/qa/verify_dashboard_stats.py"; then
     rollback_and_exit "dashboard stats response contract failed"
+fi
+if ! python3 "$REPO_DIR/scripts/qa/verify_post_deploy.py" \
+    --backend-url http://localhost:8001 \
+    --expected-sha "$DEPLOY_SHA"; then
+    rollback_and_exit "pinned dashboard post-deploy check failed"
 fi
 
 # 9. Reclaim disk: drop dangling images left by the rebuild.

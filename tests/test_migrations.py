@@ -243,6 +243,54 @@ def test_stamp_then_upgrade_preserves_existing_fixture_data(tmp_path: Path) -> N
         )
 
 
+@pytest.mark.parametrize("revision", ["0001_baseline", "0002_retire_runtime_helpers"])
+def test_verified_pre_scope2_stamp_then_upgrade_on_copy(tmp_path: Path, revision: str) -> None:
+    cfg = _alembic_config()
+    expected_heads, _ = _revision_state(cfg)
+    legacy_path = tmp_path / "unversioned.sqlite3"
+    _upgrade_to(cfg, legacy_path, revision)
+
+    engine = create_engine(f"sqlite:///{legacy_path}")
+    try:
+        with engine.begin() as conn:
+            conn.execute(text("DROP TABLE alembic_version"))
+            conn.execute(
+                text(
+                    "INSERT INTO company_reports "
+                    "(company_name, report_year, source_doc_key, scope2_co2e_tonnes, deletion_requested) "
+                    "VALUES ('RWE AG', 2023, 'verified-legacy', 200000.0, 0)"
+                )
+            )
+    finally:
+        engine.dispose()
+
+    # The closed, unversioned DB is known to match this migration revision.
+    # Rehearse on a copy and leave the original available for restoration.
+    copy_path = tmp_path / "rehearsal.sqlite3"
+    shutil.copy2(legacy_path, copy_path)
+    assert "scope2_basis" not in _company_reports_columns(copy_path)
+    _stamp(cfg, copy_path, revision)
+    assert _read_alembic_versions(copy_path) == [revision]
+    assert "scope2_basis" not in _company_reports_columns(copy_path)
+
+    _upgrade_head(cfg, copy_path)
+
+    assert _read_alembic_versions(copy_path) == sorted(expected_heads)
+    assert "scope2_basis" in _company_reports_columns(copy_path)
+    engine = create_engine(f"sqlite:///{copy_path}")
+    try:
+        with engine.connect() as conn:
+            assert conn.execute(text("PRAGMA integrity_check")).scalar_one() == "ok"
+            assert conn.execute(
+                text("SELECT source_doc_key, scope2_co2e_tonnes, scope2_basis FROM company_reports")
+            ).all() == [("verified-legacy", 200000.0, "location")]
+    finally:
+        engine.dispose()
+
+    assert "scope2_basis" not in _company_reports_columns(legacy_path)
+    assert _table_row_counts(legacy_path, ["company_reports"]) == {"company_reports": 1}
+
+
 def test_init_db_with_alembic_flag_falls_back_for_in_memory_sqlite(
     monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:

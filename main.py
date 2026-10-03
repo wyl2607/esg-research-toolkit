@@ -41,6 +41,7 @@ from report_parser.disclosures_api import router as disclosures_router
 from report_parser.storage import get_report, save_report
 from taxonomy_scorer.api import router as taxonomy_router
 from techno_economics.api import router as techno_router
+from report_parser.csp_report import CSPBodyLimitMiddleware, configure_csp_logging, router as csp_report_router
 
 APP_VERSION = app_version()
 DEPLOY_FINGERPRINT_PATH = Path(os.getenv("DEPLOY_FINGERPRINT_PATH", "/app/.deploy-fingerprint.json"))
@@ -215,6 +216,7 @@ def _cors_allowed_origins() -> list[str]:
 async def lifespan(_: FastAPI):
     validate_admin_config()
     init_db()
+    configure_csp_logging()
     validate_models_startup()
     if CONTRACT_TEST_MODE:
         _seed_contract_test_data()
@@ -239,6 +241,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.add_middleware(SlowAPIMiddleware)
+# Reject oversized reports before middleware response listeners can drain them.
+app.add_middleware(CSPBodyLimitMiddleware)
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
@@ -431,6 +435,7 @@ app.include_router(taxonomy_router)
 app.include_router(techno_router)
 app.include_router(frameworks_router)
 app.include_router(benchmark_router)
+app.include_router(csp_report_router)
 
 
 @app.get("/")

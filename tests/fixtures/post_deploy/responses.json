@@ -1,0 +1,52 @@
+{
+  "health": {"status": "ok"},
+  "fingerprint": {"status": "ok", "git_sha": "908a53f573d72a6f79ac2d12434392b7779f450e"},
+  "frontend": "<!doctype html><html><head><script type=\"module\" crossorigin src=\"/assets/index-recorded.js\"></script></head><body><div id=\"root\"></div></body></html>",
+  "cases": [
+    {
+      "name": "empty_unknown",
+      "passes": true,
+      "companies": [],
+      "stats": {"total_companies": 0, "avg_taxonomy_aligned": null, "avg_renewable_pct": null, "yearly_trend": [], "top_emitters": [], "bottom_emitters": [], "coverage_rates": {}}
+    },
+    {
+      "name": "empty_coerced_zero",
+      "passes": false,
+      "companies": [],
+      "stats": {"total_companies": 0, "avg_taxonomy_aligned": 0, "avg_renewable_pct": 0, "yearly_trend": [], "top_emitters": [], "bottom_emitters": [], "coverage_rates": {}}
+    },
+    {
+      "name": "populated_unknown",
+      "passes": true,
+      "companies": [{"company_name": "Example", "report_year": 2024, "taxonomy_aligned_revenue_pct": null, "renewable_energy_pct": null}],
+      "stats": {"total_companies": 1, "avg_taxonomy_aligned": null, "avg_renewable_pct": null, "yearly_trend": [{"year": 2024, "count": 1}], "top_emitters": [], "bottom_emitters": [], "coverage_rates": {"taxonomy_aligned_revenue_pct": 0, "renewable_energy_pct": 0}}
+    },
+    {
+      "name": "populated_coerced_zero",
+      "passes": false,
+      "companies": [{"company_name": "Example", "report_year": 2024, "taxonomy_aligned_revenue_pct": null, "renewable_energy_pct": null}],
+      "stats": {"total_companies": 1, "avg_taxonomy_aligned": 0, "avg_renewable_pct": 0, "yearly_trend": [{"year": 2024, "count": 1}], "top_emitters": [], "bottom_emitters": [], "coverage_rates": {"taxonomy_aligned_revenue_pct": 0, "renewable_energy_pct": 0}}
+    },
+    {
+      "name": "honest_zero",
+      "passes": true,
+      "companies": [{"company_name": "Example", "report_year": 2024, "taxonomy_aligned_revenue_pct": 0, "renewable_energy_pct": 0}],
+      "stats": {"total_companies": 1, "avg_taxonomy_aligned": 0, "avg_renewable_pct": 0, "yearly_trend": [{"year": 2024, "count": 1}], "top_emitters": [], "bottom_emitters": [], "coverage_rates": {"taxonomy_aligned_revenue_pct": 100, "renewable_energy_pct": 100}}
+    },
+    {
+      "name": "zero_lost_as_unknown",
+      "passes": false,
+      "companies": [{"company_name": "Example", "report_year": 2024, "taxonomy_aligned_revenue_pct": 0, "renewable_energy_pct": 0}],
+      "stats": {"total_companies": 1, "avg_taxonomy_aligned": null, "avg_renewable_pct": null, "yearly_trend": [{"year": 2024, "count": 1}], "top_emitters": [], "bottom_emitters": [], "coverage_rates": {"taxonomy_aligned_revenue_pct": 100, "renewable_energy_pct": 100}}
+    },
+    {
+      "name": "mixed_known_unknown_and_zero",
+      "passes": true,
+      "companies": [
+        {"company_name": "Example", "report_year": 2023, "taxonomy_aligned_revenue_pct": null, "renewable_energy_pct": 0},
+        {"company_name": "Example", "report_year": 2024, "taxonomy_aligned_revenue_pct": 20, "renewable_energy_pct": 40}
+      ],
+      "stats": {"total_companies": 1, "avg_taxonomy_aligned": 20, "avg_renewable_pct": 20, "yearly_trend": [{"year": 2023, "count": 1}, {"year": 2024, "count": 1}], "top_emitters": [], "bottom_emitters": [], "coverage_rates": {"taxonomy_aligned_revenue_pct": 50, "renewable_energy_pct": 100}}
+    }
+  ]
+}

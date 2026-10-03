@@ -42,6 +42,8 @@ def validate_payload(payload: Any) -> None:
         value = payload[key]
         if value is not None and not _is_number(value):
             raise ValueError(f"{key} must be a finite number or null")
+        if total_companies == 0 and value is not None:
+            raise ValueError(f"{key} must be null for an empty dataset")
 
     for key in ("yearly_trend", "top_emitters", "bottom_emitters"):
         value = payload[key]

@@ -826,6 +826,34 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/csp-report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Receive Csp Report
+         * @description Receive CSP violation reports.
+         *
+         *     Accepts:
+         *     - application/csp-report (legacy): {"csp-report": {...}}
+         *     - application/reports+json (Reporting API v1): [{"type": "csp-violation", "body": {...}}, ...]
+         *
+         *     Returns 204 No Content on success.
+         *     Returns 413 if body exceeds 16 KB.
+         *     Returns 400 if JSON is malformed.
+         */
+        post: operations["receive_csp_report_csp_report_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/": {
         parameters: {
             query?: never;
@@ -3703,6 +3731,24 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
+            };
+        };
+    };
+    receive_csp_report_csp_report_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

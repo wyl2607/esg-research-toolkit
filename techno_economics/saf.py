@@ -68,12 +68,9 @@ def calculate_saf_cost(inp: SAFInput) -> SAFCostResult:
 
     # --- Cost component breakdown (per tonne, undiscounted averages) ---
     # Annualized CAPEX
-    if inp.discount_rate > 0:
-        crf = (inp.discount_rate * (1 + inp.discount_rate) ** inp.lifetime_years) / (
-            (1 + inp.discount_rate) ** inp.lifetime_years - 1
-        )
-    else:
-        crf = 1.0 / inp.lifetime_years
+    # The reciprocal annuity factor is equivalent to the closed-form CRF,
+    # without cancellation in (1 + r)**n - 1 for tiny positive rates.
+    crf = 1.0 / float(np.sum(1.0 / discount_factors))
     capex_annualized = capex_total_eur * crf
     capex_per_tonne = capex_annualized / annual_production_tonnes
 
