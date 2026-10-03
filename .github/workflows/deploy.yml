@@ -69,7 +69,6 @@ jobs:
           EXPECTED_GITHUB_SHA: ${{ github.sha }}
         run: |
           payload="$(curl -fsS "$PUBLIC_HEALTH_URL")"
-          echo "$payload"
           python - <<'PY' "$payload"
           import json
           import os
@@ -80,15 +79,33 @@ jobs:
           actual = payload.get("git_sha")
           if actual != expected:
               raise SystemExit(f"public deploy git_sha mismatch: expected {expected}, got {actual}")
+          print(f"OK public deployed SHA: {expected}")
           PY
 
       - name: Verify public dashboard stats
         if: steps.deploy_secrets.outputs.ready == 'true' && inputs.public_dashboard_url != ''
         env:
           PUBLIC_DASHBOARD_URL: ${{ inputs.public_dashboard_url }}
+          EXPECTED_GITHUB_SHA: ${{ github.sha }}
         run: |
-          payload="$(curl -fsS "$PUBLIC_DASHBOARD_URL")"
-          printf '%s' "$payload" | python scripts/qa/verify_dashboard_stats.py
+          # Reuse verify_dashboard_stats.py through the pinned post-deploy check.
+          # Derive /health/deploy from the same API base so this cannot validate
+          # dashboard data from a different revision than the selected SHA.
+          case "$PUBLIC_DASHBOARD_URL" in
+            */report/dashboard/stats) ;;
+            *) echo "Expected a /report/dashboard/stats URL" >&2; exit 1 ;;
+          esac
+          frontend_url="$(python - <<'PY'
+          import os
+          from urllib.parse import urlsplit
+          url = urlsplit(os.environ["PUBLIC_DASHBOARD_URL"])
+          print(f"{url.scheme}://{url.netloc}/")
+          PY
+          )"
+          python scripts/qa/verify_post_deploy.py \
+            --backend-url "${PUBLIC_DASHBOARD_URL%/report/dashboard/stats}" \
+            --frontend-url "$frontend_url" \
+            --expected-sha "$EXPECTED_GITHUB_SHA"
       - name: Deploy skipped (missing secrets)
         if: steps.deploy_secrets.outputs.ready != 'true'
         run: echo "Deploy step skipped because required secrets are not configured."
