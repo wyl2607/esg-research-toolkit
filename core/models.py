@@ -101,7 +101,8 @@ def _provider_model_ids() -> tuple[set[str] | None, str | None]:
         ids = {item.id for item in result.data if getattr(item, "id", None)}
         return ids, None
     except Exception as exc:  # noqa: BLE001
-        return None, f"provider list unavailable: {exc}"
+        # Provider error text can echo part of the API key; keep only the type.
+        return None, f"provider list unavailable: {type(exc).__name__}"
 
 
 _availability_cache: dict[ModelPurpose, ModelAvailability] = {}

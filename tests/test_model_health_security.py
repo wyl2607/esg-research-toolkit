@@ -100,3 +100,22 @@ def test_public_model_health_route_uses_safe_contract(monkeypatch) -> None:
         "ready": False,
         "models": {"extraction": {"available": False}},
     }
+
+
+def test_provider_error_detail_omits_exception_text(monkeypatch) -> None:
+    import openai
+
+    class LeakyClient:
+        def __init__(self, **_: object) -> None:
+            self.models = self
+
+        def list(self) -> None:
+            raise RuntimeError("Incorrect API key provided: sk-proj-abc123SECRET")
+
+    monkeypatch.setattr(settings, "openai_api_key", "sk-proj-abc123SECRET")
+    monkeypatch.setattr(openai, "OpenAI", LeakyClient)
+
+    ids, error = models._provider_model_ids()
+
+    assert ids is None
+    assert error == "provider list unavailable: RuntimeError"
