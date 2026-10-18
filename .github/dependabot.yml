@@ -8,13 +8,16 @@
 #
 # Grouping is deliberate: ungrouped patch churn is what trains people to stop
 # reading dependency PRs.
+#
+# Monthly since 2026-10-18: weekly runs still opened 10-20 PRs a month per
+# repo. Majors get their own group per ecosystem so one breaking bump does not
+# take the minor/patch PR red, and does not arrive as a PR per package.
 version: 2
 updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "monthly"
     open-pull-requests-limit: 3
     commit-message:
       prefix: "chore(actions)"
@@ -22,11 +25,13 @@ updates:
       actions:
         patterns: ["*"]
         update-types: ["minor", "patch"]
+      actions-major:
+        patterns: ["*"]
+        update-types: ["major"]
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "monthly"
     open-pull-requests-limit: 5
     commit-message:
       prefix: "chore(deps)"
@@ -34,6 +39,9 @@ updates:
       pip-minor-patch:
         patterns: ["*"]
         update-types: ["minor", "patch"]
+      pip-major:
+        patterns: ["*"]
+        update-types: ["major"]
     ignore:
       # requirements-ci.txt deliberately pins ruff to 0.14.x: 0.16 turns on
       # ~70 new findings (I001/RUF012/B008/...) across the CI path, which is a
@@ -48,8 +56,7 @@ updates:
   - package-ecosystem: "npm"
     directory: "/frontend"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "monthly"
     open-pull-requests-limit: 5
     commit-message:
       prefix: "chore(deps)"
@@ -57,3 +64,6 @@ updates:
       npm-minor-patch:
         patterns: ["*"]
         update-types: ["minor", "patch"]
+      npm-major:
+        patterns: ["*"]
+        update-types: ["major"]
