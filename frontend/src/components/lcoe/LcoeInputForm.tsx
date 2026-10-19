@@ -190,7 +190,7 @@ export function LcoeInputForm(props: LcoeInputFormProps) {
                   type="button"
                   onClick={() => setForm((f) => ({ ...f, electricity_price_eur_per_mwh: price }))}
                   style={{ minHeight: 'unset', minWidth: 'unset' }}
-                  className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 ${
+                  className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-600 ${
                     form.electricity_price_eur_per_mwh === price
                       ? 'border-amber-300 bg-amber-100 text-amber-900 dark:border-amber-600 dark:bg-amber-900/40 dark:text-amber-300'
                       : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300'
@@ -216,7 +216,7 @@ export function LcoeInputForm(props: LcoeInputFormProps) {
                   type="button"
                   onClick={() => setForm((f) => ({ ...f, electricity_price_eur_per_mwh: price }))}
                   style={{ minHeight: 'unset', minWidth: 'unset' }}
-                  className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${
+                  className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-sky-500 ${
                     form.electricity_price_eur_per_mwh === price
                       ? 'border-sky-300 bg-sky-100 text-sky-900 dark:border-sky-600 dark:bg-sky-800/40 dark:text-sky-300'
                       : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300'
@@ -242,7 +242,7 @@ export function LcoeInputForm(props: LcoeInputFormProps) {
                   type="button"
                   onClick={() => setForm((f) => ({ ...f, electricity_price_eur_per_mwh: price }))}
                   style={{ minHeight: 'unset', minWidth: 'unset' }}
-                  className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 ${
+                  className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-red-500 ${
                     form.electricity_price_eur_per_mwh === price
                       ? 'border-red-300 bg-red-100 text-red-900 dark:border-red-600 dark:bg-red-800/40 dark:text-red-300'
                       : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300'

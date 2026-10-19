@@ -157,9 +157,9 @@ export function DashboardPage() {
       <Suspense
         fallback={(
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <div className="h-32 rounded-2xl border border-slate-200 bg-white shadow-sm" />
-            <div className="h-32 rounded-2xl border border-slate-200 bg-white shadow-sm" />
-            <div className="h-32 rounded-2xl border border-slate-200 bg-white shadow-sm" />
+            <div className="h-32 rounded-2xl border border-slate-200 bg-white shadow-xs" />
+            <div className="h-32 rounded-2xl border border-slate-200 bg-white shadow-xs" />
+            <div className="h-32 rounded-2xl border border-slate-200 bg-white shadow-xs" />
           </div>
         )}
       >
@@ -230,7 +230,7 @@ export function DashboardPage() {
           <button
             type="button"
             onClick={cycleCoverageSort}
-            className="flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 shadow-sm transition hover:border-amber-400 hover:text-amber-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600"
+            className="flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 shadow-xs transition hover:border-amber-400 hover:text-amber-700 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-600"
             aria-label={t('dashboard.coverageSortDefault')}
           >
             {coverageSort === 'default' ? (
@@ -254,7 +254,7 @@ export function DashboardPage() {
             </div>
             <div className="h-2 w-full overflow-hidden rounded-full bg-stone-200">
               <div
-                className="h-2 rounded-full bg-gradient-to-r from-amber-400 to-green-500 transition-all"
+                className="h-2 rounded-full bg-linear-to-r from-amber-400 to-green-500 transition-all"
                 style={{ width: `${overallProgress}%` }}
               />
             </div>
@@ -322,7 +322,7 @@ export function DashboardPage() {
                 <button
                   key={`${company.company_name}-${company.report_year}`}
                   type="button"
-                  className="w-full rounded-xl border border-stone-200 bg-white/90 p-3 text-left transition hover:border-stone-300 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600"
+                  className="w-full rounded-xl border border-stone-200 bg-white/90 p-3 text-left transition hover:border-stone-300 hover:shadow-xs focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-600"
                   onClick={() => navigate(`/companies/${encodeURIComponent(company.company_name)}`)}
                 >
                   <div className="flex items-start justify-between gap-3">

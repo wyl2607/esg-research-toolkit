@@ -229,7 +229,7 @@ export function CompaniesPage() {
                             <Building2 size={18} />
                           </div>
                           <div className="min-w-0">
-                            <h2 className="text-lg font-semibold leading-tight text-slate-900 break-words">
+                            <h2 className="text-lg font-semibold leading-tight text-slate-900 wrap-break-word">
                               {c.company_name}
                             </h2>
                             <p className="mt-1 text-xs leading-5 text-slate-500">

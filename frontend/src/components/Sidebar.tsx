@@ -56,7 +56,7 @@ export function Sidebar({ id, className, onNavigate }: SidebarProps) {
       <aside
         id={id}
         className={cn(
-          'fixed lg:static left-0 top-0 z-30 h-screen w-[260px] shrink-0 border-r border-stone-200/80 dark:border-slate-700/50 bg-stone-50/90 dark:bg-slate-900/95 backdrop-blur-sm flex flex-col transition-transform duration-300 lg:translate-x-0',
+          'fixed lg:static left-0 top-0 z-30 h-screen w-[260px] shrink-0 border-r border-stone-200/80 dark:border-slate-700/50 bg-stone-50/90 dark:bg-slate-900/95 backdrop-blur-xs flex flex-col transition-transform duration-300 lg:translate-x-0',
           isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
           className
         )}
@@ -86,9 +86,9 @@ export function Sidebar({ id, className, onNavigate }: SidebarProps) {
                 end={to === '/'}
                 className={({ isActive }) =>
                   cn(
-                    'flex min-h-11 items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2',
+                    'flex min-h-11 items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2',
                     isActive
-                      ? 'bg-amber-100 text-amber-900 dark:bg-amber-900/30 dark:text-amber-300 shadow-sm'
+                      ? 'bg-amber-100 text-amber-900 dark:bg-amber-900/30 dark:text-amber-300 shadow-xs'
                       : 'text-stone-700 dark:text-slate-300 hover:bg-white/80 dark:hover:bg-slate-700/50 hover:text-stone-900 dark:hover:text-slate-100'
                   )
                 }
@@ -110,9 +110,9 @@ export function Sidebar({ id, className, onNavigate }: SidebarProps) {
                 end={to === '/'}
                 className={({ isActive }) =>
                   cn(
-                    'flex min-h-11 items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2',
+                    'flex min-h-11 items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2',
                     isActive
-                      ? 'bg-amber-100 text-amber-900 dark:bg-amber-900/30 dark:text-amber-300 shadow-sm'
+                      ? 'bg-amber-100 text-amber-900 dark:bg-amber-900/30 dark:text-amber-300 shadow-xs'
                       : 'text-stone-700 dark:text-slate-300 hover:bg-white/80 dark:hover:bg-slate-700/50 hover:text-stone-900 dark:hover:text-slate-100'
                   )
                 }

@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 
 const BASE =
-  'min-w-0 max-w-full rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800'
+  'min-w-0 max-w-full rounded-2xl border border-slate-200 bg-white shadow-xs dark:border-slate-700 dark:bg-slate-800'
 
 /** Primary content container (tables, charts, long-form sections). p-6. */
 export function Panel({
@@ -24,7 +24,7 @@ export function Panel({
         <header className="mb-4 flex min-w-0 flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             {title ? (
-              <h2 className="break-words text-lg font-semibold text-slate-900 [overflow-wrap:anywhere] dark:text-slate-100">{title}</h2>
+              <h2 className="text-lg font-semibold text-slate-900 wrap-anywhere dark:text-slate-100">{title}</h2>
             ) : null}
             {description ? (
               <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{description}</p>

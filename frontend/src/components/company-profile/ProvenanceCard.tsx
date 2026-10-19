@@ -57,10 +57,10 @@ export function ProvenanceCard({
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
             {t('profile.provenancePeriodLabel')}
           </p>
-          <p className="mt-2 break-words text-sm font-semibold text-slate-900 [overflow-wrap:anywhere]">
+          <p className="mt-2 text-sm font-semibold text-slate-900 wrap-anywhere">
             {latestPeriod.period?.label ?? latestPeriod.reporting_period_label}
           </p>
-          <p className="mt-1 break-words text-xs text-slate-500 [overflow-wrap:anywhere]">
+          <p className="mt-1 text-xs text-slate-500 wrap-anywhere">
             {t('profile.provenancePeriodSummary', {
               type: latestPeriod.period?.type ?? latestPeriod.reporting_period_type ?? '—',
               year: latestPeriod.period?.legacy_report_year ?? latestPeriod.report_year,
@@ -73,13 +73,13 @@ export function ProvenanceCard({
             {t('profile.provenanceSourcesLabel')}
           </p>
           <p
-            className="mt-2 break-words text-sm font-semibold text-slate-900 [overflow-wrap:anywhere]"
+            className="mt-2 text-sm font-semibold text-slate-900 wrap-anywhere"
             data-testid="profile-provenance-source-summary"
           >
             {t('profile.provenanceSourceSummary', { count: latestSources.length })}
           </p>
           <p
-            className="mt-1 break-words text-xs text-slate-500 [overflow-wrap:anywhere]"
+            className="mt-1 text-xs text-slate-500 wrap-anywhere"
             data-testid="profile-provenance-source-types"
           >
             {[latestSourceTypes, latestSourceOrigin].filter(Boolean).join(' · ') || '—'}
@@ -91,14 +91,14 @@ export function ProvenanceCard({
             {t('profile.provenanceMergeLabel')}
           </p>
           <p
-            className="mt-2 break-words text-sm font-semibold text-slate-900 [overflow-wrap:anywhere]"
+            className="mt-2 text-sm font-semibold text-slate-900 wrap-anywhere"
             data-testid="profile-provenance-merge-summary"
           >
             {t('profile.provenanceMergeSummary', {
               count: mergeSourceCount,
             })}
           </p>
-          <p className="mt-1 break-words text-xs text-slate-500 [overflow-wrap:anywhere]">
+          <p className="mt-1 text-xs text-slate-500 wrap-anywhere">
             {latestMergeCue
               ? t('profile.provenanceMergeMetricCue', {
                   metric: metricDisclosureLabel(t, latestMergeCue.metricKey),
@@ -125,7 +125,7 @@ export function ProvenanceCard({
                       version: framework.framework_version ?? '—',
                     })}
                   </p>
-                  <p className="break-words text-xs text-slate-500 [overflow-wrap:anywhere]">
+                  <p className="text-xs text-slate-500 wrap-anywhere">
                     {t('profile.provenanceFrameworkTimestamp', {
                       date: asDate(framework.analyzed_at ?? framework.stored_at ?? null, locale),
                     })}
@@ -176,7 +176,7 @@ export function ProvenanceCard({
                     <p className="truncate text-sm font-medium text-slate-900">
                       {prettifyToken(sourceType)}
                     </p>
-                    <p className="mt-1 break-words text-xs text-slate-500 [overflow-wrap:anywhere]">
+                    <p className="mt-1 text-xs text-slate-500 wrap-anywhere">
                       {[sourcePeriodLabel, sourcePeriodSummary, sourceOriginLabel(source)]
                         .filter(Boolean)
                         .join(' · ')}

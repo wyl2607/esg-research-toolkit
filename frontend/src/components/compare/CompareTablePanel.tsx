@@ -204,7 +204,7 @@ export function CompareTablePanel({
                   key={`${c.company_name}${c.report_year}`}
                   className="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-300 min-w-[140px]"
                 >
-                  <div className="break-words leading-snug">{c.company_name}</div>
+                  <div className="wrap-break-word leading-snug">{c.company_name}</div>
                   <div
                     className="text-xs font-normal text-stone-400 dark:text-slate-500"
                     data-testid={`compare-table-source-context-${index}`}

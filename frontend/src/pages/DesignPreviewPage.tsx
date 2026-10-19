@@ -53,7 +53,7 @@ export function DesignPreviewPage() {
 
   return (
     <PageContainer>
-      <div className="rounded-3xl bg-gradient-to-br from-amber-50 to-stone-50 p-8">
+      <div className="rounded-3xl bg-linear-to-br from-amber-50 to-stone-50 p-8">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">
           {t('designPreview.hero.kicker')}
         </p>
@@ -161,7 +161,7 @@ export function DesignPreviewPage() {
               ].map((k, i) => (
                 <div
                   key={i}
-                  className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+                  className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs"
                 >
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
                     {k.l}

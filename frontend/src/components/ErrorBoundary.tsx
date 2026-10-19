@@ -40,7 +40,7 @@ export class ErrorBoundary extends Component<Props, State> {
           <p className="max-w-md text-sm text-slate-500">{this.state.message}</p>
           <p className="max-w-md text-xs text-slate-400">{i18n.t('errorBoundary.suggestion')}</p>
           <button
-            className="rounded-md bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+            className="rounded-md bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
             onClick={() => this.setState({ hasError: false, message: '' })}
             type="button"
           >
