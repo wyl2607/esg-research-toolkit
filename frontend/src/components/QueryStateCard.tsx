@@ -41,7 +41,7 @@ export function QueryStateCard({
   return (
     <div
       className={cn(
-        'rounded-2xl border p-5 shadow-sm ring-1 ring-black/5',
+        'rounded-2xl border p-5 shadow-xs ring-1 ring-black/5',
         toneStyles[tone],
         className
       )}
@@ -49,7 +49,7 @@ export function QueryStateCard({
       aria-live={tone === 'error' ? 'assertive' : 'polite'}
     >
       <div className="flex items-start gap-3">
-        <div className="mt-0.5 rounded-full bg-white/80 p-2 shadow-sm ring-1 ring-black/5">
+        <div className="mt-0.5 rounded-full bg-white/80 p-2 shadow-xs ring-1 ring-black/5">
           <ToneIcon tone={tone} />
         </div>
         <div className="min-w-0 space-y-1">

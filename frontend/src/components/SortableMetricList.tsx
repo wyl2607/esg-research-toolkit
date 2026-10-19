@@ -122,7 +122,7 @@ export function SortableMetricList({ items, loading, storageKey = 'metric-card-o
           aria-label={`${item.label} — drag or use Alt+Arrow to reorder`}
           className={[
             'group relative cursor-grab rounded-xl active:cursor-grabbing',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600',
+            'focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-600',
             direction === 'vertical' ? 'flex items-stretch gap-2' : 'flex flex-col',
           ].join(' ')}
         >

@@ -138,7 +138,7 @@ export function AutoFetchPanel({
           <span>{t('upload.autoFetchSourceHintLabel')}</span>
           <select
             id="auto-fetch-source-hint"
-            className="h-10 rounded-lg border border-stone-300 bg-white px-3 text-sm text-stone-800 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-100"
+            className="h-10 rounded-lg border border-stone-300 bg-white px-3 text-sm text-stone-800 shadow-xs focus:border-amber-500 focus:outline-hidden focus:ring-2 focus:ring-amber-100"
             value={form.sourceHint}
             onChange={(event) => actions.onSourceHintChange(event.target.value as DisclosureSourceHint)}
           >
@@ -193,7 +193,7 @@ export function AutoFetchPanel({
           <span>{t('upload.autoFetchSourceTypeLabel')}</span>
           <select
             id="auto-fetch-source-type"
-            className="h-10 rounded-lg border border-stone-300 bg-white px-3 text-sm text-stone-800 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-100"
+            className="h-10 rounded-lg border border-stone-300 bg-white px-3 text-sm text-stone-800 shadow-xs focus:border-amber-500 focus:outline-hidden focus:ring-2 focus:ring-amber-100"
             value={form.sourceType}
             onChange={(event) => actions.onSourceTypeChange(event.target.value as AutoFetchSourceType)}
           >
@@ -208,7 +208,7 @@ export function AutoFetchPanel({
           <input
             id="auto-fetch-source-url"
             data-testid="auto-fetch-source-url"
-            className="h-10 rounded-lg border border-stone-300 bg-white px-3 text-sm text-stone-800 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-100"
+            className="h-10 rounded-lg border border-stone-300 bg-white px-3 text-sm text-stone-800 shadow-xs focus:border-amber-500 focus:outline-hidden focus:ring-2 focus:ring-amber-100"
             value={form.sourceUrl}
             onChange={(event) => actions.onSourceUrlChange(event.target.value)}
             placeholder={t('upload.autoFetchSourcePlaceholder')}

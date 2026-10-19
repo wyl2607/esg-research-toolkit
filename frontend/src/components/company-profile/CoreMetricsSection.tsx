@@ -111,7 +111,7 @@ export function CoreMetricsSection({
 
       <Suspense
         fallback={(
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500 shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500 shadow-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
             {t('common.loading')}
           </div>
         )}

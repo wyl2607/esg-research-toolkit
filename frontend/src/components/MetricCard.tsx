@@ -52,7 +52,7 @@ export function MetricCard({
       </CardHeader>
       <CardContent>
         <div
-          className={`numeric-mono break-words text-[1.85rem] font-semibold leading-none ${valueColor}`}
+          className={`numeric-mono wrap-break-word text-[1.85rem] font-semibold leading-none ${valueColor}`}
           data-metric-state={unavailable ? 'unavailable' : 'ok'}
           title={unavailable ? unavailableLabel : undefined}
           aria-label={unavailable && unavailableLabel ? `${label}: ${unavailableLabel}` : undefined}

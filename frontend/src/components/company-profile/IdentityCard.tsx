@@ -29,13 +29,13 @@ export function IdentityCard(props: IdentityCardProps) {
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
             {t('profile.canonicalNameLabel')}
           </p>
-          <p className="mt-2 break-words text-sm font-semibold text-slate-900 [overflow-wrap:anywhere]">
+          <p className="mt-2 text-sm font-semibold text-slate-900 wrap-anywhere">
             {identitySummary?.canonical_company_name ?? companyName}
           </p>
           {identitySummary?.requested_company_name &&
           identitySummary.requested_company_name !==
             (identitySummary?.canonical_company_name ?? companyName) ? (
-            <p className="mt-1 break-words text-xs text-slate-500 [overflow-wrap:anywhere]">
+            <p className="mt-1 text-xs text-slate-500 wrap-anywhere">
               {identitySummary.requested_company_name} →{' '}
               {identitySummary?.canonical_company_name ?? companyName}
             </p>
@@ -45,7 +45,7 @@ export function IdentityCard(props: IdentityCardProps) {
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
             {t('profile.latestSourceTypeLabel')}
           </p>
-          <p className="mt-2 break-words text-sm font-semibold text-slate-900 [overflow-wrap:anywhere]">
+          <p className="mt-2 text-sm font-semibold text-slate-900 wrap-anywhere">
             {identitySummary?.latest_source_document_type ?? '—'}
           </p>
         </div>
@@ -58,7 +58,7 @@ export function IdentityCard(props: IdentityCardProps) {
               ? t('profile.aliasConsolidationYes')
               : t('profile.aliasConsolidationNo')}
           </p>
-          <p className="mt-1 break-words text-xs text-slate-500 [overflow-wrap:anywhere]">
+          <p className="mt-1 text-xs text-slate-500 wrap-anywhere">
             {identitySummary?.consolidated_aliases?.length
               ? identitySummary.consolidated_aliases.join(', ')
               : t('profile.aliasListNone')}
@@ -70,11 +70,11 @@ export function IdentityCard(props: IdentityCardProps) {
           </p>
           {identitySummary?.merge_priority_preview ? (
             <>
-              <p className="mt-2 break-words text-sm text-slate-700 [overflow-wrap:anywhere]">
+              <p className="mt-2 text-sm text-slate-700 wrap-anywhere">
                 {identitySummary.merge_priority_preview}
               </p>
               {identitySummary.source_priority_preview ? (
-                <p className="mt-1 break-words text-xs text-amber-700 [overflow-wrap:anywhere]">{identitySummary.source_priority_preview}</p>
+                <p className="mt-1 text-xs text-amber-700 wrap-anywhere">{identitySummary.source_priority_preview}</p>
               ) : null}
             </>
           ) : mergedResult && Object.keys(mergedResult.metrics).length > 0 ? (
@@ -85,7 +85,7 @@ export function IdentityCard(props: IdentityCardProps) {
                 .map(([key, m]) => (
                   <div key={key} className="min-w-0 text-xs">
                     <div className="flex min-w-0 items-start justify-between gap-2">
-                      <span className="break-words text-slate-600 [overflow-wrap:anywhere]">
+                      <span className="text-slate-600 wrap-anywhere">
                         {metricDisclosureLabel(t, key)}
                       </span>
                       <span className={`shrink-0 rounded px-1.5 py-0.5 font-medium ${m.conflict_detected ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-700'}`}>
@@ -93,7 +93,7 @@ export function IdentityCard(props: IdentityCardProps) {
                       </span>
                     </div>
                     {m.chosen_pdf_filename ? (
-                      <p className="mt-0.5 break-all text-slate-500 [overflow-wrap:anywhere]">
+                      <p className="mt-0.5 break-all text-slate-500 wrap-anywhere">
                         {t('profile.mergeChosenFile', { filename: m.chosen_pdf_filename })}
                       </p>
                     ) : m.chosen_source_url ? (
@@ -101,7 +101,7 @@ export function IdentityCard(props: IdentityCardProps) {
                         href={m.chosen_source_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="mt-0.5 block break-all text-indigo-600 underline-offset-2 hover:underline [overflow-wrap:anywhere]"
+                        className="mt-0.5 block break-all text-indigo-600 underline-offset-2 hover:underline wrap-anywhere"
                         title={m.chosen_source_url}
                       >
                         {t('profile.mergeChosenUrl')}
@@ -116,7 +116,7 @@ export function IdentityCard(props: IdentityCardProps) {
               )}
             </div>
           ) : (
-            <p className="mt-2 break-words text-sm text-slate-500 [overflow-wrap:anywhere]">
+            <p className="mt-2 text-sm text-slate-500 wrap-anywhere">
               {t('profile.sourceMergePriorityReserved')}
             </p>
           )}

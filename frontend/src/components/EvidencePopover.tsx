@@ -189,7 +189,7 @@ export function EvidencePopover({
           <button
             ref={closeButtonRef}
             type="button"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
             aria-label={t('profile.evidenceClose')}
             onClick={onClose}
           >

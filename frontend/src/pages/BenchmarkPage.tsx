@@ -332,7 +332,7 @@ export function BenchmarkPage() {
         <FilterBar.Field label={t('benchmark.industryLabel')} htmlFor="benchmark-industry">
           <select
             id="benchmark-industry"
-            className="h-12 w-full rounded-xl border border-stone-300 bg-white px-3 text-sm text-stone-800 shadow-sm transition hover:border-stone-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+            className="h-12 w-full rounded-xl border border-stone-300 bg-white px-3 text-sm text-stone-800 shadow-xs transition hover:border-stone-400 focus:border-amber-500 focus:outline-hidden focus:ring-2 focus:ring-amber-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
             value={industryCode}
             onChange={(event) => {
               setIndustryCode(event.target.value)
@@ -350,7 +350,7 @@ export function BenchmarkPage() {
         <FilterBar.Field label={t('benchmark.yearLabel')} htmlFor="benchmark-year">
           <select
             id="benchmark-year"
-            className="h-12 w-full rounded-xl border border-stone-300 bg-white px-3 text-sm text-stone-800 shadow-sm transition hover:border-stone-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+            className="h-12 w-full rounded-xl border border-stone-300 bg-white px-3 text-sm text-stone-800 shadow-xs transition hover:border-stone-400 focus:border-amber-500 focus:outline-hidden focus:ring-2 focus:ring-amber-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
             value={effectiveYear ?? ''}
             onChange={(event) => setSelectedYear(Number(event.target.value))}
             disabled={availableYears.length === 0}
@@ -370,7 +370,7 @@ export function BenchmarkPage() {
         <FilterBar.Actions>
           <button
             type="button"
-            className="h-12 rounded-xl bg-amber-600 px-5 text-sm font-medium text-white shadow-sm transition hover:bg-amber-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:text-stone-600 dark:focus-visible:ring-offset-slate-900"
+            className="h-12 rounded-xl bg-amber-600 px-5 text-sm font-medium text-white shadow-xs transition hover:bg-amber-700 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:text-stone-600 dark:focus-visible:ring-offset-slate-900"
             onClick={() => recomputeMutation.mutate()}
             disabled={recomputeMutation.isPending}
           >

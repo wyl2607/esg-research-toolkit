@@ -129,7 +129,7 @@ export function ComparePage() {
                     variant={isSelected ? 'default' : 'outline'}
                     size="sm"
                     className={cn(
-                      'h-auto whitespace-normal px-3 py-2 text-left leading-5 transition-all active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600',
+                      'h-auto whitespace-normal px-3 py-2 text-left leading-5 transition-all active:scale-[0.98] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-600',
                       isSelected && 'ring-2 ring-amber-200 dark:ring-amber-900/60',
                       disabled && 'opacity-40 cursor-not-allowed',
                     )}
@@ -146,7 +146,7 @@ export function ComparePage() {
                           type="button"
                           onClick={() => setYear(name, year)}
                           className={cn(
-                            'px-2 py-0.5 text-xs rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600',
+                            'px-2 py-0.5 text-xs rounded-full border transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-600',
                             year === entry?.year
                               ? 'bg-amber-100 border-amber-300 text-amber-900 font-semibold dark:bg-amber-900/40 dark:border-amber-600 dark:text-amber-300'
                               : 'bg-white border-stone-200 text-stone-600 hover:bg-stone-50 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-600'
@@ -188,7 +188,7 @@ export function ComparePage() {
                     type="button"
                     onClick={() => setViewMode(m.key)}
                     className={cn(
-                      'px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600',
+                      'px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-600',
                       viewMode === m.key
                         ? 'bg-amber-700 text-white dark:bg-amber-800'
                         : 'bg-white text-slate-600 hover:bg-stone-50 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
@@ -246,7 +246,7 @@ export function ComparePage() {
                 <FormCard key={`${company.company_name}-${company.report_year}`} className="space-y-3">
                   <div className="space-y-2">
                     <p className="section-kicker">{t('common.company')}</p>
-                    <h2 className="text-lg leading-snug text-slate-900 dark:text-slate-100 break-words">{company.company_name}</h2>
+                    <h2 className="text-lg leading-snug text-slate-900 dark:text-slate-100 wrap-break-word">{company.company_name}</h2>
                     <div className="flex flex-wrap gap-2">
                       <Badge variant="secondary" className="bg-stone-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200">
                         {periodLabel}

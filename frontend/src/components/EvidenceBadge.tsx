@@ -159,7 +159,7 @@ export function EvidenceBadge({
         type="button"
         data-testid={testId}
         className={cn(
-          'inline-flex max-w-full min-w-0 items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-left text-xs font-medium text-indigo-800 transition hover:border-indigo-300 hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500',
+          'inline-flex max-w-full min-w-0 items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-left text-xs font-medium text-indigo-800 transition hover:border-indigo-300 hover:bg-indigo-100 focus:outline-hidden focus:ring-2 focus:ring-indigo-500',
           className
         )}
         aria-haspopup="dialog"

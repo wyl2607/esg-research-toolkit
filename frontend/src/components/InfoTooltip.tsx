@@ -22,7 +22,7 @@ export function InfoTooltip({ content, className }: Props) {
         type="button"
         tabIndex={0}
         aria-label={content}
-        className="ml-1 inline-flex h-4 w-4 items-center justify-center rounded-full text-stone-400 hover:text-stone-600 dark:text-slate-500 dark:hover:text-slate-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-amber-600"
+        className="ml-1 inline-flex h-4 w-4 items-center justify-center rounded-full text-stone-400 hover:text-stone-600 dark:text-slate-500 dark:hover:text-slate-300 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-amber-600"
         style={{ minHeight: 'unset', minWidth: 'unset' }}
       >
         <Info size={12} aria-hidden="true" />

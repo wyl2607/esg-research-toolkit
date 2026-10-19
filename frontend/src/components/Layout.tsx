@@ -36,7 +36,7 @@ export function Layout() {
     <div className="flex h-screen overflow-hidden bg-transparent">
       <a
         href="#main-content"
-        className="sr-only z-[60] rounded-md bg-white px-3 py-2 text-sm text-slate-800 focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:outline-none focus:ring-2 focus:ring-amber-600"
+        className="sr-only z-60 rounded-md bg-white px-3 py-2 text-sm text-slate-800 focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:outline-hidden focus:ring-2 focus:ring-amber-600"
       >
         {t('a11y.skipToMain')}
       </a>

@@ -203,7 +203,7 @@ export function ManualCaseBuilderPage() {
                 value={draftJson}
                 onChange={(e) => setDraftJson(e.target.value)}
                 placeholder={t('manual.jsonPlaceholder')}
-                className="min-h-40 w-full rounded-md border border-input bg-white px-3 py-2 font-mono text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="min-h-40 w-full rounded-md border border-input bg-white px-3 py-2 font-mono text-xs focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               />
               <div className="flex gap-3">
                 <Button variant="outline" onClick={importDraft}>

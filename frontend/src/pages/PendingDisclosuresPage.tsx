@@ -167,7 +167,7 @@ export function PendingDisclosuresPage() {
                     key={row.id}
                     data-testid="pending-disclosure-row"
                     data-pending-id={row.id}
-                    className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm"
+                    className="rounded-2xl border border-stone-200 bg-white p-4 shadow-xs"
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="space-y-1">
