@@ -1,13 +1,13 @@
 # Core
 fastapi~=0.111.0
-python-multipart~=0.0.9
+python-multipart~=0.0.32
 uvicorn[standard]~=0.29.0
 pydantic~=2.13.5
-pydantic-settings~=2.2.0
+pydantic-settings~=2.16.0
 slowapi>=0.1.10
 
 # Database
-sqlalchemy~=2.1.1
+sqlalchemy~=2.1.4
 alembic~=1.19.1
 
 # AI
@@ -16,7 +16,7 @@ openai~=2.51.0
 # Data processing
 pandas~=3.0.6
 openpyxl~=3.1.5
-pdfplumber~=0.11.0
+pdfplumber~=0.11.10
 
 # HTTP / scraping
 httpx~=0.27.0
