@@ -12,7 +12,8 @@ import { Button } from '@/components/ui/button'
 import { useTranslation } from 'react-i18next'
 import { ArrowDownUp, ArrowRight, ArrowUpDown } from 'lucide-react'
 import { localizeErrorMessage, isBackendOffline } from '@/lib/error-utils'
-import { formatPercentMetric, resolveDashboardMetric } from '@/lib/dashboard-metrics'
+import { resolveDashboardMetric } from '@/lib/dashboard-metrics'
+import { useFormatters } from '@/lib/use-formatters'
 
 import type { MetricItem } from '@/components/SortableMetricList'
 
@@ -73,7 +74,8 @@ function DeferredHeavyCharts({
 }
 
 export function DashboardPage() {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
+  const fmt = useFormatters()
   const navigate = useNavigate()
 
   const { data: companies = [], isLoading: companiesLoading, error: companiesError } = useQuery({
@@ -124,11 +126,11 @@ export function DashboardPage() {
   )
   const taxonomyMetric = resolveDashboardMetric(
     metricSource ?? { kind: 'ready', value: stats?.avg_taxonomy_aligned },
-    formatPercentMetric
+    (n) => fmt.percent(n)
   )
   const renewableMetric = resolveDashboardMetric(
     metricSource ?? { kind: 'ready', value: stats?.avg_renewable_pct },
-    formatPercentMetric
+    (n) => fmt.percent(n)
   )
 
   const chartFallback = (
@@ -180,7 +182,7 @@ export function DashboardPage() {
               id: 'taxonomy',
               label: t('dashboard.avgTaxonomy'),
               value: taxonomyMetric.value,
-              color: 'blue',
+              color: 'default',
               unavailable: taxonomyMetric.unavailable,
               unavailableLabel: metricUnavailableLabel,
             } satisfies MetricItem,
@@ -188,7 +190,7 @@ export function DashboardPage() {
               id: 'renewable',
               label: t('dashboard.avgRenewable'),
               value: renewableMetric.value,
-              color: 'blue',
+              color: 'default',
               unavailable: renewableMetric.unavailable,
               unavailableLabel: metricUnavailableLabel,
             } satisfies MetricItem,
@@ -345,7 +347,7 @@ export function DashboardPage() {
                   </div>
                   <p className="mt-2 text-xs text-slate-600">
                     {t('companies.employees')}:{' '}
-                    {company.total_employees?.toLocaleString(i18n.resolvedLanguage) ?? '—'}
+                    {fmt.number(company.total_employees)}
                   </p>
                 </button>
               ))}
@@ -384,7 +386,7 @@ export function DashboardPage() {
                         </Badge>
                       </td>
                       <td className="px-4 py-3 text-slate-600">
-                        {company.total_employees?.toLocaleString(i18n.resolvedLanguage) ?? '—'}
+                        {fmt.number(company.total_employees)}
                       </td>
                     </tr>
                   ))}

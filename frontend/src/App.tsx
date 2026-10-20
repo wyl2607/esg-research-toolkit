@@ -1,5 +1,5 @@
 import { BrowserRouter, Link, Route, Routes, useLocation } from 'react-router-dom'
-import { Suspense, lazy, useEffect } from 'react'
+import { lazy, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Layout } from '@/components/Layout'
@@ -55,11 +55,6 @@ const SafPage = lazy(() =>
   import('@/pages/SafPage').then((module) => ({ default: module.SafPage }))
 )
 
-function LoadingFallback() {
-  const { t } = useTranslation()
-  return <div className="p-6 text-sm text-slate-500">{t('common.loading')}</div>
-}
-
 function NotFound() {
   const { t } = useTranslation()
   const location = useLocation()
@@ -97,31 +92,29 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <Suspense fallback={<LoadingFallback />}>
-          <Routes>
-            <Route element={<Layout />}>
-              <Route index element={<DashboardPage />} />
-              <Route path="upload" element={<UploadPage />} />
-              <Route path="disclosures" element={<PendingDisclosuresPage />} />
-              <Route path="taxonomy" element={<TaxonomyPage />} />
-              <Route path="lcoe" element={<LcoePage />} />
-              <Route path="saf" element={<SafPage />} />
-              <Route path="companies" element={<CompaniesPage />} />
-              <Route path="companies/:companyName" element={<CompanyProfilePage />} />
-              <Route path="manual" element={<ManualCaseBuilderPage />} />
-              <Route path="compare" element={<ComparePage />} />
-              <Route path="benchmarks" element={<BenchmarkPage />} />
-              <Route path="frameworks" element={<FrameworksPage />} />
-              <Route path="regional" element={<RegionalPage />} />
-              <Route path="coverage/:field" element={<CoverageFieldPage />} />
-              <Route path="frameworks/regional" element={<RegionalPage />} />
-              {import.meta.env.DEV && (
-                <Route path="design-preview" element={<DesignPreviewPage />} />
-              )}
-              <Route path="*" element={<NotFound />} />
-            </Route>
-          </Routes>
-        </Suspense>
+        <Routes>
+          <Route element={<Layout />}>
+            <Route index element={<DashboardPage />} />
+            <Route path="upload" element={<UploadPage />} />
+            <Route path="disclosures" element={<PendingDisclosuresPage />} />
+            <Route path="taxonomy" element={<TaxonomyPage />} />
+            <Route path="lcoe" element={<LcoePage />} />
+            <Route path="saf" element={<SafPage />} />
+            <Route path="companies" element={<CompaniesPage />} />
+            <Route path="companies/:companyName" element={<CompanyProfilePage />} />
+            <Route path="manual" element={<ManualCaseBuilderPage />} />
+            <Route path="compare" element={<ComparePage />} />
+            <Route path="benchmarks" element={<BenchmarkPage />} />
+            <Route path="frameworks" element={<FrameworksPage />} />
+            <Route path="regional" element={<RegionalPage />} />
+            <Route path="coverage/:field" element={<CoverageFieldPage />} />
+            <Route path="frameworks/regional" element={<RegionalPage />} />
+            {import.meta.env.DEV && (
+              <Route path="design-preview" element={<DesignPreviewPage />} />
+            )}
+            <Route path="*" element={<NotFound />} />
+          </Route>
+        </Routes>
       </BrowserRouter>
     </QueryClientProvider>
   )

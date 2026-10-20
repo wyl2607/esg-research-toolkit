@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
+import { MetricTile } from '@/components/MetricTile'
 
 export type PageHeaderKpi = {
   label: string
@@ -32,24 +33,11 @@ export function PageHeader({
         {actions ? <div className="pt-2">{actions}</div> : null}
       </div>
       {kpis && kpis.length > 0 ? (
-        <dl className="grid w-full min-w-0 grid-cols-2 gap-3 text-sm sm:grid-cols-3 lg:w-auto lg:min-w-[360px] lg:grid-cols-3">
+        <div className="grid w-full min-w-0 grid-cols-2 gap-3 sm:grid-cols-3 lg:w-auto lg:min-w-[360px] lg:grid-cols-3">
           {kpis.slice(0, 4).map((kpi, idx) => (
-            <div
-              key={idx}
-              className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs dark:border-slate-700 dark:bg-slate-800"
-            >
-              <dt className="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
-                {kpi.label}
-              </dt>
-              <dd className="mt-1 numeric-mono wrap-break-word text-3xl font-semibold text-slate-900 dark:text-slate-100">
-                {kpi.value}
-              </dd>
-              {kpi.hint ? (
-                <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{kpi.hint}</p>
-              ) : null}
-            </div>
+            <MetricTile key={idx} label={kpi.label} value={kpi.value} hint={kpi.hint} />
           ))}
-        </dl>
+        </div>
       ) : null}
     </header>
   )

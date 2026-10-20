@@ -125,16 +125,14 @@ export function LcoePage() {
                   value={lcoeMutation.data.lcoe_eur_per_mwh.toFixed(1)}
                   unit={t('lcoe.unitEurPerMwh')}
                   sub={t('lcoe.resultHintLcoe')}
-                  color="blue"
-                />
+                                  />
                 {lcoeMutation.data.currency !== 'EUR' && (
                   <MetricCard
                     label={t('lcoe.lcoeLocal', { currency: lcoeMutation.data.currency })}
                     value={lcoeMutation.data.lcoe_local_per_mwh.toFixed(1)}
                     unit={`${lcoeMutation.data.currency}/MWh`}
                     sub={t('lcoe.resultHintLcoeLocal')}
-                    color="blue"
-                  />
+                                      />
                 )}
                 <MetricCard
                   label={t('lcoe.npv')}
@@ -146,8 +144,7 @@ export function LcoePage() {
                   label={t('lcoe.irr')}
                   value={`${(lcoeMutation.data.irr * 100).toFixed(1)}%`}
                   sub={t('lcoe.resultHintIrr')}
-                  color="blue"
-                />
+                                  />
                 <MetricCard
                   label={t('lcoe.payback')}
                   value={
