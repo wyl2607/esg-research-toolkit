@@ -992,6 +992,7 @@ def test_disclosures_fetch_pipeline_records_attempted_urls_on_failure() -> None:
                     "https://www1.hkexnews.hk/search/titlesearch.xhtml?lang=en&query=basf",
                 ],
             ),
+            patch("report_parser.disclosures_api._robots_allows", return_value=True),
             patch("report_parser.disclosures_api._download_pdf_bytes", return_value=None),
             patch("report_parser.disclosures_api._discover_pdf_url_from_html", return_value=None),
         ):

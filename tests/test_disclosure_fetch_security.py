@@ -126,3 +126,88 @@ def test_response_body_is_bounded_while_streaming(monkeypatch) -> None:
     result = disclosures._download_pdf_bytes(client, "https://public.example/report.pdf")
 
     assert result is None
+
+
+def test_robots_disallow_skips_page_request(monkeypatch) -> None:
+    monkeypatch.setattr(disclosures.socket, "getaddrinfo", _public_dns)
+    page_url = "https://public.example/reports/2024.pdf"
+    client = _FakeClient(
+        [
+            _FakeResponse(
+                status_code=200,
+                url="https://public.example/robots.txt",
+                headers={"content-type": "text/plain"},
+                chunks=[b"User-agent: *\nDisallow: /\n"],
+            )
+        ]
+    )
+
+    assert disclosures._robots_allows(client, page_url, {}) is False
+    assert [url for url, _ in client.calls] == ["https://public.example/robots.txt"]
+
+
+def test_robots_allow_path(monkeypatch) -> None:
+    monkeypatch.setattr(disclosures.socket, "getaddrinfo", _public_dns)
+    client = _FakeClient(
+        [
+            _FakeResponse(
+                status_code=200,
+                url="https://public.example/robots.txt",
+                headers={"content-type": "text/plain"},
+                chunks=[b"User-agent: *\nAllow: /reports/\n"],
+            )
+        ]
+    )
+
+    assert disclosures._robots_allows(client, "https://public.example/reports/2024.pdf", {}) is True
+
+
+def test_missing_robots_allows_fetch(monkeypatch) -> None:
+    monkeypatch.setattr(disclosures.socket, "getaddrinfo", _public_dns)
+    client = _FakeClient(
+        [
+            _FakeResponse(
+                status_code=404,
+                url="https://public.example/robots.txt",
+                headers={},
+                chunks=[],
+            )
+        ]
+    )
+
+    assert disclosures._robots_allows(client, "https://public.example/reports/2024.pdf", {}) is True
+
+
+def test_unavailable_robots_disallows_fetch(monkeypatch) -> None:
+    monkeypatch.setattr(disclosures.socket, "getaddrinfo", _public_dns)
+    client = _FakeClient(
+        [
+            _FakeResponse(
+                status_code=503,
+                url="https://public.example/robots.txt",
+                headers={},
+                chunks=[],
+            )
+        ]
+    )
+
+    assert disclosures._robots_allows(client, "https://public.example/reports/2024.pdf", {}) is False
+
+
+def test_robots_are_cached_per_host(monkeypatch) -> None:
+    monkeypatch.setattr(disclosures.socket, "getaddrinfo", _public_dns)
+    client = _FakeClient(
+        [
+            _FakeResponse(
+                status_code=200,
+                url="https://public.example/robots.txt",
+                headers={"content-type": "text/plain"},
+                chunks=[b"User-agent: *\nAllow: /\n"],
+            )
+        ]
+    )
+    cache: dict[str, disclosures.RobotFileParser | None] = {}
+
+    assert disclosures._robots_allows(client, "https://public.example/one.pdf", cache) is True
+    assert disclosures._robots_allows(client, "https://public.example/two.pdf", cache) is True
+    assert [url for url, _ in client.calls] == ["https://public.example/robots.txt"]
