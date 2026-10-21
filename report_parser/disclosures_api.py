@@ -12,6 +12,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 from urllib.parse import quote_plus, urljoin, urlparse
+from urllib.robotparser import RobotFileParser
 
 import httpx
 from fastapi import APIRouter, BackgroundTasks, Body, Depends, HTTPException, Path as FastAPIPath, Query, Response, status
@@ -361,6 +362,41 @@ def _fetch_with_safe_redirects(
     return None
 
 
+def _robots_allows(
+    client: httpx.Client,
+    url: str,
+    cache: dict[str, RobotFileParser | None],
+) -> bool:
+    parsed = urlparse(url)
+    key = f"{parsed.scheme}://{parsed.netloc}"
+    if key in cache:
+        robots = cache[key]
+    else:
+        response = _fetch_with_safe_redirects(client, f"{key}/robots.txt")
+        if response is None or response.status_code >= 500:
+            cache[key] = None
+            _logger.info("disclosure fetch blocked by robots destination=%s", _safe_url_label(url))
+            return False
+        if 400 <= response.status_code < 500:
+            robots = RobotFileParser()
+            robots.parse([])
+            cache[key] = robots
+            return True
+        if not 200 <= response.status_code < 300:
+            cache[key] = None
+            _logger.info("disclosure fetch blocked by robots destination=%s", _safe_url_label(url))
+            return False
+
+        robots = RobotFileParser()
+        robots.parse(response.body.decode("utf-8", "replace").splitlines())
+        cache[key] = robots
+
+    if robots is None or not robots.can_fetch(HTTP_HEADERS["User-Agent"], url):
+        _logger.info("disclosure fetch blocked by robots destination=%s", _safe_url_label(url))
+        return False
+    return True
+
+
 def _candidate_source_urls(
     company_name: str,
     report_year: int,
@@ -701,6 +737,7 @@ def _run_fetch_pipeline(
         source_hints=source_hints,
     )
     client = httpx.Client(follow_redirects=False, trust_env=False)
+    robots_cache: dict[str, RobotFileParser | None] = {}
     downloaded: tuple[bytes, str] | None = None
     attempted_urls: list[str] = []
 
@@ -710,13 +747,15 @@ def _run_fetch_pipeline(
                 _validate_fetch_url(candidate)
             except _FetchPolicyError:
                 continue
+            if not _robots_allows(client, candidate, robots_cache):
+                continue
             attempted_urls.append(candidate)
 
             if candidate.lower().endswith(".pdf"):
                 downloaded = _download_pdf_bytes(client, candidate)
             else:
                 discovered_pdf_url = _discover_pdf_url_from_html(client, candidate)
-                if discovered_pdf_url:
+                if discovered_pdf_url and _robots_allows(client, discovered_pdf_url, robots_cache):
                     downloaded = _download_pdf_bytes(client, discovered_pdf_url)
 
             if downloaded is not None:
