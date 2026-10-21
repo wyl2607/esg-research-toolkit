@@ -474,6 +474,8 @@ def health_deploy() -> dict[str, object]:
                     payload[key] = fingerprint[key]
         except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
             payload["fingerprint_error"] = str(exc)
+    else:
+        payload["fingerprint_error"] = "deploy fingerprint not found"
     return payload
 
 

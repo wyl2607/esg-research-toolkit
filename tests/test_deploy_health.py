@@ -27,6 +27,8 @@ def test_health_deploy_returns_version_without_fingerprint(monkeypatch, tmp_path
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
     assert response.json()["version"] == "0.3.1"
+    assert response.json()["fingerprint_error"] == "deploy fingerprint not found"
+    assert response.json()["git_sha"] is None
 
 
 def test_health_deploy_includes_fingerprint(monkeypatch, tmp_path) -> None:
