@@ -7,21 +7,15 @@ import type {
   CompanyProfile,
   CompanyESGData,
   FrameworkScoreResult,
-  FrameworkVersionInfo,
   IndustryBenchmarksResponse,
   LCOEInput,
   LCOEResult,
-  MergeMetricDecision,
-  MergePreviewResponse,
-  MergeSourceInput,
   MultiFrameworkReport,
   SensitivityResult,
   TaxonomyActivity,
   TaxonomyScoreResult,
   ManualReportInput,
 } from './types'
-
-export type { FrameworkVersionInfo, MergeMetricDecision, MergePreviewResponse, MergeSourceInput }
 
 const BASE = '/api'
 
@@ -485,12 +479,3 @@ export const getFrameworkScore = (
 export const listFrameworks = (): Promise<
   { id: string; name: string; region: string; mandatory_from: string; description: string }[]
 > => req('/frameworks/list')
-
-export const getFrameworkVersions = (): Promise<FrameworkVersionInfo[]> =>
-  req('/frameworks/versions')
-
-export const previewMerge = (documents: MergeSourceInput[]): Promise<MergePreviewResponse> =>
-  req('/report/merge/preview', {
-    method: 'POST',
-    body: JSON.stringify({ documents }),
-  })
