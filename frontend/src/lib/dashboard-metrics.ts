@@ -3,9 +3,16 @@
  *
  * Unknown / failed / null must never collapse to 0 — that is the bug class
  * this module exists to prevent (`?? 0`, `|| 0`, `Number(x) || 0`).
+ *
+ * Formatting is *not* done here. Callers pass a locale-bound formatter from
+ * `useFormatters()`, because this module used to build percentages with a bare
+ * `${n}%` template — which rendered `29.5%` on a German page whose charts were
+ * already showing `1,1 Mio.`.
  */
 
-export const METRIC_UNAVAILABLE = '—' as const
+import { UNKNOWN } from './units'
+
+export const METRIC_UNAVAILABLE = UNKNOWN
 
 export type DashboardMetricSource =
   | { kind: 'loading' }
@@ -42,6 +49,3 @@ export function resolveDashboardMetric(
   return { value: format(raw), unavailable: false }
 }
 
-export function formatPercentMetric(n: number): string {
-  return `${n}%`
-}

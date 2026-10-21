@@ -55,9 +55,35 @@ layer(base);
   @apply text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500 dark:text-slate-400;
 }
 
+@utility numeric-mono {
+  font-family: 'IBM Plex Mono', 'SFMono-Regular', monospace;
+}
+
+/* Unit chips carry unit *symbols*, which are case-sensitive: uppercasing
+   them turned `tCO₂e` into `TCO2E`, which is not the same unit. */
 @utility metric-unit {
-  @apply rounded-full border border-stone-200 bg-stone-50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-stone-500
+  @apply rounded-full border border-stone-200 bg-stone-50 px-2 py-0.5 text-[11px] font-medium tracking-normal text-stone-500
            dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300;
+}
+
+/* ── One KPI type scale, used by every metric tile ── */
+
+/* `word-break: break-word` on <body> chopped German compounds at arbitrary
+   letters (`MITAR-BEITE-NDE`). Labels break only at real hyphenation points. */
+@utility metric-label {
+  @apply text-[11px] font-semibold uppercase leading-4 tracking-[0.1em] text-stone-500
+         [overflow-wrap:break-word] [word-break:normal] dark:text-slate-400;
+}
+
+/* Numbers never wrap: a value split across lines is unreadable, and
+   `tabular-nums` keeps digits in a column aligned. */
+@utility metric-value {
+  @apply numeric-mono text-3xl font-semibold leading-none tabular-nums
+         whitespace-nowrap overflow-x-auto;
+}
+
+@utility metric-hint {
+  @apply text-xs leading-5 text-stone-500 dark:text-slate-400;
 }
 
 @utility editorial-panel {
@@ -99,6 +125,17 @@ layer(base);
     --input: 28 18% 86%;
     --ring: 24 72% 42%;
     --radius: 1rem;
+
+    /* Chart tokens — charts are SVG, so they cannot inherit Tailwind's
+       `dark:` variants. Recharts reads these through `var()` in fill/stroke,
+       which is how a chart follows the theme instead of staying light. */
+    --chart-grid: 214 12% 84%;
+    --chart-axis: 24 8% 42%;
+    --chart-axis-strong: 24 10% 25%;
+    --chart-series-1: 24 72% 42%;
+    --chart-series-2: 12 62% 48%;
+    --chart-surface: 32 33% 99%;
+    --chart-surface-border: 28 18% 86%;
   }
 
   .dark {
@@ -121,6 +158,14 @@ layer(base);
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 224.3 76.3% 48%;
+
+    --chart-grid: 217 20% 28%;
+    --chart-axis: 215 18% 68%;
+    --chart-axis-strong: 214 24% 86%;
+    --chart-series-1: 33 88% 58%;
+    --chart-series-2: 8 78% 62%;
+    --chart-surface: 222.2 84% 9%;
+    --chart-surface-border: 217.2 32.6% 26%;
   }
 }
 
@@ -166,14 +211,24 @@ layer(base);
     font-variation-settings: 'opsz' 36;
   }
 
-  code,
-  .numeric-mono {
+  code {
     font-family: 'IBM Plex Mono', 'SFMono-Regular', monospace;
   }
 }
 
 @layer base {
-  /* ── Light → dark overrides for slate colors ── */
+  /* ── Light → dark overrides for slate colors ──
+     These exist because many components declare only a light colour and rely
+     on this block for dark mode. Two consequences to keep in mind:
+
+     1. `@apply dark:text-slate-400` inside a component class INLINES the
+        override below as `.dark .my-class:is(.dark *)`, at a higher
+        specificity than the utility itself. So whatever these rules say wins
+        everywhere, including inside `@apply`.
+     2. Because of (1) the ramp must stay monotonic. It previously mapped
+        `text-slate-400` to slate-500 — *darker* than the slate-500/600 rows
+        below it — which pushed every 11px label to 2.2–3.8:1 on card
+        backgrounds. Muted text gets lighter in dark mode, never darker. */
   .dark .bg-white {
     background-color: hsl(var(--card));
   }
@@ -192,15 +247,13 @@ layer(base);
   .dark .text-slate-800 {
     color: rgb(226 232 240);
   }
-  .dark .text-slate-700 {
+  .dark .text-slate-700,
+  .dark .text-slate-600 {
     color: rgb(203 213 225);
   }
-  .dark .text-slate-600,
-  .dark .text-slate-500 {
-    color: rgb(148 163 184);
-  }
+  .dark .text-slate-500,
   .dark .text-slate-400 {
-    color: rgb(100 116 139);
+    color: rgb(148 163 184);
   }
 
   /* ── Stone color overrides for dark mode ── */
@@ -248,3 +301,4 @@ layer(base);
       linear-gradient(to bottom, rgba(8, 12, 28, 0.98), rgba(6, 10, 22, 0.99));
   }
 }
+

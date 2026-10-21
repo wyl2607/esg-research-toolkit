@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { loadLocale } from '@/i18n/index'
+import { setLanguage } from '@/i18n/index'
 
 const LANGS = [
   { code: 'zh', flag: '🇨🇳' },
@@ -16,7 +16,7 @@ export function LanguageSwitcher() {
         <button
           key={code}
           // PERF: lazy-load the locale bundle before activating it
-          onClick={() => loadLocale(code).then(() => i18n.changeLanguage(code))}
+          onClick={() => void setLanguage(code)}
           className={`inline-flex h-9 items-center gap-1 rounded-lg px-2.5 text-xs font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 ${
             i18n.resolvedLanguage === code
               ? 'bg-indigo-600 text-white shadow-xs'

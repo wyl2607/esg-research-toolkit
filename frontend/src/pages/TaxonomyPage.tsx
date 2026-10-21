@@ -225,20 +225,17 @@ export function TaxonomyPage() {
               label={t('taxonomy.revenueAligned')}
               value={report.revenue_aligned_pct.toFixed(1)}
               unit="%"
-              color="blue"
-            />
+                          />
             <MetricCard
               label={t('taxonomy.capexAligned')}
               value={report.capex_aligned_pct.toFixed(1)}
               unit="%"
-              color="blue"
-            />
+                          />
             <MetricCard
               label={t('taxonomy.opexAligned')}
               value={report.opex_aligned_pct.toFixed(1)}
               unit="%"
-              color="blue"
-            />
+                          />
             <MetricCard
               label={t('taxonomy.dnshStatus')}
               value={report.dnsh_pass ? t('taxonomy.dnshPass') : t('taxonomy.dnshFail')}

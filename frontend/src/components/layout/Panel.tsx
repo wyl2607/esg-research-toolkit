@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
+import { MetricTile } from '@/components/MetricTile'
 
 const BASE =
   'min-w-0 max-w-full rounded-2xl border border-slate-200 bg-white shadow-xs dark:border-slate-700 dark:bg-slate-800'
@@ -49,7 +50,8 @@ export function FormCard({
   return <div className={cn(BASE, 'p-5', className)}>{children}</div>
 }
 
-/** Single KPI tile. p-4. */
+/** Single KPI tile. Re-exported so callers keep one import site; the markup
+ * lives in {@link MetricTile} so every KPI in the app shares one scale. */
 export function StatCard({
   label,
   value,
@@ -61,15 +63,5 @@ export function StatCard({
   hint?: ReactNode
   className?: string
 }) {
-  return (
-    <div className={cn(BASE, 'p-4', className)}>
-      <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
-        {label}
-      </p>
-      <p className="mt-1 numeric-mono text-3xl font-semibold text-slate-900 dark:text-slate-100">
-        {value}
-      </p>
-      {hint ? <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{hint}</p> : null}
-    </div>
-  )
+  return <MetricTile label={label} value={value} hint={hint} className={className} />
 }
