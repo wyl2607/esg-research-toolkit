@@ -6,12 +6,23 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { QueryStateCard } from '@/components/QueryStateCard'
-import { Trash2, Search, Download, Building2, CalendarRange, FileStack } from 'lucide-react'
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  Building2,
+  CalendarRange,
+  Download,
+  FileStack,
+  Search,
+  Trash2,
+} from 'lucide-react'
 import type { CompanyESGData } from '@/lib/types'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { localizeErrorMessage, isBackendOffline } from '@/lib/error-utils'
-import { formatNumber, formatPercent } from '@/lib/format'
+import { useFormatters } from '@/lib/use-formatters'
+import { UNITS } from '@/lib/units'
 import { exportCompaniesCSV, exportToJSON } from '@/lib/export'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -21,15 +32,86 @@ import { FilterBar } from '@/components/FilterBar'
 
 type SortKey = 'company_name' | 'report_year' | 'taxonomy_aligned_revenue_pct'
 
+const SORT_OPTIONS: { key: SortKey; labelKey: string }[] = [
+  { key: 'company_name', labelKey: 'companies.sortCompany' },
+  { key: 'report_year', labelKey: 'companies.sortYear' },
+  { key: 'taxonomy_aligned_revenue_pct', labelKey: 'companies.sortTaxonomy' },
+]
+
+/**
+ * A sort control that shows whether it is the active sort and in which
+ * direction. The plain buttons it replaces gave no feedback at all, so after
+ * clicking one the list reordered with nothing on screen explaining why.
+ */
+function SortButton({
+  label,
+  active,
+  direction,
+  onClick,
+}: {
+  label: string
+  active: boolean
+  direction: 'asc' | 'desc'
+  onClick: () => void
+}) {
+  const Icon = !active ? ArrowUpDown : direction === 'asc' ? ArrowUp : ArrowDown
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={onClick}
+      aria-pressed={active}
+      className={
+        active
+          ? 'border-amber-500 bg-amber-50 text-amber-900 hover:bg-amber-100 dark:border-amber-500/60 dark:bg-amber-500/15 dark:text-amber-200'
+          : undefined
+      }
+    >
+      <Icon size={14} className="mr-1 shrink-0" aria-hidden="true" />
+      {label}
+    </Button>
+  )
+}
+
+/**
+ * One metric inside a company card.
+ *
+ * Laid out as label-left / value-right rather than as three narrow columns:
+ * the columns were too narrow for German compound labels, so `Mitarbeitende`
+ * hyphenated into three lines and made every card a different height. The unit
+ * lives here and only here — the value must not repeat it.
+ */
+function CompanyMetricRow({
+  label,
+  value,
+  unit,
+}: {
+  label: string
+  value: string
+  unit: string
+}) {
+  return (
+    <div className="flex items-baseline justify-between gap-3">
+      <dt className="metric-label min-w-0">{label}</dt>
+      <dd className="numeric-mono shrink-0 whitespace-nowrap text-sm font-semibold tabular-nums text-slate-900 dark:text-slate-100">
+        {value}
+        <span className="ml-1 text-[11px] font-normal text-slate-500 dark:text-slate-400">
+          {unit}
+        </span>
+      </dd>
+    </div>
+  )
+}
+
 export function CompaniesPage() {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
+  const fmt = useFormatters()
   const [search, setSearch] = useState('')
   const [visibleCount, setVisibleCount] = useState(9)
   const [sortKey, setSortKey] = useState<SortKey>('report_year')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
   const [deleteFeedback, setDeleteFeedback] = useState<string | null>(null)
   const queryClient = useQueryClient()
-  const navigate = useNavigate()
 
   const { data: companies = [], isLoading, error } = useQuery({
     queryKey: ['companies'],
@@ -88,7 +170,12 @@ export function CompaniesPage() {
         title={t('companies.title')}
         subtitle={t('companies.subtitle')}
         kpis={[
-          { label: t('companies.summaryCompanies'), value: filtered.length },
+          {
+            label: t('companies.summaryCompanies'),
+            // Distinct companies. This counted `filtered.length` — company-year
+            // rows — so two companies across five report years read as "5".
+            value: new Set(filtered.map((company) => company.company_name)).size,
+          },
           { label: t('companies.summaryYears'), value: new Set(filtered.map((company) => company.report_year)).size },
           { label: t('companies.summaryRows'), value: companies.length },
         ]}
@@ -142,27 +229,15 @@ export function CompaniesPage() {
         </FilterBar.Field>
         <FilterBar.Actions>
           <div className="flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => toggleSort('company_name')}
-            >
-              {t('companies.sortCompany')}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => toggleSort('report_year')}
-            >
-              {t('companies.sortYear')}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => toggleSort('taxonomy_aligned_revenue_pct')}
-            >
-              {t('companies.sortTaxonomy')}
-            </Button>
+            {SORT_OPTIONS.map((option) => (
+              <SortButton
+                key={option.key}
+                label={t(option.labelKey)}
+                active={sortKey === option.key}
+                direction={sortDir}
+                onClick={() => toggleSort(option.key)}
+              />
+            ))}
           </div>
           <div className="flex flex-wrap gap-2">
             <Button
@@ -206,8 +281,7 @@ export function CompaniesPage() {
               {visibleCompanies.map((c) => (
                 <Card
                   key={`${c.company_name}-${c.report_year}`}
-                  className="group cursor-pointer overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_24px_56px_-34px_rgba(15,23,42,0.36)]"
-                  onClick={() => navigate(`/companies/${encodeURIComponent(c.company_name)}`)}
+                  className="group relative overflow-hidden transition-all duration-200 focus-within:border-amber-400 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_24px_56px_-34px_rgba(15,23,42,0.36)]"
                 >
                   <CardContent className="space-y-5 p-5">
                     <div className="flex items-start justify-between gap-4">
@@ -230,7 +304,16 @@ export function CompaniesPage() {
                           </div>
                           <div className="min-w-0">
                             <h2 className="text-lg font-semibold leading-tight text-slate-900 wrap-break-word">
-                              {c.company_name}
+                              {/* The card used to be a div with onClick: clickable
+                                  with a mouse, invisible to the keyboard and to
+                                  screen readers. The link carries the semantics
+                                  and stretches over the whole card. */}
+                              <Link
+                                to={`/companies/${encodeURIComponent(c.company_name)}`}
+                                className="rounded-xs after:absolute after:inset-0 after:content-[''] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-600"
+                              >
+                                {c.company_name}
+                              </Link>
                             </h2>
                             <p className="mt-1 text-xs leading-5 text-slate-500">
                               {t('companies.companyCardHint')}
@@ -241,11 +324,11 @@ export function CompaniesPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="shrink-0 rounded-xl text-red-500 opacity-0 transition-opacity hover:text-red-700 group-hover:opacity-100"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleDelete(c)
-                        }}
+                        /* Stays above the stretched link, and stays reachable
+                           without a hover — it was `opacity-0` until hover, so on
+                           touch and by keyboard it could not be found at all. */
+                        className="relative z-10 shrink-0 rounded-xl text-red-500 opacity-60 transition-opacity hover:text-red-700 hover:opacity-100 focus-visible:opacity-100 group-hover:opacity-100"
+                        onClick={() => handleDelete(c)}
                         aria-label={t('companies.deleteConfirm', { name: c.company_name, year: c.report_year })}
                         title={t('common.delete')}
                       >
@@ -253,29 +336,29 @@ export function CompaniesPage() {
                       </Button>
                     </div>
 
-                    <div className="grid gap-3 sm:grid-cols-3">
-                      <div className="rounded-2xl border border-slate-200 bg-slate-50/90 px-3 py-3 dark:border-slate-600 dark:bg-slate-700/60 min-w-0">
-                        <p className="section-kicker">{t('companies.metricScope1Short')}</p>
-                        <p className="mt-2 numeric-mono text-base font-semibold text-slate-900 dark:text-slate-100 break-all leading-tight">
-                          {formatNumber(c.scope1_co2e_tonnes, { locale: i18n.resolvedLanguage })}
-                        </p>
-                        <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">{t('companies.unitTco2e')}</p>
-                      </div>
-                      <div className="rounded-2xl border border-slate-200 bg-slate-50/90 px-3 py-3 dark:border-slate-600 dark:bg-slate-700/60 min-w-0">
-                        <p className="section-kicker">{t('companies.metricEmployeesShort')}</p>
-                        <p className="mt-2 numeric-mono text-base font-semibold text-slate-900 dark:text-slate-100 break-all leading-tight">
-                          {formatNumber(c.total_employees, { locale: i18n.resolvedLanguage })}
-                        </p>
-                        <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">{t('companies.unitPeople')}</p>
-                      </div>
-                      <div className="rounded-2xl border border-slate-200 bg-slate-50/90 px-3 py-3 dark:border-slate-600 dark:bg-slate-700/60 min-w-0">
-                        <p className="section-kicker">{t('companies.metricTaxonomyShort')}</p>
-                        <p className="mt-2 numeric-mono text-base font-semibold text-slate-900 dark:text-slate-100 break-all leading-tight">
-                          {formatPercent(c.taxonomy_aligned_revenue_pct, i18n.resolvedLanguage)}
-                        </p>
-                        <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">{t('companies.unitPercent')}</p>
-                      </div>
-                    </div>
+                    <dl className="space-y-1.5 rounded-2xl border border-slate-200 bg-slate-50/90 px-4 py-3 dark:border-slate-700 dark:bg-slate-900/40">
+                      <CompanyMetricRow
+                        label={t('companies.metricScope1Short')}
+                        value={fmt.number(c.scope1_co2e_tonnes)}
+                        unit={UNITS.tco2e}
+                      />
+                      <CompanyMetricRow
+                        label={t('companies.metricEmployeesShort')}
+                        value={fmt.number(c.total_employees)}
+                        unit={t('companies.unitPeople')}
+                      />
+                      {/* `fixed` so the column reads 41,0 / 25,0 / 19,5 rather
+                          than 41 / 25 / 19,5 — a percentage column with a
+                          drifting decimal count does not line up. */}
+                      <CompanyMetricRow
+                        label={t('companies.metricTaxonomyShort')}
+                        value={fmt.number(c.taxonomy_aligned_revenue_pct, {
+                          fractionDigits: 1,
+                          fixed: true,
+                        })}
+                        unit={UNITS.percent}
+                      />
+                    </dl>
                   </CardContent>
                 </Card>
               ))}

@@ -6,7 +6,7 @@ export interface MetricItem {
   id: string
   label: string
   value: string | number
-  color?: 'default' | 'green' | 'red' | 'blue'
+  color?: 'default' | 'green' | 'red'
   /** Unknown metric (API failure / null) — visually distinct from measured zero. */
   unavailable?: boolean
   unavailableLabel?: string

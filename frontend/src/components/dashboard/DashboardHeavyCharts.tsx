@@ -2,13 +2,16 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  Cell,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from 'recharts'
 import { UploadCloud } from 'lucide-react'
+
+import { CHART, CHART_TICK, CHART_TICK_STRONG, CHART_TOOLTIP_STYLE } from '@/lib/chart-theme'
+import { useFormatters } from '@/lib/use-formatters'
+import { UNITS } from '@/lib/units'
 
 type YearlyTrendItem = { year: number; count: number }
 type TopEmitterItem = { company: string; year: number; scope1: number }
@@ -24,27 +27,11 @@ interface DashboardHeavyChartsProps {
   chartsEmptyBody: string
 }
 
-function formatCompactNumber(value: number, locale: string) {
-  return new Intl.NumberFormat(locale, {
-    notation: 'compact',
-    maximumFractionDigits: 1,
-  }).format(value)
-}
-
-function coerceNumericLabel(
-  value: number | string | readonly (string | number)[] | undefined,
-  locale: string,
-  suffix?: string
-) {
-  const baseValue = Array.isArray(value) ? value[0] : value
-  // Never collapse unknown tooltip values to 0 — that implies a measured zero.
-  if (baseValue === null || baseValue === undefined || baseValue === '') return '—'
-  const numericValue = typeof baseValue === 'number' ? baseValue : Number(baseValue)
-  if (!Number.isFinite(numericValue)) return '—'
-  const formatted = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(numericValue)
-  return suffix ? `${formatted} ${suffix}` : formatted
-}
-
+/**
+ * Company labels are truncated by character count because the Y axis has a
+ * fixed pixel width. The year suffix is always kept — two rows for the same
+ * company are only distinguishable by it.
+ */
 function truncateCompanyLabel(value: string) {
   const yearSuffix = value.match(/(.*)( ·\d{2})$/)
   if (yearSuffix) {
@@ -71,6 +58,25 @@ function ChartEmptyState({ title, body }: { title: string; body: string }) {
   )
 }
 
+/**
+ * Both chart cards use this header so their plot areas start at the same
+ * height. Previously only the emitters card carried a unit line, which pushed
+ * the two charts in the same row out of alignment by exactly one line.
+ */
+function ChartCardHeader({ title, unit, id }: { title: string; unit: string; id: string }) {
+  return (
+    <div className="mb-4 space-y-1">
+      <h2
+        id={id}
+        className="text-lg font-semibold leading-tight text-stone-900 dark:text-slate-100"
+      >
+        {title}
+      </h2>
+      <p className="numeric-mono text-xs text-stone-500 dark:text-slate-400">{unit}</p>
+    </div>
+  )
+}
+
 export function DashboardHeavyCharts({
   yearlyTrend,
   topEmitters,
@@ -80,45 +86,68 @@ export function DashboardHeavyCharts({
   chartsEmptyTitle,
   chartsEmptyBody,
 }: DashboardHeavyChartsProps) {
-  const locale = typeof navigator !== 'undefined' ? navigator.language : 'en-US'
+  const fmt = useFormatters()
   const topEmitterChartData: TopEmitterChartItem[] = topEmitters.map((item) => ({
     ...item,
     label: formatEmitterLabel(item),
   }))
 
+  // One divisor for the whole axis: every tick then reads in the same form,
+  // and the magnitude is named once in the axis unit instead of appearing on
+  // some ticks but not others.
+  const emitterScale = fmt.axisScale(
+    topEmitterChartData.reduce((max, item) => Math.max(max, item.scope1 ?? 0), 0)
+  )
+  const emitterUnit = emitterScale.suffix
+    ? `${emitterScale.suffix} ${UNITS.tco2e}`
+    : UNITS.tco2e
+
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-      <section className="editorial-panel p-4 md:p-5" aria-labelledby="yearly-trend-title">
-        <h2 id="yearly-trend-title" className="mb-4 text-xl font-semibold leading-tight text-stone-900 md:text-2xl dark:text-slate-100">
-          {yearlyTrendLabel}
-        </h2>
+      <section className="editorial-panel p-6" aria-labelledby="yearly-trend-title">
+        <ChartCardHeader id="yearly-trend-title" title={yearlyTrendLabel} unit={uploadsLabel} />
         {yearlyTrend.length === 0 ? (
           <ChartEmptyState title={chartsEmptyTitle} body={chartsEmptyBody} />
         ) : (
           <div className="h-56 md:h-64">
             <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <BarChart data={yearlyTrend} role="img" aria-label={yearlyTrendLabel}>
-                <CartesianGrid stroke="#d6d3d1" strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="year" tick={{ fill: '#64748b', fontSize: 12 }} axisLine={false} tickLine={false} />
-                <YAxis allowDecimals={false} tick={{ fill: '#64748b', fontSize: 12 }} axisLine={false} tickLine={false} width={32} />
-                <Tooltip
-                  formatter={(value) => [coerceNumericLabel(value, locale), uploadsLabel]}
-                  contentStyle={{ borderRadius: 16, borderColor: '#e7e5e4' }}
+                <CartesianGrid stroke={CHART.grid} strokeDasharray="3 3" vertical={false} />
+                <XAxis
+                  dataKey="year"
+                  tickFormatter={(value: number) => fmt.year(value)}
+                  tick={CHART_TICK}
+                  axisLine={false}
+                  tickLine={false}
                 />
-                <Bar dataKey="count" fill="#b45309" name={uploadsLabel} radius={[6, 6, 0, 0]} />
+                <YAxis
+                  allowDecimals={false}
+                  tickFormatter={(value: number) => fmt.number(value)}
+                  tick={CHART_TICK}
+                  axisLine={false}
+                  tickLine={false}
+                  width={32}
+                />
+                <Tooltip
+                  cursor={{ fill: CHART.grid, fillOpacity: 0.25 }}
+                  formatter={(value) => [fmt.number(Number(value)), uploadsLabel]}
+                  labelFormatter={(label) => fmt.year(Number(label))}
+                  contentStyle={CHART_TOOLTIP_STYLE}
+                />
+                <Bar
+                  dataKey="count"
+                  fill={CHART.series1}
+                  name={uploadsLabel}
+                  radius={[6, 6, 0, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
         )}
       </section>
 
-      <section className="editorial-panel p-4 md:p-5" aria-labelledby="top-emitters-title">
-        <div className="mb-4 space-y-1">
-          <h2 id="top-emitters-title" className="text-xl font-semibold leading-tight text-stone-900 md:text-2xl dark:text-slate-100">
-            {topEmittersLabel}
-          </h2>
-          <p className="text-sm text-stone-500 dark:text-slate-400">tCO₂e</p>
-        </div>
+      <section className="editorial-panel p-6" aria-labelledby="top-emitters-title">
+        <ChartCardHeader id="top-emitters-title" title={topEmittersLabel} unit={emitterUnit} />
         {topEmitterChartData.length === 0 ? (
           <ChartEmptyState title={chartsEmptyTitle} body={chartsEmptyBody} />
         ) : (
@@ -131,11 +160,13 @@ export function DashboardHeavyCharts({
                 role="img"
                 aria-label={topEmittersLabel}
               >
-                <CartesianGrid stroke="#d6d3d1" strokeDasharray="3 3" horizontal={false} />
+                <CartesianGrid stroke={CHART.grid} strokeDasharray="3 3" horizontal={false} />
                 <XAxis
                   type="number"
-                  tickFormatter={(value: number) => formatCompactNumber(value, locale)}
-                  tick={{ fill: '#64748b', fontSize: 12 }}
+                  tickFormatter={(value: number) =>
+                    fmt.number(value / emitterScale.divisor, { fractionDigits: 1 })
+                  }
+                  tick={CHART_TICK}
                   axisLine={false}
                   tickLine={false}
                 />
@@ -144,23 +175,22 @@ export function DashboardHeavyCharts({
                   dataKey="label"
                   width={140}
                   tickFormatter={truncateCompanyLabel}
-                  tick={{ fill: '#334155', fontSize: 12 }}
+                  tick={CHART_TICK_STRONG}
                   axisLine={false}
                   tickLine={false}
                 />
                 <Tooltip
-                  formatter={(value) => [
-                    coerceNumericLabel(value, locale, 'tCO₂e'),
-                    'Scope 1',
-                  ]}
+                  cursor={{ fill: CHART.grid, fillOpacity: 0.25 }}
+                  formatter={(value) => [fmt.measure(Number(value), 'tco2e'), 'Scope 1']}
                   labelFormatter={(label) => String(label)}
-                  contentStyle={{ borderRadius: 16, borderColor: '#e7e5e4' }}
+                  contentStyle={CHART_TOOLTIP_STYLE}
                 />
-                <Bar dataKey="scope1" name="Scope 1 (tCO₂e)" radius={[0, 6, 6, 0]}>
-                  {topEmitterChartData.map((entry) => (
-                    <Cell key={`${entry.company}-${entry.year}`} fill="#ef4444" />
-                  ))}
-                </Bar>
+                <Bar
+                  dataKey="scope1"
+                  name={`Scope 1 (${UNITS.tco2e})`}
+                  fill={CHART.series2}
+                  radius={[0, 6, 6, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>

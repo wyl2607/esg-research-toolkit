@@ -1,19 +1,30 @@
 import type { ReactNode } from 'react'
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { MetricTile, type MetricTone } from '@/components/MetricTile'
 
 interface MetricCardProps {
   label: string
   value: string | number
   sub?: string
   unit?: string
-  color?: 'default' | 'green' | 'red' | 'blue'
+  color?: 'default' | 'green' | 'red'
   /** When true, value is unknown (failed request / null) — muted style, not a measured zero. */
   unavailable?: boolean
   unavailableLabel?: string
   footer?: ReactNode
 }
 
+const TONE_BY_COLOR: Record<NonNullable<MetricCardProps['color']>, MetricTone> = {
+  default: 'default',
+  green: 'positive',
+  red: 'negative',
+}
+
+/**
+ * Dashboard metric card. Kept as a named component because the sortable metric
+ * list addresses it by props, but it is now only a thin adapter over the single
+ * {@link MetricTile} so the dashboard and every other KPI row share one scale.
+ */
 export function MetricCard({
   label,
   value,
@@ -24,44 +35,16 @@ export function MetricCard({
   unavailableLabel,
   footer,
 }: MetricCardProps) {
-  const valueColor = unavailable
-    ? 'text-slate-400'
-    : {
-        default: 'text-slate-900',
-        green: 'text-green-600',
-        red: 'text-red-600',
-        blue: 'text-indigo-600',
-      }[color]
-
-  // Generate unique ID for aria-labelledby
-  const titleId = `metric-title-${label.replace(/\s+/g, '-').toLowerCase()}`
-  const resolvedSub = sub ?? (unavailable ? unavailableLabel : undefined)
-
   return (
-    <Card className="surface-card h-full min-w-0" role="region" aria-labelledby={titleId}>
-      <CardHeader className="pb-2">
-        <div className="flex items-start justify-between gap-3">
-          <CardTitle
-            id={titleId}
-            className="text-sm font-medium leading-5 text-slate-600"
-          >
-            {label}
-          </CardTitle>
-          {unit ? <span className="metric-unit shrink-0">{unit}</span> : null}
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div
-          className={`numeric-mono wrap-break-word text-[1.85rem] font-semibold leading-none ${valueColor}`}
-          data-metric-state={unavailable ? 'unavailable' : 'ok'}
-          title={unavailable ? unavailableLabel : undefined}
-          aria-label={unavailable && unavailableLabel ? `${label}: ${unavailableLabel}` : undefined}
-        >
-          {value}
-        </div>
-        {resolvedSub && <p className="mt-2 text-xs leading-5 text-slate-500">{resolvedSub}</p>}
-        {footer ? <div className="mt-3 min-w-0 max-w-full">{footer}</div> : null}
-      </CardContent>
-    </Card>
+    <MetricTile
+      label={label}
+      value={value}
+      unit={unit}
+      hint={sub}
+      tone={TONE_BY_COLOR[color]}
+      unavailable={unavailable}
+      unavailableLabel={unavailableLabel}
+      footer={footer}
+    />
   )
 }

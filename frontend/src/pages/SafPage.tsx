@@ -299,13 +299,11 @@ export function SafPage() {
                 <MetricCard
                   label={t('saf.lcosTonne')}
                   value={`€${fmt(result.levelized_cost_eur_per_tonne, 0)}`}
-                  color="blue"
-                />
+                                  />
                 <MetricCard
                   label={t('saf.lcosLitre')}
                   value={`€${fmt(result.levelized_cost_eur_per_litre, 3)}/L`}
-                  color="blue"
-                />
+                                  />
                 <MetricCard
                   label={t('saf.premium')}
                   value={`+${fmt(result.premium_vs_conventional_pct, 1)}%`}
@@ -349,8 +347,7 @@ export function SafPage() {
                   <MetricCard
                     label={t('saf.irr')}
                     value={result.irr > 0 ? `${fmt(result.irr * 100, 1)}%` : t('saf.notAvailable')}
-                    color="blue"
-                  />
+                                      />
                   <MetricCard
                     label={t('saf.payback')}
                     value={result.payback_years != null ? fmt(result.payback_years, 1) : t('saf.greaterThanLifetime')}
