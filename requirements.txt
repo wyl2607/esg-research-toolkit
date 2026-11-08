@@ -7,7 +7,7 @@ pydantic-settings~=2.16.0
 slowapi>=0.1.10
 
 # Database
-sqlalchemy~=2.1.4
+sqlalchemy~=2.1.6
 alembic~=1.19.1
 
 # AI
@@ -25,7 +25,7 @@ aiohttp>=3.14.3,<4
 # Scientific computing (LCOE/NPV/IRR)
 numpy~=1.26.0
 scipy~=1.13.0
-matplotlib~=3.8.0
+matplotlib~=3.11.2
 
 # Reporting
 reportlab~=5.0.1
@@ -34,4 +34,4 @@ python-docx~=1.1.0
 # Utilities
 python-dotenv~=1.2.3
 pymupdf~=1.28.2
-cachetools~=5.3
+cachetools~=7.2
