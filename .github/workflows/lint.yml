@@ -34,6 +34,8 @@ jobs:
             benchmark \
             tests \
             main.py \
+            workflows \
+            alembic \
             --ignore E501
 
   frontend:
