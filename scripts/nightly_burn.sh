@@ -4,7 +4,7 @@
 # you'd otherwise lose. Runs UNATTENDED but does NOT auto-commit.
 #
 # Cron suggestion (after daily quota refresh, midnight local time):
-#     0 1 * * * /Users/yumei/projects/esg-research-toolkit/scripts/nightly_burn.sh
+#     0 1 * * * <repo-root>/scripts/nightly_burn.sh
 #
 # What it does:
 #   1. git fetch + status snapshot          (no auto-pull, no auto-commit)
