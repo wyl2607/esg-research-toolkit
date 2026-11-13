@@ -67,3 +67,11 @@ updates:
       npm-major:
         patterns: ["*"]
         update-types: ["major"]
+    ignore:
+      # typescript 6.0.3 cannot be installed while openapi-typescript@7.13.0
+      # declares a peer range that excludes it: npm ERESOLVE fails every
+      # npm-major run and takes the whole group PR red (#209, run 42766347031).
+      # Remove this entry once openapi-typescript ships a version that supports
+      # TypeScript 6.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
