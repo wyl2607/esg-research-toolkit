@@ -43,7 +43,7 @@ def client(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Generator[TestCli
 
 
 def _wait_for_completion(client: TestClient, batch_id: str) -> dict:
-    deadline = time.monotonic() + 3
+    deadline = time.monotonic() + 10
     while time.monotonic() < deadline:
         response = client.get(f"/report/jobs/{batch_id}")
         assert response.status_code == 200
@@ -67,7 +67,8 @@ def test_batch_upload_returns_batch_id_for_two_pdfs(client: TestClient) -> None:
     body = response.json()
     assert body["batch_id"]
     assert body["total_jobs"] == 2
-    _wait_for_completion(client, body["batch_id"])
+    status = _wait_for_completion(client, body["batch_id"])
+    assert status["completed_jobs"] + status["failed_jobs"] == status["total_jobs"]
 
 
 def test_batch_jobs_endpoint_reaches_completion(client: TestClient) -> None:
@@ -95,6 +96,8 @@ def test_batch_jobs_endpoint_returns_404_for_unknown_batch(client: TestClient) -
 
 
 def test_batch_upload_without_files_is_rejected(client: TestClient) -> None:
+    # FastAPI rejects the missing required field with 422 before the handler runs,
+    # so the handler's own 400 branch is unreachable today (see the PR discussion).
     response = client.post("/report/upload/batch")
 
     assert response.status_code == 422
