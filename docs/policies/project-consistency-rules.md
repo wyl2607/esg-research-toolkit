@@ -96,4 +96,4 @@
 
 - 本文件修改必须在 `PROJECT_PROGRESS.md` 留一行
 - 每次远程分发的 SHA + 结果追加到 `INCIDENT_LOG.md`（若失败）或 `PROJECT_PROGRESS.md` 近期完成表（若成功）
-- 跨 AI 账本：`/Users/yumei/tools/automation/runtime/ai-trace/`（遵循 `ai-collaboration-traceability-standard.md`）
+- 跨 AI 账本：`<workspace-root>/tools/automation/runtime/ai-trace/`（遵循 `ai-collaboration-traceability-standard.md`）
