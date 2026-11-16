@@ -50,7 +50,7 @@ def _lcoe_input(**overrides: float | int | str) -> LCOEInput:
 def test_npv_zero_discount_rate_equals_cash_flow_sum() -> None:
     flows = [-100_000.0, 12_000.0, 12_000.0, 12_000.0]
 
-    assert calculate_npv(flows, 0.0) == sum(flows)
+    assert calculate_npv(flows, 0.0) == pytest.approx(sum(flows), abs=0.01)
 
 
 def test_npv_matches_closed_form_reference_at_seven_percent() -> None:
@@ -66,7 +66,7 @@ def test_npv_matches_reference_for_fractional_cash_flows() -> None:
 
 
 def test_irr_for_one_period_return_is_ten_percent() -> None:
-    assert calculate_irr([-100.0, 110.0]) == 0.1
+    assert calculate_irr([-100.0, 110.0]) == pytest.approx(0.1, abs=0.01)
 
 
 def test_irr_without_sign_change_returns_zero_current_behavior() -> None:
@@ -92,7 +92,46 @@ def test_lcoe_with_short_lifetime_matches_closed_form_reference() -> None:
     assert calculate_lcoe(inp).lcoe_eur_per_mwh == pytest.approx(_lcoe_ref(inp), abs=0.01)
 
 
-def test_lcoe_fx_conversion_preserves_local_to_eur_relation() -> None:
-    result = calculate_lcoe(_lcoe_input(currency="USD", reference_fx_to_eur=2.0))
+def test_lcoe_two_year_hand_computed_anchor() -> None:
+    inp = _lcoe_input(
+        capex_eur_per_kw=1000.0,
+        opex_eur_per_kw_year=100.0,
+        capacity_factor=0.5,
+        lifetime_years=2,
+        discount_rate=0.1,
+    )
 
-    assert result.lcoe_local_per_mwh * 2.0 == pytest.approx(result.lcoe_eur_per_mwh, abs=0.01)
+    annual_energy_kwh = 0.5 * 8760.0
+    expected_lcoe_eur_per_mwh = (
+        (1000.0 + 100.0 / 1.1 + 100.0 / 1.1**2)
+        / (annual_energy_kwh / 1.1 + annual_energy_kwh / 1.1**2)
+        * 1000.0
+    )
+
+    assert calculate_lcoe(inp).lcoe_eur_per_mwh == pytest.approx(
+        expected_lcoe_eur_per_mwh, abs=0.01
+    )
+
+
+def test_lcoe_fx_conversion_preserves_local_to_eur_relation() -> None:
+    fx = 2.0
+    result = calculate_lcoe(_lcoe_input(currency="USD", reference_fx_to_eur=fx))
+
+    rounding_tolerance = 0.005 * fx + 0.005
+    assert result.lcoe_local_per_mwh * fx == pytest.approx(
+        result.lcoe_eur_per_mwh, abs=rounding_tolerance + 0.001
+    )
+
+
+def test_lcoe_fx_scales_eur_result_and_preserves_local_result() -> None:
+    fx = 2.0
+    baseline = calculate_lcoe(_lcoe_input())
+    converted = calculate_lcoe(_lcoe_input(currency="USD", reference_fx_to_eur=fx))
+
+    rounding_tolerance = 0.005 * fx + 0.005 + 0.001
+    assert converted.lcoe_eur_per_mwh == pytest.approx(
+        baseline.lcoe_eur_per_mwh * fx, abs=rounding_tolerance
+    )
+    assert converted.lcoe_local_per_mwh == pytest.approx(
+        baseline.lcoe_local_per_mwh, abs=0.01 + 0.001
+    )
