@@ -9,6 +9,8 @@
 > **总耗时**：第一次约 1–2 小时（取决于还剩多少 URL 需要人工校验和补 PDF）。重跑通常 15–30 分钟。
 >
 > **模型说明**：抽取模型跟随后端当前 `OPENAI_MODEL` 配置；`--validate` / `--validate-only` 的 Phase B 校验使用 `OPENAI_VALIDATION_MODEL`（默认 `gpt-5.4-mini`）。
+>
+> **路径约定**：下文命令里的 `$REPO_ROOT` 指本仓库 checkout 的绝对路径；开始前先在当前 shell 执行 `export REPO_ROOT=<本仓库 checkout 的绝对路径>`。
 
 ---
 
@@ -16,7 +18,7 @@
 
 | 项目 | 怎么验证 | 期望 |
 |---|---|---|
-| 在项目根目录 | `pwd` | `<repo-root>` |
+| 在项目根目录 | `pwd` | 输出为绝对路径且以 `esg-research-toolkit` 结尾 |
 | Python venv 存在 | `ls .venv/bin/python` | 文件存在 |
 | 后端依赖装好 | `.venv/bin/pip show openai httpx fastapi` | 三个都有版本号 |
 | OpenAI 余额 | 打开 https://platform.openai.com/usage | 至少 $30 |
@@ -59,7 +61,7 @@
 3. 把 PDF 重命名为 manifest 里那个公司的 `slug` + `.pdf`
    - 例：RWE 那条 `slug` 是 `rwe-2024` → 文件名 `rwe-2024.pdf`
 4. **放进这个目录**：`scripts/seed_data/pdfs/`
-   - 完整路径示例：`<repo-root>/scripts/seed_data/pdfs/rwe-2024.pdf`
+   - 完整路径示例：`$REPO_ROOT/scripts/seed_data/pdfs/rwe-2024.pdf`
 5. manifest 里这一项的 `source_url` 不用改（脚本会先看本地缓存，本地有就不下载了），`verify` 改成 `false`
 
 **验证 PDF 有效**：
@@ -85,7 +87,7 @@ ls -lh scripts/seed_data/pdfs/rwe-2024.pdf
 ### 2.1 开新 terminal #1
 
 ```bash
-cd <repo-root>
+cd "$REPO_ROOT"
 export OPENAI_API_KEY=<把你真实的 key 粘这里，sk-proj-... 开头>
 .venv/bin/uvicorn main:app --port 8000 --host 127.0.0.1
 ```
@@ -118,7 +120,7 @@ curl -s http://127.0.0.1:8000/benchmarks/D35.11
 ### 3.1 先 dry-run 确认无网络版本能跑
 
 ```bash
-cd <repo-root>
+cd "$REPO_ROOT"
 .venv/bin/python scripts/seed_german_demo.py --dry-run
 ```
 
@@ -201,7 +203,7 @@ cd <repo-root>
 
 1. **开 terminal #3**（前两个保持不动）
 2. ```bash
-   cd <repo-root>/frontend
+   cd "$REPO_ROOT/frontend"
    npm run dev
    ```
 3. 浏览器打开 http://localhost:5173/benchmarks

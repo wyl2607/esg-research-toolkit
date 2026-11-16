@@ -5,6 +5,7 @@
 #
 # Cron suggestion (after daily quota refresh, midnight local time):
 #     0 1 * * * <repo-root>/scripts/nightly_burn.sh
+#   安装前把 <repo-root> 换成本机 checkout 的绝对路径（cron 不展开占位符）。
 #
 # What it does:
 #   1. git fetch + status snapshot          (no auto-pull, no auto-commit)
