@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { EMPTY_FORM, buildPayload, payloadToForm } from './utils'
 import type { ManualFormState } from './utils'
 
@@ -76,12 +76,18 @@ describe('buildPayload', () => {
   })
 
   it('falls back to the current year when the year is not numeric', () => {
-    expect(buildPayload(form({ report_year: 'not-a-year' })).report_year).toBe(
-      new Date().getFullYear()
-    )
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2024-06-15T12:00:00Z'))
+    try {
+      expect(buildPayload(form({ report_year: 'not-a-year' })).report_year).toBe(2024)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
-  it('treats a blank year string as numeric zero', () => {
+  it('currently treats a blank year string as numeric zero', () => {
+    // Records the existing implementation behavior (Number('') === 0), not intended product behavior.
+    // Whether a blank year should fall back to the current year is still pending a product decision.
     expect(buildPayload(form({ report_year: '' })).report_year).toBe(0)
     expect(buildPayload(form({ report_year: '   ' })).report_year).toBe(0)
   })
