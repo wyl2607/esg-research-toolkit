@@ -29,9 +29,8 @@ export function ThemeSwitcher() {
       onClick={() => setTheme(isDark ? 'light' : 'dark')}
       className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700"
       title={isDark ? t('theme.light') : t('theme.dark')}
-      aria-label={t('theme.toggle')}
     >
-      {isDark ? <Sun size={14} /> : <Moon size={14} />}
+      {isDark ? <Sun size={14} aria-hidden="true" /> : <Moon size={14} aria-hidden="true" />}
       <span>{isDark ? t('theme.light') : t('theme.dark')}</span>
     </button>
   )
