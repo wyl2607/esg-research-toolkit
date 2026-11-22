@@ -14,7 +14,8 @@ jobs:
           for endpoint in /api/health /api/health/deploy; do
             ok=0
             for attempt in 1 2 3; do
-              if curl -sf --max-time 15 "https://esg.meichen.beauty$endpoint" >/dev/null; then
+              code=$(curl -fsSL --max-redirs 3 --max-time 15 -o /dev/null -w '%{http_code}' "https://esg.meichen.beauty$endpoint" || true)
+              if [ "$code" = "200" ]; then
                 ok=1
                 break
               fi
