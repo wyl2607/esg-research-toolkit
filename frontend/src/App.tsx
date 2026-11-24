@@ -47,9 +47,11 @@ const CoverageFieldPage = lazy(() =>
   import('@/pages/CoverageFieldPage').then((module) => ({ default: module.CoverageFieldPage }))
 )
 
-const DesignPreviewPage = lazy(() =>
-  import('@/pages/DesignPreviewPage').then((module) => ({ default: module.DesignPreviewPage }))
-)
+const DesignPreviewPage = import.meta.env.DEV
+  ? lazy(() =>
+      import('@/pages/DesignPreviewPage').then((module) => ({ default: module.DesignPreviewPage }))
+    )
+  : null
 
 const SafPage = lazy(() =>
   import('@/pages/SafPage').then((module) => ({ default: module.SafPage }))
@@ -109,7 +111,7 @@ export default function App() {
             <Route path="regional" element={<RegionalPage />} />
             <Route path="coverage/:field" element={<CoverageFieldPage />} />
             <Route path="frameworks/regional" element={<RegionalPage />} />
-            {import.meta.env.DEV && (
+            {import.meta.env.DEV && DesignPreviewPage && (
               <Route path="design-preview" element={<DesignPreviewPage />} />
             )}
             <Route path="*" element={<NotFound />} />
